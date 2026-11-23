@@ -17,13 +17,14 @@ placeActionButton();   /* the button for a thing to do sits mid-screen (engine/a
 import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';
 import { goalWithCount } from '../../../engine/story.js';
-import { runQuiz, quizOpen } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
+import { makeLooks } from '../../../engine/lookkit.js';   /* a close look at a thing (owner rule 13) */
+import { runQuiz, quizOpen, closeQuiz } from '../../../engine/quiz.js';   /* one quiz for every game: a wrong pick shows the right answer */   /* "Talk to A, B and C: 1 of 3." */   /* the view turns to the person talking */
 const TC = createTalkCam();
 import { createAmbient, ambientTest } from '../../../engine/ambient.js';
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle, noiseHit } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, tone, crackle, noiseHit, mixBeds, bedTest, pickUp, putDown, carFar, dogFar, owl } from '../../../engine/audio.js';
 import { collapse } from '../../../engine/collapse.js';   /* the ward falls in pieces, as Port Royal's houses do (engine/collapse.js) */
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { slideWalls, walkRoute, segmentHitsWall } from '../../../engine/placement.js';
@@ -32,6 +33,7 @@ import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { grip, gripTick, spreadArms } from '../../../engine/grip.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { boy: 2, girl: 2, man_elder: 2, man_shirt: 2, man_suit: 2, man_work: 2, woman57: 2, woman_elder: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
+import { auditReveals } from '../../../engine/audit-reveal.js';
 import { snapMeshes, auditPlace as auditPlaceE, auditHeld, auditHeldClip, auditThrough, auditBodies, auditVehicles, auditGarments, auditHanging, hiddenWith } from '../../../engine/audit.js';
 import { G, makeSky, ease, rng, batchStatic } from './gfx.js';
 import { hamper, bucket, suitcase } from './props.js';
@@ -355,6 +357,26 @@ function chapterFade(title, sub, fn) {   /* fade to a black title card, change t
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);   /* black bars top and bottom, for the scripted moments */
+/* ---------- a close look (owner rule 13, engine/lookshot.js through engine/lookkit.js): input held, bars in, the camera eases to the thing,
+   it does something with its own sound, a short line or two, then the card or the talk, and the camera eases back. The autoplayer skips it. ---------- */
+const LOOKDEV = __DEV__ && new URLSearchParams(location.search).get('look');
+const LOOK_SFX = {
+  paper: () => { noiseHit(2600, 0.6, 0.35, 0.06, 0, 0.1); noiseHit(1800, 0.7, 0.4, 0.05, 0, 0.9); },   /* the letter out of its envelope, then unfolded */
+  radio: () => { for (let i = 0; i < 5; i++) noiseHit(1500 + i * 600, 0.6, 0.18, 0.1, -0.2, i * 0.2); tone(880, 880, 0.15, 'square', 0.01, -0.2, 1.3); for (let i = 0; i < 6; i++) tone(170 + (i % 3) * 25, 160, 0.3, 'triangle', 0.012, -0.2, 1.6 + i * 0.32); },   /* the hiss as the dial turns, then a voice you cannot make out yet */
+  board: () => [0.4, 1.0, 1.6, 2.2, 2.8, 3.4].forEach((d) => tone(620, 620, 0.25, 'sine', 0.018, 0, d)),
+  plaque: () => { noiseHit(1200, 0.5, 1.4, 0.03, 0.3, 0.2); for (let i = 0; i < 3; i++) chirp(); },
+};
+const LOOK = makeLooks({ camera, bars, say: (t) => say(t, 2600), freeze: (on) => { frozen = on; }, sounds: LOOK_SFX, quick: () => QUICK && !LOOKDEV, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  eye: () => { const P = PL[cur]; return { x: state.x, y: (P ? P.groundAt(state.x, state.z) : 0) + EYE_NOW, z: state.z, yaw: state.yaw, pitch: state.pitch }; } });
+if (LOOKDEV) LOOK.pauseAt = +(new URLSearchParams(location.search).get('k') || 0.5);
+/* the letter for Miss Iris, in your hands: folded in three, it opens as you read */
+const LETTER_HELD = (() => { const g = new THREE.Group(), tex = new THREE.CanvasTexture((() => { const c = document.createElement('canvas'); c.width = 256; c.height = 340; const x = c.getContext('2d'); x.fillStyle = '#f4efe2'; x.fillRect(0, 0, 256, 340); x.fillStyle = '#2a3a6a'; x.font = 'italic 22px Georgia, serif'; x.fillText('Dear Miss Iris,', 22, 44);
+    x.strokeStyle = 'rgba(42,58,106,0.75)'; x.lineWidth = 2; for (let i = 0; i < 9; i++) { x.beginPath(); let px = 22; x.moveTo(px, 82 + i * 26); while (px < 230 - (i === 8 ? 90 : 0)) { px += 6 + Math.random() * 8; x.lineTo(px, 82 + i * 26 + Math.sin(px * 0.4) * 3); } x.stroke(); } return c; })()); tex.colorSpace = THREE.SRGBColorSpace;
+  const parts = [0, 1, 2].map((i) => { const geo = new THREE.PlaneGeometry(0.2, 0.0867); const uv = geo.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setY(j, (2 - i + uv.getY(j)) / 3); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, side: THREE.DoubleSide })); return m; });
+  const mid = parts[1], top = new THREE.Group(), bot = new THREE.Group(); g.add(mid); top.position.y = 0.0433; bot.position.y = -0.0433; parts[0].position.y = 0.0433; parts[2].position.y = -0.0433; top.add(parts[0]); bot.add(parts[2]); g.add(top, bot);
+  g.userData.open = (k) => { top.rotation.x = -(1 - k) * 3.0; bot.rotation.x = (1 - k) * 3.0; g.rotation.x = -0.35 + k * 0.2; };
+  g.position.set(0, -0.12, -0.42); g.visible = false; camera.add(g); return g; })();
+
 let subTimer = 0;
 function say(text, ms = 4200) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
@@ -442,7 +464,7 @@ function nextCard(i, s) {   /* a finished chapter: offer the next one after a pa
   offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading || frozen || DIR.on) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished', ['Next is "' + nx.name + '" (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
-function resetTransient() { endSceneWarning(); EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
+function resetTransient() { LOOK.cancel(); LETTER_HELD.visible = false; endSceneWarning(); EP++; frozen = false; HELD_BLANKET.visible = false; endCut(); FX.shake = 0; $('sub').classList.add('dim'); document.body.classList.remove('subbing'); TICKS.length = 0; SIREN = 0; }
 async function beginChapter(i, st) {
   if (fading) return; resetTransient(); st = st || CH_FIRST[i]; const C = CHAPTERS[i]; hideCard(); closeJournal(); closeChapters(); $('dialogue').hidden = true; busy = false; talkWith = null;
   if (!modelsReady || !PL[SCENES[i].place]) toast('Loading', 4000); const specs = await takeScene(i);
@@ -501,25 +523,46 @@ function timeline(k = 0) {   /* chapter 7: which came next? Three choices at a t
   }
   runQuiz({ title: 'The story in order', items, sound: uiSound, fast: QUICK }).then(() => setStage(72));
 }
+/* the looks: what the camera frames, what moves, and the words (a card or a talk keeps only what the picture cannot say) */
+async function readLetter(P, then) {   /* the letter comes out folded in three and opens in your hands, Miss Iris watching */
+  const ep = EP, I = P.spots.iris; LETTER_HELD.visible = true; LETTER_HELD.userData.open(0);
+  await LOOK.look({ id: 'letter', at: [I.x, (I.ground || 0) + 1.35, I.z], dist: 2.1, lift: 0.05, fov: 46, act: 2.6, sound: 'paper', lines: ['You unfold the letter. It came all the way from Port Antonio.'], reveal: (k) => LETTER_HELD.userData.open(Math.min(1, k * 1.3)) }); if (ep !== EP) return;
+  card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: async () => { hideCard(); LETTER_HELD.visible = false; await LOOK.back(); then(); } }]);
+}
+function radioState(P, k) { const R = P.myers.radio; R.knob.userData.fixed = true; R.aerial.scale.y = 0.45 + 0.55 * Math.min(1, k * 2.5); R.knob.rotation.y = k * 2.4; R.dial.emissiveIntensity = Math.min(1, k * 3) * 0.9; }
+async function listenRadio(P) {   /* Miss Iris's radio on its little table: the aerial goes up, the dial lights, the knob turns to the news */
+  const ep = EP, R = P.myers.radio, toWorld = (o) => o.getWorldPosition(new THREE.Vector3()); wardStill(P, false); const at = toWorld(R.knob);
+  await LOOK.look({ id: 'radio', at: [at.x, at.y + 0.06, at.z], dist: 0.95, lift: 0.18, fov: 42, act: 3.0, sound: 'radio', lines: ['You turn the knob. The dial glows.'],
+    reveal: (k) => radioState(P, k) }); if (ep !== EP) return;
+  convo(RADIO.map((text) => ({ who: 'The radio', text })).concat([{ who: 'Miss Iris', text: 'Trouble, trouble. Turn it down, child.' }]), async () => { await LOOK.back(); wardStill(P); setStage(31); });
+}
+async function lookBoard(P) {   /* the story as a line of dates on the board: each lights in turn, then you put the story in order */
+  const ep = EP; await LOOK.look({ id: 'board', view: { p: [5.2, 1.55, 8.4], look: [5.2, 1.5, 5.25], fov: 40 }, push: 0.06, act: 3.8, sound: 'board', lines: ['Six dates on one line.', 'Can you put the story in order?'], reveal: (k) => P.boardLit(k) }); if (ep !== EP) return;
+  await LOOK.back(); timeline(0);
+}
+async function readPlaque(P) {   /* the sun finds each line of the real words in turn */
+  const ep = EP; await LOOK.look({ id: 'plaque', view: { p: [0, 1.75, 3.7], look: [0, 2.05, 0.45], fov: 36 }, push: 0.08, act: 5.2, line: 2.6, sound: 'plaque', lines: ['DEDICATED TO THE VICTIMS OF THE EVENTIDE HOME FIRE', 'MAY THEIR SOULS REST IN PEACE'], reveal: (k) => P.wordsLit(k) }); if (ep !== EP) return;
+  await LOOK.back(); setStage(74);
+}
 const ACTIONS = {
-  0: (P) => [{ label: 'Read the letter to Miss Iris', x: P.spots.iris.x - 0.9, z: P.spots.iris.z, r: 2.4, on: () => stage === 13, go: () => card('A letter for Miss Iris', LETTER, [{ t: 'Finish reading', go: () => { hideCard(); convo([{ who: 'Miss Iris', text: 'Pauline! I made that dress in 1961.' }, { who: 'Miss Iris', text: 'Thank you, child. You read it beautifully.' }], () => setStage(14), byId('iris1')); } }]) }],
+  0: (P) => [{ label: 'Read the letter to Miss Iris', x: P.spots.iris.x - 0.9, z: P.spots.iris.z, r: 2.4, on: () => stage === 13, look: 'letter', go: () => readLetter(P, () => convo([{ who: 'Miss Iris', text: 'Pauline! I made that dress in 1961.' }, { who: 'Miss Iris', text: 'Thank you, child. You read it beautifully.' }], () => setStage(14), byId('iris1'))) }],
   1: (P) => [
-    { label: 'Pick up the next thing', x: P.spots.table[0], z: P.spots.table[1], r: 1.9, on: () => stage === 21 && !ctr.holding, go: () => { const k = ctr.tidy || 0; ctr.holding = true; P.things[k].visible = false; uiSound('tap'); toast(TIDY[k].text, 4000); } },
-    ...TIDY.map((t, k) => ({ label: t.label, x: P.spots[t.where][0], z: P.spots[t.where][1], r: 1.9, on: () => stage === 21 && ctr.holding && (ctr.tidy || 0) === k, go: () => { ctr.holding = false; ctr.tidy = k + 1; P.things[k].visible = true; placeThing(P, k); uiSound('goal'); unlock(t.page); refreshGoal(true); if (ctr.tidy >= 4) setStage(22); else toast('Put back: ' + ctr.tidy + ' of 4'); } }))],
-  2: (P) => [{ label: 'Listen to the radio', x: P.spots.radio[0], z: P.spots.radio[1], r: 2.0, on: () => stage === 30, go: () => convo(RADIO.map((text) => ({ who: 'The radio', text })).concat([{ who: 'Miss Iris', text: 'Trouble, trouble. Turn it down, child.' }]), () => setStage(31)) }],
+    { label: 'Pick up the next thing', x: P.spots.table[0], z: P.spots.table[1], r: 1.9, on: () => stage === 21 && !ctr.holding, go: () => { const k = ctr.tidy || 0; ctr.holding = true; P.things[k].visible = false; pickUp(0.3); toast(TIDY[k].text, 4000); } },
+    ...TIDY.map((t, k) => ({ label: t.label, x: P.spots[t.where][0], z: P.spots[t.where][1], r: 1.9, on: () => stage === 21 && ctr.holding && (ctr.tidy || 0) === k, go: () => { ctr.holding = false; ctr.tidy = k + 1; P.things[k].visible = true; placeThing(P, k); putDown(0.3); uiSound('goal'); unlock(t.page); refreshGoal(true); if (ctr.tidy >= 4) setStage(22); else toast('Put back: ' + ctr.tidy + ' of 4'); } }))],
+  2: (P) => [{ label: 'Listen to the radio', look: 'radio', x: P.spots.radio[0], z: P.spots.radio[1], r: 2.0, on: () => stage === 30, go: () => listenRadio(P) }],
   3: (P) => [
     { label: 'Hold the gate open', x: -1.9, z: -7.7, r: 2.3, on: () => stage === 42, go: () => holdGate(P) },
-    { label: 'Take a blanket', x: PILE[0], z: PILE[1], r: 1.5, on: () => stage === 43 && !ctr.carry && (ctr.blanket || 0) < 3, go: () => { ctr.carry = true; HELD_BLANKET.children[0].material = HELD_BLANKET.children[0].material.clone(); HELD_BLANKET.children[0].material.map = P.pile.children[2 - (ctr.blanket || 0)].material.map; HELD_BLANKET.visible = true; pileShow(P); uiSound('tap'); refreshGoal(true); } },
-    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && ctr.carry && !byId('kid' + i).blanket, go: () => { const k = ctr.blanket || 0; ctr.carry = false; HELD_BLANKET.visible = false; addBlanket(byId('kid' + i), PILE_COLS[2 - k]); ctr.blanket = k + 1; uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
+    { label: 'Take a blanket', x: PILE[0], z: PILE[1], r: 1.5, on: () => stage === 43 && !ctr.carry && (ctr.blanket || 0) < 3, go: () => { ctr.carry = true; HELD_BLANKET.children[0].material = HELD_BLANKET.children[0].material.clone(); HELD_BLANKET.children[0].material.map = P.pile.children[2 - (ctr.blanket || 0)].material.map; HELD_BLANKET.visible = true; pileShow(P); pickUp(0.1); refreshGoal(true); } },   /* a soft lift of cloth */
+    ...[0, 1, 2].map((i) => ({ label: 'Wrap the child in a blanket', get x() { return byId('kid' + i).x; }, get z() { return byId('kid' + i).z + 0.75; }, r: 1.5, on: () => stage === 43 && ctr.carry && !byId('kid' + i).blanket, go: () => { const k = ctr.blanket || 0; ctr.carry = false; HELD_BLANKET.visible = false; addBlanket(byId('kid' + i), PILE_COLS[2 - k]); ctr.blanket = k + 1; pickUp(0); uiSound('goal'); refreshGoal(true); if (ctr.blanket >= 3) roofFalls(P); } }))],
   4: (P) => [{ label: 'Stand at the rail', x: P.spots.rail[0], z: P.spots.rail[1], r: 2.6, on: () => stage === 53, go: () => card('At the grave', ['The grave is closed now, with concrete and steel.', 'How will you say goodbye?'], [
-    { t: 'Lay a flower', go: () => { story.part = 'flower'; P.spray.visible = true; hideCard(); say('You lay a flower by the rail, for Miss Iris and Miss Dora.'); setStage(54); } },
+    { t: 'Lay a flower', go: () => { story.part = 'flower'; P.spray.visible = true; putDown(0); hideCard(); say('You lay a flower by the rail, for Miss Iris and Miss Dora.'); setStage(54); } },
     { t: 'Sing with the crowd', go: () => { story.part = 'sing'; hideCard(); say('The crowd sings a hymn. You sing too, as Miss Dora taught you.'); setStage(54); } },
     { t: 'Stand quietly', go: () => { story.part = 'quiet'; hideCard(); say('You stand quietly and hold Gran\'s hand.'); setStage(54); } }], { col: true, dismiss: hideCard }) }],
   5: (P) => [{ label: 'Sort the news cards', x: P.spots.table[0], z: P.spots.table[1], r: 2.0, on: () => stage === 61, go: () => sortCards(0) }],
   6: (P) => [
-    { label: 'Look at the story board', x: P.spots.board[0], z: P.spots.board[1], r: 2.2, on: () => stage === 71, go: () => timeline(0) },
-    { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
-    { label: 'Read the words', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => card('The plaque says', [PLAQUE.slice(0, 4).join(' '), PLAQUE.slice(4).join(' ')], [{ t: 'Close', go: () => { hideCard(); setStage(74); } }]) }],
+    { label: 'Look at the story board', look: 'board', x: P.spots.board[0], z: P.spots.board[1], r: 2.2, on: () => stage === 71, go: () => lookBoard(P) },
+    { label: 'Lay a flower', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 72, go: () => { const k = ctr.flower || 0; P.laid[k].visible = true; ctr.flower = k + 1; putDown(0); uiSound('goal'); say(k ? 'A flower for Miss Dora, who sang.' : 'A flower for Miss Iris, the dressmaker.'); refreshGoal(true); if (ctr.flower >= 2) setStage(73); } },
+    { label: 'Read the words', look: 'plaque', x: P.spots.plaque[0], z: P.spots.plaque[1], r: 2.4, on: () => stage === 73, go: () => readPlaque(P) }],
 };
 ON[75] = () => { refreshJourney(); if (!QUICK) setTimeout(() => { if (stage === 75) { cue('end'); card('The End', ['For years the Eventide fire was a line at the bottom of the page.', 'You have read past it. The women of Eventide were people, each with a name and a life.', 'Your journal has a page about your journey.'], [{ t: 'Open my journal', go: () => { hideCard(); openJournal('journey'); } }], { col: true }); } }, 1800); };
 
@@ -576,12 +619,12 @@ async function roofFalls(P) {
   await wait(1500); if (ep !== EP) return; FX.shake = 0.3; const F = wardFall(P); F.start();
   TICKS.push((dt) => { if (ep !== EP) return true; F.tick(dt / TS); FX.shake *= 0.95; return F.done; });
   await tween(5.5, (k) => { P.fire.setLevel(1 - 0.6 * k); P.fire.burst(k); }); if (ep !== EP) return;
-  say('Sparks fly up. The crowd goes quiet.', 5000); await wait(3600); if (ep !== EP) return;
+  say('Sparks fly up. The crowd goes quiet.', 5000); sadOnce(); await wait(3600); if (ep !== EP) return;
   reveal();
   await cut([4, 1.4, -2.2], [5.5, 1.35, -3.0], [10, 1.1, -5.2], [10.4, 1.1, -5.2], 4.5); if (ep !== EP) return;   /* then down to the road: two of your friends, safe */
   finish();
 }
-ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
+ON[45] = () => { endSceneWarning(); const P = SC.P; if (envNow === ENV.dawn) return; (async () => { const ep = EP; frozen = true; fadeBlack(true, 900); await wait(1300); if (ep !== EP) return; nightSetup(P, 45); skippableScene(() => { endCut(); frozen = false; }); state.x = DAWN.x; state.z = DAWN.z; state.yaw = DAWN.yaw; fadeBlack(false, 1400); bars(true); sadOnce(); say('Morning. Smoke hangs over Slipe Pen Road.', 6000);
   await cut([-14, 1.6, 2.5], [-9, 1.4, -2.5], [20, 2, -1], [4, 3, -30], 7); if (ep !== EP) return; endCut(); frozen = false; })(); };   /* the bus goes by, as it did that morning (Gleaner, 2020) */
 const DAWN = { x: -9, z: -5.4, yaw: -1.1 };   /* where you stand at dawn: on the pavement, out of the road */
 /* the bus at dawn drives along its lane (P.vehicles) at about 28 km/h, and stops and waits while anyone, you included, is in the road just ahead of it or beside it */
@@ -619,13 +662,21 @@ let GUIDE = null;
 
 /* ---------- sound: each chapter has its own quiet mix. All sound is made in code (engine/audio.js). No cries are ever played. ---------- */
 let auNext = 0, onceAt = 6, sirenAt = 0;
-const SOUNDSCAPE = [{ wind: 0.05, crowd: 0.05, once: chirp }, { room: 0.1, crowd: 0.03 }, { wind: 0.05, crowd: 0.02, once: chirp }, { wind: 0.06, crowd: 0.07 }, { wind: 0.05, crowd: 0.1 }, { wind: 0.05, once: chirp }, { wind: 0.06, crowd: 0.04, once: chirp }];
+/* 22 November 2026: the levels were multiplied by 0.4 here, so every place sat at 0.01 to 0.04 and was almost silent. Now each place is in the
+   shared range (engine/audio.js BED_RANGE) with no extra scale: the avenue by day with far traffic; the ward; dusk with the first crickets;
+   the night of the fire with the crowd behind the rope, the fire's low roar (room, with the fire's level), crickets and a far siren; the burial;
+   the Golden Age Home; the monument today. Talk lowers every bed. */
+const pick = (...f) => () => f[(Math.random() * f.length) | 0]();
+const SOUNDSCAPE = [{ wind: 0.06, crowd: 0.08, traffic: 0.07, once: pick(chirp, chirp, carFar, dogFar) }, { room: 0.12, crowd: 0.04, once: chirp }, { wind: 0.06, crowd: 0.05, traffic: 0.04, cricket: 0.05, once: pick(chirp, dogFar) },
+  { wind: 0.07, crowd: 0.14, room: 0.12, cricket: 0.03, once: pick(owl, dogFar) }, { wind: 0.06, crowd: 0.12, once: chirp }, { wind: 0.06, crowd: 0.05, once: chirp }, { wind: 0.06, crowd: 0.05, traffic: 0.06, once: pick(chirp, chirp, carFar) }];
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(Object.fromEntries(SOUNDSCAPE.map((S, i) => ['chapter ' + (i + 1), S])));   /* ?test=beds : each chapter's bed levels against the shared range */
+let SAD_EP = -1; const sadOnce = () => { if (SAD_EP === EP) return; SAD_EP = EP; cue('sad'); };   /* the sad phrase once in the night chapter: at the quiet after the fall, or at dawn when the night was skipped */
 const FOOT = { slipe: 'stone', ward: 'wood', park80: 'grass', golden: 'grass', monument: 'stone' };
 function audioTick(t) {
   if (!AU.ctx || t < auNext || !SC) return; auNext = t + 0.1; const S = SOUNDSCAPE[SC.i] || {};
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (S[k] || 0) * 0.4);
-  if (!AU.on || !state.started || AU.ctx.state !== 'running') return;
   const fl = SC.i === 3 && SC.P.fire ? SC.P.fire.level : 0;
+  mixBeds(SC.i === 3 ? { ...S, room: (S.room || 0) * fl, crowd: S.crowd * (0.4 + 0.6 * fl) } : S, { duck: !!talkWith });   /* the fire's roar and the crowd follow the fire; quieter at dawn */
+  if (!AU.on || !state.started || AU.ctx.state !== 'running') return;
   if (fl > 0.2 && Math.random() < fl * 0.5 && AU.crack) { try { crackle(); } catch (e) { /* no crackle sound yet */ } }
   if (SC.i === 3 && SIREN > 0 && t > sirenAt) { sirenAt = t + 2.4; tone(620, 880, 1.1, 'sine', 0.035 * SIREN, -0.4); tone(880, 620, 1.1, 'sine', 0.035 * SIREN, -0.4, 1.15); }   /* a far-off siren */
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (S.once) S.once(); }
@@ -705,6 +756,7 @@ let last = performance.now(), fixedCam = null;
 function frame(t) {
   requestAnimationFrame(frame); const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (fixedCam) { camera.position.set(...fixedCam.p); camera.lookAt(...fixedCam.t); }
+  else if (LOOK.tick(dt)) { /* a close look drives the camera */ }
   else if (DIR.on) { const k = ease(Math.min(1, DIR.t / DIR.dur)); camera.position.lerpVectors(DIR.a, DIR.b, k); _v.lerpVectors(DIR.la, DIR.lb, k); camera.lookAt(_v); }
   else if (!SC) { const s = t / 1000; camera.position.set(0.3 + Math.sin(s * 0.1) * 0.8, 1.7, 2.6); camera.rotation.set(0.16, Math.sin(s * 0.07) * 0.05, 0, 'YXZ'); }
   else { const P = PL[cur]; camera.position.set(state.x, (P ? P.groundAt(state.x, state.z) : 0) + EYE_NOW, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); }
@@ -718,6 +770,9 @@ requestAnimationFrame(frame);
 
 /* ---------- tests: dev builds only (node tools/build.mjs eventide --dev). See docs/TESTING.md and docs/games/eventide.md. ---------- */
 function devViews() {
+  { const q = new URLSearchParams(location.search); if (LOOKDEV) (async () => {   /* ?look=<letter|radio|board|plaque>&at=<chapter>,<stage>&k=0.5 : plays that look and holds it part way ("LOOK <id>" in the title) */
+    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(true); await beginChapter(ch, st); resetTransient(); for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
+    const a = SC.actions.find((x) => x.look === LOOKDEV); if (!a) { document.title = 'LOOK none'; return; } state.x = a.x; state.z = a.z; LOOK.id = LOOKDEV; a.go(); })(); }
   const q = new URLSearchParams(location.search), shot = q.get('shot'), errs = [], out = (title, linesOut) => { const el = $('autolog'); if (el) el.textContent = linesOut.join('\n'); document.title = title; };
   addEventListener('error', (e) => { errs.push(e.message); document.title = 'ERROR ' + errs.join(' | '); });
   addEventListener('unhandledrejection', (e) => { errs.push(String((e.reason && e.reason.stack) || e.reason).slice(0, 300)); document.title = 'ERROR ' + errs.join(' | '); });
@@ -783,7 +838,8 @@ function devViews() {
       const moving = st0 === 45 ? P.vehicles : [];   /* the vehicles that drive in this part of the chapter */
       const r = auditPlaceE({ id: P.id, snap: P.snap, npcs: vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, anim: n.anim, ground: n.walker ? 0 : (n.ground || 0), path: n.path }))   /* walkers' routes too, so the audit sees anyone they would walk through */, walls: P.walls.concat(S.walls || []), bounds: P.bounds, start: st,
         actions: SC.actions.filter((a) => !('get' in (Object.getOwnPropertyDescriptor(a, 'x') || {}))).map((a) => ({ label: a.label, x: a.x, z: a.z, r: a.r })), people: SC.people.filter((n) => !n.hidden && !n.kid).map((n) => ({ id: n.id, x: n.x, z: n.z, anim: n.anim })) });
-      const all = [...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...kidRoute(st0, P, S), ...garments(vis), ...placeFaces(vis.map((n) => ({ ...n, hidden: false, extra: !SC.people.includes(n) })))   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
+      if (P.myers && P.myers.radio && i === 2) { wardStill(P, false); P.reveal = { radio: (k) => radioState(P, +k) }; } const rv = P.reveal ? auditReveals({ group: P.myers.real || P.myers.group, reveal: P.reveal }, { groundAt: P.groundAt }) : []; if (P.reveal) { wardStill(P); P.reveal = null; }   /* the radio look's moving parts, in both states (engine/audit-reveal.js) */
+      const all = [...rv, ...r.floating, ...r.inside, ...r.stuck, ...auditThrough(P.snap), ...auditHanging(P.snap, P.groundAt), ...auditVehicles(moving, vis.map((n) => ({ id: n.id || n.base, x: n.x, z: n.z, path: n.path })), { start: st, walls: P.walls.concat(S.walls || []) }), ...kidRoute(st0, P, S), ...garments(vis), ...placeFaces(vis.map((n) => ({ ...n, hidden: false, extra: !SC.people.includes(n) })))   /* look-alikes: two people with one body and face within 2.5 m (engine/faces.js) */]; total += all.length; linesOut.push((name || 'chapter ' + (i + 1)) + ' (' + P.id + '): ' + all.length + ' issues, ' + vis.length + ' people', ...all.map((l) => '  ' + l)); }
     { const m = makeBody({ ...LOOKS.gateman, x: 0, z: 0 }); m.traverse((o) => { if (o.isMesh && o.material.name === 'WaistcoatButtons') o.visible = true; }); const caught = auditGarments('self-test gateman', m);   /* the garment check must see buttons left showing on a hidden waistcoat */
       if (caught.length) linesOut.push('self-test (not counted): the garment check sees buttons left on a hidden waistcoat: ' + caught[0]); else { total++; linesOut.push('self-test FAILED: the garment check missed waistcoat buttons left showing'); } }
     out('AUDIT ' + total, linesOut); })();
@@ -845,7 +901,7 @@ function devViews() {
     const IDS = ['goal', 'topr', 'talk', 'hint', 'toast', 'sub', 'dialogue', 'cinner', 'place', 'nudge'], rect = (id) => { const e = id === 'cinner' ? document.querySelector('#card .cardin') : $(id); if (!e || e.hidden) return null; const cs = getComputedStyle(e); if (cs.display === 'none' || +cs.opacity < 0.05 || cs.visibility === 'hidden') return null; const r = e.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? { id, r, e } : null; };
     const check = (name) => { const Lr = IDS.map(rect).filter(Boolean); for (const a of Lr) { if (a.r.left < -1 || a.r.top < -1 || a.r.right > W + 1 || a.r.bottom > Hh + 1) o.push(`${W}x${Hh} ${name}: ${a.id} is off the screen (${a.r.left | 0},${a.r.top | 0},${a.r.right | 0},${a.r.bottom | 0})`); if (a.e.scrollWidth > a.e.clientWidth + 2 && getComputedStyle(a.e).overflow !== 'visible' && a.id !== 'dialogue') o.push(`${W}x${Hh} ${name}: ${a.id} text is cut off`); }
       for (let i = 0; i < Lr.length; i++) for (let j = i + 1; j < Lr.length; j++) { const a = Lr[i].r, b = Lr[j].r, ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); if (ox > 4 && oy > 4) o.push(`${W}x${Hh} ${name}: ${Lr[i].id} overlaps ${Lr[j].id} by ${ox | 0}x${oy | 0}`); } };
-    const reset = () => { for (const id of ['talk', 'toast', 'dialogue', 'card', 'nudge']) $(id).hidden = true; $('hint').hidden = true; bars(false); document.body.classList.remove('subbing', 'talking'); $('sub').classList.add('dim'); $('place').hidden = true; $('place').style.opacity = 0; busy = false; };
+    const reset = () => { closeQuiz();   /* a quiz left open by the step before covered every panel after it */ for (const id of ['talk', 'toast', 'dialogue', 'card', 'nudge']) $(id).hidden = true; $('hint').hidden = true; bars(false); document.body.classList.remove('subbing', 'talking'); $('sub').classList.add('dim'); $('place').hidden = true; $('place').style.opacity = 0; busy = false; };
     const settle = () => new Promise((r) => setTimeout(r, 700)), LONG = 'Take the photograph to Miss Hyacinth';
     reset(); showGoal(true); $('talk').hidden = false; $('talk').textContent = LONG; showHint(); toast('Journal: The people who cared'); showPlace('Slipe Pen Road, Kingston, May 1980'); await settle(); check('play: goal, talk, hint, toast, place');
     reset(); showGoal(true); say('You hold the gate. Firefighters lead the children out, one by one.', 1e6); $('talk').hidden = false; $('talk').textContent = LONG; showHint(); toast('Put back: 2 of 4'); await settle(); check('narration');

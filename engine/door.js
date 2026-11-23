@@ -21,6 +21,7 @@
      rough      material roughness for the leaf (default 0.7)
    The materials are MeshStandardMaterial, named Door, DoorFrame, DoorGlass, DoorMetal (the audit and tint code can find them by name). */
 import * as THREE from 'three';
+import { doorSound } from './audio.js';
 
 const MATS = new Map();
 function mat(name, color, rough = 0.7, metal = 0, extra = {}) {
@@ -91,4 +92,17 @@ export function makeDoor(opts = {}) {
     L.rotation.y = (hingeLeft ? 1 : -1) * -o.open * 1.4; g.add(L);
   }
   return g;
+}
+
+/* swingDoor(leaves, open, dt, opts): eases a door's leaves (the groups makeDoor puts in it, or a list of them) open or shut, and makes the sound:
+   a latch and a creak as it starts to open, a soft thud as it shuts (engine/audio.js doorSound; 22 November 2026, every game).
+   angle: how far each leaf turns, times its hinge side (leaf.userData.side; Garvey's hall uses +1.55, inward), rate: radians a second, sound: false to keep quiet, pan. */
+export function swingDoor(leaves, open, dt, { angle = 1.55, rate = 3.8, sound = true, pan = 0 } = {}) {
+  const L = Array.isArray(leaves) ? leaves : leaves.children.filter((c) => c.isGroup && c.userData.side); if (!L.length) return;
+  const st = L[0].userData.swing || (L[0].userData.swing = { open: null, moving: false });
+  if (st.open !== null && open !== st.open && open && sound) doorSound('open', pan);
+  st.open = open; let left = 0;
+  for (const leaf of L) { const target = open ? (leaf.userData.side || 1) * angle : 0, e = target - leaf.rotation.y; leaf.rotation.y += THREE.MathUtils.clamp(e, -rate * dt, rate * dt); left = Math.max(left, Math.abs(target - leaf.rotation.y)); }
+  if (!open && st.moving && left < 1e-4 && sound) doorSound('close', pan);
+  st.moving = left > 1e-4;
 }

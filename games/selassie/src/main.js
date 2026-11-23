@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { propSnap } from "../../../engine/audit-props.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
@@ -35,8 +36,20 @@ import {
   stepSound,
   uiSound,
   cue,
+  chirp,
+  gullCry,
+  mixBeds,
+  bedTest,
+  carFar,
+  hornFar,
+  dogFar,
+  radioFar,
+  planeFar,
+  frog,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from "../../../engine/look-sounds.js";
 import { makeSky, G, batchStatic, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, crowdLook } from "./cast.js";
@@ -133,6 +146,7 @@ resize();
 let saved = null;
 try {
   saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved?.stage === 32) saved.stage = 33;   /* "Give the tickets to Mum" was cut (owner rule 14): a save made there carries on from the bus */
   if (saved?.version !== 1 || !STEPS[saved.stage]) saved = null;
 } catch {}
 const S = {
@@ -325,7 +339,7 @@ async function buildWorld(id) {
       o.material.forceSinglePass = true;
   });
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) { Q.snap = snapMeshes(Q.group); Q.propList = propSnap(Q.group); }   /* small props, before merging (engine/audit-props.js) */
   if (Q.props.plane) {
     Q.props.plane.userData.noBatch = false;
     batchStatic(Q.props.plane);
@@ -696,7 +710,7 @@ function visuals() {
       t.position.set(-5, 0.83, -2);
       t.visible = true;
     }
-    t.userData.lid.rotation.x = S.stage >= 13 ? -1.9 : 0;
+    t.userData.lid.rotation.x = S.stage >= 13 ? -1.6 : 0;
   }
   Q.show?.(taskApi(Q));
   if (Q.id === "airport") {
@@ -716,6 +730,7 @@ function visuals() {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   closeAll();
@@ -955,6 +970,45 @@ function readArrival() {
   S.yaw = 0.45;
   readWhatHappened(card, { what: CARDS.arrivalRead.lines, go: () => { unlock("planno"); go(55, { keep: true }); }, pairs: true });   /* the standard What happened card (engine/scene-warning.js) */
 }
+/* the look moments (owner rule 13, engine/lookshot.js): the bars come in, the camera eases to the thing, the place moves it (Q.reveal[id](k))
+   with a sound and a short line or two, then the camera eases back. view: where the camera goes; act: how long the thing moves. */
+const LOOKSHOTS = {
+  openTin: { view: { p: [-5.0, 1.72, -1.55], look: [-5.0, 0.84, -2.02], fov: 40 }, act: 2.4, sound: "lid", say: ["The lid comes up with a squeak.", "Inside lies a small picture, kept for years."] },
+  lookout: { view: { p: [-5.1, 1.7, -14.4], look: [-60, 3, -30], fov: 30 }, act: 4, sound: "water", say: ["Across the harbour lies Kingston, under the mountains.", "A fishing canoe runs before the wind."] },
+  horizon: { view: { p: [-2.9, 1.6, 7.6], look: [5, 6, -60], fov: 20 }, act: 3.4, sound: "wind", say: ["It rained an hour ago. The clouds are moving off.", "The windsock lifts. Everyone looks the same way."] },
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: () => (innerWidth / innerHeight < 0.8 ? 76 : 66),
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => {
+    $("sub").textContent = text;
+    $("sub").classList.toggle("dim", !text);
+  },
+  freeze: (on) => (busy = on),
+  sound: lookSound,
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, 1.28, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+async function lookMoment(id) {
+  const L = LOOKSHOTS[id],
+    Q = world(),
+    st = S.stage;
+  uiSound("tap");
+  await LS.play({ view: L.view, act: L.act, sound: L.sound, lines: L.say, reveal: (k) => Q.reveal?.[id]?.(k) });
+  if (S.stage !== st) return;
+  await LS.back();
+  complete(id);
+  if (st === S.stage) visuals();
+}
 const DIR = createDirector({
   camera,
   place: world,
@@ -1000,6 +1054,7 @@ function talk(n) {
 }
 function action(id) {
   if (busy || openPanel() || !story.needs(id)) return;
+  if (LOOKSHOTS[id]) return lookMoment(id);
   const Q = world(),
     stage = S.stage;
   if (id === "tin") {
@@ -1009,8 +1064,7 @@ function action(id) {
       return;
     }
     putHeld([-5, 0.83, -2]);
-  } else if (id === "openTin") Q.items.tin.userData.lid.rotation.x = -1.9;
-  else if (Q.act?.[id]) {
+  } else if (Q.act?.[id]) {
     if (Q.act[id](taskApi(Q)) === false) return;
   } else if (id === "paper") {
     setHeld(id, getItem(id));
@@ -1400,6 +1454,33 @@ function steadyHeads(Q, dt) {
     lookEnd(b.map((s) => s.bone));   /* tell the engine's guard what the head was left as (engine/anim.js), so a look still cannot pile up */
   }
 }
+/* ---------- sound: each place has its own mix of the engine's beds, and now and then one small sound (22 November 2026: it had none) ----------
+   Kingston 1966 by day: far traffic, people, birds and a radio down the road; the Palisadoes road: the harbour, gulls and the walking crowd;
+   the airport: the waiting crowd, the wind off the sea and an aeroplane far off; the lane at dusk: crickets, frogs, a dog and the shop's radio. */
+const pick = (...f) => () => f[(Math.random() * f.length) | 0]();
+const SOUNDSCAPE = {
+  yard: { wind: 0.05, crowd: 0.05, traffic: 0.07, once: pick(chirp, chirp, dogFar, radioFar, carFar) },
+  memory: { wind: 0.07, crowd: 0.05, once: pick(chirp, chirp, dogFar) },
+  downtown: { crowd: 0.2, traffic: 0.13, wind: 0.03, once: pick(carFar, hornFar, radioFar, chirp) },
+  parade: { crowd: 0.22, traffic: 0.15, wind: 0.03, once: pick(carFar, hornFar, chirp) },
+  road: { sea: 0.16, surf: 0.06, wind: 0.1, crowd: 0.14, traffic: 0.05, once: pick(gullCry, gullCry, carFar) },
+  airport: { crowd: 0.24, wind: 0.1, sea: 0.04, once: pick(planeFar, gullCry, chirp) },
+  lane: { cricket: 0.08, crowd: 0.05, traffic: 0.03, wind: 0.03, once: pick(radioFar, frog, frog, dogFar) },
+};
+if (__DEV__ && q.get("test") === "beds") bedTest(SOUNDSCAPE); /* ?test=beds : each place's bed levels against the shared range (engine/audio.js) */
+let auNext = 0,
+  onceAt = 5;
+function audioTick(t) {
+  if (!AU.ctx || t < auNext) return;
+  auNext = t + 0.1;
+  const L = (S.started && SOUNDSCAPE[current]) || {},
+    hold = DIR.paused; /* the cinematic's Pause stops every sound */
+  mixBeds(hold ? {} : L, { duck: !!talking || DIR.on, tc: hold ? 0.15 : 0.6 });
+  if (t > onceAt) {
+    onceAt = t + 6 + Math.random() * 6;
+    if (L.once && AU.on && !hold && !DIR.on) L.once();
+  }
+}
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -1464,7 +1545,9 @@ function frame(now) {
     }
   }
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a look moment holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -1484,8 +1567,9 @@ function frame(now) {
   }
   findNear();
   hint(now);
+  audioTick(now / 1000);
   steadyHeads(Q, dt);
-  renderFramed(renderer, scene, camera, DIR.on);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -1495,6 +1579,7 @@ async function start() {
   if (!ready || busy) return;
   audioInit();
   S.started = true;
+  if (!saved) cue("begin");
   $("title").hidden = true;
   $("hud").hidden = false;
   startHint(phone); /* the controls tip, for a few seconds at the start of play */
@@ -1617,6 +1702,10 @@ onLoadFail((name) => {
         body,
         loadBase,
         frame,
+        LS,
+        lookMoment,
+        LOOKSHOTS,
+        frozenWhy: () => [busy && "busy", openPanel() && $("dialogue").hidden && "panel " + openPanel(), DIR.paused && "director paused"].filter(Boolean).join(", "),   /* the game's clock is held (background life does not move) */
       });
     }
   } catch (e) {

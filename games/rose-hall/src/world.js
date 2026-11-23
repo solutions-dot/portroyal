@@ -144,7 +144,6 @@ export function candle(lit = true) {
   f.position.y = 0.32;
   f.visible = lit;
   f.userData.noBatch = true;
-  f.userData.noAudit = true;
   g.add(f);
   g.userData.light = (on) => (f.visible = on);
   return g;
@@ -279,7 +278,6 @@ export function castle({ w = 11, d = 7, h = 6.4, r = 2.05 } = {}) {
   watcher.visible = false;
   watcher.traverse((o) => {
     o.userData.noBatch = true;
-    o.userData.noAudit = true;
   });
   g.userData = {
     walls: [[-w / 2 - 0.3, -d / 2 - 0.3, w / 2 + 0.3, d / 2 + 0.3], [-w / 2 - r, d / 2 - r, -w / 2 + r, d / 2 + r], [w / 2 - r, -d / 2 - r, w / 2 + r, -d / 2 + r]],
@@ -308,10 +306,8 @@ export function sinkhole(R = 5, seed = 2) {
   const g = grp(),
     r = rng(seed);
   const shaft = mesh(new THREE.CylinderGeometry(R, R * 0.8, 40, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0x0c0d0c, side: THREE.BackSide }), 0, -20, 0, g);
-  shaft.userData.noAudit = true;
   const dark = mesh(new THREE.CircleGeometry(R * 0.86, 20), WM.dark, 0, -6, 0, g);
   dark.rotation.x = -Math.PI / 2;
-  dark.userData.noAudit = true;
   const lip = mesh(new THREE.RingGeometry(R, R + 1.6, 28), flat(0x8f897c), 0, 0.02, 0, g);
   lip.rotation.x = -Math.PI / 2;
   lip.name = "terrain";

@@ -77,6 +77,7 @@ export const spar = (a, b, r0, r1, m = SM.spar, parent) => rope(a, b, r0, m, par
 /* a sail between four corners (tack, clew, peak, throat, going round), hanging with a little belly toward +x * belly */
 export function sail(c, belly = 0.25, parent, n = 6) {
   const P = c.map(V),
+    wgt = [],
     pos = [],
     uv = [],
     idx = [];
@@ -89,6 +90,7 @@ export function sail(c, belly = 0.25, parent, n = 6) {
         p = a.lerp(b, v);
       p.x += Math.sin(u * Math.PI) * Math.sin(v * Math.PI) * belly;
       pos.push(p.x, p.y, p.z);
+      wgt.push(Math.sin(u * Math.PI) * Math.sin(v * Math.PI));
       uv.push(u * Math.max(1, P[0].distanceTo(P[1]) / 2.4), v);
     }
   for (let i = 0; i < n; i++)
@@ -103,6 +105,13 @@ export function sail(c, belly = 0.25, parent, n = 6) {
   g.setIndex(idx);
   g.computeVertexNormals();
   const o = new THREE.Mesh(g, sailMat());
+  /* userData.breathe(t, amount): the cloth fills and slackens a little, as a sail does in a near calm (the place calls it; it stays still otherwise) */
+  const base = Float32Array.from(pos);
+  o.userData.breathe = (t, amount = 0.12, phase = 0) => {
+    const p = g.attributes.position;
+    for (let i = 0; i < wgt.length; i++) p.setX(i, base[i * 3] + wgt[i] * belly * amount * (Math.sin(t * 0.55 + phase) + 0.35 * Math.sin(t * 1.7 + phase * 2 + base[i * 3 + 1] * 0.4)));
+    p.needsUpdate = true;
+  };
   if (parent) parent.add(o);
   return o;
 }
@@ -473,7 +482,10 @@ export function gunAtPort(side, len = 1.35) {
   q.position.x = side * 0.3;   /* run out: the muzzle stands in the port */
   g.add(q);
   for (const dz of [-0.42, 0.42]) {
-    rope([side * 0.78, 0.36, dz], [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
+    /* the breeching: from its ring bolt in the bulwark to the back of the gun, hanging in a slight curve, not a straight pole */
+    const mid = [side * 0.17, 0.27, dz * 0.71];
+    rope([side * 0.78, 0.36, dz], mid, 0.022, SM.hemp, g, 5);
+    rope(mid, [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
     cyl(0.035, 0.035, 0.03, SM.iron, side * 0.78, 0.36, dz, g, 6).rotation.z = Math.PI / 2;
   }
   rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.022, SM.hemp, g, 5);
@@ -923,7 +935,6 @@ export function fin(s = 1) {
   const o = new THREE.Mesh(new THREE.ShapeGeometry(sh, 5), solid(0x4c565e, 0.5, 0, DS));
   o.scale.setScalar(s);
   o.userData.noBatch = true;
-  o.userData.noAudit = true;
   o.userData.water = true;
   return o;
 }

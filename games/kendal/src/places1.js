@@ -149,8 +149,20 @@ export function buildHill() {
   const car = carriage1845('first', 6.2); car.position.x = 10; train.add(car); const w3 = wagon(); w3.position.x = 17.4; train.add(w3);
   train.userData.wheels = [loco, car, w3].flatMap((v) => v.userData.wheels); train.position.x = 90; train.visible = false; train.userData.noBatch = true;
   /* a brake handle on the platform side of the tender, the carriage and the far wagon: checking a brake pulls its handle down and hangs a white tag on it */
-  const levers = [[loco, 4.7], [car, 0], [w1, 2.6]].map(([v, lx]) => { v.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(v), o = v.getWorldPosition(new THREE.Vector3()), x = Math.max(bb.min.x - o.x + 0.3, Math.min(bb.max.x - o.x - 0.3, lx));
-    const L = grp(v, x, 0.32, bb.max.z - o.z + 0.04); L.userData.noBatch = true; box(0.08, 0.16, 0.06, TM.steel, 0, 0, 0, L); const h = grp(L, 0, 0.02, 0.05); box(0.035, 0.36, 0.035, solid(0xb83a2a, 0.6), 0, 0.17, 0, h); h.rotation.z = 0.5; const tag = box(0.08, 0.1, 0.012, solid(0xf4f0e4, 0.9), 0, 0.3, 0.025, h); tag.visible = false; L.userData.handle = h; L.userData.tag = tag; return L; });
+  const levers = [[loco, 4.7], [car, 0], [w1, 2.6]].map(([v, lx]) => { v.updateWorldMatrix(true, true);   /* parents too: the train is already out at x = 90, and a stale parent put the tender's and the carriage's handles 84 m down the line (found by the brake look, 22 November 2026) */ const bb = new THREE.Box3().setFromObject(v), o = v.getWorldPosition(new THREE.Vector3()), x = Math.max(bb.min.x - o.x + 0.3, Math.min(bb.max.x - o.x - 0.3, lx));
+    /* the hand brake as goods wagons and carriages carried it: a long iron lever along the side, pivoted at one end, pulled down over a curved iron guard
+       with pin holes and pinned there (the brake lever and lever guard of a 19th-century wagon; a general type, not a drawing of the Jamaica Railway's own).
+       It points along the vehicle toward its middle. Checking it pulls the lever down a notch, drops the pin in and hangs a white tag on it. */
+    const L = grp(v, x, 0.42, bb.max.z - o.z + 0.04); L.userData.noBatch = true; if (x > 0) L.scale.x = -1;
+    const iron = solid(0x4a4e54, 0.55, 0.5), bar = solid(0x7a7f86, 0.4, 0.6), paint = solid(0xf2efe6, 0.6), dark = solid(0x1c1d20, 0.8);
+    box(0.08, 0.22, 0.08, iron, 0, 0, 0, L); cyl(0.035, 0.035, 0.06, bar, 0, 0, 0.07, L, 12).rotation.x = PI / 2;   /* the pivot bracket and its bolt */
+    const guard = mesh(new THREE.RingGeometry(0.74, 0.88, 18, 1, -0.32, 0.86), solid(0x3e4248, 0.7, 0.3, { side: THREE.DoubleSide }), 0, 0, 0.05, L);   /* the curved iron guard the lever moves over: a narrow bar, not a plate */
+    const rim = mesh(new THREE.TorusGeometry(0.84, 0.02, 4, 18, 0.86), iron, 0, 0, 0.06, L); rim.rotation.z = -0.32; for (let a = -0.26; a <= 0.5; a += 0.095) cyl(0.012, 0.012, 0.02, dark, Math.cos(a) * 0.84, Math.sin(a) * 0.84, 0.075, L, 6).rotation.x = PI / 2;   /* its outer bar and the pin holes */
+    for (const a of [-0.3, 0.5]) box(0.04, 0.04, 0.06, iron, Math.cos(a) * 0.84, Math.sin(a) * 0.84, 0.02, L);   /* stays to the side */
+    const h = grp(L, 0, 0, 0.1); box(0.92, 0.05, 0.03, bar, 0.46, 0, 0, h); box(0.16, 0.06, 0.04, paint, 0.86, 0, 0, h); h.rotation.z = 0.36;   /* the lever, its end painted white */
+    const pin = cyl(0.014, 0.014, 0.1, bar, Math.cos(-0.17) * 0.84, Math.sin(-0.17) * 0.84 + 0.05, 0.1, L, 8); pin.rotation.x = PI / 2; pin.visible = false;   /* the pin through the guard, over the lever */
+    const tag = box(0.07, 0.1, 0.01, solid(0xf4f0e4, 0.9), 0.62, -0.08, 0.025, h); tag.visible = false;
+    L.userData.handle = h; L.userData.tag = tag; L.userData.pin = pin; L.userData.up = 0.36; L.userData.down = -0.17; return L; });
   people.push(person('gordon', 'stationmaster', 'Mr. Gordon', -0.5, 7.4, PI, { h: 1.78 }));
   people.push(person('abel', 'foreman', 'Mr. Abel', -18, 2.2, PI * 1.1, { h: 1.8 }));
   people.push(person('ezraboy', 'ezraBoy', 'Ezra', 6, 4.4, PI * 1.2, { h: 1.15 }));

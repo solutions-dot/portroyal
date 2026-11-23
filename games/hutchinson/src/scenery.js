@@ -2,10 +2,14 @@
    Spanish Town. Each builder returns a THREE.Group standing on y = 0 at its own origin. What each is modelled on, and what is still a general
    picture, is in docs/games/hutchinson.md ("Places"). Everything here is still scenery: it is merged into a few meshes when the place is built. */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";
+import { writtenPage } from "../../../engine/page.js";
 import { T, cv, grain, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { loftSkin } from "../../../engine/loft.js";
+import { vnoise, fbm } from "../../../engine/ridges.js";
 import * as W from "./world.js";
 import { makeDoor } from "../../../engine/door.js";
+import { hearthFire } from "../../../engine/flame.js";   /* the shared fire (Port Royal's tavern hearth) */
 
 const once = new Map();
 const keep = (k, make) => (once.has(k) ? once.get(k) : (once.set(k, make()), once.get(k)));
@@ -161,7 +165,23 @@ const M = {
 
 /* ---------- the land ---------- */
 /* a karst hill: steep-sided and round-topped, wooded, with pale crags where the limestone shows. One coloured mesh. */
-const HILL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+/* hills are smooth-shaded (as Nanny Town's land), coloured by soft noise: a forest canopy of darker and lighter greens, and here and there a
+   small patch of warm grey limestone among the trees, as in the photographs of the country round the castle. No speckle, no white. */
+const HILL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
+const CANOPY_DARK = [0.19, 0.3, 0.14],
+  CANOPY_LIGHT = [0.34, 0.44, 0.21],
+  LIMESTONE = [0.5, 0.47, 0.39];
+/* the colour of a wooded limestone hillside at a point: u, v are smooth coordinates on the hill, y its height (0 to 1), rock 0 to 1 */
+function forest(col, k, u, v, y, rock, seed, tone = null) {
+  const n = fbm(u, v, 3, seed),
+    fine = vnoise(u * 4.1, v * 4.1, seed + 5),
+    shade = (0.78 + 0.34 * y) * (0.9 + 0.2 * fine),
+    t = tone ? [tone[0] / 0.27, tone[1] / 0.36, tone[2] / 0.19] : [1, 1, 1];
+  for (let j = 0; j < 3; j++) {
+    const g = (CANOPY_DARK[j] + (CANOPY_LIGHT[j] - CANOPY_DARK[j]) * n) * t[j] * shade;
+    col[k * 3 + j] = g + (LIMESTONE[j] * (0.85 + 0.25 * fine) - g) * rock;
+  }
+}
 export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], crag = 0.3) {
   const rr = rng(seed),
     geo = new THREE.SphereGeometry(1, 22, 10, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -177,12 +197,10 @@ export function karstHill(r = 30, h = 26, seed = 1, base = [0.3, 0.4, 0.24], cra
       bump = 1 + 0.1 * Math.sin(a * 3 + p1) + 0.06 * Math.sin(a * 7 + p2) + 0.05 * Math.sin(a * 5 + y * 6 + p1),
       yy = Math.pow(Math.max(0, y), 0.72) * (1 + 0.07 * Math.sin(a * 4 + p2));
     pos.setXYZ(k, x * bump, yy, z * bump);
-    const wood = Math.sin(a * 9 + p1 + y * 11) * Math.sin(a * 4 + y * 5 + p2),
-      rock = y > 0.1 && y < 0.72 && Math.sin(a * 6 + p2 * 2 + y * 4) > 1 - crag,
-      v = (0.76 + 0.42 * y) * (wood > 0.2 ? 0.74 : 1) * (0.94 + rr() * 0.12);
-    col[k * 3] = rock ? 0.62 + rr() * 0.08 : base[0] * v;
-    col[k * 3 + 1] = rock ? 0.6 + rr() * 0.08 : base[1] * v;
-    col[k * 3 + 2] = rock ? 0.54 + rr() * 0.06 : base[2] * v;
+    const cx = Math.cos(a) * 3 + p1 + y * 2,
+      cz = Math.sin(a) * 3 + p2,
+      stone = y > 0.1 && y < 0.72 ? Math.max(0, (vnoise(cx * 2, cz * 2, seed + 3) - (1 - crag * 0.5)) / (crag * 0.5)) : 0;
+    forest(col, k, cx, cz, y, Math.min(0.6, stone * 1.2), seed);
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
@@ -217,18 +235,11 @@ export function cockpitHill(r = 18, h = 22, seed = 1, { bare = 0.32, tone = [0.2
       y = Math.max(0, prof + (rock ? -0.015 : crown) * (rho < 0.99 ? 1 : 0)),
       rad = rho * lobe * (rock ? 0.985 : 1);
     pos.setXYZ(k, Math.cos(a) * rad, y, Math.sin(a) * rad);
-    const blotch = Math.sin(a * 13 + p1 + rho * 17) * Math.sin(a * 9 + rho * 13 + p3),
-      v = (0.72 + 0.4 * y) * (blotch > 0.25 ? 0.72 : blotch < -0.4 ? 1.18 : 1) * (0.92 + rr() * 0.16);
-    if (rock) {
-      const g = 0.7 + rr() * 0.1;
-      col[k * 3] = g;
-      col[k * 3 + 1] = g * 0.97;
-      col[k * 3 + 2] = g * 0.88;
-    } else {
-      col[k * 3] = tone[0] * v;
-      col[k * 3 + 1] = tone[1] * v;
-      col[k * 3 + 2] = tone[2] * v;
-    }
+    /* small patches of bare stone only on the steep sides, half hidden by the trees */
+    const cx = Math.cos(a) * rho * 3 + p1,
+      cz = Math.sin(a) * rho * 3 + p2,
+      stone = steep ? Math.max(0, (vnoise(cx * 2.2, cz * 2.2, seed + 3) - (1 - bare * 0.55)) / (bare * 0.55)) : 0;
+    forest(col, k, cx, cz, y, Math.min(0.7, stone * 1.4), seed, tone);
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
@@ -298,7 +309,7 @@ export function tufts(n, area, { seed = 1, clear = [], h = 0.6, tint = [1.25, 0.
   g.setAttribute("color", new THREE.Float32BufferAttribute(C, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
   const m = new THREE.Mesh(g, TUFT());
-  m.userData.noAudit = true;
+  m.userData.noAudit = true;   /* grass tufts: ground cover that stands into everything, as real grass does */
   m.name = "grass";
   return m;
 }
@@ -480,7 +491,8 @@ export function cookFire(lit = false) {
   if (lit) {
     const e = mesh(new THREE.CircleGeometry(0.22, 10), new THREE.MeshBasicMaterial({ color: 0xff7a2a }), 0, 0.07, 0, g);
     e.rotation.x = -Math.PI / 2;
-    e.userData.noAudit = true;
+    e.userData.noAudit = true;   /* the glow of embers */
+    const f = hearthFire({ s: 0.55, bed: false }); f.position.y = 0.05; g.add(f);   /* flames under the pot (engine/flame.js) */
   }
   return g;
 }
@@ -784,7 +796,7 @@ export function castle({ w = 11, d = 7, h = 6.6, r = 2.05 } = {}) {
   const barrel = cyl(0.014, 0.016, 0.9, W.WM.iron, 0.12, -0.05, 0.45, watcher, 6);
   barrel.rotation.x = Math.PI / 2 - 0.12;
   watcher.visible = false;
-  dynamic(noAudit(watcher));
+  dynamic(watcher);
   g.userData = {
     walls: [[-w / 2 - 0.35, -d / 2 - 0.35, w / 2 + 0.35, d / 2 + 0.35], [w / 2 - r, d / 2 - r, w / 2 + r, d / 2 + r], [-w / 2 - r, -d / 2 - r, -w / 2 + r, -d / 2 + r]],
     shutter: sw,
@@ -821,7 +833,7 @@ export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8
     g.add(s);
     puffs.push(s);
   }
-  dynamic(noAudit(g));
+  dynamic(noAudit(g));   /* smoke puffs, see-through */
   g.userData.tick = (t) => {
     for (let i = 0; i < n; i++) {
       const k = (t * 0.12 + i / n) % 1,
@@ -849,7 +861,7 @@ export function birds(n = 16, seed = 4) {
     g.add(b);
     list.push(b);
   }
-  dynamic(noAudit(g));
+  dynamic(noAudit(g));   /* birds in flight: in the air on purpose */
   g.visible = false;
   g.userData.burst = (k) => {
     g.visible = k > 0 && k < 1;
@@ -906,7 +918,8 @@ export function cornerHearth(h = 3) {
     l.rotation.set(0, s * 0.3, Math.PI / 2);
   }
   const ember = box(0.7, 0.05, 0.3, new THREE.MeshBasicMaterial({ color: 0xff6a22 }), 0, 0.24, 0.32, g);
-  ember.userData.noAudit = true;
+  ember.userData.noAudit = true;   /* the glow of embers */
+  { const f = hearthFire({ s: 0.48, bed: false }); f.position.set(0, 0.25, 0.32); g.add(f); }   /* the low fire the searchers lit (engine/flame.js) */
   const pot = mesh(new THREE.SphereGeometry(0.17, 10, 7, 0, 7, 0, 2.1), W.WM.iron, 0.1, 0.72, 0.3, g);
   pot.rotation.x = Math.PI;
   cyl(0.012, 0.012, 0.42, W.WM.iron, 0.1, 1.0, 0.3, g, 5);
@@ -938,10 +951,17 @@ export function cot() {
   for (const x of [-0.9, 0.9]) for (const z of [-0.36, 0.36]) box(0.06, 0.42, 0.06, W.WM.woodDark, x, 0.21, z, g);
   box(1.9, 0.07, 0.8, W.WM.wood, 0, 0.4, 0, g);
   box(1.84, 0.1, 0.74, solid(0xbcb29a, 1), 0, 0.48, 0, g);
-  box(0.4, 0.09, 0.5, solid(0xd6ceb8, 1), -0.68, 0.57, 0, g);
-  const bl = box(0.9, 0.06, 0.78, solid(0x6a5a4a, 1), 0.52, 0.55, 0.04, g);
-  bl.rotation.z = 0.08;
-  box(0.5, 0.1, 0.5, solid(0x6a5a4a, 1), 0.2, 0.58, -0.2, g).rotation.y = 0.5;
+  /* a soft bolster at the head, and the blanket thrown back in rolls toward the foot */
+  const pillow = mesh(new THREE.CapsuleGeometry(0.075, 0.38, 4, 10), solid(0xd6ceb8, 1), -0.66, 0.585, 0, g);
+  pillow.rotation.x = Math.PI / 2;
+  pillow.scale.set(1.2, 1, 0.7);
+  const wool = solid(0x6a5a4a, 1);
+  box(0.62, 0.03, 0.76, wool, 0.58, 0.545, 0.02, g);
+  for (const [x, r] of [[0.22, 0.06], [0.33, 0.05]]) {
+    const fold = mesh(new THREE.CapsuleGeometry(r, 0.64, 4, 10), wool, x, 0.53 + r * 0.8, 0.02, g);
+    fold.rotation.x = Math.PI / 2;
+    fold.scale.set(1, 0.8, 1);
+  }
   return g;
 }
 /* a wall shelf with bottles, a pewter mug and a small keg */
@@ -960,9 +980,18 @@ export function shelf(len = 1.6) {
 /* papers, an inkwell and a quill: the searchers' list */
 export function writing() {
   const g = grp();
-  box(0.32, 0.008, 0.22, solid(0xe7dcc2, 1), 0, 0.004, 0, g).rotation.y = 0.2;
-  box(0.3, 0.008, 0.2, solid(0xded2b6, 1), 0.12, 0.01, 0.06, g).rotation.y = -0.3;
-  cyl(0.03, 0.035, 0.05, solid(0x1a1a22, 0.3), -0.26, 0.025, -0.05, g, 8);
+  /* two written sheets (old paper, lines of ink too small to read: engine/page.js), an open inkpot with ink in it and the quill standing in it */
+  for (const [w, d, x, y, z, ry, seed] of [[0.32, 0.22, 0, 0.004, 0, 0.2, 3], [0.3, 0.2, 0.12, 0.01, 0.06, -0.3, 4]]) {
+    const sh = box(w, 0.008, d, solid(0xe7dcc2, 1), x, y, z, g);
+    sh.rotation.y = ry;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.98, d * 0.98), new THREE.MeshStandardMaterial({ map: writtenPage("", { w, d, seed }), roughness: 0.95 }));
+    face.rotation.x = -Math.PI / 2;
+    face.position.y = 0.0045;
+    sh.add(face);
+  }
+  const pot = vessel([[0.001, 0], [0.035, 0], [0.035, 0.008], [0.03, 0.04], [0.02, 0.05]], { mat: solid(0x1a1a22, 0.3), fill: { y: 0.04, mat: solid(0x050508, 0.15) }, wall: 0.004 });
+  pot.position.set(-0.26, 0, -0.05);
+  g.add(pot);
   const q = cyl(0.004, 0.012, 0.26, solid(0xe8e4d8, 1), -0.24, 0.14, -0.05, g, 4);
   q.rotation.z = -0.45;
   return g;
@@ -1011,9 +1040,12 @@ export function cliffRing(R = 15, H = 10, { seed = 3, gap = [0.9, 1.6], seg = 44
       for (const [p, u] of [[a, [i / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [b, [(i + 1) / 3, k / rows]], [b, [(i + 1) / 3, k / rows]], [d, [i / 3, (k + 1) / rows]], [c, [(i + 1) / 3, (k + 1) / rows]]]) {
         P.push(p[0], p[1], p[2]);
         U.push(u[0], u[1]);
-        const v = p[3];
+        /* warm grey limestone, with ferns and moss gathering toward the wooded top and in streaks down the face */
+        const v = p[3],
+          up = (k + (p === c || p === d ? 1 : 0)) / rows,
+          moss = Math.min(0.9, Math.max(0, (up - 0.3) / 0.7) * 0.75 + Math.max(0, vnoise(i * 0.6, up * 2.5, 4) - 0.35) * 1.8);
         if (top) C.push(0.36 * v, 0.46 * v, 0.28 * v);
-        else C.push(v, v, v * 0.97);
+        else C.push((0.84 + (0.42 - 0.84) * moss) * v, (0.79 + (0.5 - 0.79) * moss) * v, (0.68 + (0.3 - 0.68) * moss) * v);
       }
     }
   const geo = new THREE.BufferGeometry();
@@ -1029,7 +1061,49 @@ export function cliffRing(R = 15, H = 10, { seed = 3, gap = [0.9, 1.6], seg = 44
     const col = ring[Math.round((((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / ((Math.PI * 2) / seg)) % seg][rows];
     return col;
   };
+  /* a point on the rock face at angle a and height t (0 at the foot, 1 at the rim): for ferns and moss on its ledges */
+  g.userData.face = (a, t) => {
+    const col = ring[Math.round((((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) / ((Math.PI * 2) / seg)) % seg],
+      k = Math.min(rows - 1 - 1e-6, Math.max(0, t * (rows - 1))),
+      i = Math.floor(k),
+      u = k - i;
+    return [0, 1, 2].map((j) => col[i][j] + (col[i + 1][j] - col[i][j]) * u);
+  };
   return g;
+}
+/* a fern: a crown of arching fronds, each a strip bent down at its tip. size: the frond length in metres */
+const FROND = () =>
+  keep("g-frond", () => {
+    const geo = new THREE.PlaneGeometry(0.11, 1, 1, 4),
+      p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const y = p.getY(i) + 0.5,
+        w = Math.sin(Math.max(0.05, y) * Math.PI) * (1 - y * 0.35);
+      p.setXYZ(i, p.getX(i) * w * 2, y * 0.8, -y * y * 0.55);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  });
+const FERN_M = [0x4f7f36, 0x5f8e3e, 0x467232].map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, side: THREE.DoubleSide }));
+export function fern(size = 0.7, seed = 1) {
+  const g = grp(),
+    r = rng(seed),
+    n = 7 + Math.floor(r() * 5);
+  for (let i = 0; i < n; i++) {
+    const f = new THREE.Mesh(FROND(), FERN_M[i % 3]);
+    f.scale.setScalar(size * (0.7 + r() * 0.45));
+    f.rotation.set(0, (i / n) * Math.PI * 2 + r() * 0.4, 0, "YXZ");
+    f.rotateX(-0.35 - r() * 0.4);
+    g.add(f);
+  }
+  return g;
+}
+/* a cushion of moss on a ledge */
+export function moss(w = 0.8, seed = 1) {
+  const r = rng(seed),
+    m = mesh(new THREE.SphereGeometry(0.5, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), solid([0x4a6a30, 0x56753a, 0x3e5e2a][Math.floor(r() * 3)], 1));
+  m.scale.set(w, 0.12 + r() * 0.1, w * (0.6 + r() * 0.5));
+  return m;
 }
 /* the mouth of the hole and the shaft under it. The mouth is about 3 by 5 metres with jagged rock at its lip; the shaft keeps that size for
    some 15 metres and then widens (the cavers' survey). rx, rz: the mouth's half sizes. */
@@ -1065,14 +1139,13 @@ export function shaft(rx = 2.5, rz = 1.5, seed = 2) {
   geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   geo.computeVertexNormals();
   const m = new THREE.Mesh(geo, BAND.map((color) => new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, fog: false })));
-  m.userData.noAudit = true;
   m.userData.noBatch = true;
   g.add(m);
   /* the dark at the bottom: the shaft is closed far down, so no daylight shows through it */
   const cap = mesh(new THREE.CircleGeometry(1, 20), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false }), 0, -40, 0, g);
   cap.rotation.x = -Math.PI / 2;
   cap.scale.set(rx * 3.3, rz * 3.3, 1);
-  cap.userData.noAudit = true;
+  cap.userData.noAudit = true;   /* the dark far down the shaft: a backdrop, not a thing */
   cap.userData.noBatch = true;
   /* the lip: jagged outcrops round the mouth, lower on the side you come to */
   for (let i = 0; i < 18; i++) {
@@ -1256,33 +1329,34 @@ export function kingsHouse(L = 46) {
 }
 /* the railed enclosure in the middle of the square: eight sides, a low stone kerb, a rail on posts. What stood inside it in 1773 is not
    known to us, so it holds only grass. R: the distance from the centre to a corner. */
-export function octagon(R = 5.2) {
+/* the railed green in the middle of the square, after the 1774 plate in Long's history (T. Bonnor, sculp.): one long straight side
+   with about ten square white piers, a low kerb and a rail between them, running the length of the gap between King's House and the
+   public building. No source found says it was an octagon, so it is a rectangle, W wide and L long (L along z, between the buildings). */
+export function railedGreen(W = 9.2, L = 13.6) {
   const g = grp(),
     kerb = std(T.stone([190, 184, 168], [3, 1]), 1),
     rail = solid(0x2c2e30, 0.6, 0.3);
-  const gr = mesh(new THREE.CircleGeometry(R * 0.99, 8), std(T.grass([4, 4], [112, 128, 76])), 0, 0.03, 0, g);
+  const gr = mesh(new THREE.PlaneGeometry(W - 0.3, L - 0.3), std(T.grass([4, 6], [112, 128, 76])), 0, 0.03, 0, g);
   gr.rotation.x = -Math.PI / 2;
-  gr.rotation.z = Math.PI / 8;
   gr.name = "terrain";
-  for (let i = 0; i < 8; i++) {
-    const a0 = (i / 8) * Math.PI * 2 + Math.PI / 8,
-      a1 = ((i + 1) / 8) * Math.PI * 2 + Math.PI / 8,
-      x0 = Math.cos(a0) * R,
-      z0 = Math.sin(a0) * R,
-      x1 = Math.cos(a1) * R,
-      z1 = Math.sin(a1) * R,
-      len = Math.hypot(x1 - x0, z1 - z0),
-      seg = grp(g, (x0 + x1) / 2, 0, (z0 + z1) / 2);
-    seg.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
-    box(len + 0.3, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
+  const side = (len, x, z, ry) => {
+    const seg = grp(g, x, 0, z);
+    seg.rotation.y = ry;
+    box(len + 0.34, 0.36, 0.34, kerb, 0, 0.18, 0, seg);
     for (const y of [0.62, 1.22]) box(len, 0.045, 0.045, rail, 0, y, 0, seg);
-    for (let k = 0; k <= 8; k++) box(0.03, 0.9, 0.03, rail, -len / 2 + (k * len) / 8, 0.8, 0, seg);
-    /* square white piers at the corners and halfway along, as on Long's plate */
-    for (const px of [-len / 2, 0]) {
+    const bays = Math.max(2, Math.round(len / 1.55));
+    for (let k = 0; k < bays; k++) for (let j = 1; j < 6; j++) box(0.03, 0.9, 0.03, rail, -len / 2 + ((k + j / 6) * len) / bays, 0.8, 0, seg);
+    /* square white piers, evenly spaced: about ten along each long side, as on the plate */
+    for (let k = 0; k <= bays; k++) {
+      const px = -len / 2 + (k * len) / bays;
       box(0.42, 1.5, 0.42, M.white, px, 0.75, 0, seg);
       box(0.54, 0.12, 0.54, M.white, px, 1.56, 0, seg);
     }
-  }
+  };
+  side(L, -W / 2, 0, Math.PI / 2);
+  side(L, W / 2, 0, Math.PI / 2);
+  side(W, 0, -L / 2, 0);
+  side(W, 0, L / 2, 0);
   return g;
 }
 /* a town house of the 1770s: two storeys, plastered or brick, sash windows with jalousies, a shingled hip roof, sometimes a timber piazza
@@ -1352,7 +1426,7 @@ export function farCrowd(n = 26, w = 12, seed = 2) {
     mesh(new THREE.SphereGeometry(0.12, 6, 5), m, x, h - 0.1, z, g);
     if (r() < 0.5) mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.04, 8), m, x, h + 0.02, z, g);
   }
-  dynamic(noAudit(g));
+  dynamic(g);
   return g;
 }
 /* a low house of one storey: thick plastered walls (the old Spanish houses Long mentions) or brick, small sash windows, a door, a hip roof.

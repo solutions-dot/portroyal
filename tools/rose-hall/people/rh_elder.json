@@ -26,7 +26,8 @@
   "jacket": true,
   "jacketsleeve": 0.92,
   "collar": "turn",
-  "recede": 0.5
+  "recede": 0.5,
+  "hatdrop": -0.005
  },
  "colors": {
   "Shoes": [

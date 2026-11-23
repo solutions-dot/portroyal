@@ -40,6 +40,7 @@ export async function actionCheck(A, { seconds = 14 } = {}) {
   const still = new Map(),
     reported = new Set();
   const sample = (label, t) => {
+    if (A.frozenWhy && A.frozenWhy()) { still.clear(); return; }   /* the game's clock is held (an opening title, a card): background life does not move by design, so no still time is counted */
     const Q = A.world(),
       cam = A.camera;
     cam.updateMatrixWorld();
@@ -47,6 +48,7 @@ export async function actionCheck(A, { seconds = 14 } = {}) {
     _fr.setFromProjectionMatrix(_pm);
     const seen = [...Q.people, ...Q.extras].filter((n) => !n.historical && inView(cam, n));
     looked += seen.length;
+    { const inSight = new Set(seen.map((n) => label + " " + (n.id || n.base))); for (const k of [...still.keys()]) if (!inSight.has(k)) still.delete(k); }   /* still time counts only while seen: someone out of view and back again later was counted as standing still all that time */
     const groups = new Map();
     let idle = 0;
     for (const n of seen) {

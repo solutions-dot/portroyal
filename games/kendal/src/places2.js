@@ -98,7 +98,11 @@ export function buildCoach() {
   const taken = (x, s, k) => (x === rows[4] && s < 0) || (x === rows[2] && s > 0 && k === 0) || ((x === rows[3] || x === rows[5]) && s > 0 && k === 1);
   const crowd = crowd57(30, 33, [0, 0, 1, 1], { anims: ['SitIdle'], kids: 0.18 }); let ci = 0;
   for (const x of rows) for (const s of [-1, 1]) for (const k of [0, 1]) { if (taken(x, s, k) || (Math.round(x * 10) + k + (s > 0 ? 1 : 0)) % 4 === 0) continue; const e = crowd[ci++]; Object.assign(e, { x, z: s * (k ? 0.9 : 0.5), ry: -PI / 2, anim: k ? 'SitIdle' : ['SitIdle', 'SitTalk'][ci % 2], seated: true, seat: SEAT, props: undefined }); extras.push(e); }   /* the wall's inner face is at 1.20 and a seated man's elbow reaches 33 to 34 cm to the side, so a window seat is 33 cm in from it (it was 30, and elbows went 4 cm into the wall). Not further in: two neighbours need 37 cm between them (?test=ambient, overlap), and the aisle seat cannot move nearer the aisle (story path) */
-  return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [],
+  /* the two windows you look out of: a glazed sash in its frame that you let down into the wall (the look in main.js lowers it, 22 November 2026) */
+  const glass = new THREE.MeshStandardMaterial({ color: 0xbfd2d8, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.32, depthWrite: false }), sashes = [];
+  for (const [wx, , side] of [[-2.5, 0.2, 1], [2.9, -0.2, -1]]) { const gap = [-4.26, -2.98, -1.7, -0.42, 0.86, 2.14, 3.42, 4.7].reduce((a, b) => (Math.abs(b - wx) < Math.abs(a - wx) ? b : a)), sh = grp(g, gap, 0, side * (W / 2)); sh.userData.noBatch = true;
+    box(1.0, 0.9, 0.012, glass, 0, 1.47, 0, sh); for (const y of [1.04, 1.9]) box(1.0, 0.06, 0.04, dark, 0, y, 0, sh); for (const x of [-0.48, 0.48]) box(0.04, 0.9, 0.04, dark, x, 1.47, 0, sh); sh.userData.x = gap; sh.userData.side = side; sashes.push(sh); }
+  return { id: 'coach', group: g, walls, bounds: { x0: -4.8, x1: 4.8, z0: -0.28, z1: 0.28 }, start: { x: 4.3, z: 0, yaw: PI / 2 }, people, extras, env: ENV.day, rig, lamp, ride: true, wheels: [], sashes,
     spots: { seat: [rows[4], -0.25], windows: [[-2.5, 0.2, 1], [2.9, -0.2, -1]] }, tick: () => {} };
 }
 
@@ -184,7 +188,14 @@ export function buildMemorial() {
   const plaque = cv(512, 192, (x, w, h) => { x.fillStyle = '#2a2d30'; x.fillRect(0, 0, w, h); x.fillStyle = '#e6e0cc'; x.textAlign = 'center'; x.font = '700 36px Georgia, serif'; x.fillText('KENDAL', w / 2, 44); x.font = '24px Georgia, serif'; x.fillText('1 September 1957', w / 2, 80); x.font = 'italic 24px Georgia, serif'; x.fillText('We remember them', w / 2, 118);
     x.fillStyle = 'rgba(230,224,204,0.45)'; for (let r = 0; r < 2; r++) for (let i = 0; i < 18; i++) x.fillRect(40 + i * 24, 140 + r * 18, 18, 3); });
   plane(4.4, 1.65, std(plaque, 0.7), 4.0, 1.05, -9.12, g).rotation.y = 0.06; walls.push([-0.6, -10.2, 8.8, -8.7]);
-  const sb = grp(g, -8, 0, -4); for (const x of [-1.3, 1.3]) box(0.12, 2.4, 0.12, TM.woodDark, x, 1.2, 0, sb); const bt = cv(512, 256, (x, w, h) => { x.fillStyle = '#f1ead8'; x.fillRect(0, 0, w, h); x.strokeStyle = '#25211b'; x.lineWidth = 6; x.strokeRect(6, 6, w - 12, h - 12); x.fillStyle = '#25211b'; x.textAlign = 'center'; x.font = '700 38px Georgia, serif'; x.fillText('The Kendal Train Crash', w / 2, 56); x.font = '24px Georgia, serif'; x.fillText('1 September 1957', w / 2, 96); x.textAlign = 'left'; x.font = '20px Georgia, serif'; for (const [i, t] of ['A church excursion train came home from the sea.', 'It ran downhill and left the rails here.', 'Hundreds of people from Kendal came to help.'].entries()) x.fillText(t, 36, 142 + i * 32); });
+  /* a few dry leaves blown on to the step at the foot of the plaque: you brush them off when you read it (main.js) */
+  const leafM = solid(0x9a7438, 1), leaves = [[2.9, 0.05], [3.8, -0.1], [4.9, 0.08], [5.4, -0.05]].map(([x, dz], i) => { const l = mesh(new THREE.CircleGeometry(0.07, 6), leafM, x, 0.255, -8.95 + dz, g); l.rotation.set(-PI / 2, 0, i); l.scale.set(1, 1.7, 1); l.userData.noBatch = true; l.userData.home = l.position.clone(); return l; });
+  const sb = grp(g, -8, 0, -4); for (const x of [-1.3, 1.3]) box(0.12, 2.4, 0.12, TM.woodDark, x, 1.2, 0, sb); const BOARD = ['A church excursion train came home from the sea.', 'It ran downhill and left the rails here.', 'Hundreds of people from Kendal came to help.'];
+  const drawBoard = (x, w, h, lit) => { x.fillStyle = '#f1ead8'; x.fillRect(0, 0, w, h); x.strokeStyle = '#25211b'; x.lineWidth = 6; x.strokeRect(6, 6, w - 12, h - 12); x.fillStyle = '#25211b'; x.textAlign = 'center'; x.font = '700 38px Georgia, serif'; x.fillText('The Kendal Train Crash', w / 2, 56); x.font = '24px Georgia, serif'; x.fillText('1 September 1957', w / 2, 96); x.textAlign = 'left'; x.font = '20px Georgia, serif';
+    for (const [i, t] of BOARD.entries()) { const a = Math.max(0, Math.min(1, lit - i)); if (a > 0 && a < 1) { x.fillStyle = 'rgba(240,196,90,' + (0.45 * (1 - Math.abs(a - 0.5) * 2)) + ')'; x.fillRect(28, 122 + i * 32, w - 56, 28); } x.fillStyle = 'rgba(37,33,27,' + (lit >= 9 ? 1 : 0.35 + 0.65 * a) + ')'; x.fillText(t, 36, 142 + i * 32); } };
+  const bt = cv(512, 256, (x, w, h) => drawBoard(x, w, h, 9));
+  /* reading the board (main.js): each line darkens in turn under a gold glow as you read it, then the whole board as it was */
+  const boardLit = (k) => { const c = bt.image, x = c.getContext('2d'); drawBoard(x, c.width, c.height, k >= 1 ? 9 : k * 3.2); bt.needsUpdate = true; };
   plane(2.8, 1.4, std(bt, 0.8), 0, 1.7, 0.08, sb); walls.push([-9.6, -4.4, -6.4, -3.6]);
   scatter(g, (i, r) => (r() < 0.4 ? palm(6 + r() * 3, i) : tree(5 + r() * 3, i)), 60, [-70, -50, 70, 50], [[-30, -14, 30, 14]], 17); scatter(g, (i) => banana(i), 8, [14, -20, 30, -12], [], 7);
   g.add(hillRing(140, 14, 55, { seed: 10 })); roadStrip(g, -90, 90, 20, 6);
@@ -192,6 +203,6 @@ export function buildMemorial() {
   people.push(person('joy', 'joy', 'Miss Joy', 0, -4.2, 0.1, { h: 1.7 }));
   people.push(person('andre', 'andre', 'Andre', 7.5, -4.6, -0.3, { h: 1.55 }));
   const kidc = [0xe4883a, 0x2f8a6a, 0xd9506a, 0x4a7ad9, 0xe8c040, 0x9a5ad9]; for (let i = 0; i < 6; i++) extras.push({ ...(i % 2 ? { base: 'girl', tint: { Shirt: kidc[i], Skirt: kidc[i], Belt: 0x2a3a5a, Ribbon: 0xf0ece0, Shoes: 0xf0ece0 } } : { base: 'boy', hat: false, tint: { Shirt: kidc[i], Breeches: [0x2a3a5a, 0x3a3a3a][(i >> 1) % 2], Shoes: 0xf0ece0 } }), scale: 0.72 + (i % 3) * 0.05, x: 2 + i * 1.1, z: -2.4 + (i % 2) * 0.8, ry: PI * 0.1, anim: ['Idle', 'Talk1', 'Idle', 'Laugh'][i % 4], skin: 0.9 + (i % 4) * 0.1 });
-  return { id: 'memorial', group: g, walls, bounds: { x0: -26, x1: 26, z0: -8, z1: 6 }, start: { x: 0, z: 4.6, yaw: 0 }, people, extras, env: ENV.day, flowerSpot: [4, -8.0],
+  return { id: 'memorial', group: g, walls, bounds: { x0: -26, x1: 26, z0: -8, z1: 6 }, start: { x: 0, z: 4.6, yaw: 0 }, people, extras, env: ENV.day, flowerSpot: [4, -8.0], boardLit, leaves,
     spots: { board: [-8, -2.8], wall: [4, -8.2], flower: [9.5, -7.6] }, tick: () => {} };
 }

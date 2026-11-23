@@ -10,12 +10,15 @@ const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, c
 const ROAD = ["cubba", "carter", "hutton"],
   DUSK = ["juba", "carter"],
   MORNING = ["callendar", "carter"],
+  SEARCH = ["carter", "officer", "hector"],
   HALL = ["officer", "juba", "cudjoe", "hector"],
   HOLE = ["officer", "cudjoe", "hector"],
   COURT = ["clerk", "cubba"],
   VERDICT = ["clerk", "cubba", "hutton"];
 export const STEPS = {
   /* 1. The dry road */
+  8: w("road", "The dry road.", "film", 10, { film: "opening", show: ROAD }),
+  9: w("road", "Watch the road.", "playing", 10, { film: "opening", show: ROAD }),
   10: t("road", "Talk to Cubba by the dry trough.", ["cubba"], 11, { show: ROAD, journal: "you" }),
   11: l("road", "Test the mud of the dry pond.", ["pond"], 12, { show: ROAD }),
   12: d("road", "Carry cut grass to the cattle at the rail.", ["fodder"], 13, { show: ROAD }),
@@ -28,8 +31,10 @@ export const STEPS = {
   22: d("road", "Set the pulled-up peg back on the line.", ["peg"], 23, { show: ROAD }),
   23: t("road", "Talk to Sampson at his cart.", ["carter"], 24, { show: ROAD }),
   24: d("road", "Carry the empty cask from the gate to the cart.", ["cask"], 25, { show: ROAD }),
-  25: w("road", "The pen needs water.", "note", 30, { note: "water", show: ROAD }),
+  25: w("road", "The pen needs water.", "note", 28, { note: "water", show: ROAD }),
   /* 3. Under the towers */
+  28: w("castle", "Edinburgh Castle at dusk.", "film", 30, { film: "towers", show: DUSK }),
+  29: w("castle", "Watch from the cart.", "playing", 30, { film: "towers", show: DUSK }),
   30: t("castle", "Talk to Sampson behind the long wall.", ["carter"], 31, { show: DUSK, journal: "castle" }),
   31: g("castle", "Reach the big cotton tree unseen.", "cotton", 32, { show: DUSK, danger: "tower" }),
   32: l("castle", "Look at what lies between the roots.", ["hat"], 33, { show: DUSK, danger: "tower" }),
@@ -43,8 +48,10 @@ export const STEPS = {
   40: t("castle", "Talk to Sampson at the long wall.", ["carter"], 41, { show: MORNING, journal: "callendar" }),
   41: l("castle", "Look over the wall of the cattle yard.", ["jackass"], 42, { show: MORNING }),
   42: g("castle", "Get down behind the long wall with Sampson.", "wall", 43, { show: MORNING }),
-  43: w("castle", "John Callendar walks up to the house.", "film", 50, { film: "warrant", show: MORNING }),
-  44: w("castle", "Watch from behind the wall.", "playing", 50, { film: "warrant", show: MORNING }),
+  43: w("castle", "John Callendar walks up to the house.", "film", 45, { film: "warrant", show: MORNING }),
+  44: w("castle", "Watch from behind the wall.", "playing", 45, { film: "warrant", show: MORNING }),
+  45: w("castle", "Afterwards.", "film", 50, { film: "search", show: SEARCH }),
+  46: w("castle", "Watch from the road.", "playing", 50, { film: "search", show: SEARCH }),
   /* 5. What the house held */
   50: t("hall", "Talk to Captain Reid.", ["officer"], 51, { show: HALL, journal: "capture" }),
   51: l("hall", "Look in the strongbox and behind the cloth.", ["watches", "coats"], 52, { show: HALL }),
@@ -57,8 +64,7 @@ export const STEPS = {
   58: t("hole", "Talk to Cudjoe.", ["cudjoe"], 60, { show: HOLE, journal: "hole" }),
   /* 6. Spanish Town */
   60: g("town", "Cross the square to the railed green.", "green", 61, { show: COURT, journal: "town" }),
-  61: t("town", "Talk to the clerk of the court.", ["clerk"], 62, { show: COURT, journal: "trial" }),
-  62: l("town", "Read the notice by the court door.", ["notice"], 63, { show: COURT }),
+  61: t("town", "Talk to the clerk of the court.", ["clerk"], 63, { show: COURT, journal: "trial" }),
   63: l("town", "Listen under the long gallery.", ["gallery"], 64, { show: COURT }),
   64: t("town", "Talk to Dr Hutton and Cubba.", ["hutton", "cubba"], 65, { show: VERDICT, journal: "epitaph" }),
   65: w("town", "The sixteenth morning of March.", "film", 67, { film: "morning", show: VERDICT }),
@@ -75,20 +81,22 @@ export const TASKS = {
   water: { place: "castle", item: "pail", start: [-13.5, 0.86, 1.26], from: [-13.5, 2.3], to: [11.6, 12.1], at: [11.9, 0.8, 13.2], label: "Take the pail of water", put: "Set the water on the cart" },
   stone: { place: "hole", item: "stone", start: [5.2, 0.02, 7.7], from: [5.2, 6.9], to: [0, -3.0], at: [0, 0.1, -5.4], label: "Pick up a stone", put: "Drop the stone", hideAfter: true },
 };
-/* Things the player looks at. at: where you stand; the place changes what you see (Q.reveal), then the card says what you found. */
+/* Things the player looks at (owner rule 13: a close-up action). at: where you stand. view: the close framing the camera eases to
+   (engine/lookshot.js); the place moves the thing while you watch (Q.reveal[id](k), k from 0 to 1, over act seconds) and plays sound; say: a
+   short story line or two in the lower bar; then the card says what you found. Town spots are in the turned square's frame. */
+const V = (p, look, fov = 42) => ({ p, look, fov });
 export const LOOKS = {
-  pond: { place: "road", at: [-8.2, -5.4], label: "Test the mud with a stick", title: "The dry pond", lines: ["Cracked mud. Hoof marks baked as hard as brick.", "Your stick goes in a hand deep and finds no wet."], page: "pen" },
-  packmule: { place: "road", at: [-6.6, 5.0], label: "Look in the pack", title: "A mule with no master", lines: ["A bedroll. A tin cup. A shirt, folded small.", "Somebody packed this for a long ride. The mule came back alone."], page: "road" },
-  hat: { place: "castle", at: [-0.8, 6.5], label: "Pick it up", title: "A hat in the roots", lines: ["A riding hat, bleached by sun and rain.", "You hang it on a root. Nobody came back for it."], page: "castle" },
-  draw: { place: "castle", at: [-13.5, 2.3], label: "Draw the water", title: "Water", lines: ["The windlass creaks. The bucket comes up heavy and cold.", "Juba fills your pail. Her eyes never leave the upper window."], page: "juba" },
-  jackass: { place: "castle", at: [16.5, 8.4], label: "Look over the wall", title: "The strayed jackass", lines: ["A grey jackass stands among cattle in the castle yard. It comes to the wall.", "A letter of 1773 says Hutchinson kept his neighbours’ strayed cattle."], page: "callendar" },
-  watches: { place: "hall", at: [-1.2, -0.4], label: "Open the strongbox", title: "Forty-three watches", lines: ["The box is full of pocket watches. The captain's man counts them twice.", "Forty-three. One man does not need forty-three watches.", "Later accounts give this number. One says forty-seven."], page: "watches" },
-  coats: { place: "hall", at: [-4.2, 1.0], label: "Draw back the cloth", title: "Coats on the pegs", lines: ["Coats. Riding coats, a merchant's coat, a boy's jacket.", "Later accounts say a great deal of clothing was found here.", "Nobody can say whose each coat was."], page: "watches" },
-  loophole: { place: "hall", at: [-1.2, 2.6], label: "Take down the board", title: "The loophole", lines: ["A small square hole in a thick wall, plastered smooth.", "Through it the whole road lies open. There is nowhere to hide.", "People said he shot from holes like this. That was first printed in 1828."], page: "castle" },
-  cot: { place: "hall", at: [3.0, -1.9], label: "Look at the cot", title: "The cot", lines: ["A plain cot, the blanket thrown back. A cup on the floor.", "A letter of 1773 says a sick man lay in this house.", "He slipped out and told what he had seen."], page: "callendar" },
-  rope: { place: "hole", at: [1.2, -2.8], label: "Watch the lantern go down", title: "How deep", lines: ["The captain's men let a lantern down on a rope.", "The light grows small. Then the rope runs out.", "Long after, cavers measured the hole: about 98 metres deep."], page: "hole" },
-  notice: { place: "town", at: [3.4, 2.33], label: "Read the notice", title: "The King against Lewis Hutchinson", lines: ["He is tried for one killing: John Callendar.", "He pleads not guilty. A free man saw that killing.", "The travellers on the road have no names in this paper."], page: "trial" },
-  gallery: { place: "town", at: [6.4, -4.67], label: "Listen", title: "Under the court", lines: ["A shutter opens on the long gallery. Voices come down.", "One name is read out, again and again: John Callendar.", "You are not allowed up the stair."], page: "trial" },
+  pond: { place: "road", at: [-8.2, -5.4], label: "Test the mud with a stick", title: "The dry pond", view: V([-7.6, 1.05, -5.5], [-8.35, 0.25, -6.8], 42), sound: "stick", say: ["You push the stick into the mud."], lines: ["Cracked mud. Hoof marks baked as hard as brick.", "A hand deep, and still no wet."], page: "pen" },
+  packmule: { place: "road", at: [-6.6, 5.0], label: "Look in the pack", title: "A mule with no master", view: V([-6.9, 2.2, 4.9], [-7.1, 1.4, 3.3], 40), sound: "flap", say: ["You lift the flap of the pack."], lines: ["A bedroll. A tin cup. A shirt, folded small.", "Somebody packed this for a long ride. The mule came back alone."], page: "road" },
+  hat: { place: "castle", at: [-0.8, 6.5], label: "Pick it up", title: "A hat in the roots", view: V([0.9, 1.45, 7.3], [-0.2, 1.0, 5.2], 46), sound: "hat", say: ["Something lies between the roots. A hat."], lines: ["A riding hat, bleached by sun and rain.", "You hang it on a broken branch. Nobody came back for it."], page: "castle" },
+  draw: { place: "castle", at: [-13.5, 2.3], label: "Draw the water", title: "Water", view: V([-13.2, 2.3, 2.4], [-13.3, 0.6, 0.4], 46), act: 3, sound: "windlass", say: ["The windlass creaks. The bucket comes up heavy and cold."], lines: ["Juba fills your pail.", "Her eyes never leave the upper window."], page: "juba" },
+  jackass: { place: "castle", at: [16.5, 8.4], label: "Look over the wall", title: "The strayed jackass", view: V([16.6, 2.25, 7.3], [16.9, 0.7, 3.6], 42), act: 3, sound: "jackass", say: ["A grey jackass comes to the wall."], lines: ["It stands among cattle in the castle yard.", "A letter of 1773 says Hutchinson kept his neighbours’ strayed cattle."], page: "callendar" },
+  watches: { place: "hall", at: [-1.2, -0.4], label: "Open the strongbox", title: "Forty-three watches", view: V([-1.1, 1.75, -0.45], [-1.2, 0.95, -1.5], 40), act: 3, sound: "lid", say: ["The lid comes up. Watches, packed tight."], lines: ["The captain's man counts them twice. Forty-three.", "One man does not need forty-three watches.", "Later accounts give this number. One says forty-seven."], page: "watches" },
+  coats: { place: "hall", at: [-4.2, 1.0], label: "Draw back the cloth", title: "Coats on the pegs", view: V([-2.9, 1.5, 1.3], [-5.1, 1.15, 1.0], 50), act: 2.6, sound: "cloth", say: ["You draw back the cloth."], lines: ["Coats. Riding coats, a merchant's coat, a boy's jacket.", "Later accounts say a great deal of clothing was found here.", "Nobody can say whose each coat was."], page: "watches" },
+  loophole: { place: "hall", at: [-1.2, 2.6], label: "Take down the board", title: "The loophole", view: V([-1.2, 1.55, 1.75], [-1.2, 1.15, 3.4], 46), act: 2.6, sound: "board", say: ["The board comes away. Daylight falls in."], lines: ["A small square hole in a thick wall, plastered smooth.", "Through it the whole road lies open. There is nowhere to hide.", "People said he shot from holes like this. That was first printed in 1828."], page: "castle" },
+  cot: { place: "hall", at: [3.0, -1.9], label: "Look at the cot", title: "The cot", view: V([3.6, 1.45, -1.2], [3.8, 0.35, -2.75], 46), sound: "cup", say: ["You set the cup back by the cot."], lines: ["A plain cot, the blanket thrown back.", "A letter of 1773 says a sick man lay in this house.", "He slipped out and told what he had seen."], page: "callendar" },
+  rope: { place: "hole", at: [1.2, -2.8], label: "Watch the lantern go down", title: "How deep", view: V([0.9, 2.2, -4.8], [1.4, -20, -5.1], 44), act: 5, sound: "rope", say: ["The captain's men let a lantern down on a rope.", "The light grows small. Then the rope runs out."], lines: ["Nobody here can see the bottom.", "Long after, cavers measured the hole: about 98 metres deep."], page: "hole" },
+  gallery: { place: "town", at: [6.4, -4.67], label: "Listen", title: "Under the court", view: V([-6, 1.7, -2.0], [7.9, 5.6, -0.3], 36), act: 3.2, sound: "shutter", say: ["A shutter opens on the long gallery. Voices come down."], lines: ["One name is read out, again and again: John Callendar.", "He says he is not guilty.", "You are not allowed up the stair."], page: "trial" },
 };
 for (const r of Object.values(STEPS)) for (const n of r.needs?.do || []) if (n.carry) n.carry = TASKS[n.id].item;
 export const ITEMS = [...new Set(Object.values(TASKS).map((t) => t.item))];

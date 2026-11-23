@@ -1,5 +1,6 @@
 import { loftSkin as skin } from "../../../engine/loft.js";
 import { bonnetLorry } from "../../../engine/roadcars.js";
+import { makeSack } from "../../../engine/sack.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
@@ -568,29 +569,7 @@ export function crate(s = 0.6, c = 0x8a6a42) {
   box(s, 0.02, s, m, 0, h, 0, g);
   return g;
 }
-export function sack(c = 0xb09a6a) {
-  const g = grp(),
-    m = solid(c, 1);
-  cyl(0.2, 0.25, 0.46, m, 0, 0.23, 0, g, 10);
-  mesh(
-    new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-    m,
-    0,
-    0.46,
-    0,
-    g,
-  ).scale.y = 0.7;
-  cyl(0.04, 0.12, 0.14, solid(0x8a7648, 1), 0, 0.66, 0, g, 8);
-  mesh(
-    new THREE.TorusGeometry(0.06, 0.012, 5, 10),
-    solid(0x5a4228, 1),
-    0,
-    0.6,
-    0,
-    g,
-  ).rotation.x = Math.PI / 2;
-  return g;
-} /* a sack: a body, a rounded top, a tied neck */
+export function sack(c = 0xb09a6a) { return makeSack({ material: solid(c, 1), seed: (c >> 4) & 7 }); }   /* the engine's cloth sack (engine/sack.js): it was a cylinder with a cap */
 /* a picnic hamper: a woven basket wider than it is deep, a flat woven lid with a strap, and a bail handle over the top. Its handle is 0.52 above the ground. */
 export function hamper(c = 0xa8803c) {
   const g = grp(),
@@ -694,15 +673,19 @@ export function lantern() {
   cyl(0.075, 0.085, 0.05, M.tin, 0, 0.025, 0, g, 10);
   cyl(0.04, 0.07, 0.03, M.tin, 0, 0.065, 0, g, 10);
   cyl(0.045, 0.045, 0.02, M.iron, 0, 0.09, 0, g, 8);
+  /* the globe is glass you can see into: the burner and a small flame inside it, a warm haze on the glass */
   const gl = mesh(
-    new THREE.SphereGeometry(0.058, 10, 8),
-    M.lanternGlass,
+    new THREE.SphereGeometry(0.058, 14, 10),
+    new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffb050, emissiveIntensity: 0.35, transparent: true, opacity: 0.32, roughness: 0.1, depthWrite: false }),
     0,
     0.16,
     0,
     g,
   );
   gl.scale.y = 1.25;
+  cyl(0.004, 0.004, 0.03, M.iron, 0, 0.11, 0, g, 5);   /* the wick holder */
+  const wick = mesh(new THREE.SphereGeometry(0.009, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe0a0 }), 0, 0.14, 0, g);
+  wick.scale.y = 1.8;
   cyl(0.03, 0.05, 0.03, M.tin, 0, 0.235, 0, g, 8);
   cyl(0.022, 0.03, 0.04, M.tin, 0, 0.27, 0, g, 8);
   cyl(0.04, 0.04, 0.008, M.tin, 0, 0.292, 0, g, 8);
@@ -731,8 +714,8 @@ export function lantern() {
       blending: THREE.AdditiveBlending,
     }),
   );
-  flame.scale.set(0.5, 0.5, 1);
-  flame.position.y = 0.14;
+  flame.scale.set(0.34, 0.34, 1);
+  flame.position.y = 0.13;
   o.add(flame);
   o.userData.flame = flame;
   return o;

@@ -314,3 +314,21 @@ All five doors stay stand-ins. Work to do: the Gleaner's May 1980 photographs of
 
 - **The Myers Ward is drawn merged while it stands.** `engine/collapse.js` needs the ward in loose pieces, so it was kept out of `batchStatic` and cost about 370 draw calls in every scene on the avenue. Now `wardCopy` (main.js, after `buildPlace`) puts the real ward and a merged copy (`engine/batch.js`) under one holder, `P.myers.group`, which the game shows and hides as before. The copy is drawn while the ward stands; `wardFall` swaps in the real ward just before it falls, and `wardStill` swaps the copy back when the fall is reset (a replayed chapter, the chapters menu). The title screen went from 465 to 113 draw calls. Screenshots before, during and after the fall match the old build.
 - **The next chapter is ready before you get there** (`engine/preload.js`). `setQuiet` is a talk, a card, the journal, the chapter title or the title screen. When a chapter starts, `readyNext` builds the next chapter's place, unpacks its bodies (`sceneReady`, kept until `beginChapter` uses it once) and warms the place, each in a quiet moment. At a chapter change `letGo` frees the last chapter's people and the places this chapter and the next do not use.
+
+## Sound (22 November 2026)
+
+Every place was almost silent: the levels were multiplied by 0.4 in `audioTick`, so the loudest bed sat at 0.02 to 0.04. Each chapter is now in the shared range with no extra scale (`SOUNDSCAPE` in `src/main.js`): the avenue by day 0.08 (people, far traffic; birds, a car, a dog), the ward 0.12 (room), dusk 0.06 (the first crickets), the night of the fire 0.14 (the crowd behind the rope, the fire's low roar following the fire's level, crickets, a far siren, now and then an owl or a dog), the burial 0.12, the Golden Age Home 0.06, the monument 0.06. Every bed is lower while someone talks. The hands-on jobs now make sounds: lifting and putting back each thing in the tidy-up (`pickUp`, `putDown`), taking a blanket (a soft lift of cloth) and wrapping a child, and laying each flower. `cue('sad')` plays once in the night chapter, at the quiet after the ward falls ("The crowd goes quiet"), or at dawn if the night was skipped. No cries are ever played. `?test=beds`: BEDS 0. The shared level is in `docs/ENGINE.md`, "One ambient level".
+
+## Close looks (22 November 2026)
+
+Every look is now a close-up moment (owner rule 13, `engine/lookshot.js` through `engine/lookkit.js`).
+- **Read the letter to Miss Iris**: the letter, folded in three, opens in your hands as the camera finds Miss Iris; then the letter card and her answer.
+- **Listen to the radio** (dusk): the camera comes down to Miss Iris's radio on its little table; the aerial pulls up, the dial glows and the knob turns, with the hiss and a far voice; then the radio's lines, and the camera eases back.
+- **Look at the story board** (the monument): the board's face is now a line of six dates (1870, 1980, 1980, 1981, 1985, 2026) and each lights in turn; then the timeline quiz.
+- **Read the words**: the plaque's real words light line by line in the sun; the card is gone, the two lines say it.
+- Checks: `?test=audit` 0 in every chapter, with `engine/audit-reveal.js` on the radio's moving parts (in the full ward copy, which the look shows while it plays).
+Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screenshot (docs/ENGINE.md, engine/lookkit.js).
+
+## Layout test 0 (22 November 2026)
+
+The six findings were the test: the quiz it opened for the timeline card stayed open and covered the journal and chapters panels opened after it. Its reset now closes the quiz (engine/quiz.js closeQuiz). `?test=layout`: 0 at 390x800 and 667x375.

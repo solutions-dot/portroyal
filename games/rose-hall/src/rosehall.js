@@ -3,6 +3,8 @@
    Candles: a fixture marks where each flame burns (flameAt); the place gathers the marks of a room into one set of points (flameSet), so a
    room full of candles is one draw call that can be put out and lit again. */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";
+import { candleSet } from "../../../engine/flame.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 
@@ -30,7 +32,6 @@ const still = (o) => {
 const quiet = (o) => {
   o.traverse((n) => {
     n.userData.noBatch = true;
-    n.userData.noAudit = true;
   });
   return o;
 };
@@ -55,14 +56,9 @@ export function flameSets(root) {
   });
   const out = {};
   for (const [name, pos] of Object.entries(by)) {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: T.flame(), size: 0.3, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    pts.frustumCulled = false;
-    pts.userData.noBatch = true;
-    pts.userData.on = (lit) => (pts.visible = lit);
-    root.add(pts);
-    out[name] = pts;
+    const set = candleSet(pos);   /* a real candle flame on each (engine/flame.js), still a few draw calls for the room; it was a glowing dot */
+    root.add(set);
+    out[name] = set;
   }
   return out;
 }
@@ -81,7 +77,6 @@ const glowMap = () =>
 export function glowPool(r = 1.2, strength = 0.55) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * r, 2 * r), new THREE.MeshBasicMaterial({ map: glowMap(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: strength }));
   m.userData.noBatch = true;
-  m.userData.noAudit = true;
   return m;
 }
 /* a single candle in a brass stick */
@@ -201,9 +196,13 @@ export function sideboard(w = 2.3, set = "a") {
     g.add(d);
     mesh(new THREE.SphereGeometry(0.018, 6, 5), clear, -w * 0.28 + dx, top + 0.26, 0, g);
   }
-  const dish = lathe([[0.001, 0.14], [0.03, 0.135], [0.02, 0.12], [0.12, 0.08], [0.16, 0.02], [0.17, 0]], SILVER, 14);
-  dish.position.set(w * 0.28, top, 0);
-  g.add(dish);
+  /* a silver dish cover on its platter: a dome with a knob, shown whole from every side */
+  const dish = grp(g, w * 0.28, top, 0);
+  cyl(0.2, 0.2, 0.01, SILVER, 0, 0.005, 0, dish, 20).scale.z = 0.75;
+  const dome = lathe([[0.16, 0.01], [0.158, 0.03], [0.14, 0.08], [0.1, 0.12], [0.05, 0.14], [0.001, 0.145]], SILVER, 20);
+  dome.scale.z = 0.75;
+  dish.add(dome);
+  mesh(new THREE.SphereGeometry(0.018, 8, 6), SILVER, 0, 0.16, 0, dish);
   const c = candelabrum(set, 3);
   c.position.set(0, top, -0.05);
   g.add(c);
@@ -239,7 +238,6 @@ export function longCaseClock() {
   box(0.22, 0.7, 0.01, MAHOG_DARK, 0, 1.05, 0.122, g);
   box(0.52, 0.52, 0.3, MAHOG, 0, 1.8, 0, g);
   const face = plane(0.36, 0.36, std(T.clock(), 0.6), 0, 1.8, 0.152, g);
-  face.userData.noAudit = true;
   box(0.56, 0.05, 0.34, MAHOG_DARK, 0, 2.08, 0, g);
   for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.035, 8, 6), BRASS, s * 0.22, 2.14, 0, g);
   mesh(new THREE.SphereGeometry(0.04, 8, 6), BRASS, 0, 2.2, 0, g).scale.y = 1.6;
@@ -359,7 +357,7 @@ export function rug(w = 3, d = 2, field = "#6a2a26", border = "#c8b078") {
    folded shutters and a pair of curtains under a pelmet. pane: the material behind the bars (night sea, night sky, bright day). */
 export function sashWindow(w = 1.3, h = 2.6, pane, { curtain = 0x7a2f2a, drapes = true } = {}) {
   const g = grp();
-  plane(w, h, pane, 0, h / 2, -0.2, g).userData.noAudit = true;
+  plane(w, h, pane, 0, h / 2, -0.2, g);
   for (const s of [-1, 1]) {
     box(0.07, h - 0.002, 0.3, WHITE, s * (w / 2 - 0.036), h / 2, -0.06, g);
     box(0.02, h - 0.16, 0.24, solid(0xd2cab4, 0.9), s * (w / 2 - 0.085), h / 2, -0.07, g);   /* shutters folded into the reveal */
@@ -443,59 +441,233 @@ export function dayPane() {
     }))
   );
 }
-/* a full-length portrait in a gilt frame, flat on a wall and facing +z. The painting is drawn in code: a dark room, a standing man in a
-   coat, no face that could be anyone's (a general picture: the paintings Waddell saw in 1830 are not known to survive).
-   userData.show(lit) lifts the gloom from it. */
+/* A full-length portrait in oils of about 1770 to 1800, as hung in a Jamaican great house: an unnamed gentleman in the dress of the time
+   (a skirted coat with deep cuffs, a waistcoat, breeches, white stockings, buckled shoes, a white stock, his own hair powdered and tied
+   back), a curtain and a column behind him and a low landscape; the paint darkened by old varnish, with fine cracks. Nobody real is
+   copied: Waddell (1830) saw "three or four full-size pictures" in the empty house and the game does not say whose they are.
+   pose 1, 2 or 3 changes the stance and what he holds (a hat under the arm, a hand on a cane, a letter). A gilt frame with a moulding; flat on a wall, facing +z.
+   The paintings Waddell saw are not known to survive. userData.show(lit) and userData.light(k) lift the gloom from it. */
 export function portrait(w = 1.15, h = 2.0, coat = "#2f3a4a", seed = 1) {
   const g = grp(),
-    r = rng(seed);
-  box(w, h, 0.07, GILT, 0, 0, 0.035, g);
-  box(w - 0.1, h - 0.1, 0.02, solid(0x6a5020, 0.5, 0.5), 0, 0, 0.065, g);
-  const tex = cv(128, 224, (x, W, H) => {
-    const bg = x.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#3a2c1e");
-    bg.addColorStop(1, "#15100c");
+    r = rng(seed),
+    pose = ((seed - 1) % 3) + 1;
+  /* the frame: an outer gilt moulding, a dark inner step and a narrow gilt lip round the canvas */
+  box(w, h, 0.06, GILT, 0, 0, 0.03, g);
+  box(w + 0.05, 0.05, 0.08, GILT, 0, h / 2 + 0.005, 0.04, g);
+  box(w + 0.05, 0.05, 0.08, GILT, 0, -h / 2 - 0.005, 0.04, g);
+  for (const s of [-1, 1]) box(0.05, h + 0.05, 0.08, GILT, s * (w / 2 + 0.005), 0, 0.04, g);
+  box(w - 0.08, h - 0.08, 0.02, solid(0x3a2a14, 0.6, 0.3), 0, 0, 0.062, g);
+  box(w - 0.13, h - 0.13, 0.012, GILT, 0, 0, 0.07, g);
+  const tex = cv(320, 560, (x, W, H) => {
+    /* ground: warm umber going to near black, lighter behind the head */
+    const bg = x.createRadialGradient(W * 0.45, H * 0.22, 10, W * 0.5, H * 0.45, H * 0.7);
+    bg.addColorStop(0, "#4a3a24");
+    bg.addColorStop(0.5, "#241a10");
+    bg.addColorStop(1, "#0c0806");
     x.fillStyle = bg;
     x.fillRect(0, 0, W, H);
-    x.fillStyle = "rgba(120,90,50,0.35)";
-    x.fillRect(W * (0.62 + r() * 0.1), H * 0.1, W * 0.3, H * 0.55);   /* a column or a curtain behind */
-    x.fillStyle = "#1a1512";
-    x.fillRect(W * 0.38, H * 0.62, W * 0.1, H * 0.3);   /* legs */
-    x.fillRect(W * 0.52, H * 0.62, W * 0.1, H * 0.3);
-    x.fillStyle = "#d9d2c0";
-    x.fillRect(W * 0.39, H * 0.6, W * 0.22, H * 0.06);   /* breeches top */
-    x.fillStyle = coat;
+    /* a heavy curtain swept to one side, in folds */
+    const side = pose === 2 ? -1 : 1,
+      cx0 = side > 0 ? W * 0.62 : 0,
+      cw = W * 0.38,
+      drape = ["#5a1a14", "#2a3a22", "#4a3018"][(seed - 1) % 3];
+    for (let i = 0; i < 9; i++) {
+      const fx = cx0 + (i / 9) * cw,
+        gr = x.createLinearGradient(fx, 0, fx + cw / 9, 0);
+      gr.addColorStop(0, "rgba(0,0,0,0.55)");
+      gr.addColorStop(0.5, drape);
+      gr.addColorStop(1, "rgba(0,0,0,0.5)");
+      x.fillStyle = gr;
+      x.beginPath();
+      x.moveTo(fx, 0);
+      x.lineTo(fx + cw / 9, 0);
+      x.lineTo(fx + cw / 9 + side * (i * 2), H * 0.62);
+      x.lineTo(fx + side * (i * 2), H * 0.62);
+      x.fill();
+    }
+    /* a column base on the other side, and a low landscape with a pale sky behind the figure */
+    x.fillStyle = "rgba(120,100,70,0.35)";
+    x.fillRect(side > 0 ? W * 0.04 : W * 0.78, H * 0.18, W * 0.16, H * 0.55);
+    const sky = x.createLinearGradient(0, H * 0.5, 0, H * 0.68);
+    sky.addColorStop(0, "rgba(150,140,100,0)");
+    sky.addColorStop(0.6, "rgba(150,140,100,0.35)");
+    sky.addColorStop(1, "rgba(60,70,40,0.5)");
+    x.fillStyle = sky;
+    x.fillRect(W * 0.18, H * 0.5, W * 0.5, H * 0.18);
+    /* the floor */
+    x.fillStyle = "#1a120a";
+    x.fillRect(0, H * 0.86, W, H * 0.14);
+    const cx = W * (0.47 + (r() - 0.5) * 0.04),
+      leg = pose === 3 ? 0.035 : 0.05;
+    /* stockings and shoes, one foot turned out */
+    x.fillStyle = "#ddd6c4";
+    for (const s of [-1, 1]) {
+      x.beginPath();
+      x.moveTo(cx + s * W * leg - W * 0.028, H * 0.66);
+      x.lineTo(cx + s * W * leg + W * 0.028, H * 0.66);
+      x.lineTo(cx + s * W * (leg + 0.012) + W * 0.016, H * 0.85);
+      x.lineTo(cx + s * W * (leg + 0.012) - W * 0.016, H * 0.85);
+      x.fill();
+    }
+    x.fillStyle = "#120c08";
+    for (const s of [-1, 1]) x.fillRect(cx + s * W * (leg + 0.012) - W * 0.03 + (s > 0 ? W * 0.01 : 0), H * 0.848, W * 0.06, H * 0.016);
+    x.fillStyle = "#c8b060";
+    for (const s of [-1, 1]) x.fillRect(cx + s * W * (leg + 0.012) - W * 0.008, H * 0.849, W * 0.016, H * 0.007);   /* buckles */
+    /* breeches */
+    x.fillStyle = ["#cbb88e", "#2a2420", "#b8a27a"][(seed - 1) % 3];
+    x.fillRect(cx - W * 0.09, H * 0.56, W * 0.18, H * 0.11);
+    /* the coat: shoulders, a long body flaring to skirts, open over the waistcoat */
+    const coatG = x.createLinearGradient(cx - W * 0.2, 0, cx + W * 0.2, 0);
+    coatG.addColorStop(0, "#050404");
+    coatG.addColorStop(0.35, coat);
+    coatG.addColorStop(0.6, coat);
+    coatG.addColorStop(1, "#060505");
+    x.fillStyle = coatG;
     x.beginPath();
-    x.moveTo(W * 0.3, H * 0.3);
-    x.lineTo(W * 0.7, H * 0.3);
-    x.lineTo(W * 0.74, H * 0.64);
-    x.lineTo(W * 0.26, H * 0.64);
+    x.moveTo(cx - W * 0.14, H * 0.25);
+    x.quadraticCurveTo(cx, H * 0.235, cx + W * 0.14, H * 0.25);
+    x.lineTo(cx + W * 0.17, H * 0.44);
+    x.lineTo(cx + W * 0.21, H * 0.7);
+    x.lineTo(cx + W * 0.02, H * 0.69);
+    x.lineTo(cx, H * 0.5);
+    x.lineTo(cx - W * 0.02, H * 0.69);
+    x.lineTo(cx - W * 0.21, H * 0.7);
+    x.lineTo(cx - W * 0.17, H * 0.44);
+    x.closePath();
     x.fill();
-    x.fillStyle = "#e8e2d0";
-    x.fillRect(W * 0.46, H * 0.3, W * 0.08, H * 0.12);   /* neckcloth */
-    x.fillStyle = "#b98f6c";
+    /* the waistcoat, buttoned, lighter, its skirts showing */
+    x.fillStyle = ["#a8884a", "#d8d0b8", "#6a4a2a"][(seed - 1) % 3];
     x.beginPath();
-    x.ellipse(W * 0.5, H * 0.23, W * 0.09, H * 0.065, 0, 0, 7);   /* a head, turned to shadow */
+    x.moveTo(cx - W * 0.045, H * 0.27);
+    x.lineTo(cx + W * 0.045, H * 0.27);
+    x.lineTo(cx + W * 0.06, H * 0.56);
+    x.lineTo(cx, H * 0.6);
+    x.lineTo(cx - W * 0.06, H * 0.56);
     x.fill();
-    x.fillStyle = "rgba(20,14,10,0.45)";
-    x.fillRect(W * 0.5, H * 0.16, W * 0.1, H * 0.14);
-    x.fillStyle = "#2a2018";
+    x.fillStyle = "rgba(220,200,140,0.7)";
+    for (let i = 0; i < 8; i++) x.fillRect(cx - 2, H * (0.29 + i * 0.033), 4, 4);
+    /* the arms: one to the hip or holding something, the other down; deep turned-back cuffs and a lace ruffle at each wrist */
+    const arm = (sx, ex, ey) => {
+      x.strokeStyle = coat;
+      x.lineWidth = W * 0.065;
+      x.lineCap = "round";
+      x.beginPath();
+      x.moveTo(cx + sx * W * 0.14, H * 0.28);
+      x.lineTo(cx + ex * W, ey * H);
+      x.stroke();
+      x.fillStyle = "rgba(0,0,0,0.45)";
+      x.fillRect(cx + ex * W - W * 0.04, ey * H - H * 0.03, W * 0.08, H * 0.035);
+      x.fillStyle = "#e8e2d2";
+      x.fillRect(cx + ex * W - W * 0.025, ey * H + H * 0.004, W * 0.05, H * 0.012);
+      x.fillStyle = "#c49a7a";
+      x.beginPath();
+      x.arc(cx + ex * W, ey * H + H * 0.026, W * 0.022, 0, 7);
+      x.fill();
+    };
+    if (pose === 1) {
+      arm(-1, -0.2, 0.47);
+      arm(1, 0.16, 0.42);
+      x.fillStyle = "#0a0806";   /* a cocked hat held under the arm */
+      x.beginPath();
+      x.moveTo(cx - W * 0.28, H * 0.43);
+      x.lineTo(cx - W * 0.13, H * 0.4);
+      x.lineTo(cx - W * 0.17, H * 0.49);
+      x.fill();
+    } else if (pose === 2) {
+      arm(-1, -0.17, 0.5);
+      arm(1, 0.24, 0.5);
+      x.strokeStyle = "#2a1a0e";   /* a cane to the floor */
+      x.lineWidth = 4;
+      x.beginPath();
+      x.moveTo(cx + W * 0.25, H * 0.52);
+      x.lineTo(cx + W * 0.3, H * 0.86);
+      x.stroke();
+      x.fillStyle = "#c8a850";
+      x.beginPath();
+      x.arc(cx + W * 0.25, H * 0.515, 5, 0, 7);
+      x.fill();
+    } else {
+      arm(-1, -0.16, 0.55);
+      arm(1, 0.1, 0.4);
+      x.fillStyle = "#e6dcc0";   /* a folded letter in his hand */
+      x.fillRect(cx + W * 0.1, H * 0.405, W * 0.08, H * 0.03);
+    }
+    /* the stock and the frill at the throat */
+    x.fillStyle = "#ece6d6";
+    x.fillRect(cx - W * 0.035, H * 0.225, W * 0.07, H * 0.035);
     x.beginPath();
-    x.ellipse(W * 0.5, H * 0.185, W * 0.095, H * 0.035, 0, Math.PI, 0);   /* hair */
+    x.moveTo(cx - W * 0.025, H * 0.26);
+    x.lineTo(cx + W * 0.025, H * 0.26);
+    x.lineTo(cx, H * 0.31);
     x.fill();
+    /* the head, lit from the upper left, turned a little; powdered hair rolled over the ears and tied back */
+    const hx = cx + W * 0.005,
+      hy = H * 0.18,
+      face = x.createRadialGradient(hx - W * 0.03, hy - H * 0.01, 2, hx, hy, W * 0.085);
+    face.addColorStop(0, "#e2c4a4");
+    face.addColorStop(0.6, "#c09474");
+    face.addColorStop(1, "#5a3c28");
+    x.fillStyle = face;
+    x.beginPath();
+    x.ellipse(hx, hy, W * 0.062, H * 0.046, 0, 0, 7);
+    x.fill();
+    x.fillStyle = "rgba(60,36,24,0.45)";   /* the shadowed side of the face, and the eyes and mouth only as soft shadow */
+    x.beginPath();
+    x.ellipse(hx + W * 0.03, hy + H * 0.004, W * 0.03, H * 0.04, 0, 0, 7);
+    x.fill();
+    x.fillStyle = "rgba(50,30,20,0.5)";
+    x.fillRect(hx - W * 0.032, hy - H * 0.008, W * 0.022, 3);
+    x.fillRect(hx + W * 0.008, hy - H * 0.008, W * 0.022, 3);
+    x.fillRect(hx - W * 0.014, hy + H * 0.024, W * 0.028, 2);
+    const hair = x.createLinearGradient(hx - W * 0.07, 0, hx + W * 0.07, 0);
+    hair.addColorStop(0, "#efeae0");
+    hair.addColorStop(1, "#9a958a");
+    x.fillStyle = hair;
+    x.beginPath();
+    x.ellipse(hx, hy - H * 0.03, W * 0.066, H * 0.025, 0, Math.PI, 0);
+    x.fill();
+    for (const s of [-1, 1]) {
+      x.beginPath();
+      x.ellipse(hx + s * W * 0.06, hy - H * 0.005, W * 0.016, H * 0.016, 0, 0, 7);
+      x.fill();
+    }
+    /* old varnish: a warm yellow-brown glaze, a dark edge, fine cracks and grain */
+    x.globalCompositeOperation = "multiply";
+    x.fillStyle = "rgba(200,160,90,0.55)";
+    x.fillRect(0, 0, W, H);
+    x.globalCompositeOperation = "source-over";
+    const vig = x.createRadialGradient(W / 2, H * 0.4, H * 0.2, W / 2, H * 0.45, H * 0.75);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(1, "rgba(0,0,0,0.6)");
+    x.fillStyle = vig;
+    x.fillRect(0, 0, W, H);
+    x.strokeStyle = "rgba(10,6,2,0.28)";
+    x.lineWidth = 1;
+    for (let i = 0; i < 140; i++) {
+      let px = r() * W,
+        py = r() * H;
+      x.beginPath();
+      x.moveTo(px, py);
+      for (let k = 0; k < 3; k++) x.lineTo((px += (r() - 0.5) * 22), (py += (r() - 0.5) * 22));
+      x.stroke();
+    }
     const dd = x.getImageData(0, 0, W, H);
     for (let i = 0; i < dd.data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 14;
+      const n = (Math.random() - 0.5) * 10;
       dd.data[i] += n;
       dd.data[i + 1] += n;
       dd.data[i + 2] += n;
     }
     x.putImageData(dd, 0, 0);
   });
-  plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ map: tex, color: 0xb0a898 }), 0, 0, 0.078, g).userData.noAudit = true;
-  const gloom = plane(w - 0.2, h - 0.2, new THREE.MeshBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.72 }), 0, 0, 0.082, g);
+  plane(w - 0.15, h - 0.15, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0 }), 0, 0, 0.078, g);   /* varnish has a soft shine */
+  const gloom = plane(w - 0.15, h - 0.15, new THREE.MeshBasicMaterial({ color: 0x050403, transparent: true, opacity: 0.72 }), 0, 0, 0.082, g);
   quiet(gloom);
   g.userData.show = (lit) => (gloom.visible = !lit);
+  g.userData.light = (k) => {   /* a candle raised to the painting: the dark lifts off it as k goes from 0 to 1 */
+    gloom.visible = k < 1;
+    gloom.material.opacity = 0.72 * (1 - k);
+  };
   return g;
 }
 /* a brass post with a card on it, as a tour puts beside a thing it wants you to look at (today's, not the house's) */
@@ -587,24 +759,54 @@ export function grandStair({ W = 2.2, rise = 0.17, tread = 0.3, steps = 12, H = 
     ld = 1.3;
   box(lw, top, ld, MAHOG_DARK, 0, top / 2, run + ld / 2, g);
   box(lw + 0.04, 0.04, ld + 0.02, MAHOG, 0, top + 0.01, run + ld / 2, g);
-  /* the two upper flights, back toward the front of the hall along the side, rising out of sight through the ceiling */
-  const up = Math.ceil((H - top) / rise);
-  for (const s of [-1, 1])
-    for (let i = 0; i < up; i++) {
-      const y = top + rise * (i + 1),
-        z = run - tread * (i + 0.5);
-      if (z < -0.2) break;
-      box(1.2, 0.06, tread + 0.02, MAHOG, s * (W / 2 + 0.7), y, z, g);
-      box(1.2, rise, 0.03, MAHOG_DARK, s * (W / 2 + 0.7), y - rise / 2, z + tread / 2, g);
-      box(0.06, y, 0.08, MAHOG_DARK, s * (W / 2 + 1.27), y / 2, z, g);   /* the string against the wall carries each tread */
+  /* the landing is closed in underneath with raised mahogany panels (it was one flat dark face) */
+  for (const sd of [-1, 1]) {
+    const x0 = W / 2, x1 = lw / 2, pw = x1 - x0;
+    for (const [py, ph] of [[0.25, 0.55], [0.95, 0.6]]) {
+      box(pw - 0.16, ph, 0.03, MAHOG, sd * (x0 + pw / 2), py + ph / 2, run - 0.015, g);   /* facing you, beside the foot of the upper flight */
+      box(0.03, ph, ld - 0.2, MAHOG, sd * (x1 + 0.015), py + ph / 2, run + ld / 2, g);   /* on the outer side */
     }
-  /* balusters and rails on the middle flight and the landing */
+    box(pw, 0.1, 0.04, MAHOG, sd * (x0 + pw / 2), 0.05, run - 0.02, g);   /* a skirting */
+  }
+  /* the two upper flights return toward the front of the hall on either side of the lower one and go on up through the stairwell to the floor
+     above (22 November 2026, owner: "these stair case is all wrong": each tread had a post down to the floor, which read as a dark slab, and the
+     flights ran into black patches on the ceiling). Each is a real flight now: treads and risers between two closed strings, boarded underneath,
+     with balusters and a handrail on both sides. g.userData.wells gives the openings the ceiling must leave over them. */
   const rail = (x0, y0, z0, x1, y1, z1) => {
     const L = Math.hypot(x1 - x0, y1 - y0, z1 - z0),
       b = box(0.07, 0.06, L, MAHOG, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, g);
     b.lookAt(g.localToWorld(new THREE.Vector3(x1, y1, z1)));
     return b;
   };
+  const up = Math.ceil((H - top) / rise), fw = 1.2, zEnd = run - tread * up;
+  const slab = (w, h, x, y0, z0, y1, z1, mat) => {   /* a board along the slope from (y0, z0) to (y1, z1) */
+    const L = Math.hypot(y1 - y0, z1 - z0), b = box(w, h, L, mat, x, (y0 + y1) / 2, (z0 + z1) / 2, g);
+    b.lookAt(g.localToWorld(new THREE.Vector3(x, y1, z1))); return b;
+  };
+  g.userData.wells = [];
+  for (const s of [-1, 1]) {
+    const xc = s * (W / 2 + 0.1 + fw / 2);
+    for (let i = 0; i < up; i++) {
+      const y = top + rise * (i + 1), z = run - tread * (i + 0.5);
+      box(fw, 0.05, tread + 0.03, MAHOG, xc, y - 0.025, z - 0.01, g);
+      box(fw, rise, 0.03, MAHOG_DARK, xc, y - rise / 2, z + tread / 2, g);
+      box(W * 0.42 * 0.8, 0.012, tread + 0.031, solid(0x7a2226, 1), xc, y + 0.006, z - 0.01, g);   /* the runner goes on up */
+    }
+    for (const e of [-1, 1]) {   /* the closed strings, deep enough to hide the step ends */
+      const xs = xc + e * (fw / 2 + 0.03);
+      slab(0.06, 0.42, xs, top - 0.02, run + 0.05, top + rise * up - 0.02, zEnd + 0.05, MAHOG_DARK);
+      for (let i = 0; i < up; i += 1) {
+        const b = lathe([[0.014, 0], [0.022, 0.12], [0.011, 0.3], [0.019, 0.6], [0.012, 0.82]], MAHOG, 6);
+        b.position.set(xs, top + rise * (i + 1) + 0.18, run - tread * (i + 0.5)); g.add(b);
+      }
+      rail(xs, top + 0.18 + rise + 0.82, run - tread * 0.5, xs, top + 0.18 + rise * up + 0.82, zEnd + tread * 0.5);
+    }
+    slab(fw + 0.12, 0.03, xc, top + rise - 0.26, run - tread, top + rise * up - 0.3, zEnd, MAHOG_DARK);   /* boarded underneath, from the first step up (below that the landing is solid) */
+    /* where the flight passes through the ceiling, it needs about 2 m of head room: the well runs from there to its top */
+    const zIn = run - tread * Math.max(0, Math.ceil((H - 2.0 - top) / rise));
+    g.userData.wells.push({ x0: xc - fw / 2 - 0.1, x1: xc + fw / 2 + 0.1, z0: zEnd - 0.05, z1: zIn });
+  }
+  /* balusters and rails on the middle flight and the landing */
   for (const s of [-1, 1]) {
     const x = s * (W / 2 - 0.05);
     for (let i = 0; i < steps; i++) {
@@ -810,7 +1012,7 @@ export function archWindow(w = 1.5, h = 3.4) {
       x.restore();
     }),
   });
-  plane(w, h, archTex, 0, h / 2, -0.12, g).userData.noAudit = true;
+  plane(w, h, archTex, 0, h / 2, -0.12, g);
   box(w + 0.3, 0.08, 0.16, solid(0xd8d0bc, 1), 0, -0.04, 0.08, g);
   return g;
 }
@@ -1253,7 +1455,7 @@ export function louvreWindow(w = 1.6, h = 1.4) {
       }
     }),
   });
-  plane(w, h, louvreM, 0, h / 2, -0.1, g).userData.noAudit = true;
+  plane(w, h, louvreM, 0, h / 2, -0.1, g);
   const fm = solid(0x9aa09a, 0.5, 0.4);
   box(w - 0.11, 0.05, 0.12, fm, 0, h - 0.026, -0.06, g);
   box(w + 0.1, 0.05, 0.14, fm, 0, -0.025, 0.071, g);
@@ -1344,12 +1546,40 @@ export function potPlant(seed = 1, s = 1) {
   g.scale.setScalar(s);
   return g;
 }
+/* a potted palm in a glazed jardiniere, for the stair hall (owner, 22 November 2026: a plant each side of the steps). A tall glazed pot on a
+   short foot, dark soil, and about ten arching fronds, each a curved stalk with paired leaflets that droop toward the tip. All the leaves are
+   one merged mesh. About 1.5 m tall at s = 1. */
+export function hallPalm(seed = 1, s = 1) {
+  const g = grp(), r = rng(seed);
+  g.add(lathe([[0.15, 0], [0.17, 0.05], [0.13, 0.08], [0.2, 0.2], [0.25, 0.4], [0.24, 0.5], [0.27, 0.53], [0.25, 0.55]], solid(0x2f4a5a, 0.35, 0.05), 16));   /* the glazed pot */
+  cyl(0.235, 0.235, 0.02, solid(0x2a1c14, 1), 0, 0.52, 0, g, 14);   /* the soil */
+  const leaves = [], stalks = [], v = new THREE.Vector3();
+  const N = 10;
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2 + r() * 0.5, up = 0.95 + r() * 0.45, L = 0.85 + r() * 0.4, ca = Math.cos(a), sa = Math.sin(a);
+    const at = (t) => { const reach = L * t, h = 0.54 + Math.sin(up) * L * t - 0.6 * L * t * t * t; return new THREE.Vector3(ca * reach * Math.cos(up * 0.4), h, sa * reach * Math.cos(up * 0.4)); };
+    const pts = []; for (let k = 0; k <= 6; k++) pts.push(at(k / 6));
+    stalks.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.008, 4));
+    for (let k = 1; k <= 9; k++) {
+      const t = 0.15 + (k / 9) * 0.8, p0 = at(t), p1 = at(t + 0.03), dir = v.copy(p1).sub(p0).normalize(), side = new THREE.Vector3(-sa, 0, ca), ll = 0.2 * (1 - t * 0.5);
+      for (const sd of [-1, 1]) {
+        const tip = p0.clone().addScaledVector(side, sd * ll).add(new THREE.Vector3(0, -ll * 0.45, 0)).addScaledVector(dir, ll * 0.4);
+        const gq = new THREE.BufferGeometry(), w = 0.022;
+        gq.setAttribute("position", new THREE.Float32BufferAttribute([...p0.toArray(), ...tip.toArray(), ...p0.clone().addScaledVector(dir, w * 2).toArray(), ...tip.clone().addScaledVector(dir, w * 0.5).toArray()], 3));
+        gq.setIndex([0, 1, 2, 2, 1, 3]); gq.computeVertexNormals(); leaves.push(gq);
+      }
+    }
+  }
+  const lm = new THREE.MeshStandardMaterial({ color: 0x3f7a3c, roughness: 0.7, side: THREE.DoubleSide });
+  g.add(new THREE.Mesh(mergeGeometries(leaves), lm), new THREE.Mesh(mergeGeometries(stalks), solid(0x5a6a34, 0.8)));
+  g.scale.setScalar(s);
+  return g;
+}
 /* a round wall clock, facing +z */
 export function wallClock() {
   const g = grp();
   cyl(0.2, 0.2, 0.05, solid(0x2b2d31, 0.6), 0, 0, 0.025, g, 20).rotation.x = Math.PI / 2;
   const f = mesh(new THREE.CircleGeometry(0.18, 20), std(T.clock(), 0.6), 0, 0, 0.052, g);
-  f.userData.noAudit = true;
   return g;
 }
 
@@ -1364,7 +1594,9 @@ export function greatHouse() {
     stone = std(T.stone([196, 186, 160], [10, 2]), 1),
     stoneUp = std(T.stone([208, 198, 172], [10, 3]), 1),
     dark = new THREE.MeshBasicMaterial({ color: 0x1c2228 }),
+    win = new THREE.MeshBasicMaterial({ color: 0x1c2228 }),   /* the sash panes: lit from inside for the night tour (userData.night) */
     trim = solid(0xe8e2d0, 0.9);
+  g.userData.night = (on) => win.color.set(on ? 0xe8a65a : 0x1c2228);
   box(W, 4.2, D, stone, 0, 2.1, 0, g);
   box(W + 0.3, 0.3, D + 0.3, trim, 0, 4.3, 0, g);
   box(W, 8.2, D, stoneUp, 0, 8.5, 0, g);
@@ -1388,11 +1620,10 @@ export function greatHouse() {
     if (!mid) {
       box(1.5, 2.2, 0.1, dark, x, 1.5, D / 2 + 0.01, g);
       const a = mesh(new THREE.CircleGeometry(0.75, 12, 0, Math.PI), dark, x, 2.6, D / 2 + 0.06, g);
-      a.userData.noAudit = true;
     }
     for (const [y, h] of [[6.6, 2.6], [10.6, 2.2]]) {
       if (mid && y < 8) continue;
-      box(1.3, h, 0.1, dark, x, y, D / 2 + 0.01, g);
+      box(1.3, h, 0.1, win, x, y, D / 2 + 0.01, g);
       box(1.5, 0.12, 0.2, trim, x, y - h / 2 - 0.06, D / 2 + 0.06, g);
       box(0.05, h, 0.12, trim, x, y, D / 2 + 0.03, g);
       box(1.3, 0.05, 0.12, trim, x, y, D / 2 + 0.03, g);
@@ -1406,7 +1637,6 @@ export function greatHouse() {
   for (const x of [-3, 0, 3]) {
     box(1.6, 2.4, 0.1, dark, x, 1.5, P0 + 3.21, g);
     const a = mesh(new THREE.CircleGeometry(0.8, 12, 0, Math.PI), dark, x, 2.7, P0 + 3.26, g);
-    a.userData.noAudit = true;
   }
   box(10.3, 0.2, 3.5, trim, 0, 4.4, P0 + 1.6, g);
   for (const x of [-4.7, -1.6, 1.6, 4.7]) box(0.5, 3.6, 0.5, stoneUp, x, 6.3, P0 + 2.9, g);
@@ -1414,8 +1644,7 @@ export function greatHouse() {
   box(10.6, 0.2, 3.8, trim, 0, 8.7, P0 + 1.6, g);
   for (const x of [-3.15, 0, 3.15]) {
     const a = mesh(new THREE.RingGeometry(1.1, 1.35, 12, 1, 0, Math.PI), trim, x, 7.0, P0 + 3.16, g);
-    a.userData.noAudit = true;
-    box(1.6, 3.0, 0.1, dark, x, 6.0, P0 + 0.06, g);
+    box(1.6, 3.0, 0.1, win, x, 6.0, P0 + 0.06, g);
   }
   for (let i = 0; i < 24; i++) cyl(0.07, 0.07, 0.8, trim, -4.4 + i * 0.383, 4.9, P0 + 3.1, g, 6);
   box(9.2, 0.12, 0.2, trim, 0, 5.34, P0 + 3.1, g);
@@ -1553,11 +1782,36 @@ export function bunch(seed = 1) {
 }
 /* a basket of cut flowers on a low stand */
 export function flowerBasket() {
-  const g = grp();
-  box(0.6, 0.5, 0.5, solid(0x6e5238, 0.9), 0, 0.25, 0, g);
-  g.add(at(lathe([[0.16, 0], [0.24, 0.2], [0.25, 0.22]], solid(0xb08a48, 0.95), 10), 0, 0.5, 0));
+  /* a crate of rough boards, and on it a round basket woven of split cane with a bent handle, full of flowers to lay at the stones */
+  const g = grp(),
+    board = std(T.plank([118, 88, 60], 4, [1, 1]), 0.95);
+  box(0.6, 0.5, 0.5, board, 0, 0.25, 0, g);
+  box(0.64, 0.04, 0.54, solid(0x5a4030, 0.95), 0, 0.5, 0, g);
+  const weave = cv(128, 64, (x, W, H) => {
+    x.fillStyle = "#9a7438";
+    x.fillRect(0, 0, W, H);
+    for (let row = 0; row < 8; row++)
+      for (let c = 0; c < 16; c++) {
+        x.fillStyle = (row + c) % 2 ? "#c49a52" : "#7a5a2a";
+        x.fillRect(c * 8, row * 8 + 1, 8, 6);
+      }
+    x.fillStyle = "rgba(60,40,15,0.6)";
+    for (let c = 0; c < 16; c++) x.fillRect(c * 8, 0, 1, H);
+  });
+  weave.repeat.set(3, 1);
+  const cane = std(weave, 0.95),
+    basket = vessel([[0.001, 0], [0.15, 0], [0.17, 0.02], [0.23, 0.18], [0.24, 0.2]], { mat: cane, wall: 0.012, segments: 18 });
+  basket.position.y = 0.52;
+  g.add(basket);
+  const rim = mesh(new THREE.TorusGeometry(0.236, 0.014, 6, 24), solid(0x7a5a2a, 0.95), 0, 0.72, 0, g);
+  rim.rotation.x = Math.PI / 2;
+  mesh(new THREE.TorusGeometry(0.22, 0.012, 6, 20, Math.PI), solid(0x8a6a34, 0.95), 0, 0.72, 0, g);   /* the handle, over the top */
   const r = rng(3);
-  for (let i = 0; i < 16; i++) mesh(new THREE.IcosahedronGeometry(0.05, 0), flat([0xd94a4a, 0xf0c040, 0xf2f0ea, 0xe07aa0][i % 4]), (r() - 0.5) * 0.34, 0.74 + r() * 0.08, (r() - 0.5) * 0.34, g);
+  for (let i = 0; i < 16; i++) {
+    const a = r() * Math.PI * 2,
+      d = r() * 0.15;
+    mesh(new THREE.IcosahedronGeometry(0.045, 0), flat([0xd94a4a, 0xf0c040, 0xf2f0ea, 0xe07aa0][i % 4]), Math.cos(a) * d, 0.7 + r() * 0.05, Math.sin(a) * d, g);
+  }
   return g;
 }
 /* the stone box in the garden that the tour calls a tomb: plain, with a flat top (a general picture) */
@@ -1668,6 +1922,99 @@ export function fingerPost(arms = ["GREAT HOUSE"]) {
       if (s < 0) p.rotation.y = Math.PI;
     }
   });
+  return g;
+}
+/* The Rose Hall Journal opened on the reading table for the camera scene: two pages either side of the spine and one leaf that turns.
+   spreads: [[left, right], ...], each page a list of rows: a string, or [name, words] for a name and the words the book gives it, or
+   null for a row of faint writing nobody can read from here. The layout of the real book is not known: the pages are the game's picture,
+   the words on them are only the book's own (docs/games/rose-hall.md). userData.turn(k): k = 1.5 is halfway from the second spread to the third. */
+export function openLedger(spreads, w = 0.31, d = 0.42) {
+  const g = still(grp()),
+    page = (rows, seed) =>
+      cv(512, 694, (x, W, H) => {
+        x.fillStyle = "#e9ddc0";
+        x.fillRect(0, 0, W, H);
+        const r = rng(seed);
+        for (let i = 0; i < 9; i++) {
+          x.fillStyle = "rgba(150,110,60," + (0.03 + r() * 0.05) + ")";
+          x.beginPath();
+          x.arc(r() * W, r() * H, 30 + r() * 90, 0, Math.PI * 2);
+          x.fill();
+        }
+        x.strokeStyle = "rgba(120,96,70,0.35)";
+        x.lineWidth = 1;
+        for (let y = 70; y < H - 20; y += 44) {
+          x.beginPath();
+          x.moveTo(24, y + 10);
+          x.lineTo(W - 24, y + 10);
+          x.stroke();
+        }
+        x.fillStyle = "#3a2a1c";
+        x.strokeStyle = "rgba(58,42,28,0.5)";
+        x.textBaseline = "alphabetic";
+        let y = 70;
+        for (const row of rows) {
+          if (row === null) {
+            x.lineWidth = 2;
+            x.beginPath();
+            x.moveTo(34, y);
+            for (let k = 34; k < W - 40 - r() * 120; k += 6) x.lineTo(k, y - 4 - r() * 8);
+            x.stroke();
+            y += 44;
+          } else if (Array.isArray(row)) {
+            x.font = "bold italic 34px Georgia, serif";
+            x.fillText(row[0], 34, y, W - 60);
+            y += 44;
+            if (row[1]) {
+              x.font = "italic 30px Georgia, serif";
+              x.fillText(row[1], 70, y, W - 96);
+              y += 44;
+            }
+          } else {
+            x.font = "italic 30px Georgia, serif";
+            x.fillText(row, 34, y, W - 60);
+            y += 44;
+          }
+        }
+      }),
+    tex = spreads.map(([a, b], i) => [page(a, i * 2 + 3), page(b, i * 2 + 4)]),
+    mat = (map) => new THREE.MeshStandardMaterial({ map, roughness: 0.95 }),
+    leafPlane = (m, x, y) => {
+      const geo = new THREE.PlaneGeometry(w, d);
+      geo.rotateX(-Math.PI / 2);
+      return mesh(geo, m, x, y, 0);
+    };
+  /* the boards, the block of pages under each side, the spine */
+  box(w * 2 + 0.05, 0.012, d + 0.03, solid(0x5a3a24, 0.8), 0, 0.006, 0, g);
+  for (const s of [-1, 1]) box(w - 0.01, 0.022, d - 0.01, solid(0xd8cbaa, 0.95), s * (w / 2 + 0.002), 0.023, 0, g);
+  const left = mat(tex[0][0]),
+    right = mat(tex[0][1]),
+    L = leafPlane(left, -w / 2 - 0.002, 0.0345),
+    Rt = leafPlane(right, w / 2 + 0.002, 0.0345);
+  g.add(L, Rt);
+  const pivot = grp(g, 0, 0.036, 0),
+    front = mat(tex[0][1]),
+    back = mat(tex[0][0]),
+    F = leafPlane(front, w / 2, 0.0006),
+    B = leafPlane(back, w / 2, -0.0006);
+  B.rotation.z = Math.PI;
+  pivot.add(F, B);
+  g.userData.turn = (k) => {
+    const n = tex.length - 1,
+      i = Math.max(0, Math.min(n, Math.floor(k))),
+      f = i >= n ? 0 : Math.max(0, Math.min(1, k - i));
+    left.map = tex[i][0];
+    right.map = tex[f > 0 ? i + 1 : i][1];
+    pivot.visible = f > 0;
+    if (f > 0) {
+      front.map = tex[i][1];
+      back.map = tex[i + 1][0];
+      const e = f * f * (3 - 2 * f);
+      pivot.rotation.z = e * Math.PI;
+      pivot.position.y = 0.036 + Math.sin(e * Math.PI) * 0.004;
+    }
+  };
+  g.userData.turn(0);
   return g;
 }
 export { lathe, still, quiet, at };

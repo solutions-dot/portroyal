@@ -15,7 +15,7 @@ import { mergeGeometries as mergeG } from 'three/addons/utils/BufferGeometryUtil
 import { rowBoat, rowStroke, dugOut } from '../../../engine/boats.js';
 import { CL, mixers, grounded, HIPS_Y, setFallbackClip, loadClips, seamLoop, clipFor, animate, groundFeet, strideOf, lookBegin, lookEnd, tickVisible } from '../../../engine/anim.js';
 import { jointTurnLimiter } from '../../../engine/bone-pose.js';
-import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound } from '../../../engine/audio.js';
+import { AU, soundPref, setSound, audioInit, out, gullCry, stepSound, crackle, chirp, cue, setG, tone, noiseHit, shipCreak, hammer, clink, uiSound, BED_RANGE, bedTest } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
 import { createSea } from '../../../engine/sea.js';
 import { loader, onLoadFail, script, model, stage } from '../../../engine/loader.js';
@@ -26,7 +26,11 @@ import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble 
 import { placeActionButton } from '../../../engine/action-button.js';
 import { callBack } from '../../../engine/return-talk.js';
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
+import { createGuide } from '../../../engine/guide.js';
+import { makeSack } from '../../../engine/sack.js';
+import { candleFlame, flickerAll, hearthFire } from '../../../engine/flame.js';   /* a real candle flame */   /* one cloth sack for every game */
+import { createLookShot, frameOf } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from '../../../engine/look-sounds.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
 import { setQuiet } from '../../../engine/preload.js';
@@ -287,6 +291,12 @@ const S = 5.2, X0 = -17.9, X1 = 17.9, SHORE = 23; const seaMat = new THREE.MeshS
 
 /* ---------- the ship you arrived on ---------- */
 const indoor = new THREE.Group(); indoor.visible = false; scene.add(indoor); let cur = scene;
+/* a cloth sack (engine/sack.js), standing, or lying on its side (lying: it rests with its tied neck toward -x of its own turn ry) */
+function sackAt(x, y, z, s, { lying = false, ry = 0, seed = 1, parent, mat } = {}) {
+  const g = makeSack({ material: mat, seed, h: 0.66, r: 0.25 }); g.scale.setScalar(s); g.rotation.set(0, 0, 0);
+  if (lying) { const o = new THREE.Group(); g.rotation.z = Math.PI / 2; g.position.set(0.33 * s, 0.29 * s, 0);   /* its bulge rests on the ground */ o.add(g); o.position.set(x, y, z); o.rotation.y = ry; (parent || cur).add(o); return o; }
+  g.position.set(x, y, z); g.rotation.y = ry + seed * 1.7; (parent || cur).add(g); return g;
+}
 function mk(geo, mat, x, y, z, parent) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || cur).add(m); return m; }
 /* still(root, keep): the still scenery under root is merged into a few meshes (engine/batch.js batchStatic), so a phone draws it in far fewer calls; it looks the same.
    keep lists things under root that move, light up or are shown and hidden on their own: they stay as they are (userData.noBatch). See-through meshes are kept too, so they are
@@ -325,10 +335,10 @@ function buildHarbour() {
   const cask = (x, y, z, lying) => { const g = new THREE.Group(); g.position.set(x, y + (lying ? 0.36 : 0.45), z); if (lying) { g.rotation.z = Math.PI / 2; g.rotation.y = x * 2.3; } scene.add(g); mk(caskG, caskM, 0, 0, 0, g); for (const [hy, hg] of hoopG) mk(hg, ironM, 0, hy, 0, g); };
   const crateM = std(plankTex([150, 118, 78], 4, 1, 1));
   const crate = (x, y, z, s, r) => { const g = new THREE.Group(); g.position.set(x, y + s / 2, z); g.rotation.y = r; scene.add(g); B(s, s, s, crateM, 0, 0, 0, g); for (const a of [-1, 1]) for (const b of [-1, 1]) { B(0.07, s + 0.03, 0.07, timber, a * s / 2, 0, b * s / 2, g); B(s + 0.03, 0.07, 0.07, timber, 0, a * s / 2, b * s / 2, g); B(0.07, 0.07, s + 0.03, timber, a * s / 2, b * s / 2, 0, g); } };
-  const sack = (x, y, z, s) => { const k = mk(new THREE.SphereGeometry(0.32, 10, 8), sackM, x, y + 0.2 * s, z); k.scale.set(s * 1.2, 0.7 * s, s * 0.85); k.rotation.y = x; };
+  const sack = (x, y, z, s, ry = x) => sackAt(x, y, z, s, { lying: true, ry, seed: Math.round(x * 7), mat: sackM });   /* sacks lying in a heap (they were squashed balls) */
   const nStreet = scene.children.length;   /* everything from here on is solid: the pier casks and crates, Kofi's barrels, the crate stacks and the street cargo */
   cask(SHORE + 2.2, 0.05, 1.32); cask(SHORE + 2.95, 0.05, 1.32); cask(SHORE + 4.6, 0.05, 1.12, true); crate(SHORE + 14.6, 0.05, 1.1, 0.8, 0.2); crate(SHORE + 15.5, 0.05, 1.05, 0.6, 0.6); crate(SHORE + 14.6, 0.85, 1.1, 0.55, 0.2); sack(SHORE + 13.7, 0.05, 1.2, 1);
-  for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.65, -3.9, 3], [21.45, -4.1, 3], [21.05, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1); else sack(x, 0.3, z, 0.9); }
+  for (const [x, z, k] of [[20.6, 5.4, 0], [21.3, 5.7, 0], [20.9, 6.5, 2], [19.95, -3.2, 1], [20.95, -2.8, 0], [21.85, -3.3, 1], [20.75, -4.0, 3], [21.32, -4.0, 3], [21.03, -4.0, 4]]) { if (k === 0) cask(x, 0, z); else if (k === 2) cask(x, 0, z, true); else if (k === 1) crate(x, 0, z, 0.75, x); else if (k === 3) sack(x, 0, z, 1, Math.PI / 2); else sack(x, 0.46, z, 0.9, Math.PI / 2); }   /* two sacks side by side, a third on top */
   for (const [x, z, k] of [[-9.6, -4.4, 0], [3.4, 4.35, 0], [4.15, 4.4, 1], [-13.2, 4.4, 0], [11.6, -4.4, 1], [12.3, -4.45, 0]]) { if (k) crate(x, 0.12, z, 0.65, 0.1); else cask(x, 0.12, z); }
   crate(19.0, 0, 3.85, 0.7, 0.1); crate(19.8, 0, 3.95, 0.7, -0.15); crate(19.4, 0.7, 3.9, 0.55, 0.3);   /* the stack Kofi carries crates from */
   for (const [x, z, k] of [[20.45, -6.0, 0], [21.2, -6.1, 0], [20.75, -6.95, 1], [20.85, -7.95, 2], [21.0, -5.25, 3]]) { if (k === 0) cask(x, 0, z); else if (k === 1) crate(x, 0, z, 0.72, x); else if (k === 2) cask(x, 0, z, true); else sack(x, 0, z, 1); }   /* cargo on the far side of the harbour corner, by the water, so the way along the houses to the sand spit and Fort Charles stays open (it was shut, found by ?test=audit) */
@@ -438,7 +448,7 @@ function buildTavern() {
   // trestle tables, benches, stools and a high-backed settle
   const table = (x, z, w, d) => { B(w, 0.05, d, board, x, 0.745, z); for (const sx of [-1, 1]) { const tx = x + sx * (w / 2 - 0.28); for (const sz of [-1, 1]) { const l = B(0.07, 0.76, 0.07, oakDark, tx, 0.36, z + sz * 0.17); l.rotation.x = -sz * 0.3; } B(0.07, 0.07, d * 0.7, oakDark, tx, 0.69, z); } B(w - 0.5, 0.06, 0.05, oakDark, x, 0.3, z); };
   const bench = (x, z, w) => { B(w, 0.05, 0.28, board, x, 0.45, z); for (const sx of [-1, 1]) { B(0.05, 0.45, 0.26, oakDark, x + sx * (w / 2 - 0.16), 0.225, z); } B(w - 0.3, 0.07, 0.04, oakDark, x, 0.3, z); };
-  const stool = (x, z, r) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; cur.add(g); B(0.34, 0.04, 0.26, board, 0, 0.47, 0, g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const l = B(0.04, 0.47, 0.04, oakDark, sx * 0.13, 0.235, sz * 0.09, g); l.rotation.z = -sx * 0.1; } B(0.26, 0.05, 0.03, oakDark, 0, 0.36, 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, -0.09, g); };
+  const stool = (x, z, r) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = r; cur.add(g); B(0.34, 0.04, 0.26, board, 0, 0.47, 0, g); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.04, 0.47, 0.04, oakDark, sx * 0.13, 0.235, sz * 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, 0.09, g); B(0.26, 0.05, 0.03, oakDark, 0, 0.36, -0.09, g); B(0.03, 0.04, 0.18, oakDark, 0.13, 0.12, 0, g); B(0.03, 0.04, 0.18, oakDark, -0.13, 0.12, 0, g); };   /* straight legs joined by rails, as a joint stool is made (the legs were tilted one way only and looked crooked: owner) */
   table(-198.2, 1.3, 1.9, 0.8); bench(-198.2, 0.58, 1.7); bench(-198.2, 2.02, 1.7);
   table(-201.6, 1.0, 1.9, 0.8); bench(-201.6, 0.28, 1.7); bench(-201.6, 1.72, 1.7);
   B(0.7, 0.04, 0.7, board, -195.9, 0.75, 2.3); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.05, 0.74, 0.05, oakDark, -195.9 + sx * 0.28, 0.37, 2.3 + sz * 0.28);
@@ -453,21 +463,14 @@ function buildTavern() {
   const pot = mk(new THREE.SphereGeometry(0.22, 14, 10), ironM, IN.x1 - 0.2, 0.72, -0.6); pot.scale.y = 0.8;
   /* the hearth fire: tongues of flame painted as soft teardrops (pale yellow at the heart, orange, then red at the edge), each two crossed sheets that glow over what is behind them, on a bed of
      red embers and charred logs. Each tongue flickers on its own (update). Two plain cones did not look like fire (owner, 17 November 2026). */
-  { const fx = IN.x1 - 0.27, fz = -0.6, ft = cv(64, 128, (c) => { c.clearRect(0, 0, 64, 128); const g1 = c.createRadialGradient(32, 96, 2, 32, 84, 44); g1.addColorStop(0, 'rgba(255,250,210,1)'); g1.addColorStop(0.25, 'rgba(255,214,90,0.95)'); g1.addColorStop(0.55, 'rgba(255,130,30,0.75)'); g1.addColorStop(0.85, 'rgba(200,40,10,0.25)'); g1.addColorStop(1, 'rgba(160,20,0,0)'); c.fillStyle = g1; c.beginPath(); c.moveTo(32, 2); c.bezierCurveTo(40, 40, 62, 70, 58, 100); c.bezierCurveTo(56, 122, 8, 122, 6, 100); c.bezierCurveTo(2, 70, 24, 40, 32, 2); c.fill(); });
-    const tm = new THREE.MeshBasicMaterial({ map: ft, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }), tg = new THREE.PlaneGeometry(1, 1); tg.translate(0, 0.5, 0);
-    fire = new THREE.Group(); fire.position.set(fx, 0.1, fz); cur.add(fire); fire.userData.tongues = [];
-    for (const [dx, dz, w, h] of [[0, 0, 0.36, 0.66], [0.02, -0.16, 0.26, 0.48], [-0.02, 0.17, 0.28, 0.54], [0.05, 0.07, 0.2, 0.38], [-0.04, -0.07, 0.2, 0.42], [0, 0.28, 0.16, 0.28], [0, -0.28, 0.15, 0.26]]) { const tn = new THREE.Group(); tn.position.set(dx, 0, dz); tn.userData.wh = [w, h]; tn.scale.set(w, h, w); for (const ry of [0.3, 0.3 + Math.PI / 2]) { const s1 = new THREE.Mesh(tg, tm); s1.rotation.y = ry; tn.add(s1); } fire.add(tn); fire.userData.tongues.push(tn); }
-    const emberM = new THREE.MeshBasicMaterial({ color: 0xff5a1a }), emberD = new THREE.MeshBasicMaterial({ color: 0xa82a0c }), char = new THREE.MeshStandardMaterial({ color: 0x1c1512, roughness: 1 });
-    for (let i = 0; i < 16; i++) { const e = mk(new THREE.DodecahedronGeometry(0.025 + (i % 3) * 0.008, 0), i % 3 ? emberM : emberD, fx + ((i * 37) % 11 - 5) * 0.012, 0.075 + (i % 2) * 0.012, fz + ((i * 53) % 17 - 8) * 0.03); e.rotation.set(i, i * 2, i * 3); }
-    for (const [dz, r, y] of [[-0.2, 0.3, 0.09], [0.15, -0.4, 0.09], [0, 1.2, 0.09], [0.02, 0.9, 0.17], [-0.05, -0.8, 0.16]]) { const lg = mk(new THREE.CylinderGeometry(0.045, 0.05, 0.5, 7), char, fx, y, fz + dz); lg.rotation.set(Math.PI / 2, 0, r); }
-    const ash = mk(new THREE.CircleGeometry(0.42, 14), new THREE.MeshStandardMaterial({ color: 0x4a443e, roughness: 1 }), fx - 0.02, 0.062, fz); ash.rotation.x = -Math.PI / 2; ash.scale.set(0.6, 1.1, 1); }
+  fire = hearthFire(); fire.position.set(IN.x1 - 0.27, 0, -0.6); cur.add(fire);   /* the engine's fire (engine/flame.js): this hearth is the one every game uses now */
   for (let i = 0; i < 7; i++) { const lg = mk(new THREE.CylinderGeometry(0.055, 0.055, 0.55, 7), oak, IN.x1 - 0.45, 0.06 + (i > 3 ? 0.11 : 0), 0.95 + (i % 4) * 0.12 + (i > 3 ? 0.06 : 0)); lg.rotation.z = Math.PI / 2; }
   for (let i = 0; i < 3; i++) { const p = mk(plateG, pewM, IN.x1 - 0.5, 1.77, -1.2 + i * 0.32); p.rotation.set(0, 0, Math.PI / 2 - 0.22); } mk(jarG, celadon, IN.x1 - 0.42, 1.645, 0.1);
   fireLight = new THREE.PointLight(0xff9d4a, 0, 8, 1.7); fireLight.position.set(IN.x1 - 0.9, 0.8, -0.6); cur.add(fireLight);
 
   // candles and a hanging lantern
   const candle = (x, y, z) => { mk(new THREE.CylinderGeometry(0.075, 0.06, 0.015, 14), brassM, x, y + 0.008, z); mk(new THREE.CylinderGeometry(0.02, 0.024, 0.05, 8), brassM, x, y + 0.04, z); B(0.1, 0.008, 0.025, brassM, x + 0.1, y + 0.012, z);
-    mk(new THREE.CylinderGeometry(0.011, 0.011, 0.12, 6), waxM, x, y + 0.12, z); const f = mk(new THREE.SphereGeometry(0.016, 6, 6), flameM, x, y + 0.2, z); f.scale.y = 1.9; flames.push(f); };
+    mk(new THREE.CylinderGeometry(0.011, 0.011, 0.12, 6), waxM, x, y + 0.12, z); const f = candleFlame({ seed: flames.length + 1 }); f.position.set(x, y + 0.18, z); cur.add(f); flames.push(f); };   /* engine/flame.js: it was a small yellow ball */
   candle(-198.75, 0.77, 1.3); candle(-201.0, 0.77, 1.05); candle(-202.9, 1.02, -2.2); candle(IN.x1 - 0.4, 1.645, -1.5);
   { const lx = -200.2, lz = 0.4, ly = H - 0.95; B(0.012, 0.5, 0.012, ironM, lx, ly + 0.42, lz); B(0.18, 0.02, 0.18, ironM, lx, ly + 0.17, lz); B(0.18, 0.02, 0.18, ironM, lx, ly - 0.13, lz); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.015, 0.3, 0.015, ironM, lx + sx * 0.08, ly + 0.02, lz + sz * 0.08);
     B(0.14, 0.26, 0.14, new THREE.MeshBasicMaterial({ color: 0xffd58a, transparent: true, opacity: 0.55 }), lx, ly + 0.02, lz); lamp = new THREE.PointLight(0xffd9a0, 0, 9, 1.6); lamp.position.set(lx, ly, lz); cur.add(lamp); }
@@ -476,12 +479,12 @@ function buildTavern() {
   tankard(-198.7, 0.77, 1.08, 1); tankard(-197.75, 0.77, 1.5, 3); tankard(-202.15, 0.77, 0.85, 2); tankard(-201.3, 0.77, 1.2, 4.5); tankard(-201.9, 1.02, -2.3, 0.6);
   mk(jugG, stoneware, -202.3, 1.02, -2.05); mk(jugG, stoneware, -197.6, 0.77, 1.12);
   for (const [dx, dz] of [[0, 0], [0.05, 0.03], [-0.03, 0.05], [0.09, -0.02]]) mk(new THREE.CylinderGeometry(0.018, 0.018, 0.004, 10), pewM, -200.0 + dx, 1.022, -2.0 + dz);
-  for (const [x, z, s] of [[-195.6, -2.9, 1], [-196.1, -3.0, 0.85], [-195.7, -2.4, 0.9]]) { const sk = mk(new THREE.SphereGeometry(0.3, 10, 8), sackM, x, 0.24 * s, z); sk.scale.set(s, 0.85 * s, s * 0.9); }
+  for (const [x, z, s, i] of [[-195.6, -2.9, 1, 1], [-196.15, -3.0, 0.88, 2], [-195.7, -2.35, 0.92, 3]]) sackAt(x, 0, z, s, { seed: i, mat: sackM });   /* sacks of flour and beans against the wall, standing and tied (owner: they were balls) */
   const rope = mk(new THREE.TorusGeometry(0.2, 0.04, 6, 16), sackM, -204.4, 0.05, -0.7); rope.rotation.x = Math.PI / 2;
   const br = B(0.03, 1.4, 0.03, oak, -204.8, 0.72, 0.6); br.rotation.z = -0.12; B(0.1, 0.25, 0.18, sackM, -204.7, 0.13, 0.6);
 
   // the four things to find
-  const g = {}; for (const f of FINDS) { g[f.id] = new THREE.Group(); g[f.id].position.set(f.x, f.y, f.z); cur.add(g[f.id]); }
+  const g = {}; for (const f of FINDS) { g[f.id] = new THREE.Group(); g[f.id].position.set(f.x, f.y, f.z); cur.add(g[f.id]); } FINDG = g;
   mk(bottleG, glassM, 0, 0, 0, g.bottle).scale.setScalar(1.25); mk(bottleG, glassM, 0.26, 0, 0.05, g.bottle);
   for (let i = 0; i < 6; i++) mk(plateG, pewM, 0, 0.009 + i * 0.016, 0, g.pewter);
   for (const [dz, r] of [[-0.06, 0.2], [0.05, -0.15], [0.14, 0.05]]) { const pg = new THREE.Group(); pg.position.set(0, 0.012, dz); pg.rotation.y = r; g.pipes.add(pg);
@@ -597,6 +600,20 @@ function buildTown() {
 let holdToast = false; const keys = new Set(); const stick = { id: null, ox: 0, oy: 0, x: 0, y: 0 }; const look = { id: null, lx: 0, ly: 0 };
 releaseOnBlur(keys, [stick, look]);
 let busy = false;                     // true while a panel is open
+/* close-ups (owner rule 13, engine/lookshot.js): the bars come in, the camera eases to the thing, it does something with a sound, a short line from
+   its journal page shows in the lower bar, the camera eases back, and then the page or card opens. The autoplayer and test views skip the camera. */
+const QUICK_LOOK = __DEV__ && /[?&](auto|test)=/.test(location.search), _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
+const LS = createLookShot({ camera, fov: () => 68, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } },
+  bars: (on) => document.body.classList.toggle('cine', on), say: (t) => { $('cinesub').textContent = t; }, freeze: (on) => { busy = on; }, sound: lookSound, quick: () => QUICK_LOOK, reduced: reduceMotion,
+  home: () => ({ pos: new THREE.Vector3(state.x, eyeY, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
+let FINDG = {};
+if (__DEV__) { window.__LS = LS; window.__cam = camera; }
+if (__DEV__) window.__look = (label, at = 1.6) => { const a = ACTIONS.find((x) => x.label === label); if (!a) return 'no action'; a.go(); setTimeout(() => { LS.paused = true; document.title = 'LOOK ' + label; }, at * 1000); return 'ok'; };   /* dev: play a look and hold it `at` seconds in */
+async function closeLook(id, focus, { lines, reveal, sound = 'wood', dist = 1.3, lift = 0.45, fov = 40, view } = {}) {
+  const page = JOURNAL.find((p) => p.id === id), L = lines || (page ? page.simple[0].split(/(?<=[.!?])\s+/) : []);   /* one sentence at a time */
+  await LS.play({ view: view || frameOf([state.x, state.z], focus, { dist, lift, fov }), lines: L, reveal, sound, act: 2.2 });
+  await LS.back();
+}
 let navGen = 0;                       // counts chapter changes: a "next chapter" card that was waiting is dropped if the player has gone to a chapter since
 addEventListener('keydown', (e) => { const k = e.key.toLowerCase();
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k) && state.started) e.preventDefault();
@@ -699,15 +716,15 @@ function startConvo(c, end) { uiSound('tap'); convo = c; convoEnd = end; busy = 
 $('next').onclick = advance;
 /* things you can walk up to and use */
 const ACTIONS = [
-  ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { unlock(id); wareMark[id].visible = false; wareGoal(); } })),
+  ...['sugar', 'cocoa', 'logwood'].map((id, i) => ({ label: ['Look at the casks', 'Look at the sacks', 'Look at the red wood'][i], r: 2.6, where: () => state.place === 'ware' && !state.unlocked.includes(id) && WGOODS[id], go: () => { wareMark[id].visible = false; closeLook(id, [WGOODS[id][0], 0.75, WGOODS[id][1]], { sound: 'wood', dist: 1.6 }).then(() => { unlock(id); wareGoal(); }); } })),
   { label: 'Sit at the desk', r: 2.4, where: () => state.place === 'ware' && wareSeen() && !W.coins && [-258.6, 2.9], go: () => startConvo(COINS, () => { W.coins = true; abba.visible = true; ABBA.x = -250.2; ABBA.z = 0.4; abba.position.set(ABBA.x, 0, ABBA.z); toast('Abba has come in.'); wareGoal(); }) },
   { label: 'Talk to Abba', r: 3.0, where: () => state.place === 'ware' && W.coins && !W.talked && [ABBA.x, ABBA.z], go: () => startConvo(WARE1, () => { W.talked = true; const ac = abba.userData.anim; if (ac && CL.WaveSlow) ac.play('WaveSlow', true); setTimeout(() => { if (state.place === 'ware') { abba.visible = false; ABBA.x = 9999; toast('Abba goes out to the wharf.'); } }, 2600); wareGoal(); }) },
   { label: 'Go out to the wharf', r: 1.8, exit: true, where: () => state.place === 'ware' && [WX1 - 0.7, 0.8], go: () => card('Leave the warehouse?', ['You can come back any time from the Chapters menu.'], [{ t: 'Back to the town', go: leaveWare }, { t: 'Stay', go: hideCard }]) },
-  { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: readLetter },
+  { label: 'Read the letter', r: 2.4, where: () => state.place === 'ware' && W.talked && [-258.6, 2.9], go: () => closeLook('letter', [-258.6, 0.85, 2.9], { lines: ['A letter lies open on the desk.'], sound: 'paper', dist: 0.9, lift: 0.55 }).then(readLetter) },
   { label: 'Talk to Abba', r: 3.2, where: () => state.place === 'after' && [ABBA.x, ABBA.z], go: () => { if (afterDone() && Q.aTalk) startConvo(AFTER2, stayOrGo); else startConvo(AFTER1, () => { Q.aTalk = true; afterGoal(); }); } },
-  { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => { unlock('tentp'); afterGoal(); } },
-  { label: 'Look across the water', r: 2.6, where: () => state.place === 'after' && !state.unlocked.includes('kingston') && [0.2, 0], go: () => { unlock('kingston'); afterGoal(); } },
-  { label: 'Read the tombstone', r: 3.2, where: () => state.place === 'yard' && [YX + 6, YZ - 2], go: readStone },
+  { label: 'Look at the big tent', r: 3.6, where: () => state.place === 'after' && !state.unlocked.includes('tentp') && [-12.5, 0.8], go: () => closeLook('tentp', [-12.5, 1.3, 0.8], { sound: 'cloth', dist: 3.2, lift: 0.4, fov: 50 }).then(() => { unlock('tentp'); afterGoal(); }) },
+  { label: 'Look across the water', r: 2.6, where: () => state.place === 'after' && !state.unlocked.includes('kingston') && [0.2, 0], go: () => closeLook('kingston', null, { sound: 'water', view: { p: [state.x, eyeY + 0.25, state.z], look: [state.x + Math.sin(state.yaw + Math.PI) * 60, 1.5, state.z + Math.cos(state.yaw + Math.PI) * 60], fov: 30 } }).then(() => { unlock('kingston'); afterGoal(); }) },   /* the lens closes in on the far shore the way you face */
+  { label: 'Read the tombstone', r: 3.2, where: () => state.place === 'yard' && [YX + 6, YZ - 2], go: () => closeLook('stone', [YX + 6, 0.35, YZ - 2], { lines: ['An old stone, its letters worn by the sea air.'], sound: 'stone', dist: 1.3, lift: 0.9 }).then(readStone) },
   ...NPCS.map((n) => ({ label: n.label, r: 2.6, where: () => townReady && !Q.on && state.place === 'out' && people[n.id] && [n.x, n.z], go: () => npcTalk(n) })),
   { label: 'Talk to Sam', r: 2.4, where: () => state.place === 'after' && survivors.sailor && [SURV[0][0], SURV[0][1]], go: () => startConvo(state.unlocked.includes('swan') ? [{ who: 'Sam', text: 'I keep looking at the water. I can\u2019t stop.' }] : SAM_AFTER) },
   { label: 'Talk to Kofi', r: 2.4, where: () => state.place === 'after' && survivors.kofi && [SURV[2][0], SURV[2][1]], go: () => startConvo(KOFI_AFTER) },
@@ -718,7 +735,8 @@ const ACTIONS = [
   { label: 'Go into the tavern', exit: true, r: 2.0, where: () => tavernReady && !Q.on && state.place === 'out' && state.talked && [-6.18, -4.5], go: () => { setPlace('in'); state.x = -203; state.z = 2.3; state.yaw = 0; state.pitch = 0; setGoal(); } },
   { label: 'Go back to the street', r: 1.3, exit: true, where: () => state.place === 'in' && [-203, 3.3], go: () => { setPlace('out'); state.x = -6.18; state.z = -3.4; state.yaw = Math.PI; state.pitch = 0; setGoal(); } },
   { label: 'Talk to Hannah', r: 2.3, where: () => state.place === 'in' && [-201, -1.9], go: () => startConvo(state.ate ? HANNAH_AFTER : STEW, () => { if (!state.ate) { state.ate = true; stew.visible = true; } }) },
-  ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { unlock(f.id); finds[f.id].visible = false; setGoal(); } })),
+  ...FINDS.map((f) => ({ label: f.label, r: 1.9, where: () => state.place === 'in' && !state.unlocked.includes(f.id) && [f.x, f.z], go: () => { finds[f.id].visible = false; closeLook(f.id, [f.x, f.y + 0.12, f.z], { sound: f.id === 'bottle' ? 'clink' : f.id === 'turtle' ? 'lid' : 'wood', dist: 1.1,   /* it is picked up a little and turned in the hand */
+    reveal: (k) => { const o = FINDG[f.id]; if (o) { o.position.y = f.y + Math.sin(k * Math.PI) * 0.07; o.rotation.y = k * 0.6; } } }).then(() => { unlock(f.id); setGoal(); }); } })),
 ];
 let current = null;
 $('talk').onclick = () => { if (current) current.go(); };
@@ -794,13 +812,14 @@ let auNext = 0, gullAt = 2, crackAt = 0, chirpAt = 0, murm = 0.6;
 function audioTick(t) { if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1;
   const p = state.place, shaking = Q.on && ['tremor', 'main', 'swallow'].includes(Q.phase), swell = 0.72 + 0.28 * Math.sin(t * 0.55) + 0.1 * Math.sin(t * 1.7);
   let sea = 0, surf = 0, wind = 0, crowd = 0, room = 0, gulls = false, fire = false, birds = false;
-  if (p === 'out') { const k = Math.max(0, Math.min(1, (state.x + 5) / (SHORE + 10))); sea = (0.15 + 0.55 * k) * swell; surf = 0.04 * k * swell; wind = Q.ruin ? 0.1 : 0.05; gulls = !Q.ruin && state.x > -2; if (NS.ready && !Q.on && state.z > 11) crowd = 0.2 * Math.max(0, Math.min(1, (state.x - 2) / 8)); }
+  if (p === 'out') { const k = Math.max(0, Math.min(1, (state.x + 5) / (SHORE + 10))); sea = (0.1 + 0.2 * k) * swell; surf = 0.04 * k * swell; wind = Q.ruin ? 0.1 : 0.05; gulls = !Q.ruin && state.x > -2; if (NS.ready && !Q.on && state.z > 11) crowd = 0.2 * Math.max(0, Math.min(1, (state.x - 2) / 8)); }
   else if (p === 'in') { crowd = 0.3; fire = true; sea = 0.03; }
   else if (p === 'ware') { room = 0.14; sea = 0.16 * swell; gulls = true; }
-  else if (p === 'sea') { sea = 0.8 * swell; surf = 0.08 * swell; wind = 0.12; }
+  else if (p === 'sea') { sea = 0.3 * swell; surf = 0.08 * swell; wind = 0.12; }   /* 22 November 2026: the sea was 0.8 here and 0.7 at the shore, about twice the shared range (engine/audio.js BED_RANGE); now 0.3 at most (0.33 at the top of the swell), still the loudest bed in the game */
   else if (p === 'after') { sea = 0.22 * swell; wind = 0.14; }
   else if (p === 'yard') { wind = 0.07; sea = 0.08 * swell; birds = true; }
   if (shaking) { sea *= 0.4; surf = 0; crowd = 0; gulls = birds = false; }
+  if (!$('dialogue').hidden) { const d = BED_RANGE.duck; sea *= d; surf *= d; wind *= d; room *= d; crowd *= d; }   /* every bed a little lower while someone talks */
   setG(AU.ch.sea, sea); setG(AU.ch.surf, surf); setG(AU.ch.wind, wind); setG(AU.ch.room, room);
   murm = Math.max(0.3, Math.min(1, murm + (Math.random() - 0.5) * 0.3)); setG(AU.ch.crowd, crowd * murm, 0.12); AU.ch.crowd.f.frequency.setTargetAtTime(380 + murm * 260, AU.ctx.currentTime, 0.2);
   if (gulls && t > gullAt) { gullAt = t + 6 + Math.random() * 10; gullCry(); }
@@ -899,7 +918,7 @@ TICKS.push((dt) => {
   if (!NUDGE.on && quiet && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) >= 2.2 && now - NUDGE.since >= 2500) { NUDGE.on = true; showGoal(); const g = $('goal'); g.classList.remove('nudge'); void g.offsetWidth; g.classList.add('nudge'); }
   if (NUDGE.on && tgt && Math.hypot(state.x - tgt[0], state.z - tgt[1]) < 2.2) { NUDGE.on = false; /* Nearby interaction takes over; do not restart the hint delay. */ }   /* there: the talk button takes over */
   el.hidden = true; if (!GUIDE) GUIDE = createGuide({ scene, camera, eye: () => eyeY });
-  if (!NUDGE.on || !tgt) { GUIDE.hide(now); return; }
+  if (!NUDGE.on || !tgt || RESCUE.on) { GUIDE.hide(now); return; }   /* no arrow or ring during the rescue shot */
   const st = nudgeStep(tgt);   /* point at the next step on the way, which is the goal itself when there is a clear way to it */
   GUIDE.point(now, { x: st[0], z: st[1], tx: tgt[0], tz: tgt[1], final: st[2] });   /* a gold arrow on the ground points the way, a gold ring marks the place */
 });
@@ -916,7 +935,7 @@ TICKS.push((dt) => { if (state.place !== 'in') { if (MOTES) MOTES.visible = fals
 function showSound() { const b = $('snd'); b.setAttribute('aria-pressed', AU.on ? 'true' : 'false'); b.setAttribute('aria-label', AU.on ? 'Sound on. Tap to turn off.' : 'Sound off. Tap to turn on.'); $('sndon').style.display = AU.on ? '' : 'none'; $('sndoff').style.display = AU.on ? 'none' : ''; }
 $('snd').onclick = () => { setSound(!AU.on); showSound(); };
 showSound();
-addEventListener('pointerdown', () => { if (AU.ctx && AU.ctx.state !== 'running') AU.ctx.resume(); });
+/* sound paused by the phone comes back on the next touch: engine/audio.js audioInit() does it for every game now */
 
 /* ---------- 7 June 1692 ---------- */
 let moveSpeed = 2.7, eyeY = 1.62, seaLevel = -0.35;
@@ -955,6 +974,32 @@ function sinkTown(T, final) { for (const o of townObjs) { const q = final === un
 function rumble() { audioInit(); if (!AU.ctx || Q.gain) return; const c = AU.ctx, len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0); let l = 0; for (let i = 0; i < len; i++) { l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = l * 3.5; }
   const src = c.createBufferSource(); src.buffer = buf; src.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 150; Q.gain = c.createGain(); Q.gain.gain.value = 0; src.connect(lp); lp.connect(Q.gain); Q.gain.connect(AU.master); src.start(); }
 function setPhase(p) { Q.phase = p; Q.t = 0; }
+/* The rescue boat, shown first (owner, 22 November 2026: "the view of the rescue boat is a bit too low, we cant see who is in the boat ... give us a
+   nicer camera view or pan"). When you come up in the sea, the bars come in and the camera rises from the water, glides out over the boat to a
+   three-quarter view of Abba in the boat, holds while a line shows, and comes back down to your eye. The boat waits until it ends. Skipped for the
+   autoplayer and the test views; with reduced motion it cuts. */
+const RESCUE = { len: 7.2 }, rescueLen = () => (__DEV__ && /[?&](auto|test)=/.test(location.search)) ? 0 : RESCUE.len;
+const _rp = new THREE.Vector3(), _rl = new THREE.Vector3(), _ra = new THREE.Vector3(), _rb = new THREE.Vector3();
+function rescueCam(t) {
+  const L = rescueLen(); if (!Q.boat || t >= L) { if (RESCUE.on) { RESCUE.on = false; document.body.classList.remove('cine'); $('cinesub').textContent = ''; } return false; }
+  if (!RESCUE.on) { RESCUE.on = true; document.body.classList.add('cine'); }
+  const b = Q.boat, c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), bow = [c, -sn], side = [sn, c];   /* the boat's bow and its side, flat */
+  const head = [b.position.x + BOAT_SEAT * c, b.position.y + 1.05, b.position.z - BOAT_SEAT * sn];          /* Abba's head, on her thwart */
+  const eye = [state.x, seaLevel + 0.6, state.z], sm = (k) => k * k * (3 - 2 * k);
+  const keys = [   /* [time, camera, look] */
+    [0, [eye[0], eye[1] + 0.2, eye[2]], [b.position.x, b.position.y + 0.6, b.position.z]],
+    [2.6, [head[0] + bow[0] * 3.6 + side[0] * 2.6, head[1] + 1.5, head[2] + bow[1] * 3.6 + side[1] * 2.6], head],
+    [5.0, [head[0] + bow[0] * 3.0 + side[0] * 1.6, head[1] + 0.9, head[2] + bow[1] * 3.0 + side[1] * 1.6], head],
+    [L, [eye[0], eye[1], eye[2]], [b.position.x, b.position.y + 0.8, b.position.z]],
+  ];
+  let i = 0; while (i < keys.length - 2 && t > keys[i + 1][0]) i++;
+  const [t0, p0, l0] = keys[i], [t1, p1, l1] = keys[i + 1], k = reduceMotion ? (t - t0 < (t1 - t0) / 2 ? 0 : 1) : sm(Math.min(1, (t - t0) / (t1 - t0)));
+  _rp.set(...p0).lerp(_ra.set(...p1), k); _rl.set(...l0).lerp(_rb.set(...l1), k);
+  camera.position.copy(_rp); camera.lookAt(_rl);
+  const line = t < 2.2 ? '' : t < 5.4 ? 'A boat! It is Abba. She calls your name.' : 'Swim to her!';
+  if ($('cinesub').textContent !== line) $('cinesub').textContent = line;
+  return true;
+}
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
   sceneWarning(card, { title: '7 June 1692', what: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud.'], watch: beginQuake, read: () => finishQuake(true) }); }
 let hideQuakeSkip;
@@ -969,7 +1014,7 @@ function buildSeaProps() { if (Q.boat) return; const wood = new THREE.MeshStanda
   /* the boat that takes Galdy up: a plain clinker-built harbour boat of the time (engine/boats.js), with ribs, thwarts, thole pins, oars, a rudder, rope and a bailer.
      The tombstone says only "a Boat", so nothing on it is named. Its keel is 0.3 under the group, as the old hull was; the mask keeps the sea out of the inside */
   const b = new THREE.Group(); b.userData.hollow = true; scene.add(b);   /* hollow: Abba sits inside it (engine/audit.js) */
-  const rb = rowBoat({ L: 5.2, beam: 1.7, depth: 0.7, seatTop: 0.52, wood, timber: new THREE.MeshStandardMaterial({ map: plankTex([104, 80, 56], 1, 1, 1), roughness: 0.9 }), oars: 'rowing', rowAt: BOAT_SEAT, rowFace: 1, mask: true }); rb.position.y = -0.3; b.add(rb); b.userData.row = rb; waves.renderOrder = 2;
+  const rb = rowBoat({ L: 5.2, beam: 1.7, depth: 0.7, seatTop: 0.52, wood, timber: new THREE.MeshStandardMaterial({ map: plankTex([104, 80, 56], 1, 1, 1), roughness: 0.9 }), oars: 'rowing', rowAt: BOAT_SEAT, rowFace: 1, mask: true }); rowStroke(rb, 0, false); rb.position.y = -0.3;   /* the oars out in their thole pins, resting with the blades clear of the water: she does not row (owner, 22 November 2026) */ b.add(rb); b.userData.row = rb; waves.renderOrder = 2;
   const mark = mk(new THREE.OctahedronGeometry(0.28), new THREE.MeshBasicMaterial({ color: 0xd9a441 }), 0, 3.3, 0, b); b.userData.mark = mark; Q.boat = b;
   for (let i = 0; i < 12; i++) { const k = i % 3, d = mk(k === 0 ? new THREE.CylinderGeometry(0.3, 0.3, 0.9, 10) : k === 1 ? new THREE.BoxGeometry(0.7, 0.6, 0.7) : new THREE.BoxGeometry(2.6, 0.12, 0.3), tim, SHORE + 8 + ((i * 37) % 50), 0, 12 + ((i * 53) % 55)); if (k === 0) d.rotation.z = Math.PI / 2; d.rotation.y = i * 1.3; d.userData.ph = i * 1.7; Q.debris.push(d); } }
 function abbaIdle() { if (!abba || !idle) return; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac) { for (const n of ['Scared', 'Terrified']) { const a = ac.get(n); if (a) a.stop(); } if (ac.cur !== idle) ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).fadeIn(0.2).play(); }
@@ -991,12 +1036,12 @@ function quakeTick(dt, time) { Q.t += dt; const t = Q.t;
     if (Q.abbaRun) { abba.rotation.y = Math.PI / 2 - 0.08; abba.position.x += 4.6 * dt; abba.position.z += 0.35 * dt; if (abba.position.x > SHORE + 4) { abba.visible = false; Q.abbaRun = false; } } if (t > 8.5) { setPhase('swallow'); goalText = 'The sand is pulling you down!'; showGoal(); } }
   else if (Q.phase === 'swallow') { Q.shake = 1; Q.T += dt; sinkTown(Q.T); const k = ease(t / 3.6); eyeY = 1.62 - 1.25 * k; moveSpeed = 2.7 * (1 - 0.9 * k); $('vig').style.opacity = k;
     if (t > 4 && $('card').hidden) { Q.shake = 0.3; card('Swallowed', ['The wet sand has gone soft, like mud. You sink up to your neck.', 'You cannot move. Then the ground shakes again!'], [{ t: 'Next', go: toSea }]); } }
-  else if (Q.phase === 'sea') { Q.shake = t < 1.5 ? 0.6 * (1 - t / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.32 + Math.sin(time * 1.6) * 0.07;
-    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x + BOAT_SEAT * c, az = b.position.z - BOAT_SEAT * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: b.rotation.y + Math.PI / 2 }; }   /* Abba sits on a thwart facing the bow and you, and pushes the oars to row over (rowing facing forward) */
+  else if (Q.phase === 'sea') { const ts = t - rescueLen(); Q.shake = ts < 0 ? 0 : ts < 1.5 ? 0.6 * (1 - ts / 1.5) : (Math.sin(time * 0.5) > 0.96 ? 0.25 : 0); eyeY = seaLevel + 0.6 + Math.sin(time * 1.6) * 0.07;   /* the eye a little higher (owner: the view was too low to see who was in the boat) */
+    const b = Q.boat; b.position.y = seaLevel + 0.12 + Math.sin(time * 1.2) * 0.06; b.rotation.z = Math.sin(time * 0.9) * 0.05; b.userData.mark.rotation.y = time * 1.5; b.userData.mark.visible = !RESCUE.on; { const c = Math.cos(b.rotation.y), sn = Math.sin(b.rotation.y), ax = b.position.x + BOAT_SEAT * c, az = b.position.z - BOAT_SEAT * sn; abba.userData.seatAnchor = { x: ax, z: az, top: b.position.y + 0.22, ry: b.rotation.y + Math.PI / 2 }; }   /* Abba sits on a thwart facing the bow and you; the oars rest in their pins */
     for (const d of Q.debris) { d.position.y = seaLevel + Math.sin(time * 1.1 + d.userData.ph) * 0.07; d.rotation.x = Math.sin(time * 0.7 + d.userData.ph) * 0.12; }
-    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); const go = d > 2.6 && t > 1.5; if (go) { const v = Math.min(1.1, 0.25 + t * 0.05) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; }
-      if (t > 1.5) { let da = Math.atan2(dx, dz) - Math.PI / 2 - b.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.rotation.y += Math.max(-1, Math.min(1, da / (0.6 * dt + 1e-6))) * 0.6 * dt; }   /* the bow swings round to you (no sudden turn) */
-      if (go) Q.rowT = (Q.rowT || 0) + dt * 2.6; rowStroke(b.userData.row, Q.rowT || 0, go); }   /* Abba rows toward you, bow first, so you always get there */
+    { const dx = state.x - b.position.x, dz = state.z - b.position.z, d = Math.hypot(dx, dz); const go = d > 2.6 && t > rescueLen() + 0.5; if (go) { const v = Math.min(0.6, 0.2 + (t - rescueLen()) * 0.04) * dt; b.position.x += dx / d * v; b.position.z += dz / d * v; }
+      if (t > rescueLen() + 0.5) { let da = Math.atan2(dx, dz) - Math.PI / 2 - b.rotation.y; da = Math.atan2(Math.sin(da), Math.cos(da)); b.rotation.y += Math.max(-1, Math.min(1, da / (0.6 * dt + 1e-6))) * 0.6 * dt; }   /* the bow swings round to you (no sudden turn) */
+    }   /* the boat drifts toward you, bow first, so you always get there. Abba does not row: her hands cannot hold the oars yet, so the oars rest in their thole pins (owner, 22 November 2026: "if the rowing doesnt look correct, dont show her rowing") */
     if (Math.hypot(state.x - b.position.x, state.z - b.position.z) < 2.8 && $('card').hidden) finishQuake(false); }
   if (Q.gain) Q.gain.gain.value = Math.min(1, Q.shake) * 0.9;
 }
@@ -1017,7 +1062,7 @@ function buildAfter() { if (afterG) return; afterG = new THREE.Group(); scene.ad
   for (const t of CAMP_TENTS) tent(t[0], t[1], t[2], t[3], t[4], t[5]);
   for (const [dx, dz, r] of [[-0.2, 0, 0.3], [0.15, 0.1, -0.5], [0, -0.15, 1.3]]) { const l = mk(new THREE.CylinderGeometry(0.06, 0.06, 0.7, 7), tim, FX + dx, 0.08, FZ + dz); l.rotation.set(Math.PI / 2, 0, r); }
   mk(new THREE.ConeGeometry(0.2, 0.5, 7), new THREE.MeshBasicMaterial({ color: 0xff9a2e }), FX, 0.33, FZ); for (const s of [-1, 1]) { const p = mk(new THREE.CylinderGeometry(0.02, 0.02, 1.3, 5), iron, FX + s * 0.3, 0.6, FZ); p.rotation.z = s * 0.45; } const pot = mk(new THREE.SphereGeometry(0.16, 10, 8), iron, FX, 0.7, FZ); pot.scale.y = 0.8; mk(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 5), iron, FX + 0.01, 1.0, FZ);   /* the chain the pot hangs from, down from where the two poles cross (it hung in the air before) */
-  for (const [x, z, s] of [[-11.4, -2.4, 1], [-12.3, -2.6, 0.85], [-6.4, -0.1, 0.85], [-3.2, 2.5, 1], [-13.6, -2.5, 1]]) { const k = mk(new THREE.SphereGeometry(0.3, 10, 8), sackM, x, 0.2 * s, z); k.scale.set(1.2 * s, 0.7 * s, 0.9 * s); }
+  for (const [x, z, s, i] of [[-11.4, -2.4, 1, 1], [-12.3, -2.6, 0.85, 2], [-6.4, -0.1, 0.85, 3], [-3.2, 2.5, 1, 4], [-13.6, -2.5, 1, 5]]) sackAt(x, 0, z, s, { lying: i % 2 === 1, ry: i * 1.3, seed: i, mat: sackM });   /* what was saved, in sacks, some lying, some standing */
   const bm = brickM(1.5, 0.5); for (const [x, z, w, h, r, d] of [[-2.0, -2.4, 2.2, 0.7, 0.15, 1.2], [-1.0, 2.4, 2.0, 0.9, -0.2, 1.2], [-15.9, 2.5, 1.8, 0.5, 0.1, 1.0]]) { const b = mk(new THREE.BoxGeometry(w, h, d), bm, x, h / 2 - 0.1, z); b.rotation.set(0.12, r, 0.1); }
   for (const [x, z, l, ry, rz] of [[-4.3, -2.9, 3.0, 0.15, 0.18], [-3.6, 0.2, 2.6, -1.25, 0.12], [-9.6, 2.8, 3.0, 0.05, 0.3], [-10.8, -2.9, 2.4, -0.05, 0.1]]) { const b = mk(new THREE.BoxGeometry(l, 0.2, 0.2), tim, x, 0.35, z); b.rotation.set(0, ry, rz); }
   const fl = mk(new THREE.PlaneGeometry(160, 160), seaMat, 81.2, 0.07, 0); fl.rotation.x = -Math.PI / 2; const wet = mk(new THREE.PlaneGeometry(3, 14), new THREE.MeshBasicMaterial({ color: 0x5f4e38, transparent: true, opacity: 0.4 }), -0.2, 0.012, 0); wet.rotation.x = -Math.PI / 2;
@@ -1144,7 +1189,7 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   mk(new THREE.CylinderGeometry(0.09, 0.11, 0.02, 12), brass, dx + 0.45, 0.945, dz - 0.15); mk(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 6), brass, dx + 0.45, 1.15, dz - 0.15); const beam = mk(new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6), brass, dx + 0.45, 1.35, dz - 0.15); beam.rotation.z = Math.PI / 2 + 0.08;
   for (const s of [-1, 1]) { mk(new THREE.CylinderGeometry(0.08, 0.06, 0.015, 12), brass, dx + 0.45 + s * 0.24, 1.14 - s * 0.02, dz - 0.15); mk(new THREE.CylinderGeometry(0.003, 0.003, 0.2, 4), brass, dx + 0.45 + s * 0.24, 1.25 - s * 0.02, dz - 0.15); }
   for (const [ox, oz, k, top] of [[0.75, 0.1, 5, .935], [0.84, 0.16, 3, .935], [0.7, 0.22, 1, .935], [0.21, -0.14, 1, 1.1675]]) mk(new THREE.CylinderGeometry(0.019, 0.019, 0.005 * k, 10), silver, dx + ox, top + 0.0025 * k, dz + oz);
-  mk(new THREE.CylinderGeometry(0.07, 0.055, 0.015, 12), brass, dx - 0.85, 0.943, dz + 0.3); mk(new THREE.CylinderGeometry(0.011, 0.011, 0.13, 6), paper, dx - 0.85, 1.02, dz + 0.3); const fl = mk(new THREE.SphereGeometry(0.016, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffc66a }), dx - 0.85, 1.1, dz + 0.3); fl.scale.y = 1.9;
+  mk(new THREE.CylinderGeometry(0.07, 0.055, 0.015, 12), brass, dx - 0.85, 0.943, dz + 0.3); mk(new THREE.CylinderGeometry(0.011, 0.011, 0.13, 6), paper, dx - 0.85, 1.02, dz + 0.3); const fl = candleFlame({ seed: 9 }); fl.position.set(dx - 0.85, 1.085, dz + 0.3); cur.add(fl); flames.push(fl);
   const lt = B(0.24, 0.004, 0.17, paper, dx + 0.1, 0.938, dz + 0.25); lt.rotation.y = 0.3; mk(new THREE.CylinderGeometry(0.018, 0.018, 0.006, 10), new THREE.MeshStandardMaterial({ color: 0x9c1f1f, roughness: 0.5 }), dx + 0.1, 0.943, dz + 0.25);
   const qp = mk(new THREE.ConeGeometry(0.012, 0.3, 5), paper, dx - 0.05, 1.02, dz - 0.2); qp.rotation.z = 0.5; mk(new THREE.CylinderGeometry(0.03, 0.035, 0.05, 8), iron, dx - 0.12, 0.96, dz - 0.25);
   B(0.4, 0.04, 0.3, board, dx, 0.5, dz + 1.0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) B(0.04, 0.5, 0.04, oak, dx + sx * 0.16, 0.25, dz + 1.0 + sz * 0.11);
@@ -1193,6 +1238,10 @@ function frame(now, step) {
       if (ac && state.place === 'sea') { galdy.rotation.y = state.yaw + Math.PI; if (CL.Tread && ac.cur !== ac.get('Tread')) ac.play('Tread'); }
       else if (CL.Walk) updateWalk(galdy, walkedX, walkedZ, dt); } }
   camera.position.set(state.x + Math.sin(tt * 31) * 0.06 * sh, eyeY + camLift + (reduceMotion ? 0 : Math.sin(bob) * 0.035) + Math.sin(tt * 37) * 0.05 * sh, state.z + Math.sin(tt * 27) * 0.05 * sh); camera.rotation.set(state.pitch + Math.sin(tt * 29) * 0.015 * sh, state.yaw, Math.sin(tt * 23) * 0.03 * sh); if (galdy && galdy.visible) { const back = state.place === 'out' ? 2.6 : 1.9, wx = camera.position.x + Math.sin(state.yaw) * back, wz = camera.position.z + Math.cos(state.yaw) * back, sx = state.x, sz = state.z; const [cx2, cz2] = camBounds(wx, wz); camera.position.x = cx2; camera.position.z = cz2; state.x = sx; state.z = sz; camera.position.y += 0.35; camera.rotation.x -= 0.12; }
+  if (Q.on && Q.phase === 'sea') rescueCam(Q.t); else if (RESCUE.on) rescueCam(1e9);
+  LS.tick(dt);   /* a close-up holds the camera (engine/lookshot.js) */
+  if (!reduceMotion) flickerAll(flames, now / 1000);   /* every candle flame (engine/flame.js) */
+  if (__DEV__ && window.__free) { const f = window.__free; camera.position.set(...f.pos); camera.lookAt(...f.look); }   /* dev only: a free camera for close looks (?shot=free&c=x,y,z&t=x,y,z) */
   for (const [b, q] of animQ) b.quaternion.copy(q);            // put back the animation's own pose before adding ours
   if (seaN && state.place !== 'in' && state.place !== 'ware') { const t = now / 1000;
     SEA.setLevel(seaLevel); const m = Q.ruin ? null : shipsM.merchant, sl = Q.ruin ? null : shipsM.sloop; if (m) { m.position.y = -0.35 + Math.sin(t * 0.8) * 0.05; m.rotation.x = Math.sin(t * 0.6) * 0.012; m.rotation.z = Math.sin(t * 0.45) * 0.004; } if (sl) { sl.position.y = -0.35 + Math.sin(t * 1.0 + 1) * 0.07; sl.rotation.x = Math.sin(t * 0.75 + 2) * 0.025; }
@@ -1225,7 +1274,7 @@ function frame(now, step) {
     if (state.started) { current = null; let best = 1e9; if (!busy) for (const a of ACTIONS) { if (!!FB.on !== !!a.fb) continue; const w = a.where(); if (!w) continue; const dd = Math.hypot(state.x - w[0], state.z - w[1]); if (a.exit && !exitReady(a.label, dd, a.r, performance.now() / 1000)) continue;   /* a way out waits until you have walked off its spot (engine/story.js) */ if (dd < a.r && dd < best) { best = dd; current = a; } }
       $('talk').hidden = !current || isTalk(current); if (current && !isTalk(current) && $('talk').dataset.label !== current.label) setActionButton(current);
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
-    if (state.place === 'in' && fire && !reduceMotion) { const f = 0.85 + Math.sin(now / 90) * 0.08 + Math.sin(now / 37) * 0.07; fireLight.intensity = 16 * f; for (let i = 0; i < fire.userData.tongues.length; i++) { const tn = fire.userData.tongues[i], [w, h] = tn.userData.wh, a = now / 1000 * (5 + i * 0.9) + i * 1.7, k2 = 0.82 + 0.16 * Math.sin(a) + 0.1 * Math.sin(a * 2.3 + i); tn.scale.set(w * (1.05 - (k2 - 0.82) * 0.5), h * k2, w * (1.05 - (k2 - 0.82) * 0.5)); tn.rotation.z = Math.sin(a * 0.7) * 0.07; tn.rotation.y = Math.sin(a * 0.31) * 0.4; } for (let i = 0; i < flames.length; i++) { const k = 1.75 + Math.sin(now / 70 + i * 2.1) * 0.25; flames[i].scale.y = flames[i].geometry.type === 'SphereGeometry' ? k : 0.9 + (k - 1.75); } }
+    if (state.place === 'in' && fire && !reduceMotion) { fireLight.intensity = 16 * fire.userData.tick(now / 1000);  }
   }
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }
@@ -1258,6 +1307,8 @@ async function loadAll() {
   setTimeout(() => { buildTavern(); try { loadSoldier(); } catch (e) {} try { buildNewStreet(); } catch (e) { NS.err = String(e && e.stack || e); document.body.dataset.nserr = NS.err.slice(0, 300); }   /* never let the extra street stop the tavern */ for (const f of FINDS) if (state.unlocked.includes(f.id)) finds[f.id].visible = false; if (state.ate) stew.visible = true; tavernReady = true; $('tchap').hidden = false; model('heath').then((g) => { people.heath = prep(g.scene); placeHeath(); }).catch(() => {}); for (const n of ['ned', 'buc1', 'buc2', 'morgan', 'gunner']) model(n).then((g) => { people[n] = prep(g.scene); pirateReady(n); }).catch(() => {});
     model('galdy').then((g) => { galdy = prep(g.scene); galdy.scale.multiplyScalar(0.94); galdy.visible = false; scene.add(galdy); animate(galdy, 'Idle'); $('view').hidden = !VIEW_SWITCH; if (__DEV__ && new URLSearchParams(location.search).get('test') === 'walk') runGaldyWalkTest(); }).catch(() => {}); if (!$('chapters').hidden) renderChapters(); const q = new URLSearchParams(location.search);
   if (__DEV__ && q.has('seed')) { const [sx, sz] = q.get('seed').split(',').map(Number); applySave({ unlocked: ['galdy'], talked: true, ate: false, done: false, ch: {}, pos: [sx, sz, 0] }); setTimeout(() => { document.title = 'RESTORE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' ns=' + NS.ready; }, 12000); }
+  if (__DEV__ && q.get('test') === 'beds') { const sw = 1.1;   /* ?test=beds : each place's loudest moment (the swell at its top) against the shared range (engine/audio.js); audioTick works the levels out as you move */
+    bedTest({ 'out: the town': { sea: 0.1 * sw, wind: 0.05, crowd: 0.2, once: 1 }, 'out: the shore': { sea: 0.3 * sw, surf: 0.04 * sw, wind: 0.05, once: 1 }, 'out: the ruins': { sea: 0.3 * sw, wind: 0.1 }, in: { crowd: 0.3, sea: 0.03, once: 1 }, ware: { room: 0.14, sea: 0.16 * sw, once: 1 }, sea: { sea: 0.3 * sw, surf: 0.08 * sw, wind: 0.12 }, after: { sea: 0.22 * sw, wind: 0.14 }, yard: { wind: 0.07, sea: 0.08 * sw, once: 1 } }); }
   if (__DEV__ && q.get('test') === 'skin') (async () => {   /* ?test=skin : how dark each face really looks in this game's daylight (engine/skinprobe.js) */
     const out = []; for (const name of (q.get('b') || 'abba,grace,galdy,kofi,sailor,benning,heath,ned,buc1,buc2,morgan,gunner,soldier,turtler,mendes,constable').split(',')) { let G = name === 'abba' ? abba : name === 'grace' ? people.grace : null, own = false;
       if (!G) { try { G = prep((await model(name)).scene); animate(G); own = true; } catch (e) { out.push(name + ': not loaded'); continue; } }
@@ -1314,7 +1365,7 @@ async function loadAll() {
       const ok = state.x < n.x - 1.0; document.title = 'PASS ' + (ok ? 'ok' : 'stuck') + ' walked ' + (x0 - state.x).toFixed(2) + ' m, at x ' + state.x.toFixed(2) + ' z ' + state.z.toFixed(2) + ' (Kofi x ' + n.x.toFixed(2) + ' z ' + n.z.toFixed(2) + ')'; }, 1500); }, 1500); }, 2000); }; go0(); }
   if (q.get('shot') === 'abba') { setTimeout(() => { state.x = ABBA.x + 0.4; state.z = ABBA.z - 1.3; state.yaw = Math.atan2(-(ABBA.x - state.x), -(ABBA.z - state.z)); state.pitch = -0.08; eyeY = 1.5; }, 9000); }   /* Abba close, face on (dev only) */
   if (q.get('shot') === 'grace') { setTimeout(() => { state.x = 9.6; state.z = +(q.get('z') || 13.4); state.yaw = Math.atan2(-(9.6 - state.x), -(16.1 - state.z)); state.pitch = -0.05; }, 9000); }   /* Grace at her stall (dev only) */
-  if (q.get('shot') === 'thumb') { setTimeout(() => { state.x = 30; state.z = 0.2; state.yaw = Math.PI / 2; state.pitch = 0.03; const st = document.createElement('style'); st.textContent = 'body > *:not(canvas){display:none!important}'; document.head.appendChild(st); }, 6500); } if (q.get('shot') === 'cratewalk' || q.get('shot') === 'pierwalk') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; const pier = q.get('shot') === 'pierwalk', mid = q.get('mid'); state.x = pier ? (mid ? SHORE + 18 : SHORE + 6) : 19.4; state.z = pier ? (mid ? 0 : 1.3) : 4.6; state.yaw = pier ? Math.PI / 2 : 0; keys.add('w'); for (let i = 0; i < (q.get('mid') ? 300 : 60); i++) { t += 33; frame(t); } keys.delete('w'); const hit = (propC || []).filter((c) => c[0] < 20.3 && c[2] > 18.5 && c[1] < 3.8 && c[3] > 2.4).length; document.title = 'CRATE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' boxes=' + hit + ' total=' + (propC ? propC.length : -1); }, 7000); } if (q.get('shot') === 'jhome') { setTimeout(() => openJournal(), 7000); } if (q.get('shot') === 'third') { setTimeout(() => { toggleView(); setTimeout(() => { const b = new THREE.Box3().setFromObject(galdy); document.title = 'THIRD vis=' + galdy.visible + ' third=' + third + ' pos=' + galdy.position.toArray().map((v) => v.toFixed(2)) + ' box=' + b.min.toArray().map((v) => v.toFixed(2)) + '/' + b.max.toArray().map((v) => v.toFixed(2)) + ' scale=' + galdy.scale.x.toFixed(2); }, 1500); }, 7000); } if (q.get('shot') === 'chap') { setTimeout(() => openChapters(), 7000); } if (q.get('shot') === 'nsthird') { setTimeout(() => { state.x = 6; state.z = 18.4; state.yaw = Math.PI / 2; toggleView(); }, 7000); } if (q.get('shot') === 'crawlpush') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; state.x = 21.2; state.z = 11.4; state.yaw = -Math.PI / 2 + 0.3; keys.add('w'); for (let i = 0; i < 150; i++) { t += 33; frame(t); } keys.delete('w'); document.title = 'CRAWL x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2); }, 7000); } if (q.get('shot') === 'savewait') { setTimeout(() => { RESTORE.pos = [8, 18.6, 0]; const t0 = townReady; townReady = false; saveGame(); const d = loadGame(); townReady = t0; document.title = 'SAVEWAIT pos=' + JSON.stringify(d && d.pos); }, 7000); } if (q.get('shot') === 'meline') { setTimeout(() => startConvo([{ who: 'You', text: 'Do you work for someone?' }, { who: 'Peter', text: 'No. I am a free man.' }]), 6000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
+  if (q.get('shot') === 'thumb') { setTimeout(() => { state.x = 30; state.z = 0.2; state.yaw = Math.PI / 2; state.pitch = 0.03; const st = document.createElement('style'); st.textContent = 'body > *:not(canvas){display:none!important}'; document.head.appendChild(st); }, 6500); } if (q.get('shot') === 'cratewalk' || q.get('shot') === 'pierwalk') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; const pier = q.get('shot') === 'pierwalk', mid = q.get('mid'); state.x = pier ? (mid ? SHORE + 18 : SHORE + 6) : 19.4; state.z = pier ? (mid ? 0 : 1.3) : 4.6; state.yaw = pier ? Math.PI / 2 : 0; keys.add('w'); for (let i = 0; i < (q.get('mid') ? 300 : 60); i++) { t += 33; frame(t); } keys.delete('w'); const hit = (propC || []).filter((c) => c[0] < 20.3 && c[2] > 18.5 && c[1] < 3.8 && c[3] > 2.4).length; document.title = 'CRATE x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2) + ' boxes=' + hit + ' total=' + (propC ? propC.length : -1); }, 7000); } if (q.get('shot') === 'jhome') { setTimeout(() => openJournal(), 7000); } if (q.get('shot') === 'third') { setTimeout(() => { toggleView(); setTimeout(() => { const b = new THREE.Box3().setFromObject(galdy); document.title = 'THIRD vis=' + galdy.visible + ' third=' + third + ' pos=' + galdy.position.toArray().map((v) => v.toFixed(2)) + ' box=' + b.min.toArray().map((v) => v.toFixed(2)) + '/' + b.max.toArray().map((v) => v.toFixed(2)) + ' scale=' + galdy.scale.x.toFixed(2); }, 1500); }, 7000); } if (q.get('shot') === 'chap') { setTimeout(() => openChapters(), 7000); } if (q.get('shot') === 'nsthird') { setTimeout(() => { state.x = 6; state.z = 18.4; state.yaw = Math.PI / 2; toggleView(); }, 7000); } if (q.get('shot') === 'crawlpush') { setTimeout(() => { window.requestAnimationFrame = () => 0; renderer.render = () => {}; let t = last; state.x = 21.2; state.z = 11.4; state.yaw = -Math.PI / 2 + 0.3; keys.add('w'); for (let i = 0; i < 150; i++) { t += 33; frame(t); } keys.delete('w'); document.title = 'CRAWL x=' + state.x.toFixed(2) + ' z=' + state.z.toFixed(2); }, 7000); } if (q.get('shot') === 'savewait') { setTimeout(() => { RESTORE.pos = [8, 18.6, 0]; const t0 = townReady; townReady = false; saveGame(); const d = loadGame(); townReady = t0; document.title = 'SAVEWAIT pos=' + JSON.stringify(d && d.pos); }, 7000); } if (q.get('shot') === 'meline') { setTimeout(() => startConvo([{ who: 'You', text: 'Do you work for someone?' }, { who: 'Peter', text: 'No. I am a free man.' }]), 6000); } if (q.get('shot') === 'credits') { $('credits').hidden = false; } if (q.get('shot') === 'resetc') { setTimeout(() => $('reset').click(), 4000); } if (q.get('shot') === 'camp3') { beginAfter(); state.x = -4.2; state.z = 3.4; state.yaw = Math.PI / 2 - 0.2; } if (q.get('shot') === 'npc4') { beginAfter(); state.x = -7.4; state.z = 3.2; state.yaw = Math.atan2(-(-9.65 + 7.4), -(1.75 - 3.2)); } if (q.get('shot') === 'street') { state.x = 17; state.z = 0.4; } if (q.get('shot') === 'free') { const v = (k, d) => (q.get(k) || d).split(',').map(Number); window.__free = { pos: v('c', '30,3,10'), look: v('t', '40,0,5') }; } if (q.get('shot') === 'ships') { state.x = SHORE + 1; state.z = 0.9; state.yaw = -Math.PI / 2 + 0.25; state.pitch = 0.22; } if (q.get('shot') === 'beach') { state.x = SHORE - 6; state.z = 1; state.yaw = -Math.PI / 2 - 0.9; state.pitch = -0.05; } if (q.get('shot') === 'beach2') { state.x = SHORE - 7; state.z = -2; state.yaw = -Math.PI / 2 + 0.8; state.pitch = 0.05; } if (q.get('shot') === 'in' || q.get('shot') === 'stew') { state.talked = true; state.unlocked.push('harbour'); setPlace('in'); state.x = -199.6; state.z = 2.6; state.yaw = 0.25; state.pitch = -0.12; setGoal(); if (q.get('shot') === 'stew') { state.x = -200.6; state.z = -0.6; state.yaw = 0.1; setTimeout(() => { $('talk').click(); state.step = 1; advance(); }, 400); } } } }, 300);
 }
 function start(saved) { try { if (sessionStorage.getItem('pr-fresh')) { sessionStorage.removeItem('pr-fresh'); saved = {}; } } catch (e) { /* ignore */ } if (!(saved && saved.started)) applySave(loadGame()); loadAll().catch(() => {}); if (saved && saved.started) { Object.assign(state, saved); if (state.place !== 'out' || state.x > SHORE + 24 || state.x < X0 - 1 || Math.abs(state.z) > 9.5) { state.place = 'out'; state.x = 17; state.z = 0.4; state.yaw = Math.PI / 2; state.pitch = 0; } $('start').addEventListener('click', () => { if (state.unlocked.length) { $('jcount').textContent = state.unlocked.length; $('jcount').hidden = false; } }, { once: true }); } requestAnimationFrame(frame); }
 /* ---------- the second street: market, turtle crawl, Jews Street, the law ---------- */

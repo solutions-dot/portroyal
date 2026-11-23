@@ -3,8 +3,10 @@
    (Q.reveal, Q.enter) and its part in a camera scene (Q.films).
    Story people: person(). Background people: crowd(), each a body made for the year and the place (tools/rose-hall/people). */
 import * as THREE from "three";
+import { vessel } from "../../../engine/vessel.js";   /* small open things with a real opening */
+import { motes } from "../../../engine/life.js";   /* dust turning in the candle light */
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, batchStatic } from "./gfx.js";
-import { tree, mule, cart, barrel, hillRing, scatter, surveyPole } from "./period-props.js";
+import { tree, mule, cart, barrel, scatter, surveyPole } from "./period-props.js";
 import * as P from "./props.js";
 import * as W from "./world.js";
 import * as R from "./rosehall.js";
@@ -82,14 +84,6 @@ function fieldWall(Q, x0, z0, x1, z1, h = 1.2, seed = 3) {
   add(Q, W.fieldWall(len, h, seed), cx, cz, 0, alongX ? 0 : Math.PI / 2);
   wall(Q, cx, cz, alongX ? len : 0.7, alongX ? 0.7 : len);
 }
-/* the dry limestone country of the middle of St Ann: pale hills near and far, scrub and rock */
-function hills(Q, seed = 3, near = true) {
-  const far = hillRing(300, 16, 50, { seed, base: [0.36, 0.42, 0.28] });
-  far.traverse((o) => (o.userData.far = true));
-  Q.group.add(far);
-  if (near)
-    for (const [x, z, r, h, s] of [[-95, -70, 46, 30, 1], [70, -110, 60, 38, 2], [120, 20, 50, 30, 3], [-130, 40, 55, 34, 4], [10, 140, 70, 36, 5], [-60, 110, 44, 26, 6]]) add(Q, W.cockpitHill(r, h, seed + s), x, z, -1);
-}
 const DUST = [186, 168, 132],
   DRY = [150, 144, 96];
 
@@ -161,6 +155,45 @@ function tagAt(Q, kind, x, y, z, ry = 0, s = 1) {
   Q.group.add(t);
   return t;
 }
+/* Looks are close-up actions (owner rule 13, engine/lookshot.js): Q.reveal[id](k) takes k from 0 (as found) to 1 (changed) and is called
+   every frame while the camera watches; true and false still mean 1 and 0 (restoring a place, engine/audit-reveal.js). */
+const kOf = (v) => (v === true ? 1 : v === false || v == null ? 0 : Math.max(0, Math.min(1, +v || 0))),
+  smooth = (k) => k * k * (3 - 2 * k);
+/* the LEGEND or RECORD card is set down in its place */
+function drop(t, v) {
+  const k = kOf(v);
+  if (t.userData.y0 === undefined) t.userData.y0 = t.position.y;
+  t.visible = k > 0;
+  t.position.y = t.userData.y0 + (1 - smooth(k)) * 0.35;
+}
+/* a candle's light carried across something: it shows only while the thing is being looked at, gone at both ends */
+function sweep(g, v, a, b, peak = 0.6) {
+  const k = kOf(v);
+  g.visible = k > 0 && k < 1;
+  g.position.set(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k);
+  g.material.opacity = peak * Math.sin(k * Math.PI);
+}
+function glowAt(Q, r, ry = 0, flatDown = false) {
+  const g = R.glowPool(r, 0);
+  if (flatDown) g.rotation.x = -Math.PI / 2;
+  else g.rotation.y = ry;
+  g.visible = false;
+  Q.group.add(g);
+  return g;
+}
+/* the guide points at the thing, once, while you look (not when a place is put back as found) */
+function guidePoints(Q, v, mem) {
+  const k = kOf(v);
+  if (k <= 0 || k >= 1) {
+    if (k <= 0) mem.done = false;
+    return;
+  }
+  if (mem.done) return;
+  mem.done = true;
+  const n = Q.people.find((p) => p.id === "guide" && p.m.visible);
+  if (n) n.ctl.play("Point", true);
+}
+
 /* a flat tiled floor drawn in code: two colours of square */
 const TILES = {};
 function tiles(a, b, repeat) {
@@ -201,7 +234,7 @@ function house({ phone } = {}) {
   Q.floor = "wood";
   Q.indoor = true;
   Q.beds = { room: 0.05, wind: 0.04, owl: 0.3, sea: 0.02 };
-  const LIT = { top: 0x10131c, hor: 0x2a2630, stars: 0.3, fog: [0x0c0b10, 22, 80], sun: [0xffd9a0, 0.22, 6, 10, 6], hemi: [0xffdcae, 0x3a2e30, 1.0], fill: 2.2 },
+  const LIT = { top: 0x10131c, hor: 0x2a2630, stars: 0.3, fog: [0x0c0b10, 22, 80], sun: [0xffd9a0, 0.8, 6, 10, 6], hemi: [0xffdcae, 0xaa8060, 2.6], fill: 1.5 },   /* rule 9: candlelight bounced off the warm floor and rugs reaches faces from below and the side */
     DARK = { ...LIT, hemi: [0xffcf9a, 0x241c20, 0.42], fill: 1.0, sun: [0xffd9a0, 0.08, 6, 10, 6] };
   Q.light = { ...LIT };
   Q.view = { pos: [2.9, 1.7, -4.2], look: [-1.2, 1.5, 2.5] };
@@ -212,7 +245,7 @@ function house({ phone } = {}) {
     mD = solid(0xc2cdc6, 1),
     floor = std(T.plank([104, 58, 38], 10, [10, 4]), 0.55);
   box(30.6, 0.06, 10.6, floor, 0, -0.03, 0, G).name = "terrain";
-  box(30.6, 0.1, 10.6, solid(0xe6dfcc, 1), 0, H + 0.05, 0, G);
+  const ceilM = solid(0xe6dfcc, 1);   /* the ceiling is laid after the stair, round its two wells */
   const WIN = { w: 1.3, h: 2.6, sill: 0.95 };
   /* the outer walls, each room in its own colour */
   W.wallRun(G, [-15.2, -5, -4, -5], H, mD, [2.7, 5.7, 8.7].map((at) => ({ at, ...WIN })), 0.4);
@@ -254,10 +287,47 @@ function house({ phone } = {}) {
   lining(G, -4.8, 4.8, -4.2, "x", -1, H, [[-1.24, 1.24]]);
   lining(G, -4.8, 4.8, -14.8, "x", 1, H);
 
+  /* moonlight from the sea: a pale shaft through each north window, falling across the floor, and dust turning in the candle light under
+     each chandelier. Light only: see-through, drawn once each. */
+  const soft = cv(64, 64, (x, W, H) => {   /* soft at the sides and fading toward the far end */
+      const g = x.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, "rgba(255,255,255,0)");
+      g.addColorStop(0.2, "rgba(255,255,255,1)");
+      g.addColorStop(0.8, "rgba(255,255,255,1)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      x.fillStyle = g;
+      x.fillRect(0, 0, W, H);
+      const f = x.createLinearGradient(0, 0, 0, H);
+      f.addColorStop(0, "rgba(0,0,0,0)");
+      f.addColorStop(1, "rgba(0,0,0,1)");
+      x.globalCompositeOperation = "destination-out";
+      x.fillStyle = f;
+      x.fillRect(0, 0, W, H);
+    }),
+    beamMat = new THREE.MeshBasicMaterial({ color: 0x9fb8e8, map: soft, transparent: true, opacity: 0.15, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }),
+    poolMat = new THREE.MeshBasicMaterial({ color: 0xa8c0ee, map: soft, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending });
+  for (const [x, w] of [[-12.5, 1.3], [-9.5, 1.3], [-6.5, 1.3], [-2.7, 0.9], [2.7, 0.9], [6.5, 1.3], [9.5, 1.3], [12.5, 1.3]]) {
+    const top = 0.95 + 2.6,
+      bot = 0.95,
+      reach = 2.4,
+      geo = new THREE.BufferGeometry();
+    /* a slanted sheet from the window down to the floor, and the patch it lights */
+    geo.setAttribute("position", new THREE.Float32BufferAttribute([-w / 2, top, 0, w / 2, top, 0, w / 2, 0.01, reach + 1.1, -w / 2, 0.01, reach + 1.1, -w / 2, bot, 0, w / 2, bot, 0, w / 2, 0.01, reach * 0.35, -w / 2, 0.01, reach * 0.35], 3));
+    geo.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0.6, 0, 0.6], 2));
+    const beam = mesh(geo, beamMat, x, 0, -4.75, G);
+    beam.userData.noBatch = true;
+    const pool = plane(w * 0.95, reach + 0.75, poolMat, x, 0.012, -4.75 + (reach * 0.35 + reach + 1.1) / 2, G);
+    pool.rotation.x = -Math.PI / 2;
+    pool.rotation.z = Math.PI;   /* bright by the window, fading into the room */
+    pool.userData.noBatch = true;
+  }
+  const dust = [motes(G, { n: 50, box: [-1.4, 1.2, -3.0, 1.4, 3.2, -0.8], seed: 2 }), motes(G, { n: 50, box: [8.1, 1.2, -0.8, 10.9, 3.2, 1.6], seed: 3 }), motes(G, { n: 50, box: [-10.9, 0.9, -2.2, -8.1, 3.2, 3.6], seed: 4 })];
+  Q.tickers.push((t) => dust.forEach((d) => d(t)));
+
   /* --- the entrance hall --- */
   add(Q, W.makeDoor({ w: 1.9, h: 2.9, kind: "six", leaves: 2, color: 0x4a2418, frame: 0xe8e2d0, handle: "knob" }), 0, -4.79, 0, 0);
   const fan = mesh(new THREE.CircleGeometry(0.95, 14, 0, Math.PI), R.nightPane(true), 0, 3.0, -4.77, G);
-  fan.userData.noAudit = true;
   for (let i = 0; i <= 4; i++) {
     const a = (i / 4) * Math.PI,
       bar = box(0.03, 0.95, 0.03, R.WHITE, Math.cos(a) * 0.47, 3.0 + Math.sin(a) * 0.47, -4.76, G);
@@ -267,15 +337,29 @@ function house({ phone } = {}) {
   /* the staircase: foot at z = 0.6, the landing against the south wall */
   const stair = R.grandStair({ W: 2.2, rise: 0.17, tread: 0.28, steps: 10, H });
   add(Q, stair, 0, 0.6);
+  for (const [x, sd] of [[-2.0, 4], [2.0, 6]]) solid1(Q, R.hallPalm(sd, 0.85), x, 2.3, 0.45, 0.45);   /* a potted palm each side of the steps, under the upper flights (owner) */
   Q.walls.push([-2.5, 0.5, 2.5, 5]);
-  for (const s of [-1, 1]) {
-    const hole = plane(1.24, 3.2, flat(0x1c1612), s * 1.8, H - 0.004, 2.0, G);   /* where the upper flights go up out of sight */
-    hole.rotation.x = Math.PI / 2;
-    hole.userData.noAudit = true;
+  /* the ceiling, with an opening over each upper flight, and the stairwell above it: plastered walls going up to the floor above, a gallery
+     rail round the opening and the upper ceiling, dimly lit by the candles below (it was a solid ceiling with two black patches) */
+  const wells = stair.userData.wells.map((w) => ({ ...w, z0: w.z0 + 0.6, z1: w.z1 + 0.6 })), xs = [-15.3, 15.3], zs = [-5.3, 5.3];
+  for (const w of wells) xs.push(w.x0, w.x1), zs.push(w.z0, w.z1);
+  xs.sort((p, q) => p - q); zs.sort((p, q) => p - q);
+  for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < zs.length - 1; j++) {   /* the ceiling in rectangles, leaving the wells open */
+    const cx = (xs[i] + xs[i + 1]) / 2, cz = (zs[j] + zs[j + 1]) / 2, w = xs[i + 1] - xs[i], d = zs[j + 1] - zs[j];
+    if (w < 0.01 || d < 0.01 || wells.some((k) => cx > k.x0 && cx < k.x1 && cz > k.z0 && cz < k.z1)) continue;
+    box(w, 0.1, d, ceilM, cx, H + 0.05, cz, G);
+  }
+  const wellM = solid(0xd9cfb2, 1), UP = 3.4;
+  for (const k of wells) {
+    const cx = (k.x0 + k.x1) / 2, cz = (k.z0 + k.z1) / 2, w = k.x1 - k.x0, d = k.z1 - k.z0;
+    for (const [bx, bz, bw, bd] of [[k.x0 - 0.05, cz, 0.1, d], [k.x1 + 0.05, cz, 0.1, d], [cx, k.z1 + 0.05, w + 0.2, 0.1]]) box(bw, UP, bd, wellM, bx, H + UP / 2, bz, G);   /* the well's sides; the stair goes on out at its front end */
+    box(w + 0.2, 0.1, d + 0.2, ceilM, cx, H + UP + 0.05, cz, G);   /* the ceiling of the floor above */
+    for (const [x0, z0, x1, z1] of [[k.x0, k.z0, k.x0, k.z1], [k.x1, k.z0, k.x1, k.z1]]) box(0.12, 0.06, z1 - z0, R.WHITE, x0, H + 0.03, (z0 + z1) / 2, G);   /* a plain white edge round the opening */
+    box(w, 0.06, 0.12, R.WHITE, cx, H + 0.03, k.z1, G); box(w, 0.06, 0.12, R.WHITE, cx, H + 0.03, k.z0, G);
+    box(w, 0.06, 0.06, R.MAHOG, cx, H + 0.95, k.z1 - 0.05, G);   /* the gallery rail across the back of the opening, upstairs */
   }
   const lw = plane(1.3, 1.9, R.nightPane(false), 0, 3.15, 4.79, G);
   lw.rotation.y = Math.PI;
-  lw.userData.noAudit = true;
   for (const s of [-1, 1]) box(0.07, 2.0, 0.06, R.WHITE, s * 0.68, 3.15, 4.77, G);
   box(1.5, 0.07, 0.06, R.WHITE, 0, 4.16, 4.77, G);
   box(1.56, 0.08, 0.12, R.WHITE, 0, 2.16, 4.75, G);
@@ -297,9 +381,16 @@ function house({ phone } = {}) {
   wall(Q, 0, 0.3, 2.9, 0.34);
   solid1(Q, R.tourSign(["UPSTAIRS", "Annie's Bedroom"], 0.5, 0.3), 3.0, 0.75, 0.4, 0.4, Math.PI);
   const tStair = tagAt(Q, "RECORD", -0.8, 0.2, 0.74, Math.PI),
-    tBed = tagAt(Q, "LEGEND", 3.0, 1.42, 0.72, Math.PI);
-  Q.reveal.stair = (seen) => (tStair.visible = seen);
-  Q.reveal.bedroom = (seen) => (tBed.visible = seen);
+    tBed = tagAt(Q, "LEGEND", 3.0, 0.0, 0.3, Math.PI);   /* on the floor in front of the stand: a card on its top edge would float */
+  const gStair = glowAt(Q, 0.8, Math.PI);
+  Q.reveal.stair = (v) => {   /* a candle carried up the stair, its light climbing the wall at the landing */
+    sweep(gStair, v, [0, 1.0, 4.74], [0, 3.6, 4.74]);
+    drop(tStair, v);
+  };
+  Q.reveal.bedroom = (v) => {   /* the light goes on up the stair the card points to */
+    sweep(gStair, v, [1.2, 2.2, 4.74], [1.8, 3.9, 4.74], 0.5);
+    drop(tBed, v);
+  };
 
   /* --- the eating-room, on the left of the hall --- */
   add(Q, R.rug(6.6, 3.6, "#3a4a3a", "#c8b078"), 9.5, 0.4);
@@ -331,13 +422,22 @@ function house({ phone } = {}) {
   solid1(Q, R.diningChair(), 5.0, 4.3, 0.5, 0.5, Math.PI);
   /* the cup the tour points at: a coffee cup and saucer at the head of the table, and the tour's card beside it */
   const cup = grp();
-  cyl(0.07, 0.05, 0.012, solid(0xf0ece0, 0.4), 0, 0.006, 0, cup, 12);
-  cup.add(R.at(R.lathe([[0.02, 0], [0.035, 0.01], [0.042, 0.055], [0.045, 0.06]], solid(0xf0ece0, 0.4), 10), 0, 0.012, 0));
-  cyl(0.036, 0.036, 0.004, solid(0x2a1a10, 0.3), 0, 0.062, 0, cup, 10);
+  const china = solid(0xf0ece0, 0.3);
+  cup.add(vessel([[0.001, 0], [0.05, 0], [0.068, 0.008], [0.07, 0.012]], { mat: china, wall: 0.003, segments: 20 }));   /* the saucer, a shallow dish */
+  const cupBody = vessel([[0.001, 0], [0.02, 0], [0.024, 0.004], [0.036, 0.016], [0.042, 0.05], [0.045, 0.062]], { mat: china, wall: 0.003, fill: { y: 0.05, mat: solid(0x2a1a10, 0.25) }, segments: 20 });
+  cupBody.position.y = 0.006;
+  cup.add(cupBody);
+  const handle = mesh(new THREE.TorusGeometry(0.014, 0.0035, 6, 12, Math.PI * 1.3), china, 0.047, 0.04, 0, cup);
+  handle.rotation.z = -Math.PI * 0.65;
   add(Q, cup, 7.55, 0.4, 0.762);
   solid1(Q, R.tourSign(["THE COFFEE CUP", "of the first husband"], 0.5, 0.3), 6.7, -0.75, 0.4, 0.4, -Math.PI / 2);
   const tCup = tagAt(Q, "LEGEND", 7.7, 0.762, 0.72, -Math.PI / 2);
-  Q.reveal.coffee = (seen) => (tCup.visible = seen);
+  Q.reveal.coffee = (v) => {   /* the cup is lifted a little, turned on its saucer and set down */
+    const k = kOf(v);
+    cup.position.y = 0.762 + Math.sin(k * Math.PI) * 0.06;
+    cup.rotation.y = smooth(k) * Math.PI * 0.8;
+    drop(tCup, v);
+  };
 
   /* --- the drawing-room, on the right of the hall --- */
   add(Q, R.rug(6.4, 4.2, "#3a4a5a", "#d8c9a0"), -9.5, -0.9);
@@ -351,8 +451,8 @@ function house({ phone } = {}) {
   add(Q, R.candlestick("d"), -4.6, 3.55, 0.85);
   add(Q, R.giltMirror(1.2, 1.9), -4.22, -2.9, 2.3, -Math.PI / 2);
   for (const z of [-4.0, -1.8]) add(Q, R.sconce("d"), -4.23, z, 2.1, -Math.PI / 2);
-  solid1(Q, R.roundTable(0.36, 0.7), -13.9, -3.0, 0.8, 0.8);
-  add(Q, R.candelabrum("d", 3), -13.9, -3.0, 0.7);
+  solid1(Q, R.roundTable(0.36, 0.7), -14.2, -2.6, 0.8, 0.8);   /* clear of the armchair: the corner behind them can be reached */
+  add(Q, R.candelabrum("d", 3), -14.2, -2.6, 0.7);
   /* the west wall: three tall paintings of men. Hope Waddell saw "three or four full-size pictures" in the empty house in 1830. */
   const pics = [];
   [[-2.7, "#2f3a4a", 1], [0, "#4a2a24", 2], [2.7, "#3a3a2a", 3]].forEach(([z, coat, seed]) => pics.push(add(Q, R.portrait(1.2, 2.1, coat, seed), -14.78, z, 2.2, Math.PI / 2)));
@@ -389,28 +489,48 @@ function house({ phone } = {}) {
     relit = false,
     picsSeen = false,
     filming = false;
+  let picK = 0,
+    snuffK = 0;
+  const mix = (a, b, k) => a + (b - a) * k;
   const dress = () => {
-    const dark = (snuffed && !relit) || filming;
-    sets.d.userData.on(!dark);
-    sets.p.userData.on(picsSeen && !dark);
-    for (const p of picGlow) p.visible = picsSeen && !dark;
-    for (const p of pics) p.userData.show(picsSeen && !dark);
-    Object.assign(Q.light, dark ? DARK : LIT);
-    if (lamp) lamp.intensity = dark ? 9 : 0;
+    const dark = (snuffed && !relit) || filming,
+      dim = dark ? 1 : relit ? 0 : snuffK;   /* part way through putting the candles out */
+    sets.d.userData.on(dim < 0.6);
+    sets.p.userData.on(picsSeen && dim < 0.3);
+    for (const p of picGlow) {
+      p.visible = picsSeen && !dark;
+      p.material.opacity = 0.5 * picK;
+    }
+    for (const p of pics) {
+      p.userData.show(picsSeen && !dark);
+      p.userData.light?.(dark ? 0 : picK);
+    }
+    Object.assign(Q.light, dim >= 1 ? DARK : dim <= 0 ? LIT : { ...LIT, hemi: [LIT.hemi[0], LIT.hemi[1], mix(LIT.hemi[2], DARK.hemi[2], dim)], fill: mix(LIT.fill, DARK.fill, dim), sun: [LIT.sun[0], mix(LIT.sun[1], DARK.sun[1], dim), ...LIT.sun.slice(2)] });
+    if (lamp) lamp.intensity = 9 * dim;
     Q.relight?.();
   };
   /* the hall window (Hakewill's sea view) and the drawing-room mirror the modern tours talk about */
   const tWin = tagAt(Q, "RECORD", -2.0, 0.0, -4.5, 0, 1.2),
     tMirror = tagAt(Q, "LEGEND", -4.4, 0.0, -2.0, -Math.PI / 2, 1.2);
-  Q.reveal.window = (seen) => (tWin.visible = seen);
-  Q.reveal.mirror = (seen) => (tMirror.visible = seen);
-  Q.reveal.portraits = (seen) => {
-    picsSeen = seen;
-    tPic.visible = seen;
+  const gWin = glowAt(Q, 0.9, 0, true),
+    gMirror = glowAt(Q, 0.45, -Math.PI / 2);
+  Q.reveal.window = (v) => {   /* moonlight from the sea window slides across the floor as a cloud passes */
+    sweep(gWin, v, [-3.6, 0.02, -3.6], [-1.8, 0.02, -3.4], 0.35);
+    drop(tWin, v);
+  };
+  Q.reveal.mirror = (v) => {   /* your candle passes across the glass: only your own light looks back */
+    sweep(gMirror, v, [-4.2, 2.3, -3.4], [-4.2, 2.3, -2.4], 0.7);
+    drop(tMirror, v);
+  };
+  Q.reveal.portraits = (v) => {   /* the candle is held up and the three men come out of the dark */
+    picK = kOf(v);
+    picsSeen = picK > 0;
+    drop(tPic, v);
     dress();
   };
-  Q.reveal.snuff = (seen) => {
-    snuffed = seen;
+  Q.reveal.snuff = (v) => {   /* the candles go out one set after another and the room falls dark */
+    snuffK = kOf(v);
+    snuffed = snuffK >= 1;
     dress();
   };
   dress();
@@ -441,7 +561,7 @@ function house({ phone } = {}) {
   };
   Q.tickers.push((t) => {
     const k = 0.3 + Math.sin(t * 11) * 0.012 + Math.sin(t * 5.3) * 0.01;
-    for (const s of Object.values(sets)) s.material.size = k;
+    void k;   /* the candle sets (engine/flame.js) flicker by themselves; they were points whose size was set here */
     if (lamp && lamp.intensity && !filming) lamp.intensity = 9 + Math.sin(t * 9.1) * 0.8 + Math.sin(t * 4.7) * 0.6;
   });
 
@@ -557,12 +677,19 @@ function church() {
   note.rotation.order = "YXZ";
   note.rotation.x = 0.45;
   const tMon = tagAt(Q, "RECORD", -2.75, 0.0, -10.5, 0, 1.6),
-    tNote = tagAt(Q, "RECORD", -5.7, 1.3, -8.24, Math.PI / 2);
-  Q.reveal.monument = (seen) => {
-    tMon.visible = seen;
-    lampGlow.visible = seen;
+    tNote = tagAt(Q, "RECORD", -5.25, 0.0, -8.6, Math.PI / 2);
+  Q.reveal.monument = (v) => {   /* the lamp over the monument is turned up, and its light comes onto the marble */
+    const k = kOf(v);
+    lampGlow.visible = k > 0;
+    lampGlow.material.opacity = 0.35 * smooth(k);
+    drop(tMon, v);
   };
-  Q.reveal.husbands = (seen) => (tNote.visible = seen);
+  Q.reveal.husbands = (v) => {   /* the note is lifted off the desk to read, then laid back */
+    const k = kOf(v);
+    note.position.y = 1.165 + Math.sin(k * Math.PI) * 0.12;
+    note.rotation.x = 0.45 - Math.sin(k * Math.PI) * 0.35;
+    drop(tNote, v);
+  };
   const tWin = tagAt(Q, "RECORD", 1.3, 0.0, -9.4, 0, 1.4);
   Q.reveal.eastwin = (seen) => (tWin.visible = seen);
   R.flameSets(G);
@@ -574,6 +701,17 @@ function church() {
   Q.walls.push([-6.2, -7.8, -0.8, -7.4], [0.8, -7.8, 6.2, -7.4]);
   Q.keepOff = [{ at: [-4.0, -9.5], r: 1.0 }, { at: [-4.9, -8.6], r: 0.8 }, { at: [0, -7.6], r: 0.9 }, { at: [0.9, -8.7], r: 0.8 }];
   R.ashlarFit(G);
+  /* the walk up the church to the monument (FILMS.aisle): the camera goes up the aisle between the pews and over the open middle of the
+     rail; the monument's lamp glow comes up as you reach it, and goes back to what you have read when the scene ends */
+  Q.films.aisle = (t) => {
+    if (t < 0) {
+      lampGlow.visible = tMon.visible;
+      lampGlow.material.opacity = 0.35;
+      return;
+    }
+    lampGlow.visible = t > 18;
+    lampGlow.material.opacity = 0.35 * Math.min(1, Math.max(0, (t - 18) / 3));
+  };
   Q.enter = staging(Q, {}, { cousin: [30, 39] });
   return Q;
 }
@@ -624,7 +762,7 @@ function archive() {
   add(Q, R.wallClock(), -7.84, 3.4, 2.5, Math.PI / 2);
   add(Q, P.ledger(), -6.3, 0.6, 1.07, 0.3);
   add(Q, R.archiveBox(""), -6.3, -2.6, 1.07, Math.PI / 2);
-  cyl(0.05, 0.06, 0.1, solid(0x486573, 0.6), -6.3, 1.12, -0.6, G, 10);
+  add(Q, vessel([[0.001, 0], [0.05, 0], [0.052, 0.004], [0.06, 0.1]], { mat: solid(0x486573, 0.6), inner: solid(0x23323a, 0.8), wall: 0.004 }), -6.3, -0.6, 1.07);   /* a pencil pot, open at the top */
   for (let i = 0; i < 4; i++) cyl(0.006, 0.006, 0.17, solid([0xd9a03a, 0x8a1f24][i % 2], 0.6), -6.3 + (i - 1.5) * 0.015, 1.2, -0.6 + (i % 2) * 0.015, G, 5);
   for (let i = 0; i < 3; i++) solid1(Q, R.shelfBay(1.8, 2.5, i + 7), -5.0 + i * 1.9, 5.12, 1.9, 0.5, Math.PI);
   /* table A: Annie Palmer's four papers, each on its rest under a sheet of tissue until you read it */
@@ -642,11 +780,12 @@ function archive() {
     add(Q, R.bookRest(cover, title), x, -0.6, 0.765, Math.PI);
     const tissue = box(0.5, 0.012, 0.36, solid(0xf8f6ee, 1), x, 0.9, -0.6, G);
     tissue.userData.noBatch = true;
-    tissue.userData.noAudit = true;
     const t = tagAt(Q, kind, x, 0.765, -0.28, Math.PI);
-    Q.reveal[id] = (seen) => {
-      tissue.visible = !seen;
-      t.visible = seen;
+    Q.reveal[id] = (v) => {   /* the tissue is drawn back off the paper */
+      const k = kOf(v);
+      tissue.visible = k < 1;
+      tissue.position.set(x + smooth(k) * 0.42, 0.9 + Math.sin(k * Math.PI) * 0.05, -0.6 + smooth(k) * 0.1);
+      drop(t, v);
     };
   }
   for (const x of [-4.1, -2.8, -1.5, -0.2, 4.4, 5.6]) add(Q, R.officeChair(), x, -1.5, 0, 0);
@@ -669,13 +808,49 @@ function archive() {
     jr.visible = seen;
     tJr.visible = seen;
   };
+  /* the book opened, page by page (FILMS.pages). Each page gives only what the Rose Hall Journal gives (Naylor 2022; docs/games/rose-hall.md):
+     a name and the words the book puts beside it. null is a row of writing too small to read: the other names. */
+  const ledger = add(
+    Q,
+    R.openLedger([
+      [[null, null, null, null, null, null, null, null, null, null, null, null, null, null], [["Celia", "Grasscutter"], "weakly", null, ["Cecelia", "Attending Young Children"], null, ["Mary James", "G.H. Attendant"], null, null, null, null, null]],
+      [[["Dorinda", "Hospital Attendant and Midwife"], null, ["George Stennet", "Head Driver"], ["Aaron", "Head Penkeeper"], ["Adonis", "Head Cooper"], null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null]],
+      [["21 April 1830", "Dorrinda the midwife being", "orderd to the field for general", "neglect in the performance of", "her duty thot proper to abscond.", null, null, null, null, null, null, null], [["1823", "Archey"], "sent to Falmouth Workhouse", "for punishment", null, ["1826", "Archey"], "transported", null, null, null, null, null]],
+      [[["Hercules"], null, null, ["Doshy"], null, null, ["Hercules"], null, null, null, ["Doshy"], null, null, null], [["Osnaburg"], null, null, ["Peniston"], null, null, null, null, null, null, null, null, null, null]],
+      [[null, null, null, null, null, null, null, null, null, null, null, null, null, null], [null, null, null, null, null, null, null, null, null, null, null, null, null, null]],
+    ]),
+    0.5,
+    -0.72,
+    0.766,
+  );
+  ledger.visible = false;
+  const TURNS = [14.5, 24.5, 35, 44];
+  let jrWas = null;
+  Q.films.pages = (t) => {
+    if (t < 0) {
+      ledger.visible = false;
+      if (jrWas !== null) jr.visible = tJr.visible = jrWas;
+      jrWas = null;
+      return;
+    }
+    if (jrWas === null) jrWas = jr.visible;
+    ledger.visible = true;
+    jr.visible = tJr.visible = false;
+    let k = 0;
+    for (const at of TURNS) k += Math.max(0, Math.min(1, (t - at) / 1.4));
+    ledger.userData.turn(k);
+  };
   /* the card catalogue, a case of maps, plants */
   solid1(Q, R.catalogue(6, 7), 7.52, -2.9, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.catalogue(6, 7), 7.52, -1.5, 1.3, 0.6, -Math.PI / 2);
   solid1(Q, R.displayCase(1.5, 0.7), 7.3, 1.6, 1.5, 0.75, Math.PI / 2);
-  add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
+  add(Q, P.sheet("SLAVE REGISTER", 0.5, 0.4), 7.3, 1.6, 0.91, -Math.PI / 2);   /* the register in the case: Annie Palmer held four people in 1829 */
   const tReg = tagAt(Q, "RECORD", 6.85, 0.0, 2.3, Math.PI / 2, 1.2);
-  Q.reveal.register = (seen) => (tReg.visible = seen);
+  const gReg = glowAt(Q, 0.4, 0, true);
+  Q.reveal.register = (v) => {   /* the case light is switched on over the page, then off */
+    sweep(gReg, v, [7.3, 0.93, 1.3], [7.3, 0.93, 1.9], 0.5);
+    drop(tReg, v);
+  };
   solid1(Q, R.potPlant(3, 1.1), -7.2, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(5, 1.0), 7.3, 4.6, 0.6, 0.6);
   solid1(Q, R.potPlant(8, 1.0), 7.3, -4.7, 0.6, 0.6);
@@ -716,42 +891,66 @@ function estate() {
   shore.rotation.x = -Math.PI / 2;
   shore.name = "terrain";
   createSea(G, { kind: "caribbean", y: -14.9, at: [0, 290], size: 320, swell: 0.6 });
-  const far = hillRing(330, 16, 56, { seed: 31, base: [0.24, 0.4, 0.3] });
-  far.traverse((o) => {
-    o.userData.far = true;
-    if (o.isMesh && o.position.z > 60) o.visible = false;   /* no hills out at sea */
-  });
-  G.add(far);
-  for (const [x, z, r, h, s] of [[-120, -150, 80, 46, 1], [90, -170, 90, 54, 2], [-10, -210, 110, 60, 3], [170, -70, 60, 34, 4], [-180, -50, 70, 38, 5]]) add(Q, W.cockpitHill(r, h, s, [0.26, 0.42, 0.3]), x, z, -1);
+  /* the far hills are the engine's ridges (engine/ridges.js, made in main.js): they go pale into the haze inland and leave the sea view clear */
   /* the great house on its hill, a stone terrace under it */
   const hillH = (x, z) => {
       const k = Math.max(0, Math.min(1, (Math.hypot(x, z + 88) - 27) / 40));
       return 11 * (1 - k * k * (3 - 2 * k));
     },
-    hg = new THREE.PlaneGeometry(140, 140, 28, 28);
+    hg = new THREE.PlaneGeometry(140, 140, 56, 56);
   hg.rotateX(-Math.PI / 2);
   hg.translate(0, 0, -88);
   {
+    /* the hill is lawn like the ground below it: the same grass picture, a little uneven in tone, lighter on the crown and darker in its folds */
     const pos = hg.attributes.position,
       col = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i),
         z = pos.getZ(i),
-        road = Math.abs(x) < 2.6 && z > -74,
-        v = 0.9 + ((i * 7919) % 13) / 60;
-      pos.setY(i, hillH(x, z) - 0.03);
-      col.set(road ? [0.82 * v, 0.78 * v, 0.66 * v] : [0.36 * v, 0.52 * v, 0.27 * v], i * 3);
+        y = hillH(x, z),
+        v = 0.82 + 0.16 * Math.sin(x * 0.21 + Math.cos(z * 0.17) * 2) * Math.cos(z * 0.13 - x * 0.05) + (y / 11) * 0.1;
+      pos.setY(i, y - 0.03);
+      col.set([v, v, v * 0.96], i * 3);
     }
     hg.setAttribute("color", new THREE.BufferAttribute(col, 3));
     hg.computeVertexNormals();
+    const uv = hg.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 14, uv.getY(i) * 14);
   }
-  const hill = mesh(hg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 }), 0, 0, 0, G);
+  const hillGrass = std(T.grass([1, 1], [98, 134, 70]));
+  const hill = mesh(hg, new THREE.MeshStandardMaterial({ map: hillGrass.map, vertexColors: true, roughness: 1 }), 0, 0, 0, G);
   hill.name = "terrain";
+  /* the drive goes on up the hill to the terrace: a strip of the same marl laid on the slope */
+  {
+    const n = 40,
+      z0 = -18,
+      z1 = -72,
+      wd = 3.2,
+      v = [],
+      t = [],
+      idx = [];
+    for (let i = 0; i <= n; i++) {
+      const z = z0 + ((z1 - z0) * i) / n;
+      for (const s of [-1, 1]) {
+        v.push((s * wd) / 2, hillH((s * wd) / 2, z) + 0.06, z);
+        t.push(s < 0 ? 0 : 1, (i / n) * 12);
+      }
+      if (i < n) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);   /* facing up */
+    }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+    dg.setAttribute("uv", new THREE.Float32BufferAttribute(t, 2));
+    dg.setIndex(idx);
+    dg.computeVertexNormals();
+    const drive = mesh(dg, new THREE.MeshStandardMaterial({ map: std(T.dirt([1, 1], [214, 204, 176])).map, roughness: 1, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }), 0, 0, 0, G);   /* drawn over the hill's own faces where they bulge */
+    drive.name = "terrain";
+    drive.userData.far = true;
+  }
   hill.userData.far = true;
   const terrace = W.stoneBox(46, 3.6, 26, W.LIME, 0, 1.8, 0);
   terrace.userData.far = true;
-  add(Q, terrace, 0, -85, 8);
-  add(Q, R.greatHouse(), 0, -87, 11.6);
+  add(Q, terrace, 0, -85, 9.8);   /* its top at 11.6, under the house (add() sets the centre: at 8 the house stood 1.8 m over it) */
+  const greatHouse = add(Q, R.greatHouse(), 0, -87, 11.6);
   for (const [x, z, h, s] of [[-30, -78, 9, 71], [31, -80, 10, 72], [-38, -66, 8, 73], [40, -64, 8, 74]]) add(Q, tree(h, s, 1), x, z, hillH(x, z) - 0.2);
   for (const [x, z, s] of [[-26, -70, 81], [27, -72, 82], [-20, -60, 83], [22, -58, 84]]) add(Q, palm(9, s), x, z, hillH(x, z) - 0.2);
   /* the drive: pale marl from the gate up toward the house */
@@ -788,11 +987,15 @@ function estate() {
   add(Q, R.caneField(30, 16, 7), -40, 4);
   for (const [x, z, h, s] of [[-19.5, -3.5, 8.5, 51], [20.2, 7.6, 8, 52], [-10.5, 9.6, 7, 53], [7.6, -10.4, 7.5, 54]]) solid1(Q, tree(h, s, 1), x, z, 1.0, 1.0);
   for (const o of scatter(G, (i) => tree(6 + (i % 4), i + 60, 1), 22, [-110, -60, 110, -16], [[-27, -100, 27, -14], [-74, -46, -30, 2], [30, -50, 78, -10]], 31)) o.position.y = hillH(o.position.x, o.position.z) - 0.2;
-  scatter(G, (i) => bush(i + 20, 0.9 + (i % 3) * 0.2), 16, [-23, -14, 23, 13], [[-21, -11, 21, 12]], 5);
+  scatter(G, (i) => bush(i + 20, 0.9 + (i % 3) * 0.2), 16, [-23, -14, 23, 13], [[-21, -11, 21, 12], [-2.6, -27, 2.6, 20]], 5);   /* none on the drive */
   /* the board of names, by the drive */
   solid1(Q, R.nameBoard("ROSE HALL  1817 TO 1832", ["CELIA", "DORINDA", "CECELIA", "MARY JAMES", "GEORGE STENNET", "AARON", "ADONIS", "HERCULES", "DOSHY", "ARCHEY"], "and 198 more. 208 names in all."), -5.6, -5.6, 3.5, 0.5, 0.25);
   const tNames = tagAt(Q, "RECORD", -4.2, 0.0, -4.4, 0.25, 2);
-  Q.reveal.names = (seen) => (tNames.visible = seen);
+  const pointed = {};
+  Q.reveal.names = (v) => {
+    guidePoints(Q, v, (pointed.names ||= {}));
+    drop(tNames, v);
+  };
   /* six markers on the lawn, each with a name or two from the estate's book */
   const MARK = { celia: [-13.5, -6.4, "CELIA", 0.5], dorinda: [-16.5, 1.2, "DORINDA", 1.0], cecelia: [-12.6, 7.4, "CECELIA|MARY JAMES", 2.2], heads: [9.4, 8.2, "GEORGE STENNET|AARON|ADONIS", -2.3], runaways: [15.8, 3.0, "HERCULES|DOSHY", -1.3], archey: [9.6, -0.9, "ARCHEY", -0.5] };
   Q.markSpots = {};
@@ -802,24 +1005,45 @@ function estate() {
     pad.rotation.x = -Math.PI / 2;
     pad.name = "terrain";
     const t = tagAt(Q, "RECORD", x + Math.sin(ry) * 0.5, 0.0, z + Math.cos(ry) * 0.5, ry, 1.6);
-    Q.reveal[id] = (seen) => (t.visible = seen);
+    /* you lay a flower from the basket at the foot of the stone */
+    const bloom = add(Q, flowers(id.length + 40), x + Math.sin(ry) * 0.6 + Math.cos(ry) * 0.38, z + Math.cos(ry) * 0.6 - Math.sin(ry) * 0.38);   /* beside the card, not on it */
+    bloom.scale.setScalar(0.7);
+    R.still(bloom);
+    Q.reveal[id] = (v) => {
+      const k = kOf(v);
+      bloom.visible = k > 0;
+      bloom.position.y = (1 - smooth(k)) * 0.35;
+      drop(t, v);
+    };
     Q.markSpots[id] = [+(x + Math.sin(ry) * 1.35).toFixed(2), +(z + Math.cos(ry) * 1.35).toFixed(2)];
   }
   /* what the tour shows as a tomb, a card about who built the house, a basket of flowers, seats */
   solid1(Q, R.boxTomb(), -19, 8.4, 2.6, 1.5, 0.3);
   solid1(Q, R.tourSign(["THE TOMB", "of Annie Palmer"], 0.5, 0.3), -17.0, 9.6, 0.4, 0.4, 1.1);
-  const tTomb = tagAt(Q, "LEGEND", -17.0, 1.42, 9.6, 1.1);
-  Q.reveal.tomb = (seen) => (tTomb.visible = seen);
+  const tTomb = tagAt(Q, "LEGEND", -16.6, 0.0, 9.8, 1.1);
+  Q.reveal.tomb = (v) => {
+    guidePoints(Q, v, (pointed.tomb ||= {}));
+    drop(tTomb, v);
+  };
   solid1(Q, R.tourSign(["ROSE HALL", "Who built it?"], 0.5, 0.3), 3.2, -8.6, 0.4, 0.4, 0.2);
-  const tBuilt = tagAt(Q, "RECORD", 3.2, 1.42, -8.6, 0.2);
-  Q.reveal.built = (seen) => (tBuilt.visible = seen);
+  const tBuilt = tagAt(Q, "RECORD", 3.29, 0.0, -8.16, 0.2);
+  Q.reveal.built = (v) => {
+    guidePoints(Q, v, (pointed.built ||= {}));
+    drop(tBuilt, v);
+  };
   /* two more cards on stands: the clothing lists of the estate book, by the board; rebellion and freedom, by the works */
   solid1(Q, R.tourSign(["CLOTHING", "from the estate book"], 0.5, 0.3), -8.2, -4.5, 0.4, 0.4, 0.2);
-  const tCloth = tagAt(Q, "RECORD", -8.2, 1.42, -4.5, 0.2);
-  Q.reveal.clothes = (seen) => (tCloth.visible = seen);
+  const tCloth = tagAt(Q, "RECORD", -8.11, 0.0, -4.06, 0.2);
+  Q.reveal.clothes = (v) => {
+    guidePoints(Q, v, (pointed.clothes ||= {}));
+    drop(tCloth, v);
+  };
   solid1(Q, R.tourSign(["FREEDOM", "1831 to 1838"], 0.5, 0.3), 5.9, -8.4, 0.4, 0.4, 0.0);
-  const tFree = tagAt(Q, "RECORD", 5.9, 1.42, -8.4, 0.0);
-  Q.reveal.freedom = (seen) => (tFree.visible = seen);
+  const tFree = tagAt(Q, "RECORD", 5.9, 0.0, -7.95, 0.0);
+  Q.reveal.freedom = (v) => {
+    guidePoints(Q, v, (pointed.freedom ||= {}));
+    drop(tFree, v);
+  };
   solid1(Q, R.flowerBasket(), -2.9, 3.4, 0.7, 0.6, 0.3);
   solid1(Q, W.bench(2), 4.6, 4.4, 2.1, 0.5, -0.6);
   solid1(Q, W.bench(2), -8.4, -9.6, 2.1, 0.5, 0.2);
@@ -832,6 +1056,28 @@ function estate() {
   crowd(Q, "rh_youth", 18.4, -1.6, 0, { kind: "wander", pts: [[18.4, -1.6], [13.2, -2.6], [12.6, 5.6], [18.6, 5.2]], pause: [3, 6] });
   Q.keepOff = [{ at: [-5.1, -3.6], r: 1.2 }, { at: [-15.8, 10.1], r: 1 }, { at: [3.5, -7.2], r: 1 }, { at: [-2.6, 4.6], r: 1 }, { at: [-8.0, -3.3], r: 1 }, { at: [5.8, -7.1], r: 1 }, ...Object.values(Q.markSpots).map((at) => ({ at, r: 1 }))];
   Q.enter = staging(Q, { guide: { 50: [-3.4, -3.2, -5.6, -5.6], 60: [-15.0, 6.2, -19, 8.4], 62: [1.6, -6.0, 3.2, -8.6] } }, { cousin: [50, 69] });
+  /* the night tour's walk up the drive (FILMS.arrive): the same estate under the moon, the house lit from inside, nobody about; the
+     day comes back when the scene ends */
+  const DAYLIGHT = { ...Q.light },
+    NIGHT = { top: 0x0a0f1e, hor: 0x262b3e, stars: 0.6, moon: 1, fog: [0x0b0e18, 60, 520], sun: [0xa8bce0, 0.5, -40, 70, 50], hemi: [0x8090c4, 0x1a1e18, 0.7], fill: 0.7 };
+  let night = false;
+  Q.films.arrive = (t) => {
+    if (t < 0) {
+      if (!night) return;
+      night = false;
+      Q.light = { ...DAYLIGHT };
+      greatHouse.userData.night(false);
+      for (const n of Q.extras) n.m.visible = true;
+      Q.relight?.();
+      return;
+    }
+    if (night) return;
+    night = true;
+    Q.light = { ...NIGHT };
+    greatHouse.userData.night(true);
+    for (const n of Q.extras) n.m.visible = false;
+    Q.relight?.();
+  };
   return Q;
 }
 

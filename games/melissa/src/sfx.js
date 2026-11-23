@@ -1,5 +1,5 @@
 /* games/melissa/src/sfx.js: the weather's and the village's sounds, made in code on top of engine/audio.js (no audio files).
-   Beds (always running, we only turn them up and down): wind, a thin howl, a deep roar, rain, a rattling roof, a generator, a helicopter far off, a chainsaw, a hymn, crickets.
+   Beds (always running, we only turn them up and down): wind, a thin howl, a deep roar, rain, a rattling roof, a generator, a helicopter far off, a chainsaw, a hymn.
    One-shots: a zinc sheet banging, a tree cracking, a roof groaning, a gust, hammering, a radio being tuned, a phone, a bell. */
 import { AU, out, tone, noiseHit, chan, noiseSrc, setG } from '../../../engine/audio.js';
 
@@ -31,21 +31,22 @@ export function initBeds() {
   { const g = c.createGain(), lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; g.gain.value = 0; lp.connect(g); g.connect(AU.master); const oscs = [];
     for (const f of [146.8, 220, 293.7, 369.99]) for (const det of [-5, 6]) { const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.detune.value = det; const og = c.createGain(); og.gain.value = 0.2; o.connect(og); og.connect(lp); o.start(); oscs.push(o); }
     B.hymn = g; B.hymnOscs = oscs; B.hymnT = 0; }
-  /* crickets */
-  { const co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), cl = c.createGain(); co.frequency.value = 4300; ch.type = 'square'; ch.frequency.value = 24; chg.gain.value = 0.5; cg.gain.value = 0.5; ch.connect(chg); chg.connect(cg.gain); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); co.start(); ch.start(); B.cricket = cl; }
-  B.levels = {}; B.scale = { wind: 0.5, howl: 0.09, roar: 0.9, rain: 0.16, rain2: 0.2, rattle: 0.12, gen: 0.06, heli: 0.45, saw: 0.15, hymn: 0.05, cricket: 0.5 };
+  /* crickets: the engine's bed (engine/audio.js AU.ch.cricket); this game's own copy was never turned up */
+  B.levels = {}; B.scale = { wind: 0.5, howl: 0.09, roar: 0.9, rain: 0.16, rain2: 0.2, rattle: 0.12, gen: 0.06, heli: 0.45, saw: 0.15, hymn: 0.05 };
 }
 export function setBeds(l, tc = 0.4) {
   if (!AU.ctx || !B.ok) return; const lv = { ...l }; if (lv.rain !== undefined && lv.rain2 === undefined) lv.rain2 = lv.rain;
-  for (const k of ['wind', 'howl', 'roar', 'rain', 'rain2', 'rattle', 'gen', 'heli', 'saw', 'hymn', 'cricket']) { const v = (lv[k] || 0) * (B.scale[k] || 1); if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } }
+  for (const k of ['wind', 'howl', 'roar', 'rain', 'rain2', 'rattle', 'gen', 'heli', 'saw', 'hymn']) { const v = (lv[k] || 0) * (B.scale[k] || 1); if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } }
 }
-export function hush(tc = 0.15) { setBeds({}, tc); for (const k of ['sea', 'surf', 'wind', 'crowd', 'room']) if (AU.ch[k]) setG(AU.ch[k], 0, tc); }
+export function hush(tc = 0.15) { setBeds({}, tc); for (const k of ['sea', 'surf', 'wind', 'crowd', 'room', 'traffic', 'cricket']) if (AU.ch[k]) setG(AU.ch[k], 0, tc); }
 /* the hymn walks slowly through four chords; call from the loop while it plays */
 export function hymnTick(t) { if (!B.ok || !AU.ctx || t < (B.hymnT || 0)) return; B.hymnT = t + 4.2; const chords = [[146.8, 220, 293.7, 369.99], [130.8, 196, 261.6, 329.6], [174.6, 220, 261.6, 349.2], [146.8, 220, 293.7, 369.99]]; B.hymnI = ((B.hymnI || 0) + 1) % 4; const ch = chords[B.hymnI]; B.hymnOscs.forEach((o, i) => o.frequency.setTargetAtTime(ch[(i / 2) | 0], AU.ctx.currentTime, 0.5)); }
 export function genPitch(f) { if (B.ok && B.genO) B.genO.frequency.setTargetAtTime(f, AU.ctx.currentTime, 0.4); }
 
 /* ---------- one-shots ---------- */
-export function zincBang(vol = 1) { if (!live()) return; const p = Math.random() * 1.4 - 0.7, k = 2.2 * vol; noiseHit(1900, 1.6, 0.6, 0.28 * k, p); noiseHit(900, 2, 0.8, 0.2 * k, p, 0.03); tone(170, 70, 0.5, 'triangle', 0.18 * k, p); for (let i = 0; i < 4; i++) noiseHit(2400 + Math.random() * 1500, 4, 0.12, 0.08 * k, p, 0.1 + i * 0.09); }
+/* a sheet of zinc banging: loud but not painful (22 November 2026: every part was times 2.2; now the sharp top, the 1.9 kHz slap and the
+   rattles, is times 1.4 and the body, the 900 Hz clang and the low thud, times 2.0, so it still stands out (5 dB) over the storm, ?test=sound) */
+export function zincBang(vol = 1) { if (!live()) return; const p = Math.random() * 1.4 - 0.7, hi = 1.4 * vol, k = 2.0 * vol; noiseHit(1900, 1.6, 0.6, 0.28 * hi, p); noiseHit(900, 2, 0.8, 0.2 * k, p, 0.03); tone(170, 70, 0.5, 'triangle', 0.18 * k, p); for (let i = 0; i < 4; i++) noiseHit(2400 + Math.random() * 1500, 4, 0.12, 0.08 * hi, p, 0.1 + i * 0.09); }
 export function treeCrack(vol = 1) { if (!live()) return; noiseHit(500, 0.8, 0.9, 0.3 * vol, -0.3); noiseHit(1800, 3, 0.15, 0.25 * vol, -0.3); tone(90, 28, 1.3, 'sine', 0.4 * vol, -0.3, 0.2); noiseHit(300, 1, 1.4, 0.22 * vol, -0.3, 0.5); }
 /* timber groaning: a low saw bent upward through a narrow band, with a fast shiver in its loudness. `at` is the delay in seconds. (engine shipCreak is too quiet to carry over a storm, so this one is our own.) */
 function creak(vol, at) { const c = AU.ctx, t0 = c.currentTime + 0.03 + at, o = c.createOscillator(), g = c.createGain(), bp = c.createBiquadFilter(), d = out(0.5 + Math.random() * 0.4), dur = 0.7 + Math.random() * 0.7, f = 70 + Math.random() * 50, sh = c.createOscillator(), sg = c.createGain();

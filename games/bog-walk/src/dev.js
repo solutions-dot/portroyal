@@ -1,9 +1,10 @@
 import { gripTick } from '../../../engine/grip.js';
-import { contentsOverlap } from '../../../engine/ui-audit.js';
+import { contentsOverlap, buttonCutOff } from '../../../engine/ui-audit.js';
 /* games/bog-walk/src/dev.js: test views, the automatic checks and the scripted playthrough. Dev builds only: main.js loads this file from code that runs
    only when __DEV__ is true, so the public build leaves it out (node tools/build.mjs bog-walk --dev to include it). See docs/TESTING.md and docs/games/bog-walk.md.
    Every check writes its lines to #autolog and its count of problems to the page title (AUDIT n, HELD n, LAYOUT n, RESUME n); every one must report 0.
    The playthrough (?auto=all, ?auto=ch0 ... ch5, add &one to stop after one chapter; ?auto=1, 2, 3 for the night alone) ends with "AUTO OK" or "AUTO FAIL". */
+import { auditReveals } from '../../../engine/audit-reveal.js';
 export function dev(D) {
   const { THREE, q, $, S, N, T, PL, hand, camera } = D;
   const errs = []; addEventListener('error', (e) => { errs.push(e.message + ' @' + e.lineno); document.body.dataset.err = errs.join(' | '); });
@@ -48,7 +49,7 @@ export function dev(D) {
     const scrolls = (e) => { for (let p = e.parentElement; p; p = p.parentElement) { const cs = getComputedStyle(p); if (/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 1) return true; } return false; };
     for (const e of els) { const r = box(e), nm = e.id || e.tagName.toLowerCase() + ' "' + e.textContent.trim().slice(0, 24) + '"';
       if (r.left < -1 || r.right > W + 1) out.push(`${name}: ${nm} runs off the side`); if ((r.top < -1 || r.bottom > H + 1) && !scrolls(e)) out.push(`${name}: ${nm} is off the screen`);
-      if (e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 2) out.push(`${name}: ${nm} is cut off`); }
+      if (e.tagName === 'BUTTON' && buttonCutOff(e)) out.push(`${name}: ${nm} is cut off`); }
     for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) { const a = els[i], b = els[j]; if (a.contains(b) || b.contains(a)) continue; if (contentsOverlap(a, b)) out.push(`${name}: "${a.textContent.trim().slice(0, 20)}" overlaps "${b.textContent.trim().slice(0, 20)}"`); }
     const first = root.querySelector('button:not([hidden])'); if (first && vis(first)) { const r = box(first); if (r.top >= 0 && r.bottom <= H) { const top = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2); if (!top || !(top === first || first.contains(top))) out.push(`${name}: its first button is covered by ${top ? (top.id || top.className || top.tagName) : 'nothing'}`); } }
     return out;
@@ -60,7 +61,7 @@ export function dev(D) {
     return out;
   }
   function tubeAuditRaw() { const walls = T.solids.filter((s) => s.r > 0).map((s) => [s.x - s.r - 0.3, s.z - s.r - 0.3, s.x + s.r + 0.3, s.z + s.r + 0.3]);
-    return D.auditPlace({ id: 'tube', snap: D.snapMeshes(T.group), npcs: [], walls, bounds: { x0: -D.LANE, x1: D.LANE, z0: D.ZMIN + 3, z1: D.ZMAX - 1.6 }, start: { x: 0.12, z: D.ZM - 1.5 }, actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] }); }
+    return D.auditPlace({ id: 'tube', passWide: 0.75, snap: D.snapMeshes(T.group), npcs: [], walls,   /* inside the pipe the walking lane is 1.24 m across and the solids here are padded 0.3 m: 0.75 m between pads is about 1.05 m of real room */ bounds: { x0: -D.LANE, x1: D.LANE, z0: D.ZMIN + 3, z1: D.ZMAX - 1.6 }, start: { x: 0.12, z: D.ZM - 1.5 }, actions: T.patches.map((p) => ({ label: 'scrape patch ' + p.i, x: p.pos.x, z: p.pos.z, r: 2.3 })), people: [] }); }
   function tubeAudit() {   /* the engine's place audit, tools that overlap, and anything hung inside the pipe that is really outside its wall */
     const r = tubeAuditRaw(), issues = [...r.floating, ...r.inside, ...r.stuck, ...propOverlaps()], v = new THREE.Vector3(), sz = new THREE.Vector3(), R = D.R;
     for (const s of D.snapMeshes(T.group)) { s.b.getSize(sz); if (sz.z > 40 || Math.abs((s.b.min.z + s.b.max.z) / 2 - D.ZM) < 0.9) continue; if (s.geo === 'CircleGeometry' && Math.max(sz.x, sz.y) <= 2 * R + 0.06) continue;
@@ -165,7 +166,7 @@ export function dev(D) {
   /* ---------- ?test=audit: every place, and the Tube ---------- */
   if (['audit','collision','seating'].includes(q.get('test'))) (async () => {
     const out = [], ids = (q.get('p') || Object.keys(D.BUILD).join(',')).split(','); let n = 0; D.startGame();
-    for (const id of ids) { const P = await D.ensurePlace(id); const r = auditWorld(P), l = [...r.floating, ...r.inside, ...r.stuck]; n += l.length; out.push(id + ': ' + l.length + ' issues', ...l.map((x) => '  ' + x)); }
+    for (const id of ids) { const P = await D.ensurePlace(id); const r = auditWorld(P), l = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(P)]; n += l.length;   /* auditReveals: what a close look moves, in both states */ out.push(id + ': ' + l.length + ' issues', ...l.map((x) => '  ' + x)); }
     D.enterTube(); const t = tubeAudit(); n += t.length; out.push('tube: ' + t.length + ' issues', ...t.map((x) => '  ' + x));
     report('AUDIT', out, n);
   })();
@@ -182,7 +183,7 @@ export function dev(D) {
     const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}'; document.head.appendChild(st);
     const inside = (name, id, e) => { const r = box(e); if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > Hh + 1) out.push(`${pre}${name}: ${id} is off the screen (${r.left | 0},${r.top | 0},${r.right | 0},${r.bottom | 0})`); };
     const check = (name) => { for (const l of hudOverlaps()) out.push(pre + name + ': ' + l);
-      for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || !e.textContent.trim() || id === 'dialogue' || id === 'barT' || id === 'barB') continue; if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== 'visible') out.push(`${pre}${name}: ${id} is clipped`); for (const b of e.querySelectorAll('button')) if (vis(b) && b.scrollWidth > b.clientWidth + 2) out.push(`${pre}${name}: a button in ${id} is cut off`); } };
+      for (const id of HUD_IDS) { const e = $(id); if (!vis(e) || !e.textContent.trim() || id === 'dialogue' || id === 'barT' || id === 'barB') continue; if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflowX !== 'visible') out.push(`${pre}${name}: ${id} is clipped`); for (const b of e.querySelectorAll('button')) if (vis(b) && buttonCutOff(b)) out.push(`${pre}${name}: a button in ${id} is cut off`); } };
     const panel = (name, sel) => { for (const l of panelCheck(name, document.querySelector(sel))) out.push(pre + l); };
     const covered = (name, panelId, ids) => { for (const id of ids) { const e = $(id), r = e.getBoundingClientRect(), t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); if (!t || !$(panelId).contains(t)) out.push(`${pre}${name}: ${id} is covered by ${t ? (t.id || t.className || t.tagName) : 'nothing'}`); } };
     const reset = () => { for (const id of ['skip', 'act', 'pick', 'holdbox', 'exit', 'toast', 'way', 'nudge', 'dialogue', 'card', 'puzzle', 'journal', 'chapters', 'credits']) $(id).hidden = true; $('hint').textContent = ''; $('sub').classList.add('dim'); D.bars(false); D.hideHud(false); D.captionOff(); $('skiphint').hidden = true; D.setClock(''); document.body.classList.remove('talk'); N.lift = 0; hand.setLift(0); hand.setCine(0); if (D.TB.el) D.TB.el.hidden = true; };

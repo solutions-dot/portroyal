@@ -1,6 +1,7 @@
 /* Small things of the 1790s: what the player carries, what people hold, and the things the story looks at.
    Every one is a reconstruction of a common kind of object; none copies a museum piece. */
 import * as THREE from "three";
+import { writtenPage } from "../../../engine/page.js";
 import { cv, std, solid, mesh, box, cyl, plane, grp } from "./gfx.js";
 import { bucket as tinBucket, lantern as stormLantern } from "./period-props.js";
 export const WOOD = solid(0x826247),
@@ -43,12 +44,11 @@ export function letter() {
 export function sheet(text = "", w = 0.3, d = 0.22) {
   const g = grp();
   box(w, 0.006, d, PAPER, 0, 0.003, 0, g);
-  if (text) {
-    const p = label(text, w * 0.94, d * 0.9, "#e8ddc4");
-    p.rotation.x = -Math.PI / 2;
-    p.position.y = 0.0065;
-    g.add(p);
-  }
+  /* the face of the sheet: old paper, the heading in an ink hand and lines of writing too small to read (engine/page.js) */
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.985, d * 0.985), new THREE.MeshStandardMaterial({ map: writtenPage(text, { w, d, seed: Math.round(w * 100 + d * 37), rows: text ? null : 0 }), roughness: 0.95 }));
+  p.rotation.x = -Math.PI / 2;
+  p.position.y = 0.0065;
+  g.add(p);
   return dynamic(g);
 }
 /* a wooden pail with iron hoops and a rope handle, water near the top */

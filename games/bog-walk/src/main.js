@@ -23,7 +23,7 @@ placeActionButton();   /* the button for a thing to do sits mid-screen (engine/a
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { CL, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, chirp, setG, AU } from '../../../engine/audio.js';
+import { soundPref, setSound, audioInit, stepSound, uiSound, cue, crackle, chirp, setG, AU, mixBeds, bedTest } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 const FACE_VARIANTS = { hl_worker: 2, nb_youth: 2, woman1914: 2 };   /* how many more faces each crowd body has (<base>_b_lo, <base>_c_lo; tools/people/rebuild.mjs) */
@@ -33,6 +33,8 @@ import { G as WG, makeSky, batchStatic } from './wgfx.js';
 import { buildTube, R, SAND, ZMIN, ZMAX, ZM } from './tube.js';
 import { makeHand } from './hand.js';
 import { initTubeSound, setBeds, drip, scrapeSound, voice, hiss, clank, waterStep, heartbeat, boom, airSwell, initWorldSound, setWorld, setMotor, bell, whistle, valveTurn, cheer } from './sfx.js';
+import { makeLooks } from '../../../engine/lookkit.js';   /* a close look at a thing (owner rule 13) */
+import { noiseHit, tone } from '../../../engine/audio.js';
 import { ENV, mixEnv, buildStation, buildYard, buildRuins, buildKingston, noticeTex, journeyIcon } from './places.js';
 import { lantern, hold, bucket } from './props.js';
 import { makeSmoke } from './trains.js';
@@ -114,6 +116,35 @@ function toast(msg, ms = 2800) { const t = $('toast'); t.textContent = msg; t.hi
 function fadeTo(color, op, ms) { const f = $('fade'); f.style.background = sceneIsCalm() && color === '#fff' ? '#000' : color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; f.style.opacity = op; }
 /* ---------- the cinematic layer: black bars (the words and buttons move inside them), captions on black, a held breath ---------- */
 function bars(on) { N.cine = on; document.body.classList.toggle('cine', on); if (on) calcLift(); }
+/* ---------- a close look (owner rule 13, engine/lookshot.js through engine/lookkit.js): input held, bars in, the camera eases to the thing,
+   it does something with its own sound, a short line, then the card or the puzzle, and the camera eases back. The autoplayer skips the moment.
+   In the Tube the two glances at the water are close looks too: the camera eases down to your boots as the water creeps in. ---------- */
+const LOOKDEV = __DEV__ && q.get('look');
+const LOOK_SFX = {
+  pin: () => { noiseHit(2400, 0.7, 0.3, 0.05, 0.2, 0.1); noiseHit(900, 4, 0.05, 0.08, 0.2, 0.9); },   /* the paper lifted by the breeze, pressed back on its pin */
+  water: () => { for (let i = 0; i < 6; i++) setTimeout(() => drip(), 150 + i * 330); noiseHit(700, 0.8, 1.6, 0.04, 0, 0.3); },
+  board: () => [0.5, 1.3, 2.1, 2.9].forEach((d) => tone(560, 560, 0.25, 'sine', 0.018, 0, d)),
+};
+const LOOK = makeLooks({ camera, bars, say: (t) => say('', t, 2800), freeze: (on) => { frozen = on; }, sounds: LOOK_SFX, quick: () => QUICK && !LOOKDEV, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  fov: () => (MODE === 'tube' ? 68 : camera.aspect < 0.8 ? 76 : 66), eye: () => ({ x: S.x, y: S.eye, z: S.z, yaw: S.yaw, pitch: S.pitch }) });
+if (LOOKDEV) LOOK.pauseAt = +(q.get('k') || 0.5);
+function glanceDown(id) {   /* your eyes go down to the water at your boots: a close look that keeps the night's own words (the people talking) */
+  const fx = -Math.sin(S.yaw), fz = -Math.cos(S.yaw), feet = S.eye - 1.42;
+  return LOOK.look({ id, view: { p: [S.x + fx * 0.05, S.eye - 0.5, S.z + fz * 0.05], look: [S.x + fx * 0.75, feet, S.z + fz * 0.75], fov: 54 }, push: 0.18, act: 2.4, sound: 'water', lines: [] }).then(() => LOOK.back());
+}
+function noticeLift(P, k) { const n = P.notice; n.userData.fixed = true; n.rotation.x = -0.35 * Math.sin(Math.min(1, k) * PI) * (1 - k * 0.3); n.position.z = -0.02 + 0.06 * Math.sin(Math.min(1, k) * PI); }   /* pinned to its board: the breeze lifts it and it settles back */
+async function readNotice(P) {   /* the notice by the turbine house door: the breeze lifts its corner, you smooth it flat, then put the water's journey in order */
+  if (reading) return; reading = true; const ep = EP, n = P.notice, at = n.getWorldPosition(new THREE.Vector3());
+  await LOOK.look({ id: 'notice', view: { p: [at.x, at.y + 0.08, at.z + 2.9], look: [at.x, at.y - 0.02, at.z], fov: 40 }, push: 0.08, act: 2.2, sound: 'pin', lines: ['A notice by the door: the journey of the water.'], reveal: (k) => P.reveal.notice(k) }); reading = false; if (ep !== EP) return;
+  n.rotation.x = 0; n.position.z = -0.02;
+  openOrder('The journey of the water', JOURNEY, 'Tap the pictures in order, from the river to the tram.', async () => { P.notice.material.map = noticeTex(true); P.notice.material.needsUpdate = true; unlock('tube'); say('', 'From the river to the tram.', 2400); if (!QUICK || LOOKDEV) await new Promise((r) => setTimeout(r, 1600)); await LOOK.back(); setStage(14); });
+}
+let reading = false;   /* one look at a time: a second tap while the first is still opening would put a second card over the first (the autoplayer found it at the end card) */
+async function readBoard(P) {   /* the information board at the ruins: the old Gleaner headlines light one by one */
+  if (reading || !$('card').hidden) return; reading = true; const ep = EP; P = P || P_(); unlock('ruins');
+  await LOOK.look({ id: 'board', view: { p: [4.2, 1.5, 0.6], look: [4.2, 1.35, -2.18], fov: 38 }, push: 0.08, act: 5.0, line: 2.5, sound: 'board', lines: ['The Gleaner, 28 June 1904.', '"Fearful Catastrophe At Bog Walk."'], reveal: (k) => P.infoLit?.(k) }); reading = false; if (ep !== EP) return; if (!$('card').hidden) { LOOK.cancel(); return; }
+  card('The information board', ['"Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: async () => { hideCard(); await LOOK.back(); if (stage === 61) setStage(62); } }]);
+}
 function calcLift() {   /* how far the hand must rise to keep the fist out from under the bottom bar (7% of the screen), at this screen size */
   const prev = N.lift; hand.setLift(0); const low = hand.lowestFistPx(camera, innerHeight); hand.setLift(prev);
   N.liftNeed = Math.max(0, low + 8 - (innerHeight - innerHeight * 0.07)) / innerHeight * 0.742;   /* 0.742 camera units is the height of the screen at the fist's distance */
@@ -176,7 +207,7 @@ function startWork(keep) {
 }
 /* chapter 2's last moment: water reaches your boots, and you choose what to do. Either way Mr Douparrouzel's own line follows (from his report). */
 function startBoots() {
-  setPhase('boots'); N.wlT = 0.03; setGoal('Look down. There is water at your boots.'); N.glanceOn = true; N.glanceT = 0;
+  setPhase('boots'); N.wlT = 0.03; setGoal('Look down. There is water at your boots.'); glanceDown('boots');
   at([[1.2, () => say('Rudy', 'My boots are wet.')], [4.2, () => showPick('Water is round your boots. What do you do?', [['Tell Bass Henry', 'tell'], ['Keep working', 'work']], afterBoots)]]);
 }
 function afterBoots(v) {
@@ -195,7 +226,7 @@ function startCh3(fromCh2) {   /* about 4 a.m.: a title on black, then the water
   });
 }
 function startTrickle() {
-  setPhase('trickle'); hideNightSkip = showCinematicSkip(skipNight); setClock('4 a.m.'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); N.glanceOn = true; N.glanceT = 0; N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
+  setPhase('trickle'); hideNightSkip = showCinematicSkip(skipNight); setClock('4 a.m.'); $('skip').hidden = false; setGoal('Look at the floor. Something is not right.'); glanceDown('trickle'); N.duck = D(2.6);   /* a held breath: the sound drops away and your eyes drop to the water at your feet */
   at([[1, () => say('Rudy', 'The water is getting deeper.')], [6.5, () => say('Old Zeke', 'It will pass. It always passes.')], [11.5, () => say('', 'Far off, a low roar.', 3600)]]);
 }
 function startRise() {
@@ -318,7 +349,7 @@ function buildPlace(id) {   /* the geometry only: quick. People come later (ensu
   if (PL[id]) return PL[id]; const P = BUILD[id](); P.group.visible = false; scene.add(P.group); P.bodies = []; P.npcs = []; P.specs = { people: P.people, extras: P.extras }; P.people = []; P.extras = []; P.populated = false; P.keepOut = P.keepOut || []; PL[id] = P;
   if (__DEV__) P.snap = snapMeshes(P.group); P.batch = batchStatic(P.group);
   P.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh && !(o.material.transparent) && !(o.material.alphaTest > 0)) { o.castShadow = o.receiveShadow = true; } });
-  P.actions = (ACTIONS_FOR[id] || (() => []))(P); return P;
+  P.actions = (ACTIONS_FOR[id] || (() => []))(P); P.reveal = P.notice && id === 'station' ? { notice: (k) => noticeLift(P, +k) } : {}; return P;
 }
 /* spreadOut: nobody stands inside anybody (as in Kendal). Background figures too close to someone are moved to a free spot nearby, or dropped. The audit then checks the result. */
 function spreadOut(P) {
@@ -600,7 +631,7 @@ $('reset').onclick = () => { if (fading || !S.started) return; closeJournal(); l
 $('exit').onclick = () => { if (locked()) return; card('Leave Zeke\'s story?', ['You can come back to it from the Chapters list.'], [{ t: 'Yes, go into the Tube', go: () => { hideCard(); beginChapter(2); } }, { t: 'No, stay here', go: hideCard }]); };
 
 function resetTransient() { endSceneWarning(); hideIntroSkip?.(); hideNightSkip?.(); hideStorySkip?.();   /* leave anything running: scripted scenes, a ride, the night's timers, the cinematic layer */
-  EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('nudge').hidden = true; NUDGE.on = false; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
+  LOOK.cancel(); EP++; TICKS.length = 0; frozen = false; RIDE.on = false; bars(false); hideHud(false); captionOff(); fadeTo('#000', 0, 0); $('sub').classList.add('dim'); $('holdbox').hidden = true; $('pick').hidden = true; $('nudge').hidden = true; NUDGE.on = false; $('exit').hidden = true; $('skip').hidden = true; $('way').hidden = true; $('act').hidden = true; $('vig').style.opacity = 0;
   N.q = []; N.intro = false; N.turn = null; $('skiphint').hidden = true; setClock(''); HOLD.v = 0; HOLD.on = false; setWorld({}, 0.1); setBeds({}, 0.1); smoke.clear(); leaveTalk(); closePuzzle(false); closeJournal(); closeChapters(); closeCredits(); hideCard();
 }
 async function beginChapter(i, st) {
@@ -620,11 +651,11 @@ function startScene(i, st) {
 }
 const ACTIONS_FOR = {
   station: (P) => [
-    { label: 'Read the notice board', x: P.spots.notice[0], z: P.spots.notice[1], r: 2.2, on: () => stage === 13, go: () => openOrder('The journey of the water', JOURNEY, 'Tap the pictures in order, from the river to the tram.', () => { P.notice.material.map = noticeTex(true); P.notice.material.needsUpdate = true; unlock('tube'); setStage(14); }) },
+    { label: 'Read the notice board', x: P.spots.notice[0], z: P.spots.notice[1], r: 2.2, on: () => stage === 13, look: 'notice', go: () => readNotice(P) },
   ],
   kingston: (P) => [{ label: 'Climb on to the car', get x() { return P.car.position.x - 4.4; }, z: 1.3, r: 2.2, on: () => stage === 22, go: () => setStage(23) }],   /* at the back platform, wherever the car is */
   yard: () => [],
-  ruins: (P) => [{ label: 'Read the information board', x: P.spots.board[0], z: P.spots.board[1], r: 2.2, on: () => stage === 61 || stage >= 62, go: readBoard }],
+  ruins: (P) => [{ label: 'Read the information board', look: 'board', x: P.spots.board[0], z: P.spots.board[1], r: 2.2, on: () => stage === 61 || stage >= 62, go: () => readBoard(P) }],
 };
 function onTalked(n) {
   const t = TALK_TARGETS[stage] || []; if (stage === 20) { ctr.talked = t.filter((id) => byId(id) && byId(id).talked).length; refreshGoal(true); }
@@ -713,9 +744,7 @@ ON[54] = async () => {   /* a whistle: the special train comes in at ten to twel
 ON[55] = () => endOffer(55, () => card('Chapter 5 is finished', ['Next, the same place today.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(5); } }]));
 
 /* ---------- chapter 5: the ruins today ---------- */
-function readBoard() {
-  unlock('ruins'); card('The information board', ['The Gleaner, 28 June 1904:', '"Fearful Catastrophe At Bog Walk. Drowning Men Fight For Life. Sudden Rush of Water Causes Panic. 33 Able-Bodied Men Drowned In Water-Pipe. No Accurate Information as To Cause Of The Disaster."', 'In 1904, 33 men died here when water came into the pipe.'], [{ t: 'Close', go: () => { hideCard(); if (stage === 61) setStage(62); } }]);
-}
+/* readBoard: see the close looks near bars() above */
 ON[65] = () => { unlock('journey', true); unlock('why', true); cue('end'); run([[1.4, () => card('The End', ['In 1904, 33 men died in the Tube at Bog Walk. 28 got out.', 'Nobody could say for sure why the water came. We remember the men.', 'Thank you for playing. Your journey is in the Journal.'], [{ t: 'Read your journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }, ...(MENU.ok ? [{ t: 'Exit', go: toMenu }] : [])], { col: true })]]); };   /* no credit line on The end (owner, 21 Nov 2026): it is on the Credits page */
 
 /* ---------- movement: keys, touch (left half is a stick, right half looks) and mouse drag to look ---------- */
@@ -771,14 +800,17 @@ function moveTick(dt) {
 }
 
 /* ---------- sound outside: each place has its own mix ---------- */
+/* 22 November 2026: the station's wind was 0.025 and the yard's and the ruins' 0.025 to 0.03 after the 0.5 below, under the shared range (engine/audio.js
+   BED_RANGE). Each is now at 0.05 or more; the ruins today have a little far traffic from the gorge road. The hum, the river and the crickets are this game's own beds (sfx.js). */
+const WORLD_BEDS = { station: { wind: 0.1 }, kingston: { crowd: 0.16, wind: 0.03 }, yard: { wind: 0.1, crowd: 0.08 }, ruins: { wind: 0.1, crowd: 0.03, traffic: 0.08 } };
+if (__DEV__ && q.get('test') === 'beds') bedTest(WORLD_BEDS, { scale: 0.5 });   /* ?test=beds */
 let auNext = 0, onceAt = 6;
 function audioTick(t) {
   if (!AU.ctx || MODE !== 'world' || t < auNext) return; auNext = t + 0.1; const P = P_(); if (!P) return;
   const night = envNow.stars > 0.5, inHouse = cur === 'station' && S.x > -7 && S.x < 7 && S.z > -15.5 && S.z < -5.5, dHouse = Math.hypot(S.x, S.z + 10.5);
   const power = cur === 'station' ? (P.wheelSpeed ?? 2.6) / 2.6 : 0, hum = power * (inHouse ? 0.12 : Math.max(0, 0.07 - dHouse * 0.002));
   setWorld({ hum, cricket: (cur === 'station' && night ? 0.05 : cur === 'yard' && stage < 52 ? 0.02 : 0), river: cur === 'kingston' ? 0 : Math.max(0.01, 0.06 - Math.abs(S.z + 30) * 0.0015), motor: RIDE.on ? 0.06 : (cur === 'kingston' && frozen ? 0.05 : 0) });
-  const L = { station: { wind: 0.05, crowd: 0.0 }, kingston: { crowd: 0.16, wind: 0.03 }, yard: { wind: 0.05, crowd: 0.05 }, ruins: { wind: 0.06 } }[cur] || {};
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], (L[k] || 0) * 0.5);
+  mixBeds(WORLD_BEDS[cur] || {}, { scale: 0.5, duck: !!talkWith });
   if (t > onceAt) { onceAt = t + 7 + Math.random() * 6; if (AU.on && !night && (cur === 'ruins' || cur === 'yard' || cur === 'kingston')) chirp(); }
 }
 
@@ -827,13 +859,12 @@ function tick(dt, clockDt = dt) {
     if (w.hidden === show) w.hidden = !show; if (show) { $('waytext').textContent = behind ? 'Turn around' : 'This way'; $('wayarrow').style.transform = behind ? 'rotate(-90deg) scaleX(-1)' : 'rotate(' + (rel > 0 ? 180 : 0) + 'deg)'; } }   /* the cue: a gold arrow and "This way", or "Turn around" when the light is behind you */
   else nudgeTick(time);
   const ph = N.phase; let shake = 0; if (!sceneIsCalm() && MODE === 'tube' && S.started && ph !== 'shot') shake = (ph === 'rise' ? 0.4 + 0.6 * ease(N.wl) : ph === 'dark' ? 1 : ph === 'out' ? Math.max(0, 1 - N.t / D(1.6)) : 0) * 0.0045;
-  if (N.glanceOn) { N.glanceT += dt; N.glance = -0.34 * Math.sin(Math.min(1, N.glanceT / D(3.2)) * PI); if (N.glanceT > D(3.2)) { N.glanceOn = false; N.glance = 0; } }
   if (MODE === 'tube') { const fovT = ph === 'dark' ? 61 : ph === 'out' ? 72 : 68; if (Math.abs(camera.fov - fovT) > 0.01) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 1.1); camera.updateProjectionMatrix(); }
     const liftT = N.cine ? N.liftNeed : 0; if (Math.abs(N.lift - liftT) > 0.002) { N.lift += (liftT - N.lift) * Math.min(1, dt * 3); hand.setLift(N.lift); }
     { const csT = N.cine ? 1 : 0; if (Math.abs(hand.cs - csT) > 0.002) hand.setCine(hand.cs + (csT - hand.cs) * Math.min(1, dt * 3)); } }   /* the torch shrinks a little while the bars are in */
   else { const fov = camera.aspect < 0.8 ? 76 : 66; if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); } }
   if (!S.started && !RIDE.on && P_() && P_().titleView) { const tv = P_().titleView; camera.position.set(tv.x - Math.sin(ft * 0.08) * 2, tv.y, tv.z); camera.rotation.set(tv.pitch, tv.yaw + Math.sin(ft * 0.05) * 0.04, 0, 'YXZ'); }
-  else { camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch + (sceneIsCalm() ? 0 : N.glance), S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ'); }
+  else if (!LOOK.tick(dt)) { camera.position.set(S.x + Math.sin(ft * 43) * shake, S.eye + bob + Math.sin(ft * 57 + 1) * shake * 0.7, S.z); camera.rotation.set(S.pitch, S.yaw, Math.sin(ft * 31) * shake * 1.6, 'YXZ'); }
   if (MODE === 'tube') hand.keepLightInside(lightInside);
   if (MODE === 'tube') { const nearP = !locked() && !!nearPatch(); if (N.phase !== 'shot') { if ($('act').hidden === nearP) $('act').hidden = !nearP; if (nearP && $('act').textContent !== 'Scrape') $('act').textContent = 'Scrape'; } }   /* test views and checks set the Scrape button themselves */
   else { sun.target.position.set(camera.position.x, 0, camera.position.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 110); for (const o of [sky.dome, sky.stars, sky.clouds]) o.position.copy(camera.position); sky.moon.position.set(camera.position.x - 190, camera.position.y + 230, camera.position.z - 380); bubbleTick(time); }
@@ -856,7 +887,12 @@ requestAnimationFrame(frame);
 if (__DEV__) window.__dbg = { S, N, PL, get cur() { return cur; }, get stage() { return stage; } };
 
 /* ---------- test views, the automatic checks and the scripted playthrough: dev builds only (node tools/build.mjs bog-walk --dev) ---------- */
-function devViews() { if (__DEV__) import('./dev.js').then((m) => m.dev(DEV)); }
+function devViews() {
+  if (__DEV__ && LOOKDEV) { (async () => {   /* ?look=<notice|board|boots|trickle>&at=<chapter>,<stage>&k=0.5 : plays that look and holds it part way ("LOOK <id>" in the title) */
+    const [ch, st] = (q.get('at') || '0,10').split(',').map(Number); startGame(); await beginChapter(ch, st); for (let i = 0; i < 40 && fading; i++) await new Promise((r) => setTimeout(r, 100)); if (N.intro) skipIntro(); for (let i = 0; i < 15; i++) { if (!$('card').hidden) hideCard(); await new Promise((r) => setTimeout(r, 100)); }
+    LOOK.id = LOOKDEV; if (LOOKDEV === 'boots') return startBoots(); if (LOOKDEV === 'trickle') { for (let i = 0; i < 20 && !$('card').hidden; i++) hideCard(); return startTrickle(); }
+    const a = P_().actions.find((x) => x.look === LOOKDEV); if (!a) { document.title = 'LOOK none'; return; } S.x = a.x; S.z = a.z; a.go(); })(); return; }
+  if (__DEV__) import('./dev.js').then((m) => m.dev(DEV)); }
 const DEV = __DEV__ ? { THREE, q, $, S, N, T, PL, hand, keys, camera, scene, renderer, CL, story, ctr, unlocked, doneCh, JOURNAL, CHAPTERS, REPORT, WHY, AFTER, JOURNEY, TALK_TARGETS, BUILD, DONE, SAFE, CH_PLACE,
   get cur() { return cur; }, get stage() { return stage; }, set stage(v) { stage = v; }, get MODE() { return MODE; }, get near() { return near; }, get frozen() { return frozen; }, get fading() { return fading; }, get envNow() { return envNow; }, set manual(v) { manual = v; }, set poster(v) { POSTER = v; }, RIDE, HOLD, TB,
   tick, render, begin, startGame, startWork, startIntro, skipIntro, startRise, startDark, startTrickle, startBoots, skipNight, setPhase, resetNight, setGoal, setClock, say, toast, bars, hideHud, caption, captionOff, fadeTo, calcLift, nearPatch, act, showEnd, showPick,

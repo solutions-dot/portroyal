@@ -24,7 +24,8 @@
   "bands": true,
   "hairvol": 0.4,
   "hat": [],
-  "facings": true
+  "facings": true,
+  "necktuck": true
  },
  "colors": {
   "Shirt": [

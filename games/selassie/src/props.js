@@ -45,10 +45,24 @@ export function chair() {
   return dynamic(g);
 }
 export function tin() {
-  const g = grp();
-  box(0.34, 0.16, 0.25, solid(0x708783, 0.5, 0.5), 0, 0.08, 0, g);
-  const hinge = grp(g, 0, 0.16, -0.125);
-  box(0.36, 0.025, 0.27, solid(0x82938a, 0.5, 0.5), 0, 0, 0.125, hinge);
+  /* a biscuit tin kept for keepsakes: thin tin walls round an open box, a hinged lid, and the small picture lying inside */
+  const g = grp(),
+    m = solid(0x708783, 0.5, 0.5),
+    t = 0.008;
+  box(0.34, t, 0.25, m, 0, t / 2, 0, g);
+  box(0.34, 0.16, t, m, 0, 0.08, 0.125 - t / 2, g);
+  box(0.34, 0.16, 2 * t, m, 0, 0.08, -0.125 + t, g);   /* the back, doubled where the hinge is fixed */
+  for (const z of [-1, 1]) box(0.3, 0.008, 0.03, m, 0, 0.161, z * 0.098, g);   /* the rolled rim inside the top, which the lid closes on */
+  for (const x of [-1, 1]) box(t, 0.16, 0.25 - 2 * t, m, x * (0.17 - t / 2), 0.08, 0, g);
+  const pic = card("photo");
+  pic.scale.set(0.8, 1, 0.8);
+  pic.position.set(0.02, t, 0.005);
+  pic.rotation.y = Math.PI / 2 + 0.08;
+  g.add(pic);
+  const hinge = grp(g, 0, 0.172, -0.115);   /* over the doubled back, so the open lid stands on it */
+  box(0.3, 0.01, 0.01, solid(0x5f706c, 0.5, 0.5), 0, 0, 0, hinge);   /* the hinge, lying along the back edge */
+  box(0.36, 0.02, 0.27, solid(0x82938a, 0.5, 0.5), 0, 0.01, 0.125, hinge);
+  box(0.36, 0.03, 0.01, solid(0x82938a, 0.5, 0.5), 0, -0.005, 0.255, hinge);   /* the lid's front lip */
   g.userData.lid = hinge;
   return dynamic(g);
 }

@@ -16,6 +16,7 @@ import { checkAll } from '../../../engine/checks.js';
 import { CL, isSeated, strideOf, WALKS } from '../../../engine/anim.js';
 import { footWatch } from '../../../engine/foot-watch.js';
 import { AU, setSound } from '../../../engine/audio.js';
+import { buttonCutOff } from '../../../engine/ui-audit.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const $ = (id) => document.getElementById(id);
@@ -117,7 +118,7 @@ function placeAudit(A, P) {
     return { id, x: p.x, z: p.z, anim: m.userData.sits ? 'SitIdle' : clipOf(m), ground: Math.max(p.y, m.userData.ground || 0, A.groundYAt(p.x, p.z)), path: paths[id] || paths[base], h: 1.75 * (m.scale.y || 1), r: 0.22, offWall: [[0, 0], [0.4, 0], [-0.4, 0], [0, 0.4], [0, -0.4]].some(([dx, dz]) => grid.free(p.x + dx, p.z + dz)) }; });   /* offWall: the walking walls here are half-metre grid rows that include the player's own 32 cm margin round every prop, so a seller right behind her stall is "in" one without touching anything. A person counts as inside a walking wall only when there is no walkable ground within 40 cm. */
   const acts = A.ACTIONS.filter((a) => !!A.FB.on === !!a.fb).map((a) => [a, a.where()]).filter(([, w]) => w).map(([a, w]) => ({ label: a.label, x: w[0], z: w[1], r: a.r }));
   const talk = acts.filter((a) => /^Talk|^Reach/.test(a.label)).map((a) => ({ id: a.label, x: a.x, z: a.z, anim: '' }));
-  const r = auditPlace({ id: P.id, snap, npcs, walls: grid.walls, bounds: P.bounds, start: { x: P.start[0], z: P.start[1] }, actions: acts, people: talk, groundAt: (x, z) => A.groundYAt(x, z) });
+  const r = auditPlace({ id: P.id, passage: false, snap, npcs, walls: grid.walls, bounds: P.bounds,   /* no passage check here: Port Royal's walk grid (0.5 m cells, from the real collision) already says where the player can get; widths under a cell are not measured (docs/games/port-royal.md) */ start: { x: P.start[0], z: P.start[1] }, actions: acts, people: talk, groundAt: (x, z) => A.groundYAt(x, z) });
   /* look-alikes (engine/faces.js faceCheck): two people with one body and face within 2.5 m of each other, story people and townsfolk alike */
   const twins = faceCheck(peopleHere(A).map((m) => { const p = m.getWorldPosition(new THREE.Vector3()), id = idOf(A, m); return { id, m, face: m.userData.face, x: p.x, z: p.z, path: paths[id] || paths[id.replace(/ \(.*$/, '')] }; }));
   r.inside.push(...twins);
@@ -147,7 +148,7 @@ async function runLayout(A) {
   count.textContent = '13'; count.hidden = false; $('view').hidden = false;
   for (const button of $('topr').querySelectorAll('button')) {
     const bounds = button.getBoundingClientRect();
-    if (bounds.width && (bounds.left < 0 || bounds.right > W || button.scrollWidth > button.clientWidth + 1)) {
+    if (bounds.width && (bounds.left < 0 || bounds.right > W || buttonCutOff(button, 1))) {   /* the shared measure: a corner badge is not cut-off text (engine/ui-audit.js) */
       out.push(`${W}x${H} camera toolbar: ${button.id} is clipped`);
     }
   }

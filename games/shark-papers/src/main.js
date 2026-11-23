@@ -4,6 +4,7 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 /* An all-ages mystery on the shared engine. It plays like every other game (walk, talk, do, watch a scene). Everything that differs from one mature game
    to the next is data: content.js (words), steps.js (the story table), places.js (the world) and cast.js (the people). */
 import { renderFramed } from "../../../engine/cine.js";
+import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { placeActionButton } from "../../../engine/action-button.js";
 import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
@@ -22,8 +23,9 @@ import { createStory, createCarry, needList } from "../../../engine/story.js";
 import { createGuide } from "../../../engine/guide.js";   /* the gold arrow on the ground that shows the way (every game) */
 import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit } from "../../../engine/audio.js";
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit, shipCreak } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
@@ -203,7 +205,10 @@ async function buildWorld(id) {
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) {
+    Q.snap = snapMeshes(Q.group);
+    Q.propList = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js); Q.props is the place's own */
+  }
   mergePlace(Q);
   Q.people = [];
   Q.extras = [];
@@ -388,6 +393,7 @@ function cast(Q, row) {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   dangerOff();
@@ -557,11 +563,40 @@ function talk(n) {
   );
 }
 /* a thing to look at: it changes where you can see it (a cloth pulled back, a lid lifted), then a card says what you found */
-function lookAt(id) {
+/* the sound of each look (engine/lookshot.js plays it as the thing moves): gentle, made in code like the rest of the game's sound */
+const LOOK_SFX = {
+  bell: () => [0, 0.45, 1.3, 1.75].forEach((d) => { tone(1320, 1310, 1.6, "sine", 0.045, 0, d); tone(2630, 2620, 0.8, "sine", 0.016, 0, d); }),   /* two pairs: ding-ding, ding-ding */
+  glass: () => { noiseHit(3000, 2, 0.25, 0.06, 0.2, 0); noiseHit(2400, 2, 0.2, 0.05, 0.2, 0.35); },   /* the brass tubes drawn out */
+  line: () => { noiseHit(1200, 0.6, 1.2, 0.12, -0.3, 0.2); noiseHit(600, 1.2, 0.5, 0.1, -0.3, 0.9); },   /* the line runs out, then jerks tight */
+  paper: () => [0.2, 0.6, 1.0].forEach((d) => noiseHit(3400, 0.5, 0.3, 0.1, 0, d)),   /* old paper unfolded */
+  flags: () => { [0, 0.4, 0.8, 1.2].forEach((d) => tone(900, 1100, 0.12, "sine", 0.02, -0.4, d)); noiseHit(1800, 0.6, 0.6, 0.06, -0.4, 1.7); },   /* a halyard block squeaks, the flags shake out */
+  canvas: () => { noiseHit(2200, 0.5, 1.2, 0.1, 0.2, 0.1); shipCreak(); },   /* canvas drawn back over the hatch */
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: playFov,
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => {
+    $("sub").textContent = text;
+    $("sub").classList.toggle("dim", !text);
+  },
+  freeze: (on) => (busy = on),
+  sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, GAME.eye, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+async function lookAt(id) {
   const lk = LOOKS[id],
     Q = world();
   S.found[id] = true;
-  Q.reveal[id]?.(true);
   uiSound("tap");
   const st = S.stage,
     done = () => {
@@ -572,12 +607,14 @@ function lookAt(id) {
       uiSound("goal");
       save();
     };
-  busy = true;   /* a moment to see the change before the card covers it */
-  setTimeout(() => {
-    busy = false;
-    if (S.stage !== st || openPanel()) return done();
-    card(lk.title, lk.lines, [[lk.button || "Go on", done]]);
-  }, QUICK ? 0 : 900);
+  /* a framing from the look itself, or from the place when it depends on how the place was built (a ship out in the harbour) */
+  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  if (S.stage !== st) return;
+  if (openPanel()) {
+    LS.cancel();
+    return done();
+  }
+  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
@@ -903,7 +940,9 @@ function tick(dt, now = performance.now()) {
     if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking });
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a look moment holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -920,7 +959,7 @@ function tick(dt, now = performance.now()) {
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q;   // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderFramed(renderer, scene, camera, DIR.on);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -960,7 +999,7 @@ async function start() {
     return;
   }
   await go(FIRST);
-  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => {}]]);
+  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => waits(FIRST)]]);   /* the first step is a scene card: it comes after the intro */
 }
 $("start").onclick = start;
 onLoadFail(() => {
@@ -988,7 +1027,7 @@ onLoadFail(() => {
     prepare(STEPS[saved?.stage]?.place || STEPS[FIRST].place);   /* the place Start opens, built behind the title */
     if (__DEV__) {
       const { dev } = await import("./dev.js");
-      await dev({ q, S, story, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light });
+      await dev({ q, S, story, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light, LS, lookAt });
     }
   } catch (e) {
     console.error(e);

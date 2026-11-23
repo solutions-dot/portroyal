@@ -28,7 +28,9 @@
     "cocked",
     "Hat"
    ]
-  ]
+  ],
+  "necktuck": true,
+  "shoetuck": true
  },
  "colors": {
   "Skin": [

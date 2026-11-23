@@ -133,6 +133,16 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(784, 780, 1.6, "sine", 0.02, 0);
           } else if (what === "drum") {
             noiseHit(90, 0.9, 0.5, 0.35, 0, 0);
+          } else if (what === "hoof") {
+            /* a mule's hooves on a dry road, four slow beats */
+            for (let i = 0; i < 4; i++) noiseHit(300 + (i % 2) * 60, 3, 0.07, 0.09, 0, i * 0.42);
+          } else if (what === "steps") {
+            for (let i = 0; i < 5; i++) noiseHit(220, 2, 0.08, 0.07, 0.2, i * 0.55);   /* boots on the track */
+          } else if (what === "wind") {
+            noiseHit(500, 0.4, 2.6, 0.08, -0.3, 0);   /* a dry gust over the grass */
+          } else if (what === "creak") {
+            tone(140, 110, 0.9, "sawtooth", 0.012, 0.3, 0);   /* timber on its hinge, or a windlass */
+            tone(180, 150, 0.6, "sawtooth", 0.008, 0.3, 0.5);
           } else if (what === "fire") crackle();
           else cue(what);
         }

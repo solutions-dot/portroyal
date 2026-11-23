@@ -1,6 +1,9 @@
 /* Development checks are stripped from public builds. */
 import { Raycaster, Vector3 } from "three";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
+import { auditReveals } from "../../../engine/audit-reveal.js";
+import { auditProps } from "../../../engine/audit-props.js";
+import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import { animCheck } from "./animcheck.js";
 import ANIM_CLIPS from "../anim-clips.json";
@@ -226,9 +229,22 @@ export async function dev(A) {
           advice: 80,
           people: 10,
           film: q.get("key") === "arrival" ? 35 : 25,
+          close: q.get("key") === "letter18" ? 72 : 64,
         }[id] || 10;
+    if (id === "close") A.chapterState(st);
     await go(st);
     closeAll();
+    if (id === "close") {
+      /* ?shot=close&key=letter62|letter18&at=<seconds>: a close-up before a talk (engine/lookshot.js) held at that moment; &hud keeps the bars */
+      S.view = null;
+      S.lookShot = true;
+      A.closeup(q.get("key"));
+      for (let i = 0, n = Number(q.get("at") || 2) * 30; i < n; i++) A.LS.tick(1 / 30);
+      A.LS.paused = true;
+      if (!q.has("hud")) $("hud").hidden = true;
+      window.__SHOT = true;
+      return;
+    }
     const views = {
       yard: { pos: [7, 2.2, 14.5], look: [-2, 1, 0] },
       yard2: { pos: [-1, 1.3, 10], look: [4, 1.0, 2] },
@@ -390,6 +406,7 @@ export async function dev(A) {
     for (const Q of Object.values(worlds)) {
       const pp = (n) => ({ id: n.id, x: n.x, z: n.z, m: n.m, anim: n.m.userData.seatAnchor ? "SitIdle" : "Idle", h: 1.75 * (n.scale || 1), r: (n.scale || 1) < 0.9 ? 0.2 : 0.25, path: n.amb?.spec?.pts || (n.amb?.spec?.from ? [n.amb.spec.from, n.amb.spec.to] : null) });
       const r = auditPlace({
+        passage: false, props: false,   /* run below with this game's own look and task spots */
         id: Q.id,
         snap: Q.snap,
         npcs: [...Q.people, ...Q.extras].map(pp),
@@ -407,7 +424,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...(Q.yardIssues || [])];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...(Q.yardIssues || []), ...auditReveals(Q, { groundAt: Q.groundAt }), ...auditProps(Q.propList || []), ...(Q.walls && Q.bounds && Q.start ? auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { TASKS }) }) : [])];   /* room to pass and props that read right (engine/audit-passage.js, engine/audit-props.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

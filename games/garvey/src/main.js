@@ -19,10 +19,10 @@ import { refresh as refreshLifeOf, lifeFor, EXTRAS } from './life.js';   /* what
    The two people and their lines are placeholders for testing the pipeline. Both are fictional. */
 import * as THREE from 'three';
 import { steamer, sideWheeler, steamYacht } from '../../../engine/boats.js';
-import { makeDoor } from '../../../engine/door.js';   /* a framed, panelled door for every building (owner, 17 November 2026) */
+import { makeDoor, swingDoor } from '../../../engine/door.js';   /* a framed, panelled door for every building (owner, 17 November 2026) */
 import { gripTick, spreadArms } from '../../../engine/grip.js';
 import { CL, mixers, grounded, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak } from '../../../engine/audio.js';
+import { soundPref, setSound, audioInit, stepSound, uiSound, cue, AU, setG, tone, noiseHit, gullCry, chirp, shipCreak, mixBeds, bedTest, carFar, hornFar, dogFar } from '../../../engine/audio.js';
 import { exitReady, exitsReset } from '../../../engine/story.js';
 import { createSea } from '../../../engine/sea.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
@@ -39,6 +39,8 @@ import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+import { createLookShot, frameOf, cineLayer, lookFrom } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from '../../../engine/look-sounds.js';
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -645,11 +647,12 @@ function nudgeTick(now) {
 let auNext = 0, thumpAt = 7;
 function pressThump() { if (!AU.ctx || !AU.on) return; for (let i = 0; i < 3; i++) { noiseHit(220, 1.2, 0.16, 0.1, 0.5, i * 0.55); tone(90, 55, 0.2, 'triangle', 0.04, 0.5, i * 0.55); } }
 const SOUNDSCAPE = {   /* bed levels (room hum, crowd murmur, wind, sea, surf) and the small sound heard every few seconds */
-  shop: { room: 0.28, crowd: 0.04, once: pressThump }, hall: { room: 0.22, crowd: 0.05 }, street: { crowd: 0.1, wind: 0.05 }, press: { room: 0.26, crowd: 0.03, once: pressThump },
-  dock: { sea: 0.2, surf: 0.05, wind: 0.07, crowd: 0.04, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, deck: { sea: 0.22, surf: 0.04, wind: 0.1, crowd: 0.02, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, liberty: { room: 0.22, crowd: 0.12 }, office: { room: 0.18, crowd: 0.02 }, park: { wind: 0.05, crowd: 0.03, once: chirp } };
+  shop: { room: 0.28, crowd: 0.04, once: pressThump }, hall: { room: 0.22, crowd: 0.05 }, street: { crowd: 0.12, wind: 0.05, traffic: 0.08, once: () => (Math.random() < 0.6 ? carFar() : Math.random() < 0.5 ? hornFar() : dogFar()) }, press: { room: 0.26, crowd: 0.03, once: pressThump },
+  dock: { sea: 0.2, surf: 0.05, wind: 0.07, crowd: 0.04, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, deck: { sea: 0.22, surf: 0.04, wind: 0.1, crowd: 0.02, once: () => (Math.random() < 0.5 ? gullCry() : shipCreak()) }, liberty: { room: 0.22, crowd: 0.12 }, office: { room: 0.18, crowd: 0.02 }, park: { wind: 0.06, crowd: 0.03, traffic: 0.03, once: chirp } };
+const FOOT = { shop: 'wood', hall: 'wood', street: 'stone', press: 'wood', dock: 'wood', deck: 'wood', liberty: 'wood', office: 'wood', park: 'grass' };   /* the ground of each place (it was always wood) */
 function audioTick(t) {
   if (!AU.ctx || !state.started || t < auNext) return; auNext = t + 0.1; const S = SOUNDSCAPE[place] || SOUNDSCAPE.shop;
-  for (const k of ['room', 'crowd', 'wind', 'sea', 'surf']) if (AU.ch[k]) setG(AU.ch[k], S[k] || 0);
+  mixBeds(S, { duck: !!talkWith });   /* every bed a little lower while someone talks (engine/audio.js BED_RANGE) */
   if (t > thumpAt) { thumpAt = t + 6 + Math.random() * 6; if (S.once && AU.on) S.once(); }
 }
 
@@ -966,7 +969,7 @@ function buildDock() {
 }
 const DOCK_SPOTS = { garvey5: [1.4, -0.4], clerk: [-4.5, -1.8], engineer: [5.0, 2.0], friend: [-1.6, 1.4] };
 let inspected = 0;
-const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs, but it is very old and will need many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
+const INSPECT = { hull: ['Hull', 'The paint looks fresh. Under it, the plates are rusty.'], engine: ['Engine', 'The engineer says it runs. But it is very old and needs many repairs.'], deck: ['Deck', 'The planks are worn, and some of the rails are loose.'] };
 let inspectDone = null, inspectSeen = {};
 function closeInspect(done) { if ($('inspect').hidden) return; $('inspect').hidden = true; busy = panelsOpen(); if (inspectDone) { const f = inspectDone; inspectDone = null; f(done); } }
 $('inclose').onclick = () => closeInspect(false); $('indone').onclick = () => closeInspect(true);
@@ -1073,11 +1076,26 @@ function buildDeck() {
 }
 const DECK_VIEW = { hull: [8.2, 0.2, -8.6, Math.PI, -0.3], engine: [-6.2, 1.15, -0.62, Math.PI, -1.12], deck: [9.0, 0.75, 1.0, Math.PI, -0.5] };   /* where your eyes go for each close look: x, height, z, yaw, pitch */
 const deckGoal = () => { const n = Object.keys(INSPECT).filter((k) => inspectSeen[k]).length; return n < 3 ? 'Look at the hull, the engine and the deck. (' + n + ' of 3)' : 'You have seen the ship. Go back down to the dock.'; };
-function lookPart(k) {   /* a close look: your eyes go to the thing itself (over the rail, down the hatch, down to the planks) while the words are on the screen */
-  if (busy) return; busy = true; keys.clear(); uiSound('tap'); const keep = [state.x, state.z, state.yaw, state.pitch], v = DECK_VIEW[k]; state.x = v[0]; state.eyeY = v[1]; state.z = v[2]; state.yaw = v[3]; state.pitch = v[4];
-  $('intitle').textContent = INSPECT[k][0]; $('inrow').replaceChildren(); $('inmsg').textContent = INSPECT[k][1]; $('indone').hidden = false; $('inspect').hidden = false; $('indone').focus({ preventScroll: true });
-  inspectDone = () => { [state.x, state.z, state.yaw, state.pitch] = keep; delete state.eyeY; const first = !inspectSeen[k]; inspectSeen[k] = true; setGoal(); if (first && Object.keys(INSPECT).every((x) => inspectSeen[x])) { uiSound('goal'); toast('You have looked at everything. The ship is old.'); } };
+/* close-ups (owner rule 13, engine/lookshot.js): the bars come in, the eye glides to the thing, it does something with a sound, the words show in the
+   lower bar one sentence at a time, and the eye glides back. The deck looks were an instant jump and a panel. */
+const _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
+let LS = null, SEE_LOOK = false;   /* SEE_LOOK: a dev view that wants to see the close-up although the test speed-up is on */
+function lookShot() {
+  if (LS) return LS; const C = cineLayer();
+  LS = createLookShot({ camera, fov: () => camera.fov, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } }, bars: C.bars, say: C.say, freeze: (on) => { busy = on; if (on) keys.clear(); },
+    sound: lookSound, quick: () => QUICK && !SEE_LOOK, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, home: () => ({ pos: new THREE.Vector3(state.x, EYE, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
+  return LS;
 }
+if (__DEV__) window.__gv = { st: () => ({ busy, fading, ls: !!LS, on: !!(LS && LS.on) }), board: () => boardShip(), look: (k, at = 1.6) => { SEE_LOOK = true; lookPart(k); setTimeout(() => { if (LS) LS.paused = true; document.title = 'LOOK ' + k; }, at * 1000); } };   /* dev: board the Yarmouth, play a deck look and hold it */
+const sentences = (t) => t.split(/(?<=[.!?])\s+/);
+async function closeUp(view, { lines = [], sound = 'wood', reveal, act = 2.2 } = {}) { const L = lookShot(); await L.play({ view, lines, sound, reveal, act }); await L.back(); }
+const DECK_LOOK = { hull: { sound: 'water' }, engine: { sound: 'creak', reveal: (k) => { if (k > 0.2 && DECK.steam <= 0.01) DECK.steam = 1.8; } }, deck: { sound: 'wood' } };   /* the hull creaks in the swell, steam puffs from the engine room, the old planks */
+async function lookPart(k) {
+  if (busy) return; uiSound('tap'); const v = DECK_VIEW[k], p = [v[0], v[1], v[2]], D = DECK_LOOK[k];
+  await closeUp({ p, look: lookFrom(p, v[3], v[4], 3), fov: 46 }, { lines: sentences(INSPECT[k][1]), sound: D.sound, reveal: D.reveal });
+  const first = !inspectSeen[k]; inspectSeen[k] = true; setGoal(); if (first && Object.keys(INSPECT).every((x) => inspectSeen[x])) { uiSound('goal'); toast('You have looked at everything. The ship is old.'); }
+}
+
 function boardShip() { chapterFade('On board', 'The deck of the Yarmouth', () => { buildDeck(); enterPlace('deck'); const s = PLACES.deck.start; state.x = s.x; state.z = s.z; state.yaw = s.yaw; state.pitch = 0; setGoal(); showPlace(); }); }
 function leaveShip() { const done = Object.keys(INSPECT).every((x) => inspectSeen[x]); chapterFade('Back on the dock', 'New York, 1919', () => { enterPlace('dock'); state.x = 0; state.z = 2.0; state.yaw = 0; state.pitch = 0; if (done && stage === 41) { unlock('shares'); setStage(42); uiSound('goal'); } else setGoal(); showPlace(); }); }
 function deckTick(dt) {
@@ -1180,7 +1198,7 @@ function pickColour(b) {
 for (const b of $('dccolors').children) b.onclick = () => pickColour(b);
 function closeDecl(done) { if ($('decl').hidden) return; $('decl').hidden = true; busy = panelsOpen(); if (done && declDone) { const f = declDone; declDone = null; f(); } }
 $('dcx').onclick = () => closeDecl(false); $('dcdone').onclick = () => closeDecl(true);
-const LIB_ACTIONS = [{ id: 'declaration', label: 'Read the Declaration', x: 4.8, z: 3.0, r: 1.3, on: () => stage === 52, go: () => openDecl(() => { story.banner = true; showBanner(); setStage(53); uiSound('goal'); }) }];
+const LIB_ACTIONS = [{ id: 'declaration', label: 'Read the Declaration', x: 4.8, z: 3.0, r: 1.3, on: () => stage === 52, go: () => closeUp(frameOf([state.x, state.z], [4.8, 0.95, 3.0], { dist: 1.0, lift: 0.6, fov: 40 }), { lines: ['The Declaration of Rights of the Negro Peoples of the World.', 'It was agreed here in August 1920.'], sound: 'paper' }).then(() => openDecl(() => { story.banner = true; showBanner(); setStage(53); uiSound('goal'); })) }];
 const help = (id, t, reply) => ({ t, set: { helped: id }, then: [{ who: 'Steward', text: reply }, { who: 'Steward', text: 'I will go to the others right after. Thank you.' }] });
 const thanks = (id, other) => () => stage >= 52 ? [story.helped === id ? 'Thank you for helping me first!' : other] : null;
 const LIB_PEOPLE = [
@@ -1299,7 +1317,7 @@ function openLetter(done) {
 function closeLetter(done) { if ($('letp').hidden) return; $('letp').hidden = true; busy = panelsOpen(); if (done && letDone) { const f = letDone; letDone = null; f(); } }
 $('lex').onclick = () => closeLetter(false); $('ledone').onclick = () => closeLetter(true);
 const OFF_ACTIONS = [{ id: 'sort', label: 'Sort the news cards', x: -0.5, z: -0.5, r: 1.3, on: () => stage === 61, go: () => openSort(() => { setStage(62); uiSound('goal'); }) },
-  { id: 'letter', label: 'Read the letter', x: 3.2, z: 0.0, r: 1.3, on: () => stage === 63, go: () => openLetter(() => { setStage(64); uiSound('goal'); }) }];
+  { id: 'letter', label: 'Read the letter', x: 3.2, z: 0.0, r: 1.3, on: () => stage === 63, go: () => closeUp(frameOf([state.x, state.z], [3.2, 0.85, 0.0], { dist: 0.9, lift: 0.55, fov: 40 }), { lines: ['A letter from your friend lies open.'], sound: 'paper' }).then(() => openLetter(() => { setStage(64); uiSound('goal'); })) }];
 const fair = (id, t, reply) => ({ t, set: { question: id }, then: [{ who: NAR, text: reply }, { who: NAR, text: 'A letter has come for you, from a friend.' }, { who: NAR, text: 'It is on the table by the door.' }] });
 const OFF_PEOPLE = [
   { id: 'amyj', model: 'amyj1925', real: true, who: 'Amy Jacques Garvey', label: 'Talk to Amy Jacques Garvey', x: 1.5, z: -1.5, ry: faceToward(1.5, -1.5, 0, 1.5), base: 'Idle',
@@ -1384,9 +1402,9 @@ function refreshJourney() {
   if (story.final) L2.push('Asked if the dream has come true, you said: "' + story.final + '"');
   pg.simple = L2.length ? L2 : ['You finished the story.'];
 }
-const PARK_ACTIONS = [{ id: 'timeline', label: 'Read the timeline board', x: -5.0, z: 1.4, r: 1.4, on: () => stage === 71, go: () => openTime(() => { setStage(72); uiSound('goal'); }) },
+const PARK_ACTIONS = [{ id: 'timeline', label: 'Read the timeline board', x: -5.0, z: 1.4, r: 1.4, on: () => stage === 71, go: () => closeUp(frameOf([state.x, state.z], [-5.0, 1.5, 1.4], { dist: 1.8, lift: 0.1, fov: 44 }), { lines: ['A board tells the story of his life.'], sound: 'wood' }).then(() => openTime(() => { setStage(72); uiSound('goal'); })) },
   { id: 'answer', label: 'Answer at the shrine', x: 0, z: -0.3, r: 1.7, on: () => stage === 73, go: () => openAnswer(() => { story.final = ansText(); unlock('shrine'); unlock('pardon'); refreshJourney(); unlock('journey'); setStage(74); uiSound('goal'); endCard(); }) }];
-function endCard() { card('The End', ['Thank you for walking through this story. Your journey, with all your choices, is in the Journal.', 'Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.'], [{ t: 'Read my journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Keep exploring', go: hideCard }]); }
+function endCard() { cue('end'); card('The End', ['Thank you for walking through this story. Your journey, with all your choices, is in the Journal.', 'Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.'], [{ t: 'Read my journey', go: () => { hideCard(); openJournal('journey'); } }, { t: 'Keep exploring', go: hideCard }]); }
 const PARK_PEOPLE = [
   { id: 'guide', model: 'guide2020', who: 'Guide', label: 'Talk to the guide', x: -1.8, z: 2.2, ry: faceToward(-1.8, 2.2, 0, -3), base: 'Idle',
     lines: () => [{ who: 'Guide', text: 'Welcome to National Heroes Park in Kingston.' }, { who: 'Guide', text: 'This shrine is for Marcus Garvey.', unlock: 'shrine' }, { who: 'Guide', text: 'In 1927 he came home to Jamaica.', unlock: 'later' }, { who: 'Guide', text: 'In 1929 he started a political party here.' }, { who: 'Guide', text: 'In 1935 he moved to London.' }, { who: 'Guide', text: 'In 1937 he gave a speech in Nova Scotia, in Canada.' }, { who: 'Guide', text: 'He said these real words there:', unlock: 'mind' }, { who: 'Guide', text: '“... none but ourselves can free the mind.”' }, { who: 'Guide', text: 'He died in London in 1940.' }, { who: 'Guide', text: 'In 1964 his remains came home, to this shrine.' }, { who: 'Guide', text: 'In 1969 he was named a National Hero.' }],
@@ -1602,15 +1620,12 @@ function update(dt, now) {
     const len = Math.hypot(f, r);
     if (len > 0.05) { const sp = (keys.has('shift') ? 3.6 : 2.2) * Math.min(1, len), fx = -Math.sin(state.yaw), fz = -Math.cos(state.yaw);
       [state.x, state.z] = clampPos(state.x + (fx * f - fz * r) / Math.max(1, len) * sp * dt, state.z + (fz * f + fx * r) / Math.max(1, len) * sp * dt);
-      stepT -= dt * sp; if (stepT <= 0) { stepT = 1.3; stepSound('wood'); } }
+      stepT -= dt * sp; if (stepT <= 0) { stepT = 1.3; stepSound(FOOT[place] || 'wood'); } }
   }
   for (const n of PEOPLE) npcTick(n, dt);
   if (place === 'hall') {
     const arriving = HALL_PEOPLE.some(n => n.fol && n.m?.visible && n.z > HALL.z1 - 1.4);
-    for (const leaf of hallLeaves) {
-      const target = arriving ? leaf.userData.side * 1.55 : 0;
-      leaf.rotation.y += THREE.MathUtils.clamp(target - leaf.rotation.y, -3.8 * dt, 3.8 * dt);
-    }
+    swingDoor(hallLeaves, arriving, dt, { angle: 1.55, rate: 3.8 });   /* the doors swing in for the neighbours, with a latch, a creak and a thud (engine/door.js) */
   }
   if (talkWith && talkWith.m && !POSTER) {   /* in a talk the view turns gently to the person, their face above the dialogue box */
     const n = talkWith, dx = n.x - state.x, dz = n.z - state.z, d = Math.max(0.6, Math.hypot(dx, dz)), hy = (n.m.userData.ground || 0) + (n.seated ? 1.12 : 1.5) * n.m.scale.y;
@@ -1629,7 +1644,7 @@ let last = performance.now(), stepT = 0;
 function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
-  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); }   /* eyeY: dev face views only */
+  if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); } if (LS) LS.tick(dt);   /* a close-up holds the camera */   /* eyeY: dev face views only */
   renderer.render(scene, camera);
 }
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.
@@ -1741,6 +1756,7 @@ function devViews() {
   if (shot === 'hallseat2') inHall(13, 0.3, 0.9, -Math.PI / 2 + 0.25, 0.0, 'LEARN');
   if (shot === 'hallseat3') inHall(13, 0.0, 3.6, 0.0, 0.05, 'LEARN');
   if (shot === 'hallchat') inHall(10, -0.8, -1.2, 0, 0.04).then(() => startTalk(byId('garvey')));
+  if (q.get('test') === 'beds') bedTest(SOUNDSCAPE);   /* ?test=beds : each place's bed levels against the shared range (engine/audio.js) */
   if (q.get('test') === 'skin') {   /* ?test=skin : how dark each face really looks in this game's light (engine/skinprobe.js), every body */
     (async () => { const out = []; while (!CL.Idle) await new Promise((r) => setTimeout(r, 100));
       const names = (q.get('b') || 'amy1914,amyj1925,clerk1919,delegate1920,engineer1919,garvey1914,garvey1916,guide2020,hl_critic,hl_pressman,hl_woman,hl_worker,nb_elder,nb_seller,nb_youth,nurse1920,printer1907,seaman1919,steward1920,student2020,woman1914').split(',');
@@ -1846,6 +1862,7 @@ function devViews() {
         $('start').click(); best = 64; stage = 64; Object.assign(story, { strike: 'speak', poster: 'LEARN', words: 'work', answer: 'listen', headline: 'pride', delivery: 'all', plan: 'now', advice: 'truth', helped: 'nurse', question: 'who', reassure: 'honest' }); CHAPTERS[7].go(); for (let i = 0; i < 300 && place !== 'park'; i++) await sleep(100); await sleep(200); L('place=' + place + ' stage=' + stage + ' goal="' + $('goal').textContent + '" caption="' + $('place').textContent + '" people=' + PEOPLE.map((n) => n.id).join(','));
         for (const id of ['guide', 'student']) L(id + ' lines=' + await talkTo(byId(id))); L('stage=' + stage);
         const act = ACTIONS.find((a) => a.on()); L('action=' + (act && act.label)); act.go(); $('tmtray').querySelector('[data-i="3"]').click(); L('wrong msg="' + $('tmmsg').textContent + '" list=' + $('tmlist').children.length);
+        for (let k = 0; k < 60 && showingRight(); k++) await new Promise((r) => setTimeout(r, 100));   /* the right answer is shown, then picked for you; taps wait until it is (the run used to tap on at once, so every tap was ignored and the list stayed empty) */
         for (let i = 0; i < EVENTS.length; i++) $('tmtray').querySelector('[data-i="' + i + '"]').click(); L('list=' + $('tmlist').children.length + ' done shown=' + !$('tmdone').hidden + ' first="' + $('tmlist').firstChild.textContent + '"'); $('tmdone').click(); L('stage=' + stage + ' busy=' + busy);
         L('student lines=' + await talkTo(byId('student')) + ' stage=' + stage); const act2 = ACTIONS.find((a) => a.on()); L('action=' + (act2 && act2.label)); act2.go(); L('text before="' + $('antext').textContent + '" done shown=' + !$('andone').hidden); $('anopen').children[1].click(); L('after one: done shown=' + !$('andone').hidden); $('anwhy').children[0].click(); L('text="' + $('antext').textContent + '" done shown=' + !$('andone').hidden); $('andone').click();
         L('stage=' + stage + ' final="' + story.final + '" card shown=' + !$('card').hidden + ' goal="' + $('goal').textContent + '"'); $('cbtns').firstChild.click(); L('journal open=' + !$('journal').hidden + ' title="' + document.querySelector('#jpage h3').textContent + '" lines=' + document.querySelectorAll('#jpage p').length + ' first="' + document.querySelector('#jpage p').textContent + '"');

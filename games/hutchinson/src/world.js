@@ -122,21 +122,41 @@ export function well() {
   water.rotation.x = -Math.PI / 2;
   for (const s of [-1, 1]) box(0.14, 2.1, 0.14, WM.woodDark, s * 1.0, 1.05, 0, g);
   box(2.3, 0.14, 0.14, WM.woodDark, 0, 2.1, 0, g);
-  const roller = cyl(0.09, 0.09, 1.9, WM.wood, 0, 1.55, 0, g, 10);
+  const roller = cyl(0.09, 0.09, 1.9, WM.wood, 0, 1.55, 0, g, 8);
   roller.rotation.z = Math.PI / 2;
   cyl(0.012, 0.012, 0.75, WM.rope, 0.2, 1.17, 0, g, 5);
-  box(0.05, 0.36, 0.05, WM.iron, 1.12, 1.55, 0.0, g);
-  box(0.05, 0.05, 0.3, WM.iron, 1.12, 1.71, 0.15, g);
+  /* the crank turns on the roller's axis: userData.turn(a) winds it (a in radians) */
+  const crank = grp(g, 1.12, 1.55, 0);
+  box(0.05, 0.36, 0.05, WM.iron, 0, 0, 0.0, crank);
+  box(0.05, 0.05, 0.3, WM.iron, 0, 0.16, 0.15, crank);
+  for (const o of [roller, crank]) o.traverse((m) => (m.userData.noBatch = true));
+  g.userData.turn = (a) => {
+    crank.rotation.x = a;
+    roller.rotation.x = a;
+  };
   return g;
 }
 /* a sea chest or strongbox with a lid that lifts (userData.open(k)) */
-export function chest(w = 0.95, d = 0.5, h = 0.5) {
-  const g = grp();
-  box(w, h * 0.68, d, WM.woodDark, 0, h * 0.34, 0, g);
-  for (const x of [-w * 0.32, w * 0.32]) box(0.05, h * 0.7, d + 0.02, WM.iron, x, h * 0.34, 0, g);
-  const hinge = grp(g, 0, h * 0.68, -d / 2);
+export function chest(w = 0.95, d = 0.5, h = 0.5, fill = 0) {
+  /* a real box: a floor and four boards 2.5 cm thick, open at the top under the lid, iron straps round the outside only. fill: how high
+     (0 to 1 of the body) it is packed inside, with a dark cloth over what is in it */
+  const g = grp(),
+    H = h * 0.68,
+    t = 0.025;
+  box(w, t, d, WM.woodDark, 0, t / 2, 0, g);
+  for (const z of [-1, 1]) box(w, H, t, WM.woodDark, 0, H / 2, z * (d / 2 - t / 2), g);
+  for (const x of [-1, 1]) box(t, H, d - 2 * t, WM.woodDark, x * (w / 2 - t / 2), H / 2, 0, g);
+  if (fill) box(w - 2 * t - 0.004, H * fill - t, d - 2 * t - 0.004, solid(0x2e2420, 1), 0, t + (H * fill - t) / 2, 0, g);
+  for (const x of [-w * 0.32, w * 0.32]) {
+    for (const z of [-1, 1]) box(0.05, H + 0.01, 0.008, WM.iron, x, H / 2, z * (d / 2 + 0.004), g);
+    box(0.05, 0.008, d + 0.016, WM.iron, x, 0.004, 0, g);
+  }
+  const hinge = grp(g, 0, H, -d / 2);
   box(w, h * 0.3, d, WM.woodDark, 0, h * 0.15, d / 2, hinge);
-  for (const x of [-w * 0.32, w * 0.32]) box(0.05, h * 0.31, d + 0.02, WM.iron, x, h * 0.15, d / 2, hinge);
+  for (const x of [-w * 0.32, w * 0.32]) {
+    box(0.05, 0.008, d + 0.016, WM.iron, x, h * 0.3 + 0.004, d / 2, hinge);
+    for (const z of [0, d]) box(0.05, h * 0.3, 0.008, WM.iron, x, h * 0.15, z + (z ? 0.004 : -0.004), hinge);
+  }
   hinge.traverse((o) => (o.userData.noBatch = true));
   g.userData.open = (k) => (hinge.rotation.x = -k * 1.25);
   return g;
@@ -167,19 +187,33 @@ export function candle(lit = true) {
   f.position.y = 0.32;
   f.visible = lit;
   f.userData.noBatch = true;
-  f.userData.noAudit = true;
+  f.userData.noAudit = true;   /* a candle flame sprite */
   g.add(f);
   g.userData.light = (on) => (f.visible = on);
   return g;
 }
 /* a coat on a wall peg, or folded: a traveller's coat with no traveller in it */
 export function hungCoat(c = 0x5a3a2a) {
+  /* a long coat of the 1770s hung by its collar on a peg: a body with some depth that widens to full skirts, sleeves hanging at the sides,
+     a turned-down collar, cuffs and a row of buttons. Faces +z, its back to the wall. */
   const g = grp(),
-    m = solid(c, 1);
+    m = solid(c, 1),
+    dark = solid(new THREE.Color(c).multiplyScalar(0.7).getHex(), 1),
+    brass = solid(0xb8963c, 0.4, 0.7);
   box(0.5, 0.05, 0.06, WM.woodDark, 0, 1.62, 0.03, g);
   cyl(0.012, 0.012, 0.1, WM.iron, 0, 1.6, 0.08, g, 6).rotation.x = Math.PI / 2;
-  box(0.42, 0.85, 0.07, m, 0, 1.16, 0.09, g);
-  for (const s of [-1, 1]) box(0.12, 0.62, 0.07, m, s * 0.27, 1.22, 0.085, g).rotation.z = s * 0.1;
+  const body = cyl(0.17, 0.25, 0.92, m, 0, 1.12, 0.1, g, 14);   /* shoulders to hem, flattened to a hung coat's depth */
+  body.scale.z = 0.3;
+  const yoke = mesh(new THREE.SphereGeometry(0.17, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), m, 0, 1.58, 0.1, g);
+  yoke.scale.set(1.05, 0.25, 0.3);
+  const collar = mesh(new THREE.TorusGeometry(0.075, 0.022, 6, 14, Math.PI), dark, 0, 1.6, 0.11, g);
+  collar.rotation.x = -Math.PI / 2 + 0.4;
+  for (const s of [-1, 1]) {
+    const sl = cyl(0.05, 0.062, 0.6, m, s * 0.21, 1.27, 0.1, g, 10);
+    sl.rotation.z = s * 0.08;
+    cyl(0.066, 0.066, 0.1, dark, s * 0.235, 0.99, 0.1, g, 10).rotation.z = s * 0.08;   /* the cuff */
+  }
+  for (let i = 0; i < 6; i++) mesh(new THREE.SphereGeometry(0.012, 6, 4), brass, 0.03, 1.5 - i * 0.12, 0.1 + (0.17 + (0.08 * i) / 6) * 0.3, g);
   return g;
 }
 /* a plain room: floor, four walls with openings, a boarded ceiling on beams. walls: [{ line: [ax, az, bx, bz], gaps: [{ at, w, h, sill }] }] */

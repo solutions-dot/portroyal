@@ -21,7 +21,7 @@ import { showCinematicSkip } from '../../../engine/cine.js';
 import * as THREE from 'three';
 import { groundFeet } from '../../../engine/anim.js';
 import { LOOKS, BODIES, loadBase, makeBody } from './cast.js';
-import { arm, disarm } from './weapons.js';
+import { arm, disarm, modeOf, PISTOL_CLIPS } from './weapons.js';
 import { pose, POSES } from './clips.js';
 import { pace, strideOf } from './walk.js';
 import { buildStreet } from './street.js';
@@ -29,7 +29,9 @@ import { release } from '../../../engine/preload.js';
 import { aimDir, faceFor, wrap } from './aim.js';
 import { FX, flash, puff, kick, updateFx, shakeOffset } from './fx.js';
 import * as SFX from './sfx.js';
+import { cue } from '../../../engine/audio.js';
 import { finishChapter } from './story.js';
+import { makeHelicopter, spinRotors, flyAlong, rotorSound } from '../../../engine/helicopter.js';
 
 export const FIGHT = { on: false, T: 0, contact: false, bodies: [], actors: [], hidden: [], env: null, street: null, cleanup: null };
 const END = 46, W = -Math.PI / 2, E = Math.PI / 2;   /* the clock runs from -4 (the quiet start) to 46 s; a body faces +z, so facing west (-x) is -pi/2 */
@@ -98,7 +100,7 @@ export async function begin() {
   FX.calm = sceneIsCalm(); FX.shake = 0;
   FIGHT.hidden = scene.children.filter((c) => c.visible && !c.isLight); FIGHT.hidden.forEach((c) => (c.visible = false));
   FIGHT.fog = scene.fog; FIGHT.bg = scene.background; scene.background = new THREE.Color(0xdbe6ea); scene.fog = new THREE.Fog(0xcfdde4, 70, 270);
-  const shadows = !matchMedia('(pointer: coarse)').matches, st = buildStreet({ shadows }); FIGHT.street = st; scene.add(st.group, FX.group);
+  const shadows = !matchMedia('(pointer: coarse)').matches, st = buildStreet({ shadows }); FIGHT.street = st; scene.add(st.group, FX.group); const H = FIGHT.heli || (FIGHT.heli = makeHelicopter()); H.visible = false; scene.add(H); FIGHT.rotor = rotorSound();   /* a helicopter overhead (heli() below) */
   FIGHT.lights = scene.children.filter((c) => c.isLight && c !== st.sun).map((l) => [l, l.intensity]); FIGHT.lights.forEach(([l]) => (l.intensity = l.isDirectionalLight ? 0 : 1.9));   /* the street has its own sun */
   FIGHT.shadowWas = renderer.shadowMap.enabled; if (shadows) { renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; }
   FIGHT.actors = []; FIGHT.bodies = []; FIGHT.contact = false; FIGHT.T = -4; FIGHT.shot = -1; FIGHT.ended = false;
@@ -120,6 +122,7 @@ export async function begin() {
 function finish(showTitle = true) {
   clearTimeout(titleTimer); clearTimeout(endTimer);
   SFX.ambience(false); endSceneWarning();
+  if (FIGHT.heli) { FIGHT.heli.visible = false; FIGHT.heli.removeFromParent(); } if (FIGHT.rotor) { FIGHT.rotor.stop(); FIGHT.rotor = null; }
   const gone = FIGHT.cleanup ? [FIGHT.street.group, ...FIGHT.bodies] : [];
   if (FIGHT.cleanup) FIGHT.cleanup(); FIGHT.cleanup = null; for (const o of gone) release(o, FIGHT.env.scene);   /* engine/preload.js: the street and its people are built afresh next time, so their graphics memory is let go */ FIGHT.on = false;
   for (const id of ['aftercard', 'windowframe', 'fighttitle', 'fade']) $(id).hidden = true;
@@ -129,7 +132,7 @@ function complete() {
   if (!FIGHT.on) return;
   FIGHT.ended = true;
   finish(false);
-  show('aftercard'); finishChapter(5);
+  show('aftercard'); finishChapter(5); cue('sad');   /* a soft, sad phrase under the after card (about 70 civilians and one soldier died) */
   $('fnext').focus();
 }
 
@@ -153,11 +156,14 @@ function pickTarget(a) {
 /* the way a person at cover looks between bursts: toward the target on the other side with the clearest line (kept while it stays clear), or the guard's side street */
 function restYaw(a) {
   if (a.face !== undefined && a.cover === 'guard') return a.face;
-  const p = a.b.position; let best = a.next && clearance(a, a.next.b.position.x, a.next.b.position.z) > CLEAR ? a.next : null;
-  if (!best) { let bc = -1; for (const o of targets(a)) { const c = clearance(a, o.b.position.x, o.b.position.z); if (c > bc) { bc = c; best = o; } } a.next = best; }
-  if (best) return Math.atan2(best.b.position.x - p.x, best.b.position.z - p.z);
-  let x = 0, z = 0; const opp = FIGHT.actors.filter((o) => o.side !== a.side); for (const o of opp) { x += o.b.position.x; z += o.b.position.z; } x /= opp.length || 1; z /= opp.length || 1;
-  return Math.atan2(x - p.x, z - p.z);
+  const p = a.b.position, opp = FIGHT.actors.filter((o) => o.side !== a.side); let mx = 0, mz = 0; for (const o of opp) { mx += o.b.position.x; mz += o.b.position.z; } mx /= opp.length || 1; mz /= opp.length || 1;
+  const mid = Math.atan2(mx - p.x, mz - p.z), dirTo = (o) => Math.atan2(o.b.position.x - p.x, o.b.position.z - p.z), inArc = (o) => Math.abs(wrap(dirTo(o) - mid)) < 60 / 57.3, clear = (o) => clearance(a, o.b.position.x, o.b.position.z) > CLEAR;
+  /* the target: kept while its line stays clear and it stays within 60 degrees of the middle of the other side (people move up and the middle moves);
+     otherwise the clearest line among those in that arc, or among all if none there is clear */
+  let best = a.next && clear(a.next) && inArc(a.next) ? a.next : null;
+  if (!best) { const all = targets(a), near = all.filter((o) => inArc(o) && clear(o)); let bc = -1; for (const o of near.length ? near : all) { const c = clearance(a, o.b.position.x, o.b.position.z); if (c > bc) { bc = c; best = o; } } a.next = best; }
+  if (!best) return mid;
+  const off = wrap(dirTo(best) - mid); return wrap(mid + Math.max(-60 / 57.3, Math.min(60 / 57.3, off)));   /* at rest, never more than 60 degrees off the middle */
 }
 function moveAlong(a, pts, clipName, v, dt, camera) {
   const b = a.b, tgt = pts[a.wp]; if (!tgt) return true;
@@ -177,14 +183,22 @@ function fire(a, camera) {
   flash(p, rifle ? 0.55 : 0.4); SFX.shot(Math.max(-0.9, Math.min(0.9, ndc.x * 0.8)), Math.min(1, d / 55), FX.calm, rifle ? 'rifle' : 'pistol'); kick(d < 25 ? 1 : 0.4);
   if (Math.random() < 0.45) { const sp = FIGHT.street.spots, set = a.side === 'gunmen' ? sp.dust : sp.dustFar, q = set[(Math.random() * set.length) | 0]; puff(new THREE.Vector3(q[0] + rnd(-0.3, 0.3), q[1], q[2] + rnd(-0.3, 0.3)), rnd(0.7, 1.3)); }
 }
+/* turn so that what the check and the eye see (the weapon in the hands, or the chest) points along yaw: measured from the body itself, not
+   worked out from the clip, so a pose's own twist never leaves the aim a few degrees off */
+function aimAt(a, yaw, dt, rate = 3) { const b = a.b, d = aimDir(b); return turnTo(a, wrap(b.rotation.y + wrap(yaw - Math.atan2(d.x, d.z))), dt, rate); }
 /* resting and firing at a cover spot: rest (crouched, facing the clearest target) -> rise (turn the last bit until the weapon will point at it) -> fire (a burst) -> rest */
 function atCover(a, st, T, dt, camera) {
   const C = COVER[a.cover], endSoft = T > 40 ? Math.max(0, 1 - (T - 40) / 4) : 1, b = a.b, p = b.position; a.speed = 0; a.stT -= dt;
   const fireClip = C.fire ? pose(C.fire) : null, restClip = pose(C.rest);
   if (a.st === 'rest') {
-    play(a, C.rest); const y = restYaw(a), yr = faceFor(a.bodyId, a.kind, restClip, y), yf = fireClip ? faceFor(a.bodyId, a.kind, fireClip, y) : yr;
-    turnTo(a, wrap(yf + 0.5 * wrap(yr - yf)), dt, 3);   /* half way between the rest clip's facing and the fire clip's, so the chest faces the other side and the feet swivel little when they rise */
+    const y = restYaw(a), yr = faceFor(a.bodyId, a.kind, restClip, y), yf = fireClip ? faceFor(a.bodyId, a.kind, fireClip, y) : yr;
+    if (a.kind === 'pistol' && PISTOL_CLIPS.test(restClip)) {   /* a rest that holds the pistol up: lower it to turn to a new target, raise it once facing it */
+      const e = Math.abs(wrap(faceFor(a.bodyId, a.kind, restClip, a.next ? Math.atan2(a.next.b.position.x - p.x, a.next.b.position.z - p.z) : y) - b.rotation.y)); a.low = a.low ? e > 0.08 : e > 0.25;
+      const ya = a.next ? Math.atan2(a.next.b.position.x - p.x, a.next.b.position.z - p.z) : y;   /* a raised pistol aims at the target itself */
+      if (a.low) { play(a, 'CrouchIdle'); turnTo(a, faceFor(a.bodyId, a.kind, restClip, ya), dt, 3); } else { play(a, C.rest); aimAt(a, ya, dt); }
+    } else { play(a, C.rest); aimAt(a, y, dt); }   /* the chest faces where they look, measured (it was half way to the fire clip's facing, which could leave it 75 degrees off) */   /* a rest that holds the weapon up (the kneeling pistol) points it straight at the target; otherwise half way between the rest clip's facing and the fire clip's, so the chest faces the other side and the feet swivel little when they rise */
     if (a.stT > 0) return;
+    if (a.low) return;   /* still turning with the pistol down */
     if (T >= st.fight) { next(a); return; }   /* time to move on: only from a rest, never in the middle of a burst */
     if (!fireClip || endSoft <= 0.05) { a.stT = rnd(1, 2); return; }
     const t = a.next; if (!t || clearance(a, t.b.position.x, t.b.position.z) <= CLEAR) { a.stT = rnd(0.8, 1.6); return; }   /* no clear line: stay down a little longer */
@@ -192,13 +206,14 @@ function atCover(a, st, T, dt, camera) {
   }
   const tp = a.target.b.position, yaw = Math.atan2(tp.x - p.x, tp.z - p.z), blocked = clearance(a, tp.x, tp.z) <= CLEAR;
   if (a.st === 'rise') {   /* still crouched: turn until the fire clip will point at the target, then stand and fire */
-    play(a, C.rest); const err = turnTo(a, faceFor(a.bodyId, a.kind, fireClip, yaw), dt, 3);
+    play(a, C.rest); const err = aimAt(a, yaw, dt);   /* by the weapon if the rest holds it up, else by the chest: measured, not estimated from the fire clip */
     if (blocked) { a.st = 'rest'; a.stT = rnd(1, 2); return; }
     if (err < 0.1 || a.stT <= 0) { a.st = 'fire'; a.stT = rnd(1.6, 3.4); a.fireT = 0; a.shotT = rnd(0.35, 0.7); }
     return;
   }
   /* firing */
-  play(a, C.fire); a.fireT += dt; const err = turnTo(a, faceFor(a.bodyId, a.kind, fireClip, yaw), dt, 3);
+  if (blocked) { a.st = 'rest'; a.stT = rnd(1.2, 2); play(a, C.rest); return; }   /* a friend in the way: lower at once, before this frame's raise */
+  play(a, C.fire); a.fireT += dt; const err = a.fireT > 0.35 ? aimAt(a, yaw, dt) : turnTo(a, faceFor(a.bodyId, a.kind, fireClip, yaw), dt, 3);   /* once the weapon is up, aim by the weapon itself */
   if (blocked || a.stT <= 0) { a.st = 'rest'; a.stT = blocked ? rnd(1.2, 2) : rnd(1.4, 3.8); return; }   /* a friend in the way: stop at once */
   if (err < 0.08 && a.fireT > 0.45 && endSoft > 0) { a.shotT -= dt; if (a.shotT <= 0) { fire(a, camera); a.shotT = rnd(0.25, 0.75) / Math.max(0.35, endSoft); } }
 }
@@ -213,13 +228,29 @@ export function tick(dt) {
     if (st.ready) { a.speed = 0; play(a, 'ReadyIdle'); turnTo(a, faceFor(a.bodyId, a.kind, pose('ReadyIdle'), W), dt, 2); if (FIGHT.contact) next(a); continue; }
     if (st.react) { a.speed = 0; if (a.t > a.react) next(a); continue; }   /* a moment's start before running (they keep the clip they had) */
     if (st.run) { if (moveAlong(a, st.run, 'RunLow', RUN_V, dt, camera)) { a.cover = st.cover; a.face = st.face; a.st = 'rest'; a.stT = rnd(0.8, 2.2); next(a); } continue; }
-    if (st.burst) { a.speed = 0; if (!a.target) a.target = pickTarget(a); if (!a.target || a.t > st.burst) { next(a); continue; } const clip = play(a, 'StandFire'), p = b.position, tp = a.target.b.position, err = turnTo(a, faceFor(a.bodyId, a.kind, clip, Math.atan2(tp.x - p.x, tp.z - p.z)), dt, 4); if (clearance(a, tp.x, tp.z) <= CLEAR) { next(a); continue; } if (err < 0.08 && a.t > 0.4) { a.shotT -= dt; if (a.shotT <= 0) { fire(a, camera); a.shotT = rnd(0.25, 0.5); } } continue; }   /* the first shots, from where they stand, then they run for cover */
+    if (st.burst) { a.speed = 0; if (!a.target) a.target = pickTarget(a); if (!a.target || a.t > st.burst) { next(a); continue; } const fc = pose('StandFire'), p = b.position, tp = a.target.b.position; if (clearance(a, tp.x, tp.z) <= CLEAR) { play(a, 'ReadyIdle'); next(a); continue; } const err = turnTo(a, faceFor(a.bodyId, a.kind, fc, Math.atan2(tp.x - p.x, tp.z - p.z)), dt, 4); play(a, err < 0.15 ? 'StandFire' : 'ReadyIdle'); if (a.cur === pose('StandFire') && a.t > 0.75) aimAt(a, Math.atan2(tp.x - p.x, tp.z - p.z), dt, 4);   /* the rifle comes up only once he faces the target (it used to rise while he was still turning) */ if (clearance(a, tp.x, tp.z) <= CLEAR) { next(a); continue; } if (err < 0.08 && a.t > 0.4) { a.shotT -= dt; if (a.shotT <= 0) { fire(a, camera); a.shotT = rnd(0.25, 0.5); } } continue; }   /* the first shots, from where they stand, then they run for cover */
     if (st.cover) { b.visible = true; a.cover = st.cover; a.st = 'rest'; a.stT = rnd(0.2, 1.6); next(a); continue; }
     if (st.fight !== undefined) atCover(a, st, T, dt, camera);
   }
   updateFx(dt);
+  heli(dt, T);
   if (T > 12 && T < 38 && Math.random() < dt * 0.35) SFX.rattle(rnd(-0.8, 0.8), FX.calm);   /* more fighting, further off */
   if (T >= END - 2) { FIGHT.ended = true; SFX.ambience(false); $('fade').style.transition = 'opacity 2s'; $('fade').style.opacity = 1; SFX.ring(FX.calm); endTimer = setTimeout(complete, 2600); }
+}
+/* A helicopter overhead (22 November 2026, owner's request). The Security Minister said the troops that took the area were "backed by helicopters"
+   (Voice of America, 25 May 2010; docs/games/tivoli.md). No source says how many, of what kind, or what they did, so the scene shows only one,
+   high up, passing over: it never fires and nothing comes from it. The model is the shared stand-in shape (engine/helicopter.js). It crosses the
+   sky as the soldiers walk in, and again far off at the end, where the wide shots can see it. Its sound grows as it comes nearer. */
+const HELI = [
+  { t0: -3, t1: 10, A: new THREE.Vector3(90, 34, -46), B: new THREE.Vector3(-170, 30, -22) },
+  { t0: 36, t1: 47, A: new THREE.Vector3(-190, 30, 60), B: new THREE.Vector3(-80, 26, -70) },
+];
+const EAR = new THREE.Vector3(16.5, 4.8, 8.9);
+function heli(dt, T) {
+  const H = FIGHT.heli; if (!H) return; const p = HELI.find((h) => T >= h.t0 && T <= h.t1);
+  H.visible = !!p; let near = 0;
+  if (p) { flyAlong(H, p.A, p.B, (T - p.t0) / (p.t1 - p.t0)); spinRotors(H, dt); near = Math.max(0, 1 - H.position.distanceTo(EAR) / 220); }
+  if (FIGHT.rotor) FIGHT.rotor.level(near * near * (FX.calm ? 0.35 : 1), 0.4);
 }
 /* what runs after the mixers: feet on the ground, and the camera */
 const SHOTS = [   /* all from the child's window: the balcony of the second floor of the south flats (x 16.5, y 4.8, z 8.9), looking west along the street */

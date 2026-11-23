@@ -15,7 +15,7 @@ const TC = createTalkCam();
    See docs/TESTING.md section 5 and games/kendal/src/main.js ("the place audit"). */
 import * as THREE from 'three';
 import { CL, mixers, loadClips, animate, groundFeet } from '../../../engine/anim.js';
-import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
+import { soundPref, setSound, audioInit, stepSound, uiSound, AU, cue, chirp, mixBeds, bedTest, carFar, dogFar, radioFar } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
 import { pose, standIns, POSES, deriveClips } from './clips.js';
 import { LOOKS, BODIES, loadBase, makeBody, bodyOf } from './cast.js';
@@ -134,7 +134,7 @@ function card(title, paras, btns, { dismiss } = {}) {
 }
 function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
 function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game), after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
-  const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable);
+  const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable); if (!nx) cue('end');   /* the last chapter: the closing phrase */
   offerNextChapter({ clear: () => !panelOpen() && $('chcard').hidden && $('dialogue').hidden, show: () => card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }]
     : [{ t: 'Chapters', go: () => { hideCard(); openChapters(); } }, { t: 'Exit', href: MENU_URL }]) });
 }
@@ -193,7 +193,28 @@ function prepare(id) {
 }
 /* the player is reading, not moving, while a panel, a card, a conversation, the title or a loading card is on screen */
 setQuiet(() => panelOpen() || ['chcard', 'dialogue', 'title', 'fightcard', 'readcard', 'aftercard', 'fightload'].some((id) => !$(id).hidden));
-$('start').onclick = () => { audioInit(); startChapter(nextChapter()); };
+$('start').onclick = () => { audioInit(); cue('begin'); startChapter(nextChapter()); };
+/* ---------- sound in the walking chapters (22 November 2026: they were silent; only the street scene had beds, fight.js and sfx.js).
+   Each chapter's street life: people about, the wind, birds, a dog far off, a radio or a car down the road. Kept low and plain; quieter on
+   Sunday 23 May 2010 (chapter 4, waiting) and in the days after (chapter 6: no radio, no traffic, only birds and the wind). The street scene
+   keeps its own sound (fight.js turns these beds over to SFX.ambience while FIGHT.on). */
+const pick = (...f) => () => f[(Math.random() * f.length) | 0]();
+const SOUNDSCAPE = {
+  1: { crowd: 0.1, wind: 0.06, once: pick(chirp, chirp, dogFar) },   /* Back-o-Wall, before the 1960s */
+  2: { crowd: 0.12, wind: 0.05, traffic: 0.04, once: pick(chirp, chirp, dogFar, radioFar) },   /* the new Tivoli, 1960s */
+  3: { crowd: 0.13, wind: 0.04, traffic: 0.07, once: pick(chirp, radioFar, carFar, dogFar) },   /* 1970s to 2009 */
+  4: { wind: 0.07, crowd: 0.04, traffic: 0.02, once: pick(chirp, dogFar) },   /* Sunday 23 May 2010: barricades at the entrances, the street waits; a few cars still pass (street.js addTraffic) */
+  6: { wind: 0.06, crowd: 0.03, once: chirp },   /* after: quiet */
+  7: { crowd: 0.08, wind: 0.04, traffic: 0.06, once: pick(chirp, carFar) },   /* 2016 to 2017 */
+  8: { crowd: 0.14, wind: 0.04, traffic: 0.08, once: pick(chirp, radioFar, carFar, dogFar) },   /* today */
+};
+if (__DEV__ && new URLSearchParams(location.search).get('test') === 'beds') bedTest(SOUNDSCAPE);   /* ?test=beds : each chapter's bed levels against the shared range (engine/audio.js) */
+let auNext = 0, onceAt = 6;
+function audioTick(t) {
+  if (!AU.ctx || FIGHT.on || t < auNext) return; auNext = t + 0.1; const S = (CH.on && state.started && SOUNDSCAPE[CH.id]) || {};
+  mixBeds(S, { duck: !!Talk.open });
+  if (t > onceAt) { onceAt = t + 7 + Math.random() * 7; if (S.once && AU.on && !Talk.open) S.once(); }
+}
 const FOOT = { 1: 'sand' };   /* Back-o-Wall's lanes are earth; everywhere else is paving */
 const talkEnv = { scene, camera, uiSound: uiS, setBusy, onUnlock: (id) => unlockPage(id), onTalked: (n) => ch1Talked(n), onClose: () => flushToasts() };
 setupTalk(talkEnv);
@@ -473,7 +494,7 @@ function update(dt, now) {
   if (CH.on) { lifeTick(dt); talkAfter(dt, state); }   /* after the mixers: the background people (engine/ambient.js) and the story people's heads turn on top of their clips */
   if (__DEV__) for (const m of DEVG) groundFeet(m);
   for (const m of ARMED) weaponTick(m);   // after the mixer and the feet: weapons follow the hands
-  if (now !== undefined) { bubbleTick(now / 1000); stickUI(); guideTick(now); }
+  if (now !== undefined) { bubbleTick(now / 1000); stickUI(); guideTick(now); audioTick(now / 1000); }
 }
 function frame(t) {
   requestAnimationFrame(frame);

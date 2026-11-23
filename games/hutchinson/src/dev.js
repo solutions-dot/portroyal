@@ -1,4 +1,7 @@
 /* Development checks are stripped from public builds. */
+import { auditReveals } from "../../../engine/audit-reveal.js";
+import { auditProps } from "../../../engine/audit-props.js";
+import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import ANIM_CLIPS from "../anim-clips.json";
@@ -56,7 +59,7 @@ export async function dev(A) {
     A.begin();
     A.chapterState(CHAPTERS[first - 1].first);
     await go(CHAPTERS[first - 1].first);
-    closeAll();
+    if (!STEPS[CHAPTERS[first - 1].first].card) closeAll();   /* a chapter that opens with a camera scene keeps its scene card, which is clicked below */
     let lastStage = -1,
       same = 0;
     for (let guard = 0; guard < 400 && S.stage <= last; guard++) {
@@ -132,8 +135,11 @@ export async function dev(A) {
       return;
     }
     A.begin();
-    const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key"));
-    await go(id === "film" ? filmStep : STEPS[id] ? +id : FIRST);
+    const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key")),
+      lookStep = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === q.get("key")));
+    if (id === "look") A.chapterState(lookStep);
+    else if (STEPS[id]) A.chapterState(+id);   /* what was carried and looked at before that step is shown done */
+    await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
     if (q.has("look")) A.action(q.get("look"));
@@ -153,6 +159,19 @@ export async function dev(A) {
       $("cineControls").hidden = !q.has("ui");
       if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
     }
+    if (id === "look") {
+      /* ?shot=look&key=<look>&at=<seconds>: the look moment (engine/lookshot.js) held at that moment, from the player's spot for it */
+      const lk = LOOKS[q.get("key")];
+      S.view = null;
+      Object.assign(S, { x: lk.at[0], z: lk.at[1], yaw: Math.atan2(lk.at[0] - lk.view.look[0], lk.at[1] - lk.view.look[2]), pitch: -0.2 });
+      S.lookShot = true;
+      A.lookAt(q.get("key"));
+      const draw = A.renderer.render;
+      A.renderer.render = () => {};
+      for (let t = 0, n = Number(q.get("at") || 2) * 30; t < n; t++) A.tick(1 / 30, performance.now() + t * 33);
+      A.renderer.render = draw;
+      A.LS.paused = true;
+    }
     if (id === "people") {
       world().group.visible = false;
       const list = q.has("b") ? q.get("b").split(",") : BASES;
@@ -170,7 +189,7 @@ export async function dev(A) {
       }
       S.view = { pos: [0, 2.2, 6.5], look: [0, 1, -2] };
     }
-    $("hud").hidden = true;
+    $("hud").hidden = !(id === "look" && q.has("ui"));   /* a look with &ui keeps its story line in the bar */
     window.__SHOT = true;
     return;
   }
@@ -264,10 +283,12 @@ export async function dev(A) {
       }
     return new Set([...out].filter((c) => SHIPPED.has(c) && c !== "WalkM"));
   }
+  globalThis.__REVEAL_DEBUG = q.has("rdebug");
   if (["audit", "collision", "seating"].includes(test))
     for (const Q of Object.values(worlds)) {
       const pp = (n) => ({ id: n.id, x: n.x, z: n.z, m: n.m, anim: n.m.userData.seatAnchor ? "SitIdle" : "Idle", h: 1.75 * (n.scale || 1), r: (n.scale || 1) < 0.9 ? 0.2 : 0.25, path: n.amb?.spec?.pts || (n.amb?.spec?.from ? [n.amb.spec.from, n.amb.spec.to] : null) });
       const r = auditPlace({
+        passage: false, props: false,   /* run below with this game's own look and task spots */
         id: Q.id,
         snap: Q.snap,
         npcs: [...Q.people, ...Q.extras].map(pp),
@@ -286,7 +307,7 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck];
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

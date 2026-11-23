@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { propSnap } from "../../../engine/audit-props.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A family story built on the existing engine, with no shared-module changes. */
@@ -41,8 +42,12 @@ import {
   gullCry,
   chirp,
   shipCreak,
+  mixBeds,
+  bedTest,
 } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
+import { lookSound } from "../../../engine/look-sounds.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace, PLACE_IDS } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
@@ -141,6 +146,7 @@ resize();
 let saved = null;
 try {
   saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved && { 12: 13, 14: 15, 22: 23, 31: 32, 54: 55, 61: 62, 65: 66 }[saved.stage]) saved.stage = { 12: 13, 14: 15, 22: 23, 31: 32, 54: 55, 61: 62, 65: 66 }[saved.stage];   /* steps cut as busy work (owner rule 14): a save made there carries on from the next */
   if (saved?.version !== 1 || !STEPS[saved.stage]) saved = null;
 } catch {}
 const S = {
@@ -281,7 +287,7 @@ async function buildWorld(id) {
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) { Q.snap = snapMeshes(Q.group); Q.propList = propSnap(Q.group); }   /* small props, before merging (engine/audit-props.js) */
   mergePlace(Q);
   Q.people = [];
   Q.extras = [];
@@ -533,6 +539,7 @@ function light(Q) {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   closeAll();
@@ -701,6 +708,40 @@ function filmRead(key) {
   const F = FILMS[key];
   readWhatHappened(card, { what: F.read, go: () => { unlock("passage"); go(F.next); }, pairs: true });   /* the standard What happened card (engine/scene-warning.js) */
 }
+/* close-ups before a talk (owner rule 13, engine/lookshot.js): a step with closeup: id first eases the camera to the thing, the place moves it
+   (Q.reveal[id](k)) with a sound and a short line, eases back, and then the talk begins */
+const LOOKSHOTS = {
+  letter62: { view: { p: [9.25, 1.15, 4.75], look: [9.0, 0.44, 4.3], fov: 40 }, act: 2.6, sound: "paper", say: ["A letter from London, and something folded inside."] },
+  letter18: { view: { p: [-2.25, 1.15, -1.05], look: [-2.55, 0.46, -1.45], fov: 40 }, act: 2.2, sound: "paper", say: ["The letter asks Iris to prove her right to be here."] },
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: () => (innerWidth / innerHeight < 0.8 ? 76 : 66),
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => ($("sub").textContent = text),
+  freeze: (on) => (busy = on),
+  sound: lookSound,
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, camera.position.y, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+async function closeup(id) {
+  const L = LOOKSHOTS[id],
+    Q = world(),
+    st = S.stage;
+  uiSound("tap");
+  await LS.play({ view: L.view, act: L.act, sound: L.sound, lines: L.say, reveal: (k) => Q.reveal?.[id]?.(k) });
+  if (S.stage !== st) return false;
+  await LS.back();
+  return S.stage === st;
+}
 const DIR = createDirector({
   camera,
   world: () => world(),
@@ -826,6 +867,12 @@ async function waits(st) {
 }
 function talk(n) {
   if (busy || openPanel() || DIR.on) return;
+  const row = STEPS[S.stage];
+  if (row.closeup && story.needs(n.id) && !(S.closeSeen ||= {})[S.stage]) {
+    S.closeSeen[S.stage] = true;
+    closeup(row.closeup).then((ok) => ok && talk(n));
+    return;
+  }
   const response = story.talk(n.id),
     L =
       response?.kind === "story"
@@ -1245,7 +1292,9 @@ function tick(dt, now = performance.now()) {
   }
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a close-up holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -1266,7 +1315,7 @@ function tick(dt, now = performance.now()) {
   hint(now);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q; // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderFramed(renderer, scene, camera, DIR.on);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -1277,13 +1326,14 @@ const BEDS = {
   harbour48: { sea: 0.1, surf: 0.05, crowd: 0.09, wind: 0.03, gull: 0.25 },
   tilbury48: { sea: 0.08, surf: 0.04, crowd: 0.08, wind: 0.05, gull: 0.15 },
   deck48: { sea: 0.16, wind: 0.1, creak: 0.12 },
-  yard48: { wind: 0.025, crowd: 0.03, bird: 0.2 },
-  yard62: { wind: 0.025, crowd: 0.03, bird: 0.2 },
-  brixton48: { crowd: 0.06, wind: 0.04 },
-  brixton62: { crowd: 0.08, wind: 0.03 },
-  home18: { room: 0.05, crowd: 0.015 },
-  centre18: { room: 0.06, crowd: 0.04 },
-};
+  yard48: { wind: 0.05, crowd: 0.04, bird: 0.2 },
+  yard62: { wind: 0.05, crowd: 0.04, traffic: 0.02, bird: 0.2 },
+  brixton48: { crowd: 0.08, wind: 0.04, traffic: 0.05 },
+  brixton62: { crowd: 0.09, wind: 0.03, traffic: 0.07 },
+  home18: { room: 0.07, crowd: 0.02, traffic: 0.02 },
+  centre18: { room: 0.07, crowd: 0.05 },
+}; /* 22 November 2026: the yards and the 2018 rooms sat at 0.025 to 0.06, under the shared range (engine/audio.js BED_RANGE); Brixton has its far traffic. No place here is at night. */
+if (__DEV__ && new URLSearchParams(location.search).get("test") === "beds") bedTest(Object.fromEntries(Object.entries(BEDS).map(([k, B]) => [k, { ...B, once: B.gull || B.bird || B.creak }]))); /* ?test=beds */
 let bedT = 0;
 function audioTick(Q, dt) {
   if (!AU.ctx || !AU.on || AU.ctx.state !== "running" || (bedT += dt) < 0.1) return;
@@ -1291,7 +1341,7 @@ function audioTick(Q, dt) {
     k = talking ? 0.6 : 1,
     t = bedT;
   bedT = 0;
-  for (const ch of ["sea", "surf", "wind", "crowd", "room"]) if (AU.ch[ch]) setG(AU.ch[ch], (B[ch] || 0) * k, 0.8);
+  mixBeds(B, { duck: k < 1, tc: 0.8 });
   if (B.gull && Math.random() < B.gull * t * 0.5) gullCry();
   if (B.bird && Math.random() < B.bird * t * 0.6) chirp();
   if (B.creak && Math.random() < B.creak * t * 0.4) shipCreak();
@@ -1306,6 +1356,7 @@ async function start() {
   if (!ready) return;
   audioInit();
   begin();
+  if (!saved) cue("begin");
   if (saved) {
     const d = saved;
     saved = null;
@@ -1378,6 +1429,8 @@ onLoadFail(() => {
         frame,
         chapterState,
         resetSceneTasks,
+        LS,
+        closeup,
       });
     }
   } catch (e) {

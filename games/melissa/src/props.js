@@ -2,6 +2,7 @@ import { loftSkin as skin } from '../../../engine/loft.js';
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from 'three';
+import { makeSack } from '../../../engine/sack.js';
 import { boardDoor51 } from './doors.js';
 import { T, std, solid, flat, glow, mesh, box, cyl, plane, grp, rng, cv } from './gfx.js';
 import { buildWaterTower } from '../../../engine/water-tower.js';
@@ -132,7 +133,7 @@ export function crate(s = 0.6, c = 0x8a6a42) {   /* a slatted crate: boards with
   for (let i = 0; i < 3; i++) { const y = h * (0.17 + i * 0.33); for (const sg of [-1, 1]) { box(s, h * 0.27, 0.02, m, 0, y, sg * s / 2, g); box(0.02, h * 0.27, s, m, sg * s / 2, y, 0, g); } }
   for (const x of [-1, 1]) for (const z of [-1, 1]) box(0.05, h, 0.05, m, x * (s / 2 - 0.01), h / 2, z * (s / 2 - 0.01), g); box(s, 0.02, s, m, 0, h, 0, g); return g;
 }
-export function sack(c = 0xb09a6a) { const g = grp(), m = solid(c, 1); cyl(0.2, 0.25, 0.46, m, 0, 0.23, 0, g, 10); mesh(new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), m, 0, 0.46, 0, g).scale.y = 0.7; cyl(0.04, 0.12, 0.14, solid(0x8a7648, 1), 0, 0.66, 0, g, 8); mesh(new THREE.TorusGeometry(0.06, 0.012, 5, 10), solid(0x5a4228, 1), 0, 0.6, 0, g).rotation.x = Math.PI / 2; return g; }   /* a sack: a body, a rounded top, a tied neck */
+export function sack(c = 0xb09a6a) { return makeSack({ material: solid(c, 1), seed: (c >> 4) & 7 }); }   /* the engine's cloth sack (engine/sack.js): it was a cylinder with a cap */
 /* a picnic hamper: a woven basket wider than it is deep, a flat woven lid with a strap, and a bail handle over the top. Its handle is 0.52 above the ground. */
 export function hamper(c = 0xa8803c) {
   const g = grp(), wv = std(T.weave([3, 1]), 0.95, { color: new THREE.Color(c).multiplyScalar(1.5) }), rim = solid(new THREE.Color(c).multiplyScalar(0.7).getHex(), 1), b = cyl(0.3, 0.26, 0.3, wv, 0, 0.15, 0, g, 14); b.scale.z = 0.72;

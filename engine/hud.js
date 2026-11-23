@@ -27,7 +27,7 @@ const FLAG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
 const BANNER_CSS = '#goalbanner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:60;max-width:min(30rem,calc(100% - 32px));width:max-content;'
   + 'background:rgba(16,34,43,.94);color:#fff6dc;border:2px solid #ffd65c;border-radius:12px;padding:.7em 1.1em;font-size:clamp(1.05rem,3.6vw,1.45rem);font-weight:700;'
   + 'line-height:1.3;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.45);pointer-events:none;opacity:0;transition:opacity .45s ease,transform .5s ease}'
-  + '#goalbanner.on{opacity:1}#goalbanner.off{opacity:0}#goalbanner[hidden]{display:none}'
+  + '#goalbanner.on{opacity:1}#goalbanner.off{opacity:0}#goalbanner[hidden]{display:none}body.cine #goalbanner,body.cine-on #goalbanner{visibility:hidden}'   /* a camera scene or a look moment (engine/lookshot.js) keeps the picture clear */
   + '#goalbanner small{display:block;font-size:.62em;font-weight:600;opacity:.8;letter-spacing:.04em;margin-bottom:.15em}'
   + '@media (prefers-reduced-motion: reduce){#goalbanner,#goalbanner.off{transition:opacity .2s}#goal.goalicon.fresh{animation:none!important;box-shadow:0 0 0 4px rgba(255,214,92,.7)!important}}'
   /* the goal box becomes a round flag icon (owner, 22 November 2026: "an icon they can click on at any time to see the goal, that flashes when there
@@ -89,7 +89,11 @@ function goalBanner(goalId) {
   const b = document.createElement('div'); b.id = 'goalbanner'; b.hidden = true; b.setAttribute('aria-hidden', 'true');   /* the goal box itself is what a screen reader reads */
   document.body.appendChild(b);
   let last = '', timer = 0, wait = 0;
-  const busy = () => screenBusy() || pending > 0;
+  /* one thing at a time (owner, 22 November 2026: "2 things shouldnt show on screen at the same time as it can be confusing for the reader.. the
+     journal notice seems to do that in some games"): a notice (#toast: a new journal page, a thing picked up) has the screen while it shows; the
+     banner waits for it, and if a notice comes up while the banner is out, the banner steps aside and comes back when the notice has gone. */
+  const notice = () => shown(document.getElementById('toast'));
+  const busy = () => screenBusy() || pending > 0 || notice();
   let fresh = false;
   g.addEventListener('animationend', () => g.classList.remove('fresh'));
   let stay = false;
@@ -103,7 +107,7 @@ function goalBanner(goalId) {
     if (stay) { const watch = () => { if (b.hidden) return; if (busy() || (g.textContent || '').trim() !== text) { hide(); return; } timer = setTimeout(watch, 400); }; timer = setTimeout(watch, 400); return; }   /* opened with the flag: stays until the flag is tapped again, a talk or card opens, or the goal changes */
     /* a card, a talk or a chapter title that opens while the banner is up takes the screen: the banner goes at once, never on top of it
        (owner, 22 November 2026: the goal showed over the card before a scene) */
-    const guard = setInterval(() => { if (b.hidden || !b.classList.contains('on')) { clearInterval(guard); return; } if (busy()) { clearInterval(guard); hide(); } }, 120);
+    const guard = setInterval(() => { if (b.hidden || !b.classList.contains('on')) { clearInterval(guard); return; } if (busy()) { clearInterval(guard); const back = notice() && !screenBusy() && !stay; hide(); if (back) wait = setTimeout(() => show(text), 500); } }, 120);   /* a notice only borrows the screen: the banner comes back after it */
     timer = setTimeout(() => {
       const gr = g.getBoundingClientRect(), br = b.getBoundingClientRect();   /* the banner shrinks into the goal box, then the box comes back */
       if (gr.width > 0) b.style.transform = `translate(calc(-50% + ${(gr.left + gr.width / 2) - (br.left + br.width / 2)}px), calc(-50% + ${(gr.top + gr.height / 2) - (br.top + br.height / 2)}px)) scale(.45)`;
@@ -117,8 +121,15 @@ function goalBanner(goalId) {
   setTimeout(check, 0);
 }
 
+/* the hint line (#hint) is the least urgent words on the screen: it steps aside while a notice or the goal banner is out, so two lines never show at once */
+function oneAtATime(toastId) {
+  if (document.getElementById('oneAtATimeCss')) return;
+  const st = document.createElement('style'); st.id = 'oneAtATimeCss'; st.textContent = 'body.pp-noticing #hint{visibility:hidden!important}'; document.head.appendChild(st);
+  const tick = () => { const b = document.getElementById('goalbanner'), on = shown(document.getElementById(toastId)) || (!!b && !b.hidden && b.classList.contains('on')); document.body.classList.toggle('pp-noticing', on); };
+  setInterval(tick, 150);
+}
 export function hudTidy({ toast = 'toast', button = 'talk', gap = 10, goal = 'goal' } = {}) {
-  goalBanner(goal); journalBadge();
+  goalBanner(goal); journalBadge(); oneAtATime(toast);
   if (!document.getElementById('hudTidyCss')) { const s = document.createElement('style'); s.id = 'hudTidyCss'; s.textContent = HUD_CSS; document.head.appendChild(s); }
   const t = document.getElementById(toast); if (!t || t.dataset.tidy) return; t.dataset.tidy = '1';
   Object.assign(t.style, { whiteSpace: 'normal', width: 'max-content', lineHeight: '1.3', overflow: 'visible', textOverflow: 'clip' });

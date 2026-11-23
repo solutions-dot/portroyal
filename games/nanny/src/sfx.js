@@ -1,5 +1,5 @@
 /* games/nanny/src/sfx.js: the sounds of the mountain, made in code on top of engine/audio.js (no audio files).
-   The horn, guns heard from far away, a soldiers' drum and trumpet, night insects, a stream, a fire, an owl, a low whistle. */
+   The horn, guns heard from far away, a soldiers' drum and trumpet, a stream, a fire, an owl, a low whistle. */
 import { AU, out, tone, noiseHit, chan, setG } from '../../../engine/audio.js';
 
 const live = () => AU.ctx && AU.on && AU.ctx.state === 'running';
@@ -9,12 +9,10 @@ export function initBeds() {
   B.stream = chan('white', 'bandpass', 900, 1.2);   /* a brook, not a rush: a narrower, lower band */ B.stream.gain.value = 0;
   B.fire = chan('brown', 'bandpass', 520, 0.7); B.fire.gain.value = 0;
   B.rumble = chan('brown', 'lowpass', 150); B.rumble.gain.value = 0;
-  /* night insects: a high tone chopped fast, with a slower chop on top */
-  const co = c.createOscillator(), cg = c.createGain(), ch = c.createOscillator(), chg = c.createGain(), ch2 = c.createOscillator(), ch2g = c.createGain(); co.frequency.value = 4500; ch.type = 'square'; ch.frequency.value = 22; chg.gain.value = 0.5; ch2.type = 'square'; ch2.frequency.value = 2.7; ch2g.gain.value = 0.5;
-  cg.gain.value = 0.5; ch.connect(chg); chg.connect(cg.gain); ch2.connect(ch2g); ch2g.connect(cg.gain); const cl = c.createGain(); cl.gain.value = 0; co.connect(cg); cg.connect(cl); cl.connect(AU.master); B.cricket = cl; co.start(); ch.start(); ch2.start();
-  B.levels = { stream: 0, fire: 0, rumble: 0, cricket: 0 };
+  /* night insects: the engine's bed now (engine/audio.js AU.ch.cricket, set by mixBeds in main.js) */
+  B.levels = { stream: 0, fire: 0, rumble: 0 };
 }
-export function setBeds(l, tc = 0.5) { if (!AU.ctx || !B.ok) return; for (const k of ['stream', 'fire', 'rumble', 'cricket']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
+export function setBeds(l, tc = 0.5) { if (!AU.ctx || !B.ok) return; for (const k of ['stream', 'fire', 'rumble']) { const v = l[k] || 0; if (B.levels[k] !== v) { B.levels[k] = v; setG(B[k], v, tc); } } }
 
 /* ---------- the horn. A call is a list of notes: 'L' long, 'S' short. far: 0 (beside you) to 1 (across the valley). Returns how long it lasts. ---------- */
 export const NOTE = { L: 0.95, S: 0.3, GAP: 0.22 };

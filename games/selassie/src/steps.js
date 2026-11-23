@@ -50,11 +50,10 @@ export const STEPS = {
   26: wait("downtown", "The family is ready for tomorrow."),
   // chapter 3: the Parade bus park, then the Palisadoes road
   30: go("parade", "Follow Mum to the bus.", "busStop", 31),
-  31: task("parade", "Buy the tickets from the conductor.", "buyTicket", 32, "ticket"),
-  32: task("parade", "Give the tickets to Mum.", "giveTicket", 33, "ticket"),
+  31: task("parade", "Buy the tickets from the conductor.", "buyTicket", 33, "ticket"),   /* "Give the tickets to Mum" was cut (owner rule 14): Mum takes them as you buy them */
   33: task("parade", "Climb on the bus with your family.", "bus", 34, null, "buses"),
   34: task("road", "Bring Grandma some water.", "roadWater", 35, "bottle"),
-  35: go("road", "Look out over the harbour.", "lookout", 36),
+  35: task("road", "Look out over the harbour.", "lookout", 36),
   36: go("road", "Walk on toward the airport.", "roadEnd", 37),
   37: go("airport", "Find the family meeting place.", "meeting", 38),
   38: talk("airport", "Talk to Mum.", ["mum"], 40, "road"),
@@ -80,7 +79,7 @@ export const STEPS = {
     next: 44,
   },
   44: talk("airport", "Listen to Uncle Levi.", ["levi"], 45, "fairness"),
-  45: go("airport", "Look toward the runway.", "horizon", 46),
+  45: task("airport", "Look toward the runway.", "horizon", 46),
   46: wait("airport", "A sound changes the waiting."),
   50: wait("airport", "The arrival is about to begin."),
   51: wait("airport", "Watch the aircraft approach."),

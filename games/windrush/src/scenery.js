@@ -1,11 +1,18 @@
 /* Lived-in scenery for Windrush, built in code (no image files). Each builder returns a group standing on y = 0 at its own origin,
    facing +z unless it says otherwise. Shapes are reconstructions from period photographs and descriptions (docs/games/windrush.md). */
 import * as THREE from "three";
+import { mergeGeometries as mergeGeo } from "three/addons/utils/BufferGeometryUtils.js";
 import * as DR from "./doors.js";
 export { DR };
 import { T, cv, std, solid, flat, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { saloonCar } from "../../../engine/roadcars.js";
 import { shipLifeboat, paintKit } from "../../../engine/boats.js";
+import { buildingMat, loadBuildingTex, worldUV, roofUV } from "../../../engine/building-tex.js";
+import { touchFirst } from "../../../engine/device.js";
+/* phones keep the rooms' warm glow in the lamp shades but skip the extra point lights (each one costs every lit surface in the place) */
+const ROOM_LIGHTS = !touchFirst();
+import { paintedBoards, weatherZinc, fretMat, jalousie, glassMat, lace, wallpaper, sway } from "../../../engine/house-detail.js";
+export { buildingMat, wallpaper };
 
 const M = {
   zinc: () => std(T.zinc([150, 152, 146], [1, 1]), 0.6),
@@ -393,7 +400,7 @@ export function terraceHouse(opts = {}) {
     const dr = opts.upvc ? DR.upvcDoor() : DR.terraceDoor({ color: opts.door || 0x2f4f46 });
     dr.position.set(dx, 0.12, 0);
     g.add(dr);
-  } else plane(0.9, 0.18, M.glass, dx, 2.1, 0.02, g);
+  } else plane(0.9, 0.18, glassMat(), dx, 2.1, 0.02, g);
   box(1.3, 0.12, 0.5, trim, dx, 0.06, 0.25, g);
   box(1.2, 0.12, 0.08, trim, dx, 2.3, 0.04, g);
   // upstairs sash windows
@@ -415,25 +422,32 @@ export function terraceHouse(opts = {}) {
   } else {
     // a bay window: three faces on a low wall, with a lead roof
     box(2.3, 0.7, 0.75, br, -1.0, 0.35, 0.37, g);
-    box(2.1, 1.5, 0.06, M.glass, -1.0, 1.5, 0.72, g);
+    box(2.1, 1.5, 0.02, M.black, -1.0, 1.5, 0.64, g);   /* the dark room behind the glass */
+    plane(2.1, 1.5, glassMat(), -1.0, 1.5, 0.735, g);
     for (const s of [-1, 1]) {
-      const p = box(0.06, 1.5, 0.66, M.glass, -1.0 + s * 1.12, 1.5, 0.38, g);
-      p.rotation.y = s * 0.0;
+      const p = plane(0.66, 1.5, glassMat(), -1.0 + s * 1.12, 1.5, 0.38, g);
+      p.rotation.y = s * Math.PI / 2;
     }
+    box(2.1, 0.05, 0.06, M.brickTrim, -1.0, 1.9, 0.735, g);   /* the transom bar */
     for (const x of [-2.12, -1.35, -0.65, 0.12]) box(0.08, 1.6, 0.08, trim, x, 1.5, 0.73, g);
     box(2.4, 0.12, 0.85, trim, -1.0, 0.72, 0.38, g);
     box(2.4, 0.14, 0.85, M.slate, -1.0, 2.32, 0.38, g);
-    // net curtains
-    plane(1.95, 1.2, solid(0xe8e4d6, 1), -1.0, 1.55, 0.68, g);
+    // net curtains, half drawn
+    plane(1.95, 1.1, lace(), -1.0, 1.4, 0.69, g);
   }
   return g;
 }
+/* a sash window: two sashes (the meeting rail across the middle, a glazing bar down each), real glass over a dark room and a net curtain,
+   a stone sill and a flat lintel */
 function sash(g, x, y) {
   box(1.1, 1.6, 0.08, M.brickTrim, x, y, 0.0, g);
-  plane(0.92, 1.4, M.glass, x, y, 0.05, g);
+  box(0.92, 1.4, 0.01, M.black, x, y, 0.035, g);
+  plane(0.84, 0.6, lace(), x, y + 0.3, 0.042, g);
+  plane(0.92, 1.4, glassMat(), x, y, 0.05, g);
   box(0.94, 0.05, 0.05, M.brickTrim, x, y, 0.07, g);
+  box(0.035, 1.4, 0.03, M.brickTrim, x, y, 0.065, g);
   box(1.25, 0.1, 0.18, M.brickTrim, x, y - 0.83, 0.07, g);
-  plane(0.88, 0.62, solid(0xe8e4d6, 1), x, y + 0.32, 0.03, g);
+  box(1.3, 0.16, 0.06, M.brickTrim, x, y + 0.88, 0.04, g);
 }
 /* a row of terrace houses along x, starting at x = 0 (each house 5 m); specs[i] are the opts for house i, null for a bomb-site gap */
 export function terraceRow(specs) {
@@ -540,10 +554,13 @@ export function gate(w = 0.9, open = 1.2) {
 /* ---------- inside ---------- */
 /* a room: floor, walls with door gaps and windows, a ceiling. Walls are listed as [x0, z0, x1, z1] lines along the room's edge, with gaps
    { at: along metres, w, h, kind: 'door' | 'window' }. Returns the group; the caller adds walking walls for each wall run. */
-export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, walls }) {
+/* opts tile and floorTile: lay the wall and floor pictures in metres (worldUV), so a wallpaper or boards keep one size on every wall;
+   rail: a picture rail at 2.1 m; cornice: a moulding under the ceiling */
+export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, walls, tile = 0, floorTile = 0, rail = false, cornice = false }) {
   const g = grp(),
     t = 0.12;
-  const fl = box(x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, floor, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, g);
+  if (floorTile) tiled(g, floor, x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, floorTile);
+  else box(x1 - x0 - 0.14, 0.04, z1 - z0 - 0.14, floor, (x0 + x1) / 2, -0.01, (z0 + z1) / 2, g);
   if (ceiling) box(x1 - x0 - 0.14, 0.1, z1 - z0 - 0.14, solid(0xeeeae0, 1), (x0 + x1) / 2, h + 0.05, (z0 + z1) / 2, g);
   for (const w of walls) {
     const [ax, az, bx, bz] = w.line,
@@ -553,7 +570,7 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
     seg.rotation.y = -Math.atan2(dir[1], dir[0]);
     const gaps = (w.gaps || []).slice().sort((a, b) => a.at - b.at);
     let s = 0;
-    const piece = (a, b, y0, y1) => b - a > 0.01 && y1 - y0 > 0.01 && box(b - a, y1 - y0, t, wall, (a + b) / 2, (y0 + y1) / 2, 0, seg);
+    const piece = (a, b, y0, y1) => b - a > 0.01 && y1 - y0 > 0.01 && (tile ? tiled(seg, wall, b - a, y1 - y0, t, (a + b) / 2, (y0 + y1) / 2, 0, tile) : box(b - a, y1 - y0, t, wall, (a + b) / 2, (y0 + y1) / 2, 0, seg));
     for (const gp of gaps) {
       const a = gp.at - gp.w / 2,
         b = gp.at + gp.w / 2;
@@ -561,7 +578,7 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
       if (gp.kind === "window") {
         piece(a, b, 0, gp.sill || 0.9);
         piece(a, b, (gp.sill || 0.9) + gp.h, h);
-        plane(gp.w, gp.h, M.glass, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0, seg);
+        plane(gp.w, gp.h, tile ? glassMat() : M.glass, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0, seg);
         box(gp.w + 0.1, 0.06, 0.2, M.white, (a + b) / 2, gp.sill || 0.9, 0.04, seg);
         box(0.05, gp.h, 0.06, M.white, (a + b) / 2, (gp.sill || 0.9) + gp.h / 2, 0.0, seg);
       } else {
@@ -572,6 +589,45 @@ export function room({ x0, z0, x1, z1, h = 2.7, floor, wall, ceiling = true, wal
     }
     piece(s, len, 0, h);
     box(len, 0.1, t + 0.03, M.white, len / 2, 0.05, 0, seg);
+    if (rail) box(len, 0.04, t + 0.04, M.white, len / 2, 2.1, 0, seg);
+    if (cornice) box(len, 0.09, t + 0.09, M.white, len / 2, h - 0.045, 0, seg);
+  }
+  return g;
+}
+/* a Victorian cast-iron fireplace in a front room: a painted wooden surround and mantel shelf, a tiled slip, the black grate (fireplace for a
+   room's side wall, facing +z). Front rooms of London terraces were built with one. */
+export function fireplace(tileCol = 0x5a7a6a) {
+  const g = grp(),
+    wood = solid(0xe8e2d2, 0.6),
+    iron = solid(0x1c1c1e, 0.5, 0.4);
+  box(1.3, 1.15, 0.12, wood, 0, 0.575, 0.06, g);
+  box(1.45, 0.05, 0.24, wood, 0, 1.17, 0.1, g);
+  box(0.8, 0.85, 0.02, solid(tileCol, 0.25, 0.1), 0, 0.5, 0.13, g);
+  box(0.56, 0.62, 0.04, iron, 0, 0.36, 0.14, g);
+  box(0.4, 0.4, 0.02, solid(0x0a0908, 1), 0, 0.3, 0.16, g);
+  for (let i = 0; i < 4; i++) box(0.4, 0.015, 0.02, iron, 0, 0.18 + i * 0.07, 0.175, g);
+  box(1.4, 0.04, 0.4, solid(0x6a5a4a, 0.6), 0, 0.02, 0.32, g);   /* the hearth */
+  return g;
+}
+/* a 1940s or 1950s wireless set in a wooden cabinet: a cloth-covered speaker, a glowing dial, two knobs */
+export function wireless(glow = true) {
+  const g = grp();
+  box(0.42, 0.3, 0.2, solid(0x5a3a22, 0.45), 0, 0.15, 0, g);
+  box(0.2, 0.2, 0.01, solid(0xb8a27a, 1), -0.07, 0.16, 0.101, g);
+  box(0.12, 0.06, 0.01, new THREE.MeshStandardMaterial({ color: 0xf0d8a0, emissive: glow ? 0xffb050 : 0x000000, emissiveIntensity: 0.6, roughness: 0.3 }), 0.11, 0.2, 0.101, g);
+  for (const x of [0.08, 0.15]) cyl(0.018, 0.018, 0.02, solid(0x1c1a18, 0.4), x, 0.08, 0.105, g, 10).rotation.x = Math.PI / 2;
+  return g;
+}
+/* a light hanging from the ceiling: a cloth or glass shade on a flex, with a warm light under it (one point light, no shadow) */
+export function pendant(h = 2.7, { shade = 0xe8d8b0, warm = 0xffcf9a, power = 2.2, reach = 6 } = {}) {
+  const g = grp();
+  cyl(0.004, 0.004, 0.55, M.black, 0, h - 0.275, 0, g, 4);
+  const sm = new THREE.MeshStandardMaterial({ color: shade, emissive: warm, emissiveIntensity: 0.35, roughness: 0.9, side: THREE.DoubleSide });
+  mesh(new THREE.CylinderGeometry(0.1, 0.2, 0.18, 14, 1, true), sm, 0, h - 0.62, 0, g);
+  if (ROOM_LIGHTS) {
+    const L = new THREE.PointLight(warm, power, reach, 2);
+    L.position.y = h - 0.75;
+    g.add(L);
   }
   return g;
 }
@@ -854,67 +910,255 @@ export function headBasket() {
 
 /* ---------- a Jamaican country district (Windrush's own home place, not shared with any other game) ---------- */
 /* a board house raised on posts and stones, as country houses were (air under the floor, off the wet ground), with a veranda along its
-   front, a rail, steps down to the yard, shutters, and a zinc roof. Its front faces +z; it stands from z = -d/2 to the foot of its steps at
-   z = d/2 + 2.45. wall and trim are colours [r, g, b]. */
+   front, a rail, steps down to the yard, jalousie windows and board shutters, and a hipped zinc roof. Its front faces +z; it stands from
+   z = -d/2 to the foot of its steps at z = d/2 + 2.45. wall is the paint [r, g, b]. Modelled on the National Library of Jamaica's photograph
+   of a rural housing scheme (small board houses raised on posts) and the board houses of the district (docs/games/windrush.md, "Doors").
+   interior: the family's own house is hollow, its door standing open on one room of the period and their means (a dresser of plates, a table
+   with a cloth, the Bible, a lamp, a calendar of `year`, a bed behind a curtain), lit warm; a house seen from afar stays a shell.
+   userData.tick(t) moves the curtains in the breeze. Surfaces: engine/house-detail.js and engine/building-tex.js. */
 const darker = (hex) => new THREE.Color(hex).multiplyScalar(0.85).getHex();
-export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8e0cc, shut = 0x2f6a3f, roof = [150, 154, 150], seed = 1 } = {}) {
+/* a box laid in metres for a tiled picture (worldUV), placed at x, y, z */
+function tiled(g, m, w, h, d, x, y, z, tile) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  geo.translate(x, y, z);
+  const o = new THREE.Mesh(worldUV(geo, tile), m);
+  g.add(o);
+  return o;
+}
+/* a wall of boards along x from -len/2 to len/2, its foot at y0, with holes [{ u, w, y0, y1 }] (u: the hole's middle along the wall) */
+function boardWall(m, len, h, holes, t = 0.06, tile = 0.9) {
+  const g = grp(),
+    xs = [-len / 2, ...holes.flatMap((o) => [o.u - o.w / 2, o.u + o.w / 2]).sort((a, b) => a - b), len / 2];
+  for (let i = 0; i < xs.length - 1; i++) {
+    const a = xs[i], b = xs[i + 1];
+    if (b - a < 0.005) continue;
+    const hole = holes.find((o) => Math.abs(o.u - (a + b) / 2) < o.w / 2 + 0.001);
+    if (!hole) tiled(g, m, b - a, h, t, (a + b) / 2, h / 2, 0, tile);
+    else {
+      if (hole.y0 > 0.005) tiled(g, m, b - a, hole.y0, t, (a + b) / 2, hole.y0 / 2, 0, tile);
+      if (hole.y1 < h - 0.005) tiled(g, m, b - a, h - hole.y1, t, (a + b) / 2, (hole.y1 + h) / 2, 0, tile);
+    }
+  }
+  return g;
+}
+/* a hip roof's surface (no thickness), eaves at y = 0, for roofUV */
+function hipGeo(w, d, rise, over) {
+  const W = w / 2 + over,
+    D = d / 2 + over,
+    r = Math.max(0.3, W - D),
+    v = [-W, 0, -D, W, 0, -D, W, 0, D, -W, 0, D, -r, rise, 0, r, rise, 0],
+    idx = [0, 4, 5, 0, 5, 1, 2, 5, 4, 2, 4, 3, 3, 4, 0, 1, 5, 2];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+  geo.setIndex(idx);
+  const ni = geo.toNonIndexed();
+  ni.computeVertexNormals();
+  return roofUV(ni, 0.8);
+}
+/* a calendar on a nail: a print above, the year, a grid of days */
+export function calendar(year) {
+  const t = cv(96, 140, (x, W, H) => {
+    x.fillStyle = "#f2ecdc";
+    x.fillRect(0, 0, W, H);
+    const g = x.createLinearGradient(0, 6, 0, 62);
+    g.addColorStop(0, "#9cc0d0");
+    g.addColorStop(1, "#cfe0c0");
+    x.fillStyle = g;
+    x.fillRect(6, 6, W - 12, 56);
+    x.fillStyle = "#4f7a44";
+    x.beginPath();
+    x.moveTo(6, 62);
+    x.quadraticCurveTo(40, 30, 90, 62);
+    x.fill();
+    x.fillStyle = "#8a2a24";
+    x.font = "bold 18px serif";
+    x.textAlign = "center";
+    x.fillText(String(year), W / 2, 84);
+    x.fillStyle = "#3a3a3a";
+    for (let j = 0; j < 5; j++) for (let i = 0; i < 7; i++) x.fillRect(10 + i * 11.5, 94 + j * 9, 7, 5);
+  });
+  const g = grp();
+  plane(0.24, 0.35, flat(0xffffff, { map: t }), 0, 0, 0, g);
+  return g;
+}
+export function stiltHouse(w = 7, d = 4.5, { wall = [196, 176, 140], trim = 0xe8e0cc, shut = 0x2f6a3f, roof = [150, 154, 150], seed = 1, interior = false, year = 1948 } = {}) {
+  loadBuildingTex();
   const g = grp(),
     lift = 0.85,
     h = 2.6,
-    wt = T.plank(wall, 9, [w / 2, 1]).clone();
-  wt.needsUpdate = true;
-  wt.repeat.set(w / 2, 1);
-  const wm = std(wt, 0.9),
+    y0 = lift + 0.12,
+    t = 0.06,
+    wm = paintedBoards({ paint: wall, boards: 6, wear: interior ? 0.45 : 0.3, seed: seed % 4 }),
     tm = solid(trim, 0.8),
-    sm = solid(shut, 0.85);
+    sm = solid(shut, 0.85),
+    planks = buildingMat("wood", { tint: 0xb89a78 }),
+    zm = weatherZinc({ tint: roof, rust: interior ? 0.55 : 0.4, seed: seed % 3 }),
+    ticks = [];
   // posts on stones under the floor and the veranda
+  const stone = buildingMat("stone", { tint: 0xd8d2c4 });
   for (let x = -w / 2 + 0.2; x <= w / 2 - 0.1; x += (w - 0.4) / 4)
     for (const z of [-d / 2 + 0.2, 0, d / 2 - 0.2, d / 2 + 1.45]) {
       box(0.16, lift, 0.16, M.woodDark, x, lift / 2, z, g);
-      box(0.34, 0.16, 0.34, solid(0x9a968a, 1), x, 0.08, z, g).name = "house footing";
+      tiled(g, stone, 0.34, 0.16, 0.34, x, 0.08, z, 0.5).name = "house footing";
     }
   box(w, 0.12, d, M.woodDark, 0, lift + 0.06, 0, g);
-  box(w, h, d, wm, 0, lift + 0.12 + h / 2, 0, g);
-  // the veranda floor, its rail and posts, and the steps down
-  box(w + 0.1, 0.1, 1.6, std(T.plank([120, 92, 64], 8, [3, 1]), 0.95), 0, lift + 0.05, d / 2 + 0.8, g);
-  for (let x = -w / 2; x <= w / 2 + 0.01; x += w / 3) box(0.11, h + 0.1, 0.11, tm, x, lift + (h + 0.1) / 2, d / 2 + 1.55, g);
-  for (const [a, b] of [[-w / 2, -0.6], [0.6, w / 2]]) {
-    box(b - a, 0.06, 0.06, tm, (a + b) / 2, lift + 0.9, d / 2 + 1.55, g);
-    for (let x = a + 0.1; x < b; x += 0.16) box(0.035, 0.85, 0.035, tm, x, lift + 0.45, d / 2 + 1.55, g);
+  // the walls: boards, with the door and the windows cut through; the front and back along x, the ends along z
+  const win = (u) => ({ u, w: 0.95, y0: 1.0, y1: 2.0 });
+  const front = boardWall(wm, w, h, interior ? [{ u: 0, w: 0.95, y0: 0, y1: 2.0 }, win(-w * 0.3), win(w * 0.3)] : [win(-w * 0.3), win(w * 0.3)], t);
+  front.position.set(0, y0, d / 2 - t / 2);
+  g.add(front);
+  const back = boardWall(wm, w, h, [], t);
+  back.position.set(0, y0, -d / 2 + t / 2);
+  g.add(back);
+  for (const s of [-1, 1]) {
+    const end = boardWall(wm, d - 2 * t, h, interior ? [win(s * -0.3)] : [], t);
+    end.position.set(s * (w / 2 - t / 2), y0, 0);
+    end.rotation.y = Math.PI / 2;
+    g.add(end);
+    if (interior) {
+      const j = jalousie(0.9, 0.95, { color: trim, open: 0.75 });
+      j.position.set(s * (w / 2 - t / 2), y0 + 1.5, s * 0.3);
+      j.rotation.y = Math.PI / 2;
+      g.add(j);
+    }
+    for (const z of [-1, 1]) box(0.1, h, 0.1, tm, s * (w / 2 - 0.02), y0 + h / 2, z * (d / 2 - 0.02), g);   /* corner boards */
   }
-  for (let i = 0; i < 4; i++) box(1.1, 0.06, 0.3, M.wood, 0, lift - 0.21 * (i + 1) + 0.03, d / 2 + 1.75 + i * 0.25, g);
+  if (!interior) box(w - 0.1, h - 0.1, d - 0.1, M.black, 0, y0 + h / 2, 0, g);   /* a shell seen from afar: dark inside its windows */
+  // the veranda floor, its rail and posts with brackets, the steps down
+  tiled(g, planks, w + 0.1, 0.1, 1.6, 0, lift + 0.05, d / 2 + 0.8, 1.2);
+  for (let x = -w / 2; x <= w / 2 + 0.01; x += w / 3) {
+    box(0.11, h + 0.1, 0.11, tm, x, lift + (h + 0.1) / 2, d / 2 + 1.55, g);
+    for (const s of [-1, 1]) {
+      if ((x <= -w / 2 + 0.01 && s < 0) || (x >= w / 2 - 0.01 && s > 0)) continue;
+      const br = box(0.05, 0.36, 0.05, tm, x + s * 0.14, lift + h - 0.12, d / 2 + 1.55, g);
+      br.rotation.z = -s * 0.75;
+    }
+  }
+  for (const [a, b] of [[-w / 2, -0.6], [0.6, w / 2]]) {
+    box(b - a, 0.06, 0.08, tm, (a + b) / 2, lift + 0.9, d / 2 + 1.55, g);
+    box(b - a, 0.04, 0.06, tm, (a + b) / 2, lift + 0.16, d / 2 + 1.55, g);
+    for (let x = a + 0.1; x < b; x += 0.16) box(0.035, 0.72, 0.035, tm, x, lift + 0.52, d / 2 + 1.55, g);
+  }
+  for (let i = 0; i < 4; i++) tiled(g, planks, 1.1, 0.06, 0.3, 0, lift - 0.21 * (i + 1) + 0.03, d / 2 + 1.75 + i * 0.25, 1.2);
   for (const s of [-1, 1]) {
     const st = box(0.06, 0.06, 1.15, M.woodDark, s * 0.55, lift / 2, d / 2 + 2.05, g);
     st.rotation.x = Math.atan2(lift, 1.1);
   }
-  // the front: a door and two windows with board shutters swung open
-  const dr = DR.fretDoor({ color: shut === 0x2f6a3f ? 0x5a3a26 : darker(shut), trim });
+  // the front door, standing open on the family's house, under its fretwork vent
+  const dr = DR.fretDoor({ color: shut === 0x2f6a3f ? 0x5a3a26 : darker(shut), trim, open: interior ? 1.25 : 0 });
   dr.position.set(0, lift + 0.1, d / 2);
   g.add(dr);
+  // the windows: jalousies in their openings, board shutters swung back against the wall, a sill and a head
   for (const x of [-w * 0.3, w * 0.3]) {
-    box(0.95, 1.0, 0.05, M.black, x, lift + 1.5, d / 2 + 0.02, g);
-    for (const s of [-1, 1]) box(0.45, 1.0, 0.05, sm, x + s * 0.72, lift + 1.5, d / 2 + 0.05, g);
-    box(1.1, 0.07, 0.08, tm, x, lift + 2.05, d / 2 + 0.06, g);
-    box(1.1, 0.07, 0.14, tm, x, lift + 0.97, d / 2 + 0.08, g);
+    if (interior) {
+      const j = jalousie(0.9, 0.95, { color: trim, open: 0.7 });
+      j.position.set(x, y0 + 1.5, d / 2 - t / 2);
+      g.add(j);
+    } else box(0.95, 1.0, 0.05, M.black, x, y0 + 1.5, d / 2 + 0.02, g);
+    for (const s of [-1, 1]) {
+      const sh = boardWall(sm, 0.45, 1.0, [], 0.04, 0.45);
+      sh.position.set(x + s * 0.72, y0 + 1.0, d / 2 + 0.05);
+      g.add(sh);
+    }
+    box(1.1, 0.07, 0.08, tm, x, y0 + 2.08, d / 2 + 0.06, g);
+    box(1.1, 0.07, 0.14, tm, x, y0 + 0.97, d / 2 + 0.08, g);
   }
-  // a hipped zinc roof, and the veranda's own lean-to roof
-  const zt = T.zinc(roof).clone();
-  zt.needsUpdate = true;
-  zt.repeat.set(2, 2);
-  const zm = std(zt, 0.7),
-    top = lift + 0.12 + h;
-  for (const s of [-1, 1]) {
-    const p = box(w + 0.6, 0.06, d / 2 + 0.6, zm, 0, top + 0.55, s * (d / 4 + 0.12), g);
-    p.rotation.x = s * 0.48;
-  }
-  for (const s of [-1, 1]) {
-    const p = mesh(new THREE.ConeGeometry(d / 2 + 0.45, 1.2, 4, 1, true), zm, s * (w / 2 - 0.2), top + 0.6, 0, g);
-    p.rotation.y = Math.PI / 4;
-    p.scale.set(0.5, 1, 1.0);
-  }
-  const vr = box(w + 0.4, 0.05, 1.9, zm, 0, top - 0.15, d / 2 + 0.95, g);
-  vr.rotation.x = 0.16;
+  // the hipped zinc roof, the fascia and the veranda's own lean-to roof, with a fretwork valance along its eave
+  const top = y0 + h;
+  const rf = new THREE.Mesh(hipGeo(w, d, 1.25, 0.45), zm);
+  rf.position.y = top + 0.02;
+  g.add(rf);
+  box(w + 0.92, 0.16, 0.05, tm, 0, top - 0.04, d / 2 + 0.46, g);
+  box(w + 0.92, 0.16, 0.05, tm, 0, top - 0.04, -d / 2 - 0.46, g);
+  const vg = new THREE.PlaneGeometry(w + 0.4, 1.95, 1, 1);
+  vg.rotateX(-Math.PI / 2 + 0.16);
+  const vr = new THREE.Mesh(roofUV(vg.toNonIndexed(), 0.8), zm);
+  vr.position.set(0, top - 0.17, d / 2 + 0.98);
+  g.add(vr);
   box(w + 0.2, 0.18, 0.08, tm, 0, top - 0.05, d / 2 + 0.03, g);
+  const fv = new THREE.PlaneGeometry(w + 0.3, 0.22);
+  const uv = fv.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * ((w + 0.3) / 0.6));
+  mesh(fv, fretMat({ color: "#" + new THREE.Color(trim).getHexString(), kind: "scallop" }), 0, top - 0.42, d / 2 + 1.62, g);
+  // on the veranda: plants in old kerosene tins, as country houses had, and a chair
+  for (const [x, c] of [[-w / 2 + 0.35, 0xb83a2a], [w / 2 - 0.35, 0xd8a030], [-0.85, 0x5a8a3a]]) {
+    cyl(0.12, 0.12, 0.3, M.steel, x, lift + 0.25, d / 2 + 1.35, g, 8);
+    for (let k = 0; k < 5; k++) {
+      const lf = box(0.08, 0.32, 0.02, solid(k % 2 ? c : 0x3f6a2a, 0.8), x + Math.sin(k * 1.3) * 0.06, lift + 0.55, d / 2 + 1.35 + Math.cos(k * 1.3) * 0.06, g);
+      lf.rotation.set(Math.cos(k * 2) * 0.35, k, Math.sin(k * 1.3) * 0.35);
+    }
+  }
+  if (interior) {
+    const vc = chair(0x6a4a32);
+    vc.position.set(w * 0.3 + 0.9, lift + 0.1, d / 2 + 0.75);
+    vc.rotation.y = -0.6;
+    g.add(vc);
+  }
+  if (interior) {
+    /* inside: one room of the period and the family's means, seen through the open door and the jalousies */
+    tiled(g, planks, w - 0.12, 0.03, d - 0.12, 0, y0 + 0.015, 0, 1.2);
+    const dk = solid(0x5a3e2a, 0.7), cloth = solid(0xf2ede0, 1);
+    // the dresser: a cupboard below, shelves of plates above
+    const dx = w * 0.18, dz = -d / 2 + 0.3;
+    box(1.3, 0.85, 0.45, dk, dx, y0 + 0.43, dz, g);
+    box(1.3, 1.05, 0.04, dk, dx, y0 + 1.38, dz - 0.18, g);
+    for (const y of [1.15, 1.5, 1.85]) box(1.3, 0.03, 0.22, dk, dx, y0 + y, dz - 0.08, g);
+    for (const s of [-1, 1]) box(0.04, 1.05, 0.24, dk, dx + s * 0.63, y0 + 1.38, dz - 0.08, g);
+    const plates = [];
+    for (const y of [1.15, 1.5]) for (let i = 0; i < 5; i++) { const p0 = new THREE.CylinderGeometry(0.1, 0.1, 0.015, 14); p0.rotateX(Math.PI / 2 - 0.2); p0.translate(dx - 0.5 + i * 0.25, y0 + y + 0.11, dz - 0.14); plates.push(p0); }
+    for (let i = 0; i < 4; i++) { const c0 = new THREE.CylinderGeometry(0.04, 0.032, 0.07, 10); c0.translate(dx - 0.4 + i * 0.27, y0 + 1.885 + 0.035, dz - 0.06); plates.push(c0); }
+    mesh(mergeGeo(plates), solid(0xf4f0e6, 0.35), 0, 0, 0, g);
+    const rims = [];
+    for (const y of [1.15, 1.5]) for (let i = 0; i < 5; i++) { const r0 = new THREE.TorusGeometry(0.095, 0.006, 4, 16); r0.rotateX(-0.2); r0.translate(dx - 0.5 + i * 0.25, y0 + y + 0.11, dz - 0.128); rims.push(r0); }
+    mesh(mergeGeo(rims), solid(0x2f5a8a, 0.4), 0, 0, 0, g);
+    // the table with its cloth, the Bible and the lamp; two chairs
+    const tx = -0.3, tz = -0.35;
+    for (const [a, b] of [[-0.42, -0.28], [0.42, -0.28], [-0.42, 0.28], [0.42, 0.28]]) box(0.05, 0.74, 0.05, dk, tx + a, y0 + 0.37, tz + b, g);
+    box(1.0, 0.03, 0.7, dk, tx, y0 + 0.755, tz, g);
+    box(1.12, 0.01, 0.82, cloth, tx, y0 + 0.775, tz, g);
+    for (const s of [-1, 1]) { box(1.12, 0.16, 0.006, cloth, tx, y0 + 0.7, tz + s * 0.41, g); box(0.006, 0.16, 0.82, cloth, tx + s * 0.56, y0 + 0.7, tz, g); }
+    box(0.17, 0.045, 0.23, solid(0x1a1612, 0.6), tx + 0.25, y0 + 0.803, tz + 0.05, g).rotation.y = 0.3;   /* the Bible */
+    box(0.172, 0.006, 0.232, solid(0xc9a43c, 0.4), tx + 0.25, y0 + 0.803, tz + 0.05, g).rotation.y = 0.3;
+    cyl(0.06, 0.07, 0.1, solid(0x4a7a5a, 0.2), tx - 0.2, y0 + 0.83, tz, g, 10);   /* the oil lamp: a glass bowl, a chimney, a small flame */
+    cyl(0.03, 0.04, 0.17, new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffc070, emissiveIntensity: 0.6, transparent: true, opacity: 0.55, roughness: 0.1 }), tx - 0.2, y0 + 0.97, tz, g, 10);
+    mesh(new THREE.SphereGeometry(0.014, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffd080 }), tx - 0.2, y0 + 0.95, tz, g).scale.y = 1.8;
+    for (const [x, z, ry] of [[tx - 0.75, tz, Math.PI / 2], [tx + 0.75, tz, -Math.PI / 2]]) {
+      const c = chair(0x6a4a32);
+      c.position.set(x, y0, z);
+      c.rotation.y = ry;
+      g.add(c);
+    }
+    // on the walls: the calendar, a framed picture, a shelf with a clock; a bed behind a curtain on a rod
+    const cal = calendar(year);
+    cal.position.set(-w * 0.12, y0 + 1.55, -d / 2 + t + 0.005);
+    g.add(cal);
+    const pic = picture(0.36, 0.28, 2);
+    pic.position.set(w * 0.18, y0 + 2.2, -d / 2 + t + 0.02);
+    g.add(pic);
+    const bd = bed1948();
+    bd.position.set(-w / 2 + 0.65, y0, -d / 2 + 1.15);
+    g.add(bd);
+    box(0.02, 0.02, d * 0.55, M.iron, -w / 2 + 1.35, y0 + 2.05, -d / 2 + d * 0.275, g);
+    const cg = new THREE.PlaneGeometry(d * 0.55, 1.95, 10, 8);
+    const curtain = mesh(cg, wallpaper({ ground: [214, 120, 96], ink: [244, 226, 180], kind: "stripe", seed: 4 }), -w / 2 + 1.35, y0 + 1.06, -d / 2 + d * 0.275, g);
+    curtain.material = curtain.material.clone();
+    curtain.material.side = THREE.DoubleSide;
+    curtain.rotation.y = Math.PI / 2;
+    ticks.push(sway(curtain, { amp: 0.06, speed: 1.1, seed }));
+    // lace at the front windows, inside
+    for (const x of [-w * 0.3, w * 0.3]) {
+      const lg = new THREE.PlaneGeometry(0.9, 0.85, 6, 6);
+      const lc = mesh(lg, lace(), x, y0 + 1.55, d / 2 - t - 0.03, g);
+      ticks.push(sway(lc, { amp: 0.035, speed: 1.6, seed: seed + x }));
+    }
+    // warm light inside: a little fill, as the lamp and the light through the jalousies give
+    if (ROOM_LIGHTS) {
+      const lamp = new THREE.PointLight(0xffc890, 1.6, 5.5, 2);
+      lamp.position.set(tx - 0.2, y0 + 1.6, tz);
+      g.add(lamp);
+    }
+  }
+  g.userData.tick = (time) => ticks.forEach((f) => f(time));
   return g;
 }
 /* a breadfruit tree: a tall trunk, big glossy dark crowns and green fruit hanging under them */
@@ -1201,5 +1445,88 @@ export function wallClock() {
   mesh(new THREE.CircleGeometry(0.16, 20), solid(0xf2efe2, 0.6), 0, 0, 0.027, g);
   box(0.012, 0.11, 0.005, M.black, 0, 0.045, 0.032, g);
   box(0.012, 0.08, 0.005, M.black, 0.03, -0.01, 0.033, g).rotation.z = -1.2;
+  return g;
+}
+
+/* a fitted kitchen of the 1980s or 1990s along a wall (its back at z = 0, facing +z), len long: base units with doors and handles, a laminate
+   worktop at 0.92, a sink with a mixer tap, a band of tiles, wall cupboards above */
+export function fittedKitchen(len = 4) {
+  const g = grp(),
+    door = solid(0xe8e0cc, 0.5),
+    edge = solid(0xc8bca2, 0.6),
+    top = solid(0x8a7a66, 0.35),
+    steel = solid(0xb8bcc0, 0.25, 0.8);
+  box(len, 0.86, 0.6, edge, 0, 0.43, 0.3, g);
+  const n = Math.round(len / 0.6);
+  for (let i = 0; i < n; i++) {
+    const x = -len / 2 + (i + 0.5) * (len / n);
+    box(len / n - 0.02, 0.7, 0.02, door, x, 0.45, 0.61, g);
+    box(len / n - 0.02, 0.12, 0.02, door, x, 0.8, 0.61, g);
+    box(0.1, 0.012, 0.02, steel, x, 0.72, 0.63, g);
+    box(len / n - 0.02, 0.5, 0.02, door, x, 1.75, 0.36, g);
+    box(0.012, 0.08, 0.02, steel, x + (len / n) * 0.35, 1.6, 0.38, g);
+  }
+  box(len + 0.02, 0.04, 0.64, top, 0, 0.9, 0.32, g);
+  box(len, 0.62, 0.34, edge, 0, 1.75, 0.17, g);   /* the wall cupboards' carcass */
+  // tiles between the worktop and the cupboards: a small square pattern
+  const tt = cv(64, 64, (x) => {
+    x.fillStyle = "#ece8dc";
+    x.fillRect(0, 0, 64, 64);
+    x.strokeStyle = "#b8b2a2";
+    x.lineWidth = 2;
+    for (let i = 0; i <= 64; i += 16) {
+      x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 64); x.stroke();
+      x.beginPath(); x.moveTo(0, i); x.lineTo(64, i); x.stroke();
+    }
+  });
+  tt.wrapS = tt.wrapT = THREE.RepeatWrapping;
+  tt.repeat.set(len / 0.6, 0.54 / 0.6);
+  plane(len, 0.54, new THREE.MeshStandardMaterial({ map: tt, roughness: 0.3 }), 0, 1.19, 0.015, g);
+  // the sink and its tap
+  box(0.5, 0.012, 0.4, steel, -len / 2 + 0.9, 0.925, 0.32, g);
+  box(0.42, 0.01, 0.32, solid(0x6a6e72, 0.3, 0.6), -len / 2 + 0.9, 0.93, 0.32, g);
+  cyl(0.014, 0.014, 0.22, steel, -len / 2 + 0.9, 1.03, 0.1, g, 8);
+  box(0.02, 0.02, 0.14, steel, -len / 2 + 0.9, 1.14, 0.16, g);
+  return g;
+}
+/* a fridge-freezer: two doors with long handles */
+export function fridge() {
+  const g = grp(),
+    w = solid(0xf2f0ea, 0.35);
+  box(0.6, 1.75, 0.62, w, 0, 0.875, 0, g);
+  box(0.58, 0.01, 0.01, solid(0x9a9a9a, 0.4), 0, 1.1, 0.315, g);
+  for (const y of [0.55, 1.4]) box(0.025, 0.3, 0.03, solid(0x9a9a9a, 0.3, 0.6), -0.24, y, 0.33, g);
+  return g;
+}
+/* a curtain hanging in folds from a rod (its top at h, the folds facing +z); kind 0 or 1 picks the print */
+export function drape(w = 0.8, h = 2.2, kind = 0) {
+  const geo = new THREE.PlaneGeometry(w, h, 16, 1),
+    p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin((p.getX(i) / w) * Math.PI * 7) * 0.035);
+  geo.computeVertexNormals();
+  const m = wallpaper({ ground: kind ? [176, 132, 92] : [178, 128, 90], ink: [232, 214, 170], kind: "trellis", seed: 9 }).clone();
+  m.side = THREE.DoubleSide;
+  const g = grp();
+  mesh(geo, m, 0, h / 2, 0, g);
+  return g;
+}
+/* a crocheted throw over the back of a chair (in the chair's own frame: back at z = -0.34, its top at 1.0) */
+export function throwRug() {
+  const t = cv(64, 64, (x) => {
+    const c = ["#b83a2a", "#e8c040", "#2f6a4a", "#f2ead8"];
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) {
+      x.fillStyle = c[(i + j) % 4];
+      x.fillRect(i * 16, j * 16, 16, 16);
+      x.fillStyle = c[(i + j + 2) % 4];
+      x.fillRect(i * 16 + 5, j * 16 + 5, 6, 6);
+      x.strokeStyle = "#1c1a18";
+      x.strokeRect(i * 16 + 0.5, j * 16 + 0.5, 15, 15);
+    }
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 1 }),
+    g = grp();
+  box(0.62, 0.03, 0.24, m, 0, 1.015, -0.34, g);
+  box(0.62, 0.5, 0.03, m, 0, 0.77, -0.46, g);
   return g;
 }

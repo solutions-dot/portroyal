@@ -24,8 +24,9 @@ import { createStory, createCarry, needList } from "../../../engine/story.js";
 import { createGuide } from "../../../engine/guide.js";   /* the gold arrow on the ground that shows the way (every game) */
 import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit } from "../../../engine/audio.js";
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit, shipCreak, clink } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
+import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
@@ -33,6 +34,8 @@ import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, SILENT } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
+import { createLookShot } from "../../../engine/lookshot.js";
+import { makeRidges } from "../../../engine/ridges.js";   /* far hills that fade into the haze, as in Nanny Town */   /* looking at a thing is a close-up action (owner rule 13) */
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
@@ -56,6 +59,15 @@ const sky = makeSky();
 const iosWebGL = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 if (iosWebGL) sky.clouds.visible = false;   /* layered cloud sprites draw as coloured noise on some iPhones */
 sky.objects.forEach((o) => scene.add(o));
+/* the far hills (engine/ridges.js): they follow the camera like a painted backdrop and take the light of the hour (light() below).
+   St Ann: the middle of the island is limestone hill country all round, ridge after ridge of low wooded hills going blue into the haze,
+   lower than Nanny Town's Blue Mountains. Spanish Town: the plain lies open to the south, with the hills of St Catherine to the north
+   (north is -z in this game). Indoors none is drawn. */
+const RIDGES = {
+  stann: makeRidges({ seed: 7, layers: [{ r: 190, base: 0, amp: 22, k: 0.14 }, { r: 230, base: 6, amp: 30, k: 0.28 }, { r: 280, base: 12, amp: 38, k: 0.42 }, { r: 340, base: 20, amp: 50, k: 0.58 }, { r: 420, base: 30, amp: 66, k: 0.74 }] }),
+  town: makeRidges({ seed: 19, layers: [{ r: 240, base: 0, amp: 26, k: 0.2 }, { r: 300, base: 8, amp: 38, k: 0.38 }, { r: 380, base: 18, amp: 52, k: 0.62 }, { r: 470, base: 30, amp: 74, k: 0.78 }], shape: (x, z) => Math.max(0, Math.min(1, (0.25 - z) / 0.6)) }),
+};
+for (const r of Object.values(RIDGES)) scene.add(r.group);
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
@@ -86,9 +98,11 @@ function resize() {
 addEventListener("resize", resize);
 resize();
 const FIRST = CHAPTERS[0].first;
+const STEPS_MOVED = { 62: 63 };   /* 22 November 2026: "Read the notice" was cut (owner rule 14), the clerk already says it */
 let saved = null;
 try {
   saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved && STEPS_MOVED[saved.stage]) saved.stage = STEPS_MOVED[saved.stage];   /* a step that was cut: a save made in it carries on from the next */
   if (saved?.version !== 1 || !STEPS[saved.stage]) saved = null;
 } catch {}
 const S = { stage: FIRST, best: 0, x: 0, z: 0, yaw: 0, pitch: 0, started: false, journal: [], newPages: 0, completed: {}, placed: {}, found: {}, hand: null, teacher: false };
@@ -191,7 +205,10 @@ async function buildWorld(id) {
   Q.group.name = id;
   Q.group.visible = false;
   scene.add(Q.group);
-  if (__DEV__) Q.snap = snapMeshes(Q.group);
+  if (__DEV__) {
+    Q.snap = snapMeshes(Q.group);
+    Q.propList = propSnap(Q.group);   /* small props, before merging (engine/audit-props.js); Q.props is the place's own */
+  }
   mergePlace(Q);
   Q.people = [];
   Q.extras = [];
@@ -353,6 +370,8 @@ function chapterState(first) {
 const DAY = { top: 0x71a7bf, hor: 0xe4d1a7, stars: 0, moon: 0, fog: [0xc7d7d1, 100, 550], sun: [0xffe2b6, 2.1, -20, 42, 20], hemi: [0xfff1d4, 0x819183, 2.5], fill: 0 };
 function light(Q) {
   const L = { ...DAY, ...(Q.light || {}) };
+  for (const [k, r] of Object.entries(RIDGES)) r.group.visible = !Q.indoor && (Q.ridges || "stann") === k;
+  RIDGES[Q.ridges || "stann"]?.tone(L.ridge || 0x3c6634, L.haze || L.fog[0], L.glow ?? (L.stars ? 0.45 : 1));   /* green going into the haze of the hour */
   sky.setSky(L.top, L.hor, L.stars, L.moon, L.stars ? 0.35 : 1);
   sky.clouds.visible = !iosWebGL && !L.stars && !Q.indoor;
   scene.fog = new THREE.Fog(L.fog[0], L.fog[1], L.fog[2]);
@@ -376,6 +395,7 @@ function cast(Q, row) {
 }
 async function go(stage, { restore = null, keep = false } = {}) {
   const generation = ++epoch;
+  LS.cancel();
   busy = true;
   DIR.stop();
   dangerOff();
@@ -441,8 +461,9 @@ async function go(stage, { restore = null, keep = false } = {}) {
   busy = false;
   save();
   const c = CHAPTERS[chapterOf(stage)];
-  if (stage === c.first && stage !== FIRST && !restore && !skipIntro) {
-    card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
+  if (stage === c.first && !restore && !skipIntro) {
+    /* a chapter opens with its card (the first also says who you are), then its step: often a camera scene */
+    card(c.name, stage === FIRST ? [c.intro, GAME.fiction] : [c.intro], [["Begin", () => waits(stage)]]);
   } else await waits(stage);
   /* a save made after a chapter's last step was done, before Next chapter was pressed: offer the next chapter again */
   if (restore && needList(row).length && needList(row).every((n) => !story.needs(n.id))) advance(row.next);
@@ -545,12 +566,63 @@ function talk(n) {
     },
   );
 }
-/* a thing to look at: it changes where you can see it (a cloth pulled back, a lid lifted), then a card says what you found */
-function lookAt(id) {
+/* a thing to look at (owner rule 13, engine/lookshot.js): the bars come in and the camera eases to a close framing of it, the place moves it
+   while you watch (Q.reveal[id](k)), with its sound and a short line in the lower bar; then the card says what you found, and on its button
+   the camera eases back to you. The autoplayer and ?test runs skip the moment. */
+const LOOK_SFX = {
+  stick: () => [0, 0.5, 0.9].forEach((d, i) => noiseHit(260 - i * 40, 1.2, 0.18, 0.16, 0, d)),   /* the stick crunching into dry mud */
+  flap: () => noiseHit(1400, 0.8, 0.35, 0.12, -0.2, 0.15),   /* leather lifted */
+  hat: () => [0, 0.5].forEach((d) => noiseHit(1800, 0.7, 0.3, 0.07, 0.2, d)),
+  windlass: () => {
+    for (let i = 0; i < 4; i++) shipCreak();
+    [1.9, 2.3, 2.6].forEach((d) => tone(1300, 900, 0.12, "sine", 0.03, -0.2, d));   /* drips back into the well */
+  },
+  jackass: () => [0.6, 1.1, 1.6, 2.1].forEach((d, i) => noiseHit(320, 3, 0.08, 0.1, 0.3, d + (i % 2) * 0.05)),   /* hooves on the dry yard */
+  lid: () => {
+    shipCreak();
+    [0.9, 1.15, 1.5, 1.8, 2.2].forEach((d) => setTimeout(clink, d * 1000));   /* the watches chink as the light finds them */
+  },
+  cloth: () => noiseHit(2200, 0.5, 1.2, 0.1, -0.3, 0.1),   /* linen drawn along its rail */
+  board: () => {
+    noiseHit(500, 4, 0.12, 0.16, 0, 0.2);
+    noiseHit(300, 4, 0.18, 0.2, 0, 1.6);   /* set down against the wall */
+  },
+  cup: () => {
+    noiseHit(900, 4, 0.08, 0.08, 0.2, 0.2);
+    tone(2100, 2100, 0.3, "sine", 0.03, 0.2, 1.7);
+  },
+  rope: () => {
+    for (let i = 0; i < 6; i++) setTimeout(shipCreak, i * 700);   /* the rope over the lip, hand over hand */
+    tone(196, 180, 1.6, "sine", 0.04, 0, 4.4);
+  },
+  seal: () => noiseHit(160, 1.5, 0.25, 0.25, 0, 1.2),   /* the seal pressed on the paper */
+  shutter: () => {
+    [0.3, 1.0, 1.7].forEach((d) => noiseHit(700, 3, 0.15, 0.1, 0.4, d));
+    for (let i = 0; i < 5; i++) tone(150 + i * 12, 140 + i * 10, 0.5, "triangle", 0.012, 0.4, 2 + i * 0.35);   /* voices from the court, words you cannot make out */
+  },
+};
+const _lq = new THREE.Quaternion(),
+  _le = new THREE.Euler();
+const LS = createLookShot({
+  camera,
+  fov: playFov,
+  setFov: (f) => {
+    if (Math.abs(camera.fov - f) < 0.01) return;
+    camera.fov = f;
+    camera.updateProjectionMatrix();
+  },
+  bars: (on) => document.body.classList.toggle("cine", on),
+  say: (text) => ($("sub").textContent = text),
+  freeze: (on) => (busy = on),
+  sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
+  quick: () => QUICK && !S.lookShot,
+  reduced,
+  home: () => ({ pos: new THREE.Vector3(S.x, GAME.eye, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+});
+async function lookAt(id) {
   const lk = LOOKS[id],
     Q = world();
   S.found[id] = true;
-  Q.reveal[id]?.(true);
   uiSound("tap");
   const st = S.stage,
     done = () => {
@@ -561,12 +633,13 @@ function lookAt(id) {
       uiSound("goal");
       save();
     };
-  busy = true;   /* a moment to see the change before the card covers it */
-  setTimeout(() => {
-    busy = false;
-    if (S.stage !== st || openPanel()) return done();
-    card(lk.title, lk.lines, [[lk.button || "Go on", done]]);
-  }, QUICK ? 0 : 900);
+  await LS.play({ view: lk.view, act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  if (S.stage !== st) return;
+  if (openPanel()) {
+    LS.cancel();
+    return done();
+  }
+  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
@@ -892,7 +965,9 @@ function tick(dt, now = performance.now()) {
     if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking });
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (__DEV__ && S.view) {
+  else if (LS.tick(dt)) {
+    /* a look moment holds the camera */
+  } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
     camera.lookAt(...S.view.look);
   } else if (!S.started) {
@@ -909,7 +984,8 @@ function tick(dt, now = performance.now()) {
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);
   if (__DEV__) camera.userData.checkPlace = Q;   // Match camera probes to the scene actually drawn, including chapter transitions.
-  renderFramed(renderer, scene, camera, DIR.on);
+  for (const r of Object.values(RIDGES)) r.group.position.set(camera.position.x, 0, camera.position.z);
+  renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;
     save();
@@ -948,8 +1024,7 @@ async function start() {
     await go(d.stage, { restore: d });
     return;
   }
-  await go(FIRST);
-  if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => {}]]);
+  await go(FIRST);   /* the first chapter's card, then its opening scene (go) */
 }
 $("start").onclick = start;
 onLoadFail(() => {
@@ -977,7 +1052,7 @@ onLoadFail(() => {
     prepare(STEPS[saved?.stage]?.place || STEPS[FIRST].place);   /* the place Start opens, built behind the title */
     if (__DEV__) {
       const { dev } = await import("./dev.js");
-      await dev({ q, S, story, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light });
+      await dev({ q, S, story, worlds, ensure, world, go, start, action, talk, carry, where, blocked, save, DIR, DANGER, skip: () => (skipIntro = true), begin, renderer, camera, scene, body, loadBase, tick, frame, chapterState, resetSceneTasks, light, LS, lookAt });
     }
   } catch (e) {
     console.error(e);
