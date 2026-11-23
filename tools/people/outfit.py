@@ -286,6 +286,28 @@ elif OUTFIT_PHASE == 'finish':
             sd = (loc - v.co).dot(nrm)      # how far inside the jacket the shirt lies
             if sd < 0.009: v.co -= nrm * (0.009 - sd); _n += 1
         _jb.free(); _new['Shirt'].data.update(); print('OUTFIT shirt in under the lapels', _n)
+    # what the jacket hides of the shirt is cut away (23 November 2026): a shirt face whose outward line meets the jacket within 4 cm, at least
+    # 2.5 cm in from any edge of the jacket, can never be seen, and where the two are weighted a little differently it came through the lapels
+    # in motion (the cloth check, every suited body, every game). Faces near the jacket's edges stay, so the V, the collar and the cuffs never open.
+    if 'Jacket' in _new and 'Shirt' in _new and _OF.get('trimshirt', True):
+        from mathutils.bvhtree import BVHTree as _BVH3
+        from mathutils.kdtree import KDTree as _KD3
+        _jb = bmesh.new(); _jb.from_mesh(_new['Jacket'].data); _jb.normal_update(); _jt = _BVH3.FromBMesh(_jb)
+        _bd = [v.co.copy() for v in _jb.verts if v.is_boundary]; _kd = _KD3(len(_bd))
+        for i, c in enumerate(_bd): _kd.insert(c, i)
+        _kd.balance(); _sb = bmesh.new(); _sb.from_mesh(_new['Shirt'].data); _sb.normal_update(); _del = []
+        for f in _sb.faces:
+            c = f.calc_center_median(); d = f.normal
+            if d.length < 1e-6: continue
+            hit = None
+            for dd in (d, -d):      # the face may point either way: whichever way meets the jacket first
+                _hh = _jt.ray_cast(c + dd * 0.001, dd, 0.04)
+                if _hh[0] is not None and (hit is None or _hh[3] < hit[3]): hit = _hh
+            if hit is None: continue
+            if _kd.find(hit[0])[2] < 0.025: continue      # near the jacket's edge: it may show as the jacket moves
+            if all(_jt.ray_cast(v.co + (v.co - c).normalized() * 0.0005 + d * 0.001, d, 0.05)[0] is not None or _jt.ray_cast(v.co - d * 0.001, -d, 0.05)[0] is not None for v in f.verts): _del.append(f)
+        bmesh.ops.delete(_sb, geom=_del, context='FACES'); bmesh.ops.delete(_sb, geom=[v for v in _sb.verts if not v.link_faces], context='VERTS')
+        _sb.to_mesh(_new['Shirt'].data); _sb.free(); _jb.free(); _new['Shirt'].data.update(); print('OUTFIT shirt hidden under the jacket cut away', len(_del))
     # the lapels and the jacket's collar are their own piece (Lapels, in the jacket's cloth), which the packer never simplifies (tools/people/pack.mjs WHOLE): cut
     # down with the rest of the jacket, their edges and the notch went soft. Both pieces keep the whole jacket's shading across the cut, so no line shows there.
     if 'Jacket' in _new and _OF.get('lapels', True):
