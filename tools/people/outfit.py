@@ -234,18 +234,58 @@ elif OUTFIT_PHASE == 'finish':
             _new_co[v.index] = c.lerp(avg, w); _new_co.setdefault(mi, m.lerp(Vector((-avg.x, avg.y, avg.z)), w)); _ne += 1
         for i_, co_ in _new_co.items(): _jv[i_].co = co_
         _new['Jacket'].data.update(); print('OUTFIT jacket sides made alike', _ne)
-    # round the neck the jacket lies outside the shirt, 4 mm clear: where the two crossed, the shirt's collar showed through the jacket's in teeth
+    # round the neck and down the upper chest the jacket lies outside the shirt: where the two crossed, the shirt's collar showed through the jacket's in teeth.
+    # 8 mm clear, down to 18 cm below the neck (23 November 2026: at 4 mm and 10 cm, the cloth check still found the shirt through the lapels in every pose, 2 to 14 mm,
+    # in every game that wears this suit: the lapels and the shirt front are weighted to the chest a little differently, so they part by a few millimetres as the body moves)
     if 'Jacket' in _new and 'Shirt' in _new:
         from mathutils.bvhtree import BVHTree as _BVH0
         _sb = bmesh.new(); _sb.from_mesh(_new['Shirt'].data); _sb.normal_update(); _st = _BVH0.FromBMesh(_sb); _n = 0
         for v in _new['Jacket'].data.vertices:
-            if v.co.z < NZ - 0.10 * s: continue
-            loc, nrm, _i, _d = _st.find_nearest(v.co, 0.02)
+            if v.co.z < NZ - 0.18 * s: continue
+            loc, nrm, _i, _d = _st.find_nearest(v.co, 0.025)
             if loc is None: continue
             if nrm.dot(Vector((loc.x, loc.y - NJ.y, 0))) < 0: nrm = -nrm      # outward from the neck
+            gap = 0.008 if v.co.z > NZ - 0.14 * s else 0.008 * max(0.0, (v.co.z - (NZ - 0.18 * s)) / (0.04 * s))      # eased out below, so no step shows on the chest
             sd = (v.co - loc).dot(nrm)
-            if sd < 0.004: v.co += nrm * (0.004 - sd); _n += 1
+            if sd < gap: v.co += nrm * (gap - sd); _n += 1
         _sb.free(); _new['Jacket'].data.update(); print('OUTFIT jacket clear of the shirt collar', _n)
+    # over the seat and the hips the jacket lies outside the trousers, 8 mm clear: the trousers' waistband came through the back of the jacket by up to 24 mm when walking
+    if 'Jacket' in _new and 'Breeches' in _new:
+        from mathutils.bvhtree import BVHTree as _BVH1
+        _bb = bmesh.new(); _bb.from_mesh(_new['Breeches'].data); _bb.normal_update(); _bt = _BVH1.FromBMesh(_bb); _n = 0; _hz = J('Hips').z if 'J' in globals() else HIP
+        for v in _new['Jacket'].data.vertices:
+            if not (_hz - 0.16 * s < v.co.z < _hz + 0.14 * s): continue
+            loc, nrm, _i, _d = _bt.find_nearest(v.co, 0.03)
+            if loc is None: continue
+            if nrm.dot(Vector((loc.x, loc.y - J('Hips').y, 0))) < 0: nrm = -nrm      # outward from the hips
+            gap = 0.008 + 0.012 * max(0.0, min(1.0, (v.co.y - J('Hips').y) / (0.06 * s)))      # more room over the seat (behind: +y, the body faces -y), where the stride stretches the trousers out behind
+            sd = (v.co - loc).dot(nrm)
+            if sd < gap: v.co += nrm * (gap - sd); _n += 1
+        _bb.free(); _new['Jacket'].data.update(); print('OUTFIT jacket clear of the trousers', _n)
+    # the back vent closes: the two edges of the slit at the back of the jacket are drawn together to overlap by a few millimetres, as a real vent's
+    # underlap does, so the trousers no longer show through it (the cloth check found them there by up to 24 mm in every pose, in every game with this suit)
+    if 'Jacket' in _new:
+        _vb = bmesh.new(); _vb.from_mesh(_new['Jacket'].data); _hy, _hz = J('Hips').y, J('Hips').z; _n = 0
+        _edge = [v for v in _vb.verts if v.is_boundary and v.co.y > _hy + 0.02 * s and abs(v.co.x) < 0.06 * s and _hz - 0.35 * s < v.co.z < _hz + 0.06 * s]
+        _ring = {e.other_vert(v) for v in _edge for e in v.link_edges} - set(_edge)
+        for v in _edge:
+            if abs(v.co.x) < 0.004: continue
+            sx = 1 if v.co.x > 0 else -1; v.co.x = -sx * 0.003; _n += 1      # each edge just past the middle: the two sides overlap
+        for v in _ring:
+            if abs(v.co.x) < 0.06 * s and v.co.y > _hy + 0.02 * s: v.co.x *= 0.55      # the cloth beside the edge follows half way, so no fold shows
+        _vb.to_mesh(_new['Jacket'].data); _vb.free(); _new['Jacket'].data.update(); print('OUTFIT back vent closed', _n)
+    # and under the lapels the shirt front lies a little in: where the shirt stood within 6 mm of the jacket there, it came through the lapels as the chest moved
+    if 'Jacket' in _new and 'Shirt' in _new:
+        from mathutils.bvhtree import BVHTree as _BVH2
+        _jb = bmesh.new(); _jb.from_mesh(_new['Jacket'].data); _jb.normal_update(); _jt = _BVH2.FromBMesh(_jb); _n = 0
+        for v in _new['Shirt'].data.vertices:
+            if not (NZ - 0.20 * s < v.co.z < NZ - 0.015 * s): continue      # below the collar band, which shows above the jacket's collar
+            loc, nrm, _i, _d = _jt.find_nearest(v.co, 0.02)
+            if loc is None: continue
+            if nrm.dot(Vector((loc.x, loc.y - NJ.y, 0))) < 0: nrm = -nrm
+            sd = (loc - v.co).dot(nrm)      # how far inside the jacket the shirt lies
+            if sd < 0.009: v.co -= nrm * (0.009 - sd); _n += 1
+        _jb.free(); _new['Shirt'].data.update(); print('OUTFIT shirt in under the lapels', _n)
     # the lapels and the jacket's collar are their own piece (Lapels, in the jacket's cloth), which the packer never simplifies (tools/people/pack.mjs WHOLE): cut
     # down with the rest of the jacket, their edges and the notch went soft. Both pieces keep the whole jacket's shading across the cut, so no line shows there.
     if 'Jacket' in _new and _OF.get('lapels', True):
