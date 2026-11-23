@@ -157,27 +157,56 @@ export function caneField(area, { seed = 5, step = 0.55, h = 3.0, clear = [] } =
 
 /* yam hills: heaped earth with a tall stick for the vine, as provision grounds were planted. dry: the vines withered (the drought of 1865) */
 export function yamHills(n, area, { seed = 9, dry = true } = {}) {
+  /* yam hills as they are made in Jamaica: a heap of loosened earth about knee high, hoed up into a cone with clods on it, a tall stick
+     (a "yam stick") pushed in, and the yam vine twining up it with heart-shaped leaves on short stalks. In the dry year of 1865 the leaves
+     are few, yellowed and brown, thinner toward the top. (owner, 23 November 2026: "they just look like dirt mounds") */
   const g = grp(),
     r = rng(seed),
-    earth = solid(dry ? 0x8c6f4e : 0x6e5438, 1),
-    vine = solid(dry ? 0x8a7a48 : 0x4f7a32, 1);
+    earth = std(T.dirt([1, 1], dry ? [140, 106, 74] : [104, 78, 54]), 1),
+    clod = solid(dry ? 0x7a5c3e : 0x5a4430, 1),
+    leafCols = dry ? [0x8a8a3a, 0xa08a3a, 0x7a6a3a, 0x6f7a34] : [0x4f7a32, 0x5a8a36, 0x466e2c];
+  const heart = new THREE.Shape();   /* a yam leaf: a heart, pointed at the tip */
+  heart.moveTo(0, 0);
+  heart.bezierCurveTo(-0.05, 0.02, -0.06, 0.07, 0, 0.12);
+  heart.bezierCurveTo(0.06, 0.07, 0.05, 0.02, 0, 0);
+  const leafG = new THREE.ShapeGeometry(heart, 4),
+    leafM = leafCols.map((c) => solid(c, 0.9, 0, { side: THREE.DoubleSide }));
   const cols = Math.ceil(Math.sqrt(n * ((area[2] - area[0]) / (area[3] - area[1]))));
   for (let i = 0; i < n; i++) {
     const x = area[0] + ((i % cols) + 0.5) * ((area[2] - area[0]) / cols) + (r() - 0.5) * 0.3,
       z = area[1] + (Math.floor(i / cols) + 0.5) * 1.3 + (r() - 0.5) * 0.3;
     if (z > area[3]) break;
-    const hill = mesh(new THREE.SphereGeometry(0.45, 9, 6, 0, Math.PI * 2, 0, Math.PI / 2), earth, x, 0, z, g);
-    hill.scale.set(1, 0.7, 1);
-    const lean = (r() - 0.5) * 0.15,
-      st = cyl(0.015, 0.02, 1.8, DARKW, x + 0.05, 0.9, z, g, 4);
+    /* the hill: a hoed cone, lumpy, wider than tall, its top a little flattened */
+    const hg = new THREE.SphereGeometry(0.5, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2), hp = hg.attributes.position;
+    for (let k = 0; k < hp.count; k++) {
+      const hx = hp.getX(k), hy = hp.getY(k), hz = hp.getZ(k), f = 1 + (r() - 0.5) * 0.16 * (hy > 0.02 ? 1 : 0);
+      hp.setXYZ(k, hx * f, Math.min(hy * (0.9 + r() * 0.15), 0.42), hz * f);
+    }
+    hg.computeVertexNormals();
+    const hill = mesh(hg, earth, x, 0, z, g);
+    hill.scale.set(1, 0.85, 1);
+    for (let c = 0; c < 4; c++) {   /* clods of hoed earth on its sides */
+      const a = r() * 6.28, d = 0.22 + r() * 0.2, cl = mesh(new THREE.DodecahedronGeometry(0.05 + r() * 0.04, 0), clod, x + Math.cos(a) * d, 0.18 - d * 0.35, z + Math.sin(a) * d, g);
+      cl.rotation.set(r() * 3, r() * 3, 0);
+    }
+    const lean = (r() - 0.5) * 0.12,
+      H = 1.6 + r() * 0.4,
+      st = cyl(0.014, 0.022, H, DARKW, x + 0.04, 0.3 + H / 2, z, g, 5);
     st.rotation.z = lean;
-    /* the vine twines up the stake: small clumps of leaves at intervals, fewer and smaller toward the top (withered in the dry year) */
-    for (let k = 0; k < 5; k++) {
-      const y = 0.35 + k * 0.28,
-        a = k * 2.1 + r() * 0.6,
-        rr = 0.07 - k * 0.008,
-        lf = mesh(new THREE.IcosahedronGeometry(0.09 - k * 0.01, 0), vine, x + 0.05 - Math.sin(lean) * y + Math.cos(a) * rr, y, z + Math.sin(a) * rr, g);
-      lf.scale.set(1.2, 0.7, 1.0);
+    /* the vine: a thin stem spiralling up the stick, and leaves on it, more and bigger low down */
+    const pts = [];
+    for (let k = 0; k <= 24; k++) {
+      const t = k / 24, y = 0.32 + t * (H * 0.85), a = t * 9 + i;
+      pts.push(new THREE.Vector3(x + 0.04 - Math.sin(lean) * (y - 0.3) + Math.cos(a) * 0.03, y, z + Math.sin(a) * 0.03));
+    }
+    mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.005, 4), solid(dry ? 0x7a6a3a : 0x3e6a2a, 1), 0, 0, 0, g);
+    const nl = dry ? 10 : 14;
+    for (let k = 0; k < nl; k++) {
+      const t = Math.pow(k / nl, 1.3), p = pts[Math.min(24, Math.round(t * 24))], a = r() * 6.28,
+        lf = mesh(leafG, leafM[Math.floor(r() * leafM.length)], p.x + Math.cos(a) * 0.04, p.y, p.z + Math.sin(a) * 0.04, g),
+        sc = 2.0 - t * 0.9;
+      lf.scale.setScalar(sc);
+      lf.rotation.set(-0.9 + r() * 0.5, a + Math.PI / 2, (r() - 0.5) * 0.6, "YXZ");   /* hanging out and down from the stem, as a leaf on a stalk does */
     }
   }
   return g;

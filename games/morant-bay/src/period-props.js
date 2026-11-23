@@ -137,11 +137,12 @@ export function banana(seed = 1, fruit = false) {
     h.add(fr);
     const arm = cyl(0.03, 0.03, 0.4, solid(0x7a8440, 1), 0.18, 2.535, 0, h, 5);
     arm.rotation.z = -1.82;
+    cyl(0.018, 0.022, 0.34, solid(0x7a8440, 1), 0.36, 1.5, 0, h, 5);   /* the bare stalk that runs on below the bunch to the bud */
     const bud = mesh(
       new THREE.SphereGeometry(0.1, 8, 6),
       solid(0x6a2a58, 0.6),
       0.36,
-      1.56,
+      1.24,
       0,
       h,
     );
