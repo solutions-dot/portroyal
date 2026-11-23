@@ -20,6 +20,10 @@ The next game (owner, 23 November 2026). It tells the Morant Bay rebellion and w
 - **The 2026 scene shows no statue.** Edna Manley's statue of Paul Bogle (1965, ciment fondu: Bogle with his feet wide and his hands on the hilt of a machete, facing the court-house) was taken off its base for repair after the 2007 fire (Jamaica Information Service, 2009); no report was found of it going back. The journal says so.
 - **Still general pictures (no source found):** the rural constables of 1865 (shown in dark blue with peaked caps and muskets) and the Volunteers (shown as men of the town in dark coats with rifles: the Commission records "Volunteers' rifles" and "police muskets", not their dress). The chapel at Stony Gut, the school-house and the police station are general pictures too. To check: Heuman, *The Killing Time*; the Princeton and Yale albums.
 
+### To do: people falling at a distance (owner, 23 November 2026)
+
+The owner supplied `shared/anim-sources/Dying_Backwards.fbx` (a fall backwards) for the volley at the court-house. Use it only as this game's line allows: far from the camera, behind the opt-in card, cut away before anyone lies still, never close, no blood. Not in any other mature game (Tivoli: no one is hit; the Mad Master: the moment of a killing is never shown). Add it to `tools/anims/clips.json` and this game's `anim-clips.json` (docs/PIPELINE.md), then check it with the full look.
+
 ### Decided (owner, 23 November 2026)
 
 - The girl is **Hannah** (a common name among Jamaica's Baptist families of the time; the owner left the name to Claude). Her family is as recommended in `notes/the-girl-and-her-family.md`.
