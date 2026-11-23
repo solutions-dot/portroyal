@@ -33,7 +33,7 @@ export const TALK = {
   22: { father: [L("Papa", "Two days on the road. My feet are done."), L("You", "Is that the Governor's house?"), L("Papa", "King's House. Governor Eyre lives there."), L("Papa", "We only want him to hear us. About the land."), L("Papa", "Come. Walk with me to the door.")] },
   24: { secretary: [L("The clerk", "You are the people from St Thomas?"), L("You", "Yes, sir. We walked here to see the Governor."), L("The clerk", "The Governor will not see you."), L("The clerk", "Take your complaints to your own magistrates."), L("You", "The magistrates are who we complain about."), L("The clerk", "That is all. Good day.")] },
   26: { father: [L("Papa", "Two days to walk here. Two minutes at the door."), L("You", "What do we do now, Papa?"), L("Papa", "We walk home. We tell them what you saw."), L("Papa", "You read the door, Hannah. Tell it true.")] },
-  32: { deacon: [L("Deacon Clarke", "Shut the door. Speak low."), L("Deacon Clarke", "The men want their names written down."), L("You", "Why, Deacon?"), L("Deacon Clarke", "They are making a promise to stand together."), L("Deacon Clarke", "You write. I will read the names to you.")] },
+  32: { deacon: [L("Deacon Clarke", "Come in, child. Speak low."), L("Deacon Clarke", "The men want their names written down."), L("You", "Why, Deacon?"), L("Deacon Clarke", "They are making a promise to stand together."), L("Deacon Clarke", "You write. I will read the names to you.")] },
   34: { father: [L("Papa", "You wrote my name too?"), L("You", "Yes, Papa. Near the top. Like before."), L("Papa", "Then I am in it, whatever comes."), L("You", "What did they promise?"), L("Papa", "Not for you to carry. Go home to bed.")] },
   37: {
     mother: [L("Mama", "Stay in, Hannah. Police at Mr Bogle's yard."), L("Mama", "They came with a paper. A warrant, to take him."), L("You", "What happened?"), L("Mama", "The men came out of the chapel and the cane."), L("Mama", "Now the police are the ones held. Stay in.")],
@@ -164,7 +164,7 @@ export const FILMS = {
   meeting: {
     place: "gut", next: 32, journal: "names", title: "A night in late September",
     read: ["Two or three weeks before 11 October there were night meetings near Morant Bay.", "An oath was given and the names of the people sworn were written down. Nobody knows the words of the oath."],
-    captions: [[0, "A night in late September."], [6, "One by one, men come up the path to the chapel."], [13, "A lantern inside. The door shuts."], [18, "Deacon Clarke has sent for you. You can write."]],
+    captions: [[0, "A night in late September."], [6, "One by one, men come up the path to the chapel."], [13, "A lantern inside. The men speak low."], [18, "Deacon Clarke has sent for you. You can write."]],
     shots: [
       { t: 0, p: [-2, 5, 10], look: [6, 1.6, -6] },
       { t: 6, p: [2.6, 1.6, 0.4], look: [6, 1.4, -4] },

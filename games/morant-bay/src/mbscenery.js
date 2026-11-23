@@ -305,7 +305,7 @@ export function marketShed(w = 10, d = 4, { stalls = 4 } = {}) {
   for (let i = 0; i < stalls; i++) {
     const x = -w / 2 + (i + 0.5) * (w / stalls);
     box(w / stalls - 0.4, 0.07, 1.3, WOOD, x, 0.9, -0.4, g);   /* the stall board */
-    for (const dx of [-0.45, 0.45]) for (const dz of [-0.95, 0.15]) box(0.08, 0.9, 0.08, DARKW, x + dx * (w / stalls - 0.4), 0.45, -0.4 + dz, g);
+    for (const dx of [-0.45, 0.45]) for (const dz of [-0.58, 0.58]) box(0.08, 0.9, 0.08, DARKW, x + dx * (w / stalls - 0.4), 0.45, -0.4 + dz, g);
     box(w / stalls - 0.4, 0.55, 0.04, solid(0x8a7656, 1), x, 0.6, 0.27, g);   /* a sacking curtain hung along the front of the board */
   }
   return g;

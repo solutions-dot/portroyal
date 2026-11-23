@@ -87,7 +87,7 @@ export const STEPS = {
    put it down; at: where it is left [x, y, z]. */
 export const TASKS = {
   jar: { place: "gut", item: "jar", start: [-15.6, 0.02, 11.6], from: [-15.4, 11.0], to: [-4.6, 7.6], at: [-3.4, 0, 7.4], label: "Fill the water jar", put: "Set the jar by Gran" },
-  basket: { place: "bay", item: "basket", start: [-14.4, 0, 7.4], from: [-14.4, 8.1], to: [-11.4, 5.4], at: [-11.4, 0.94, 3.2], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
+  basket: { place: "bay", item: "basket", start: [-14.4, 0, 7.4], from: [-14.4, 8.1], to: [-11.6, 5.4], at: [-11.75, 0.94, 3.0], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
 };
 /* Things the player looks at (owner rule 13: a close-up action). at: where you stand. view: the close framing the camera eases to
    (engine/lookshot.js); the place moves the thing while you watch (Q.reveal[id](k), k from 0 to 1, over act seconds) and plays sound; say: a

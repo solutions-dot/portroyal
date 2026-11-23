@@ -4,6 +4,7 @@ import { makeSack } from "../../../engine/sack.js";
 /* games/kendal/src/props.js: plants, hills, houses, animals and the many small things that fill a scene.
    Each builder returns a THREE.Group sitting on y = 0 at its own origin. */
 import * as THREE from "three";
+import { produceBasket } from "../../../engine/produce.js";
 import { fretDoor } from "./doors.js";
 import {
   T,
@@ -902,48 +903,13 @@ export function bananaLoad() {
   return g;
 }
 /* a wide round market basket for carrying on the head, heaped with produce and covered at one side by a cloth. Its origin is the middle of its bottom. */
-export function marketBasket(c = 0xb08a48) {
-  const g = grp(),
-    wv = std(T.weave([4, 1]), 0.95, {
-      color: new THREE.Color(c).multiplyScalar(1.5),
-    });
-  cyl(0.3, 0.2, 0.17, wv, 0, 0.085, 0, g, 16);
-  const rim = mesh(
-    new THREE.TorusGeometry(0.3, 0.018, 5, 18),
-    solid(0x7a5a2a, 1),
-    0,
-    0.17,
-    0,
-    g,
-  );
-  rim.rotation.x = Math.PI / 2;
-  const heap = mesh(
-    new THREE.SphereGeometry(0.27, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
-    solid(0x6a8a3a, 1),
-    0,
-    0.15,
-    0,
-    g,
-  );
-  heap.scale.y = 0.35;
-  [
-    [0.1, 0.05, 0xe0a030],
-    [-0.08, 0.1, 0xd8662a],
-    [0.0, -0.12, 0xe8c040],
-    [-0.14, -0.05, 0x8ab040],
-    [0.15, -0.08, 0xd8662a],
-    [0.03, 0.15, 0x8ab040],
-  ].forEach(([x, z, col], i) =>
-    mesh(
-      new THREE.SphereGeometry(0.06, 8, 6),
-      solid(col, 0.8),
-      x,
-      0.23 + (i % 2) * 0.012,
-      z,
-      g,
-    ),
-  );
-  return g;
+/* a market woman's basket heaped with produce (engine/produce.js: each fruit its own piece, piled on the basket's floor, after Port Royal's market).
+   St Thomas markets sold provisions: yams, plantains, oranges, limes, mangoes, ackee. c tints the weave. */
+const FILLS = [["orange", "lime"], ["yam"], ["mango", "orange"], ["lime", "ackee"]];
+let basketN = 0;
+export function marketBasket(c = 0xb08a48, fill = null) {
+  const k = basketN++;
+  return produceBasket({ fill: fill || FILLS[k % FILLS.length], r: 0.3, seed: k + 3, tint: new THREE.Color(c).multiplyScalar(1.5).getHex() });
 }
 
 /* ---------- a mule (Mass Dudley's Bess) with a pack saddle, two panniers and a halter. She faces +x. Her body, neck, head, legs, ears and tail are smooth skins

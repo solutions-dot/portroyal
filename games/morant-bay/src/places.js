@@ -251,7 +251,7 @@ function gut() {
   Q.reveal.placard = (seen) => {
     const k = span(K(seen), 0.05, 0.6);
     plac.rotation.x = -0.25 * (1 - k);   /* a corner had curled down: you smooth it flat to read */
-    plac.position.z = 0.08 + 0.04 * (1 - k);
+    plac.position.z = 0.08 + 0.1 * (1 - k);   /* stood off the post far enough that the tilted sheet never goes behind its face (owner: the post came through the paper) */
   };
   point(Q, "placard", 2.4, -1.4, "the placard");
   /* the old list, kept in the house in a tin box: lifted out and unfolded (chapter 1) */
@@ -459,8 +459,9 @@ function gut() {
       at("father", CHAPEL.x - 1.2, CHAPEL.z - 0.6, CHAPEL.x, CHAPEL.z - 4.5);   /* on a bench inside, with the other men */
     } else if (stage >= 35 && stage < 40) {
       at("father", 10.2, -0.4, 13, -4);
-      at("mother", H.x + 2.2, H.z + 1.4, 4, 2);
-      at("gran", H.x + 2.4, H.z - 0.6, 4, 2);
+      at("mother", H.x + 4.4, H.z + 0.6, 4, 2);   /* out from the wall, clear of the cook fire at (-3.8, 6.6), and a step from Sammy */
+      at("brother", H.x + 5.6, H.z + 2.2, 4, 2);
+      at("gran", H.x + 3.4, H.z - 1.5, 4, 2);   /* clear of the door leaf as it swings out (owner: she stood in the door) */
     } else if (stage >= 50 && stage < 55) {
       at("gran", H.x - 3.4, H.z + 0.6, -12, 8);
       at("brother", H.x - 3.2, H.z - 0.6, -12, 8);
@@ -468,7 +469,7 @@ function gut() {
       at("gran", CAVE.x - 1.0, CAVE.z + 0.2, 0, 0);
       at("brother", CAVE.x + 1.1, CAVE.z + 0.1, 0, 0);
     } else {
-      at("deacon", 2.0, -4.0, 2.4, -2.6);
+      at("deacon", 1.4, -4.7, 2.4, -2.6);
       at("father", -11.4, -1.4, -14, -4);
       at("mother", -3.2, 8.4, -3.8, 6.6);
       at("gran", -4.2, 2.6, -3.8, 6.6);
@@ -480,7 +481,7 @@ function gut() {
   person(Q, "mother", "mother", -3.2, 8.4, face(-3.2, 8.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
   person(Q, "father", "father", -11.4, -1.4, face(-11.4, -1.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "brother", "brother", -2.4, 5.0, 0, { kind: "wander", area: [-5.6, 3.2, -1.6, 8.4], pause: [2, 5] });
-  person(Q, "deacon", "deacon", 2.0, -4.0, face(2.0, -4.0, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
+  person(Q, "deacon", "deacon", 1.4, -4.7, face(1.4, -4.7, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "bogle", "bogle", 13.2, -2.4, face(13.2, -2.4, 9, -2), { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "constable", "constable", 4.4, 3.0, face(4.4, 3.0, 12, -2), { kind: "watch", at: [12, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 9] });
   /* the village: neighbours at their work, children */
