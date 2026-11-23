@@ -442,16 +442,18 @@ async function go(stage, { restore = null, keep = false } = {}) {
   const newChapter = change || chapterOf(stage) !== chapterOf(S.stage);
   current = Q.id;
   PLACES.shown(Q.id);   /* drawn now, so sent again */
+  const afterFilm = !!(STEPS[S.stage] && STEPS[S.stage].wait);   /* a camera scene or card just ended: the player is set back down, so face the action too */
   S.stage = stage;
   if (newChapter && $("title").hidden) releaseFar(stage);
   prepare(nextPlace(stage));
   S.best = Math.max(S.best, chapterOf(stage));
   const at = row.start || Q.start;
-  if (!keep || change || row.start) Object.assign(S, { x: at.x, z: at.z, yaw: at.yaw || 0, pitch: 0 });
+  const placed = !keep || change || row.start;
+  if (placed) Object.assign(S, { x: at.x, z: at.z, yaw: at.yaw || 0, pitch: 0 });
   if (restore) {
     story.restore(restore.story);
     Object.assign(S, { x: restore.x, z: restore.z, yaw: restore.yaw, pitch: restore.pitch || 0 });
-  } else story.sync(stage);
+  } else { story.sync(stage); if (placed || afterFilm) { const fy = story.faceYaw(); if (fy !== null) S.yaw = fy; } }   /* set down in a place: face the action (engine/story.js faceYaw) */
   if (S.hand && !carry.holding()) {
     const o = Q.items[S.hand];
     if (o) carry.carry(o);

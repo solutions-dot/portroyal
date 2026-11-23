@@ -142,6 +142,7 @@ export async function dev(A) {
     await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
+    if (q.has("me")) S.view = null;   /* &me: from the player's own eyes, as the step begins (to check the player faces the action) */
     if (q.has("look")) A.action(q.get("look"));
     if (q.has("c")) S.view = { pos: q.get("c").split(",").map(Number), look: (q.get("l") || "0,1,0").split(",").map(Number) }; /* &c=x,y,z&l=x,y,z: look from anywhere */
     if (q.has("t")) {

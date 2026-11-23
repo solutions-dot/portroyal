@@ -146,6 +146,14 @@ export function createStory(options) {
     }
     return best;
   };
+  /* the way to face so the player looks at the step's action (owner, 23 November 2026: "ensure in all chapters, you are facing the action"):
+     toward the next point on the arrow's way to the nearest unfinished need, as a yaw in the games' convention (0 looks down -z). null when there is none. */
+  S.faceYaw = () => {
+    const t = S.pick(); if (!t) return null; const [px, pz] = player();
+    let w = o.route ? o.route([t.x, t.z], player(), S.stage) : null; w = w ? xz(w) : [t.x, t.z];
+    const dx = w[0] - px, dz = w[1] - pz; if (Math.hypot(dx, dz) < 0.3) return null;
+    return Math.atan2(-dx, -dz);
+  };
   S.delay = () => (S.active && S.step.explore ? o.exploreDelay : o.delay);
   S.ready = () => S.active && waited >= S.delay();
   const HIDE = Object.freeze({ show: false });
