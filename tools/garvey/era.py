@@ -2135,6 +2135,21 @@ def face_out():
             if f.normal.dot(nrm)<0: fl.append(f)
         if fl: bmesh.ops.reverse_faces(b,faces=fl); print('TURNED OUT',k,len(fl))
         b.to_mesh(o.data); b.free(); o.data.update()
+if G.get('beltover') and PART.get('coat'):
+    # a belt worn over a tunic ("beltover": true; owner, 23 November 2026: the Morant Bay constable's belt was hidden under his tunic). As the
+    # Selassie game's policeman has it (tools/selassie/finish_person.py), moved here so any game can use it: the belt under the coat goes, and a
+    # band is laid round the coat itself just above the hips, a centimetre clear of it, taking the coat's own weights so it bends with it.
+    for _n in ('Belt','Buckle'):
+        _o=bpy.data.objects.get(_n)
+        if _o: bpy.data.objects.remove(_o,do_unlink=True)
+    _bt=tree_of(PART['coat']); _bm=bmesh.new(); _rows=[]
+    for _z in (HIP+0.05,HIP+0.11):
+        _ring=[]
+        for _i in range(48):
+            _a=_i/48*math.pi*2; _c=Vector((0,J('Hips').y,_z)); _d=Vector((math.sin(_a),-math.cos(_a),0)); _h=_bt.ray_cast(_c,_d)[0]
+            _ring.append(_bm.verts.new(_c+_d*(((_h-_c).length if _h else 0.17)+0.01)))
+        _rows.append(_ring)
+    quadstrip(_bm,_rows,close=True); _bo=soft('Belt',_bm,'Belt',src=PART['coat']); paint(_bo); print('BELT OVER THE COAT')
 face_out()
 def sync_weights(dst, src, pick, maxd=0.03):
     # A layer that lies over another moves with it: each point of dst that pick() chooses takes the bone weights of the nearest point of src

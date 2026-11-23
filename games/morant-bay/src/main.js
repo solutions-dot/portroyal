@@ -336,7 +336,7 @@ function visuals() {
   const Q = world();
   if (!Q) return;
   for (const id of Object.keys(S.placed)) if (TASKS[id]?.place === Q.id) applyPlaced(Q, id);
-  for (const [id, lk] of Object.entries(LOOKS)) if (lk.place === Q.id) Q.reveal[id]?.(!!S.found[id]);
+  for (const [id, lk] of Object.entries(LOOKS)) if (lk.place === Q.id) Q.reveal[id]?.(lk.shut ? 0 : !!S.found[id], S.stage);   /* shut: put back as it was once read (a box closed again); the stage lets a thing be put away after its chapter */
   if (S.hand && carry.holding()) carry.holding().visible = true;
 }
 function resetSceneTasks() {
@@ -442,12 +442,14 @@ async function go(stage, { restore = null, keep = false } = {}) {
   const newChapter = change || chapterOf(stage) !== chapterOf(S.stage);
   current = Q.id;
   PLACES.shown(Q.id);   /* drawn now, so sent again */
+  const afterFilm = !!(STEPS[S.stage] && STEPS[S.stage].wait);   /* a camera scene or card just ended: the player is set back down, so face the action too */
   S.stage = stage;
   if (newChapter && $("title").hidden) releaseFar(stage);
   prepare(nextPlace(stage));
   S.best = Math.max(S.best, chapterOf(stage));
   const at = row.start || Q.start;
-  if (!keep || change || row.start) Object.assign(S, { x: at.x, z: at.z, yaw: at.yaw || 0, pitch: 0 });
+  const placed = !keep || change || row.start;
+  if (placed) Object.assign(S, { x: at.x, z: at.z, yaw: at.yaw || 0, pitch: 0 });
   if (restore) {
     story.restore(restore.story);
     Object.assign(S, { x: restore.x, z: restore.z, yaw: restore.yaw, pitch: restore.pitch || 0 });
@@ -459,6 +461,10 @@ async function go(stage, { restore = null, keep = false } = {}) {
   }
   cast(Q, row);
   Q.enter?.(stage, S);   /* the place's own change for this step (a door open, a fire lit, a rider gone) */
+  if (!restore) {   /* face the action (engine/story.js faceYaw), once the step's people stand where it puts them: when set down in a place, after a camera scene, and when the next person is close by */
+    const t = story.pick(), fy = story.faceYaw();
+    if (fy !== null && (placed || afterFilm || (t && t.d < 6))) S.yaw = fy;
+  }
   visuals();
   light(Q);
   $("place").textContent = CHAPTERS[chapterOf(stage)].caption;
@@ -889,7 +895,7 @@ function dangerTick(dt, quiet) {
     }
     [S.x, S.z, S.yaw] = DANGER.safe;
     S.pitch = 0;
-    notice(D.line || "A shot! The dust jumps beside you. You run back to cover.");
+    { const L = Array.isArray(D.line) ? D.line : [D.line || "A shot! The dust jumps beside you. You run back to cover."]; D.said = ((D.said ?? -1) + 1) % L.length; notice(L[D.said]); }   /* a different line each time, so being seen does not read the same again and again */
   }
 }
 /* a soldier's shout across the open ground: a rough rising voice, then a second */

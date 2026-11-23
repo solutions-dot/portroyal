@@ -1,3 +1,5 @@
+/* the camera scenes run a little quicker than they were written (owner, 23 November 2026: "some of the cinematic scenes feel a little too long ... some is just camera zooming") */
+const PACE = 1.15;
 import { showCinematicSkip } from "../../../engine/cine.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
@@ -115,7 +117,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     if (!D.on || D.paused) return;
     const F = FILMS[D.key],
       before = D.time;
-    D.time += dt * (D.fast ? 30 : 1);
+    D.time += dt * (D.fast ? 30 : PACE);
     const t = D.time;
     D.apply(Math.min(t, F.duration));
     if (AU.ctx && AU.on && AU.ctx.state === "running") {
@@ -145,7 +147,11 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(180, 150, 0.6, "sawtooth", 0.008, 0.3, 0.5);
           } else if (what === "fire") crackle();
           else if (what === "shell") {
-            tone(174, 168, 1.6, "sawtooth", 0.016, 0.5, 0);   /* a conch shell blown far off, the call of the crowd */
+            /* a conch shell blown on the hill, the call that brought the men out (owner: "dont hear the shell blown"): two long, loud blasts */
+            for (const d of [0, 2.1]) {
+              tone(174, 166, 1.7, "sawtooth", 0.07, 0.25, d);
+              tone(348, 332, 1.7, "triangle", 0.03, 0.25, d);
+            }
           } else if (what === "volley") {
             /* a ragged volley of muskets, close: cracks one after another, then the boom off the hills */
             for (let i = 0; i < 6; i++) noiseHit(2200, 0.7, 0.06, 0.32, -0.2 + i * 0.08, i * 0.07);

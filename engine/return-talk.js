@@ -44,5 +44,6 @@ export function comeOver(n, { px, pz, goTo = null, talk, gap = COME_GAP }) {
   const dx = n.x - px, dz = n.z - pz, d = Math.hypot(dx, dz);
   if (!goTo || d < gap + 1.2) { talk(); return; }
   const k = gap / d;
+  if (n.amb) n.amb.held = true;   /* the person's background life lets go while they walk over, so the walk clip plays: left running, its idle and work clips played over the walk and they slid along like a ghost (owner, 23 November 2026, Morant Bay) */
   goTo(n, px + dx * k, pz + dz * k, { done: () => talk() });
 }

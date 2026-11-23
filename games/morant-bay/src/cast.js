@@ -4,7 +4,7 @@ export const CAST = {
   mother: { base: "mb_mother", sex: "f", who: "Mama" },
   gran: { base: "mb_gran", sex: "f", who: "Gran", idle: "OldIdle" },
   father: { base: "mb_father", sex: "m", who: "Papa", idle: "IdleM" },
-  brother: { base: "mb_brother", sex: "m", who: "Sammy", idle: "Idle" },
+  brother: { base: "mb_brother", sex: "m", who: "Sammy", idle: "Idle", scale: 1 / 1.45 },   /* a boy of six: his body is built big so every clip fits (the recipe's upscale), and shrunk back here */
   deacon: { base: "mb_deacon", sex: "m", who: "Deacon Clarke", idle: "OldIdle" },
   ada: { base: "mb_ada", sex: "f", who: "Miss Ada" },
   bogle: { base: "mb_bogle", sex: "m", who: "Paul Bogle", idle: "IdleM" },   /* real; he does not speak */

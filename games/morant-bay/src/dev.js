@@ -1,5 +1,6 @@
 /* Development checks are stripped from public builds. */
 import { auditReveals } from "../../../engine/audit-reveal.js";
+import { lensBlocked, targetHidden } from "../../../engine/lens-check.js";
 import { auditProps } from "../../../engine/audit-props.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
@@ -121,6 +122,57 @@ export async function dev(A) {
     closeAll();
     return r;
   };
+  if (q.get("test") === "lens") {
+    /* ?test=lens: every camera scene sampled each half second, and every look moment, for a lens looking into a leaf, a roof or a wall
+       (engine/lens-check.js). LENS n at the end. */
+    A.begin();
+    for (const id of PLACE_IDS) await ensure(id);
+    const out = [], { FILMS } = await import("./content.js");
+    for (const key of Object.keys(FILMS)) {
+      const st = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === key);
+      if (!st) continue;
+      A.chapterState(st); await go(st); closeAll(); S.view = null;
+      A.DIR.start(key); A.DIR.paused = true; let lastBad = -9;
+      for (let t = 0; t <= FILMS[key].duration; t += 1) {
+        A.DIR.apply(t); A.camera.updateMatrixWorld(true);
+        const b = lensBlocked(A.camera, world().group, { near: 1.4 });
+        if (b.share >= 0.34 && t - lastBad > 2) { out.push("LENS film " + key + " at " + t.toFixed(1) + "s: " + Math.round(b.share * 100) + "% of the view blocked within 1.4 m by " + b.what); lastBad = t; }
+      }
+      A.DIR.stop?.();
+    }
+    for (const [id, lk] of Object.entries(LOOKS)) {
+      if (!lk.view) continue;
+      const st = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === id));
+      A.chapterState(st); await go(st); closeAll();
+      const h = targetHidden(lk.view.p, lk.view.look, world().group);
+      if (h) out.push("LENS look " + id + ": the view of it is blocked by " + h);
+    }
+    window.__RESULT = [...out, "LENS " + out.length, "AUTO END"];
+    return;
+  }
+  if (q.get("test") === "face") {
+    /* ?test=face: at the start of every step that sends the player somewhere, how far the player's view is turned from the way to the goal
+       (owner, 23 November 2026: "many chapters the player is facing away from the objectives"). A turn over 35 degrees is reported. */
+    A.begin();
+    for (const id of PLACE_IDS) await ensure(id);
+    const keys = Object.keys(STEPS).map(Number).sort((a, b) => a - b), out = [];
+    for (let i = 0; i < keys.length; i++) {
+      const st = keys[i], row = STEPS[st];
+      if (row.wait) continue;
+      const prev = STEPS[keys[i - 1]];
+      A.chapterState(st);
+      if (prev && prev.wait && prev.place === row.place) { await go(keys[i - 1]); closeAll(); await go(st, { keep: true }); }
+      else await go(st);
+      closeAll();
+      const t = story.pick();
+      if (!t) { out.push(st + " no target"); continue; }
+      const want = Math.atan2(-(t.x - S.x), -(t.z - S.z));
+      let d = Math.abs(((want - S.yaw) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI) * 57.3;
+      out.push((d > 35 ? "AWAY " : "ok ") + st + " " + t.id + " " + d.toFixed(0) + "deg dist " + Math.hypot(t.x - S.x, t.z - S.z).toFixed(1));
+    }
+    window.__RESULT = [...out, "FACE " + out.filter((l) => l.startsWith("AWAY")).length, "AUTO END"];
+    return;
+  }
   if (q.get("test") === "all") {
     await checkAll(A.checkAdapter, CHECK_TABLES);
     return;
@@ -142,6 +194,7 @@ export async function dev(A) {
     await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
+    if (q.has("me")) S.view = null;   /* &me: from the player's own eyes, as the step begins (to check the player faces the action) */
     if (q.has("look")) A.action(q.get("look"));
     if (q.has("c")) S.view = { pos: q.get("c").split(",").map(Number), look: (q.get("l") || "0,1,0").split(",").map(Number) }; /* &c=x,y,z&l=x,y,z: look from anywhere */
     if (q.has("t")) {

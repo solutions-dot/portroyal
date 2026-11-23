@@ -154,8 +154,9 @@ if G.get('jacket'):   # a plain suit jacket: waist-length hem, sleeves to the wr
 SKIRT_ZB=ANK+0.07+(KNEE-ANK-0.07)*G.get('hem',0.0)   # the hem: 0 is the ankle (1914 dresses), about 0.5 mid-calf, 1 the knee
 if G.get('cardigan'):
     ccol=NECK-0.010*s; ccs=G.get('cardigansleeve',0.92); cvz=ccol-0.26*s
-    parts.append(('cardigan',piece('Cardigan','helper-tights',lambda c:c.z>HIP-0.10*s and arm_ok(c,ccs),lambda c:0.03 if abs(c.x)>SX*0.8 else 0.028,'Cardigan',post=lambda bm:smooth_edge(bm,14),
-        cuts=[((0,0,ccol),(0,0,1),None),((0,0,cvz),Vector((-3.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,cvz),Vector((3.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0),
+    parts.append(('cardigan',piece('Cardigan','helper-tights',lambda c:c.z>HIP-0.10*s and arm_ok(c,ccs),lambda c:(0.03 if abs(c.x)>SX*0.8 else 0.028)+0.022*min(1.0,max(0.0,(HIP+0.12*s-c.z)/(0.14*s))),'Cardigan',post=lambda bm:smooth_edge(bm,14),
+        cuts=[((0,0,ccol),(0,0,1),None),((0,0,HIP-0.075*s),(0,0,-1),None),   # the hem cut straight across: where the body's faces happened to end it was ragged (owner, 23 November 2026)
+              ((0,0,cvz),Vector((-3.5,0,1)).normalized(),lambda c:c.y<0 and c.x>0),((0,0,cvz),Vector((3.5,0,1)).normalized(),lambda c:c.y<0 and c.x<0),
               ((0.012,0,0),(-1,0,0),lambda c:c.y<0 and c.z<cvz+0.01 and c.x<0.012 and c.x>-0.03)]+cuts_sleeve(ccs))))
 if G.get('skirt'):
     ZT=HIP+0.08*s; ZB=SKIRT_ZB
@@ -372,6 +373,25 @@ def paint(o):
             l[cl]=(col.x*k,col.y*k,col.z*k,1)
     bm.to_mesh(me); bm.free(); ca=me.color_attributes; ca.active_color=ca['Col']; ca.render_color_index=list(ca.keys()).index('Col')
     for p in me.polygons: p.use_smooth=True
+def sync_weights(dst, src, pick, maxd=0.04):      # a layer that lies over another bends with it: each chosen point takes the bone weights of the nearest point of src (as tools/garvey/era.py does for the fitted suit)
+    from mathutils.kdtree import KDTree
+    sv=src.data.vertices; kd=KDTree(len(sv))
+    for v in sv: kd.insert(v.co,v.index)
+    kd.balance(); names={g.index:g.name for g in src.vertex_groups}; n=0
+    for v in dst.data.vertices:
+        if not pick(v.co): continue
+        co,i,d=kd.find(v.co)
+        if d is None or d>maxd: continue
+        w=[(names[g.group],g.weight) for g in sv[i].groups if g.weight>1e-4 and names[g.group].startswith('mixamorig:')]
+        if not w: continue
+        for g in list(v.groups):
+            if dst.vertex_groups[g.group].name.startswith('mixamorig:'): dst.vertex_groups[g.group].remove([v.index])
+        for nm,wt in w: (dst.vertex_groups.get(nm) or dst.vertex_groups.new(name=nm)).add([v.index],wt,'REPLACE')
+        n+=1
+    return n
+_ca,_sh,_sk=bpy.data.objects.get('Cardigan'),bpy.data.objects.get('Shirt'),bpy.data.objects.get('Skirt')
+if _ca and _sh: print('SYNC cardigan to the dress top',sync_weights(_ca,_sh,lambda c:c.z>HIP+0.10*s,0.05))      # (owner, 23 November 2026) with weights of its own the dress came through it at the bust and sides as soon as she moved
+if _ca and _sk: print('SYNC cardigan to the skirt',sync_weights(_ca,_sk,lambda c:c.z<=HIP+0.10*s,0.06))
 for o in clothes+[h]: paint(o)
 for m in eyes.data.materials:
     for n in m.node_tree.nodes:

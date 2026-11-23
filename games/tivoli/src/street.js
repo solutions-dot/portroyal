@@ -184,7 +184,7 @@ export function streetPlace(opts = {}) {
     { id: 'brown', name: 'Mr Brown', look: 'brown', x: -20.2, z: 6.0, ry: -Math.PI / 2, anim: 'Idle' },
   ];
   for (const n of npcs) st.solids.push({ kind: 'person', name: n.id, x0: n.x - 0.3, x1: n.x + 0.3, z0: n.z - 0.3, z1: n.z + 0.3, y0: 0, y1: 1.7 });
-  const start = { x: -26.6, z: 5.9, yaw: Math.atan2(-(-20.2 + 26.6), -(6.0 - 5.9)) };   /* walking home from the west: facing Mr Brown by the bus stop, then the shop, then Gran at the gate */
+  const start = { x: -27.4, z: 6.8, yaw: Math.atan2(-(-20.2 + 27.4), -(6.0 - 6.8)) };   /* walking home from the west: facing Mr Brown by the bus stop, then the shop, then Gran at the gate */
   st.solids.push({ kind: 'person', name: 'start', x0: start.x - 0.3, x1: start.x + 0.3, z0: start.z - 0.3, z1: start.z + 0.3, y0: 0, y1: 1.7 });
   const groundAt = (x, z) => (Math.abs(z) > 4.64 && Math.abs(z) <= 8.1 ? 0.16 : Math.abs(z) >= 4.36 && Math.abs(z) <= 4.64 ? 0.2 : 0);   /* pavements 16 cm, kerbs 20 cm, road and grass 0 */
   const traffic = addTraffic(st.group);

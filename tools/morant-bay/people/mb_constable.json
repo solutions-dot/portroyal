@@ -13,21 +13,19 @@
   "height": 0.55
  },
  "garments": {
-  "sleeve": 0.95,
-  "trousers": true,
-  "jacket": true,
-  "jacketsleeve": 0.92,
+  "sleeve": 0.96,
   "shoes": true,
-  "collar": "turn",
-  "hairvol": 0.3,
+  "collar": "stand",
+  "hairvol": 0.25,
   "hat": [
    [
     "peaked",
-    "Hat"
+    "Cap"
    ]
   ],
-  "tie": true,
-  "waistcoat": false
+  "trousers": true,
+  "belt": true,
+  "hatdrop": 0.008
  },
  "colors": {
   "Skin": [
@@ -35,55 +33,63 @@
    96,
    70
   ],
-  "Shirt": [
-   220,
-   214,
-   200
+  "Hair": [
+   22,
+   18,
+   16
   ],
-  "Jacket": [
-   36,
+  "Shirt": [
+   34,
    40,
-   64
+   66
+  ],
+  "Collar": [
+   34,
+   40,
+   66
   ],
   "Breeches": [
-   36,
-   40,
-   58
+   30,
+   34,
+   52
   ],
   "Shoes": [
    24,
    20,
    18
   ],
-  "Hat": [
-   34,
-   38,
-   60
-  ],
-  "Hair": [
-   22,
-   18,
-   16
+  "Sole": [
+   20,
+   16,
+   14
   ],
   "Buttons": [
-   190,
-   170,
-   110
+   214,
+   200,
+   150
   ],
-  "Collar": [
-   232,
+  "Belt": [
    226,
-   210
+   220,
+   200
   ],
-  "Tie": [
-   40,
-   36,
-   36
+  "Buckle": [
+   150,
+   130,
+   80
+  ],
+  "Cap": [
+   30,
+   34,
+   54
+  ],
+  "CapBand": [
+   30,
+   34,
+   54
   ]
  },
- "face": "strong",
- "outfit": {
-  "garment": "toigo_male_suit_tie_and_jacket",
-  "waistcoat": false
- }
+ "note": "A constable of 1865 in the dress of the British and Irish constabularies of the day, after which Jamaica's police were modelled: a fitted dark tunic buttoned to a stand collar, a pale belt, a peaked cap. No picture of a Jamaican constable of 1865 was found: a general picture (docs/games/morant-bay.md). The tunic is built as a fitted shirt (fitted sleeves and shoulders); the builder's loose coat gave puffy shoulders and bell sleeves (owner, 23 November 2026).",
+ "uniform": "police",
+ "face": "strong"
 }

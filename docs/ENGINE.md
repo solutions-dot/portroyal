@@ -674,3 +674,7 @@ A crowd that belongs to one chapter (the market crowd, soldiers who come later) 
 
 `const SH = sunShadow(renderer, sun, { phone })`; `SH.prepare(group)` once a place is built (and again once its people are in), `SH.relight()` right after the game sets its sun for an hour, `SH.enable(!Q.indoor)`, and `SH.follow(camera)` before each render. Desktop only: a phone pays nothing and keeps the blob shadows under people. A soft shadow map, 2048 texels over a 46 m box that follows the camera, snapped to whole texels so its edges do not crawl. People cast shadows but never receive them, so no face goes dark (rule 9); glows, water and see-through things neither cast nor receive. With shadows on, the sun is 15% stronger and the sky light 12% weaker outdoors, so the shadows read. In use: Morant Bay, The Mad Master, Rose Hall, The Shark Papers (the shared story kit). The other games set their lights their own way: wire it in when you touch them.
 
+
+## Produce baskets (engine/produce.js, 23 November 2026)
+
+`produceBasket({ fill: ['orange', 'lime'], r: 0.3, seed })`: a woven basket heaped with produce, each fruit its own piece laid ring by ring on the basket's floor, after Port Royal's market baskets (which still build their own copy in `games/port-royal/src/main.js`; move them over when that game is next touched). Kinds: orange, lime, mango, yam, ackee, pepper, plantain. Morant Bay's market uses it (`period-props.js marketBasket`).

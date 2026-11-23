@@ -62,7 +62,7 @@ function person(Q, id, cast, x, z, ry = 0, life = null, opts = {}) {
 function crowd(Q, look, x, z, ry, life, opts = {}) {
   /* the story's own marks (when they are on stage, a part in a camera scene, a thing in the hand) belong to the person, not the behaviour */
   const own = {};
-  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead"]) if (life && k in life) {
+  for (const k of ["when", "watcher", "riot", "vol", "held", "uniform", "march", "lead", "police", "rise"]) if (life && k in life) {
     own[k] = life[k];
     delete life[k];
   }
@@ -196,7 +196,7 @@ function gut() {
     const h = add(Q, hen(sd), x, z, 0, sd * 1.7);
     Q.tickers.push((t) => h.userData.tick(t));
   }
-  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [7.4, 10.6, 13], [18.6, 7.4, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
   for (const [x, z, sd] of [[-11.6, 12.4, 21], [11.4, 12.0, 22], [2.6, -13.6, 23], [19.4, 1.8, 24], [-19.6, 4.0, 25], [9.8, -14.6, 26]]) solid1(Q, palm(8 + (sd % 3), sd), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => bush(i + 40, 0.9 + (i % 3) * 0.3), 26, [-24, -18, 24, 18], [[-21.5, -16.5, 21.5, 15.5]], 31);
   scatter(Q.group, (i) => tree(6 + (i % 3), i + 70, i % 2), 14, [-40, -40, 40, 40], [[-24, -18, 24, 18]], 37);
@@ -220,9 +220,14 @@ function gut() {
     add(Q, S.postRail(x1 - x0, 1.15), (x0 + x1) / 2, z0);
     wall(Q, (x0 + x1) / 2, z0, x1 - x0, 0.3);
   }
-  add(Q, S.postRail(3.6, 1.15), 8.6, -5.6).rotation.y = Math.PI / 2;
-  wall(Q, 8.6, -5.6, 0.3, 3.6);
-  point(Q, "yard", 7.2, -1.2, "the gap in Bogle's fence");
+  /* the west side of the yard: a fence with one narrow gap between two posts (owner, 23 November 2026: the watching place was out in the open,
+     in a wide gateway), and bushes either side of it to hide behind */
+  for (const [z0, z1] of [[-7.4, -2.3], [-1.3, 1.4]]) {
+    add(Q, S.postRail(z1 - z0, 1.15), 8.6, (z0 + z1) / 2).rotation.y = Math.PI / 2;
+    wall(Q, 8.6, (z0 + z1) / 2, 0.3, z1 - z0);
+  }
+  for (const [x, z, sz] of [[7.6, -3.1, 1.25], [7.5, -0.3, 1.15]]) solid1(Q, bush(x * 13 | 0, sz), x, z, 1.0, 1.0);
+  point(Q, "yard", 7.5, -1.8, "the gap in Bogle's fence");
   /* the chapel: a long thatched house, its door to the south */
   const ch = add(Q, dyn(bushChapel(5.4, 10)), CHAPEL.x, CHAPEL.z);
   for (const [x, z, w, d] of [[CHAPEL.x, CHAPEL.z - 5, 5.6, 0.4], [CHAPEL.x - 2.7, CHAPEL.z, 0.4, 10], [CHAPEL.x + 2.7, CHAPEL.z, 0.4, 10], [CHAPEL.x - 2.0, CHAPEL.z + 5, 1.6, 0.4], [CHAPEL.x + 2.0, CHAPEL.z + 5, 1.6, 0.4]]) wall(Q, x, z, w, d);
@@ -251,7 +256,7 @@ function gut() {
   Q.reveal.placard = (seen) => {
     const k = span(K(seen), 0.05, 0.6);
     plac.rotation.x = -0.25 * (1 - k);   /* a corner had curled down: you smooth it flat to read */
-    plac.position.z = 0.08 + 0.04 * (1 - k);
+    plac.position.z = 0.08 + 0.1 * (1 - k);   /* stood off the post far enough that the tilted sheet never goes behind its face (owner: the post came through the paper) */
   };
   point(Q, "placard", 2.4, -1.4, "the placard");
   /* the old list, kept in the house in a tin box: lifted out and unfolded (chapter 1) */
@@ -260,19 +265,18 @@ function gut() {
   const lid = box(0.3, 0.02, 0.22, solid(0x7a7a76, 0.5, 0.4), 0, 0.11, 0, tin);
   lid.geometry.translate(0, 0, 0.11);
   lid.position.z = -0.11;
-  const paper = plane(0.26, 0.3, solid(0xe6dcc0, 1, 0, { side: THREE.DoubleSide }), 0, 0.12, 0, tin);
+  const paper = plane(0.22, 0.16, solid(0xe6dcc0, 1, 0, { side: THREE.DoubleSide }), 0, 0.105, 0, tin);   /* folded small: it lies inside the box (it was wider than the box and stuck out through the lid) */
   paper.rotation.x = -Math.PI / 2;
-  for (let i = 0; i < 8; i++) {
-    const ln = box(0.16 - (i % 2) * 0.03, 0.002, 0.008, solid(0x2e2822, 1), -0.02, 0.122, -0.11 + i * 0.03, tin);
-    ln.userData.noBatch = true;
-  }
+  const lines = grp(); paper.add(lines); lines.rotation.x = Math.PI / 2;   /* the writing moves with the paper */
+  for (let i = 0; i < 5; i++) box(0.14 - (i % 2) * 0.03, 0.002, 0.008, solid(0x2e2822, 1), -0.02, 0.002, -0.06 + i * 0.03, lines);
   tin.traverse((o) => (o.userData.noBatch = true));
   add(Q, tin, -4.4, 8.4, 0.46, 0.2);
-  Q.reveal.list = (seen) => {
+  Q.reveal.list = (seen, stage) => {
     const k = K(seen),
       u = span(k, 0.05, 0.5);
     lid.rotation.x = -1.9 * u;
-    paper.position.y = mix(0.12, 0.2, span(k, 0.5, 0.9));
+    paper.position.y = mix(0.105, 0.2, span(k, 0.5, 0.9));
+    if (stage !== undefined) tin.visible = stage < 20;   /* put away indoors after chapter 1: it is not on the bench in later chapters */
   };
   point(Q, "bench", -4.4, 9.4, "the bench");
   /* the yam hill you dig in (chapter 1): the fork goes in and turns up dry earth and a yam no bigger than a fist */
@@ -326,7 +330,7 @@ function gut() {
   point(Q, "table", CHAPEL.x + 0.2, CHAPEL.z - 2.8, "the table");
   /* the drill in Bogle's yard (chapter 3): men in lines, sticks on their shoulders. Watched from the gap in the fence. */
   Q.reveal.drill = () => {};
-  point(Q, "drill", 7.6, -1.0, "the fence");
+  point(Q, "drill", 7.5, -1.8, "the fence");
   /* the cave in the limestone, north-west */
   wall(Q, CAVE.x, CAVE.z - 2.6, 6.4, 1.6);
   /* the limestone the cave runs into: a low face of grey rock behind the mouth, and woods on the slope beyond (a smooth hill stood here and read
@@ -346,7 +350,13 @@ function gut() {
   point(Q, "cave", CAVE.x + 0.2, CAVE.z + 0.6, "the cave");
   point(Q, "cane", -12.6, 7.4, "the cane");
   /* chapter 5: soldiers in the yard, one of them looking out over the open ground to the west. While he looks, be in cover. */
-  const cover = [CANE.slice(), [H.x - 2.8, H.z - 2.4, H.x - 1.8, H.z + 2.4], [-14.4, -11, -12.0, -8.6], [CAVE.x - 3.6, CAVE.z - 1, CAVE.x + 3.6, CAVE.z + 2.0], [-20.5, -6.6, -18.3, -5.4], [-12, -9.8, -10.4, -8.6]];
+  /* two clumps of bush between the cane and the rocks below the cave: from the cane to the next cover was about 15 m of open ground, more than a
+     walk can cross while the soldier looks away (owner, 23 November 2026: "not sure it can be completed") */
+  for (const [x, z] of [[-13.4, 1.6], [-12.8, -3.8]]) {
+    for (const [dx, dz, sz] of [[-0.6, 0, 1.3], [0.5, 0.2, 1.15], [0, -0.4, 1.0]]) add(Q, bush((x * 7 + dx * 13) | 0, sz), x + dx, z + dz);
+    wall(Q, x, z, 1.8, 1.0);
+  }
+  const cover = [[-14.6, 0.6, -12.2, 2.6], [-14.0, -4.8, -11.6, -2.8], CANE.slice(), [H.x - 2.8, H.z - 2.4, H.x - 1.8, H.z + 2.4], [-14.4, -11, -12.0, -8.6], [CAVE.x - 3.6, CAVE.z - 1, CAVE.x + 3.6, CAVE.z + 2.0], [-20.5, -6.6, -18.3, -5.4], [-12, -9.8, -10.4, -8.6]];
   const cycle = (len, still, look) => (t) => {
     const u = t % len;
     return u < still ? 0 : u < still + 0.8 ? (u - still) * 1.2 : u < still + 0.8 + look ? 1 : Math.max(0, 1 - (u - still - 0.8 - look) / 0.8) * 0.99;
@@ -356,14 +366,23 @@ function gut() {
     if (!w) return;
     w.m.rotation.y = mix(Math.PI / 2 + 0.4, -Math.PI / 2, span(k, 0, 1));   /* he turns from the yard to look west over the provision ground */
   };
-  Q.danger.yard = { start: [H.x - 2.3, H.z, -Math.PI / 2], zone: [-21, -14, -2, 15], cover, grace: 2.2, look: cycle(9, 4.6, 2.6), show, shout: true, line: "A soldier shouts. You drop down and crawl back to cover." };
+  Q.danger.yard = { start: [H.x - 2.3, H.z, -Math.PI / 2], zone: [-21, -14, -2, 15], cover, grace: 2.2, look: cycle(9, 5.2, 2.2), show, shout: true, line: ["A soldier shouts. You drop down and crawl back to cover.", "He turns your way. You freeze, then slip back.", "Too soon! Wait until he looks away.", "Watch him. Move when his back is turned."] };
   /* the burning (chapter 5): the chapel and the houses catch one after another */
+  /* each building burns hard for a while, then its roof gives way: the building slumps and leans over two seconds (with a burst of sparks), then
+     only the burnt shell stands, still smoking, as the ward does in Eventide Home (owner, 23 November 2026: "look at the fire from eventide home
+     and the collapse of the building.. that is what we need to see in Morant Bay") */
+  const falls = [[ch, chB, fires[0], 5], [home, homeBurnt, fires[1], 13], [bh, bhB, fires[2], 9]];
+  for (const [w] of falls) w.userData.baseY = w.position.y;
   Q.films.burning = (t) => {
     const on = t >= 0;
-    const lv = (a) => (on ? Math.max(0, Math.min(1, (t - a) / 3)) : 0);
-    fires[0].userData.setLevel(lv(5));
-    fires[1].userData.setLevel(lv(13));
-    fires[2].userData.setLevel(lv(9));
+    for (const [w, b, f, a] of falls) {
+      if (!on) { w.scale.y = 1; w.rotation.z = 0; continue; }
+      const lit = Math.max(0, Math.min(1, (t - a) / 3)), u = Math.max(0, Math.min(1, (t - a - 7) / 2)), fell = t >= a + 9;
+      f.userData.setLevel(fell ? 0.42 : u > 0 ? 1 - 0.3 * u : lit);
+      w.visible = !fell; b.visible = fell;
+      w.scale.y = 1 - 0.5 * u * u;   /* the roof and walls sink as the roof gives way */
+      w.rotation.z = 0.08 * u * u;
+    }
     /* night comes; lanterns on the track; soldiers lead men away south, toward the Bay */
     const want = on && t >= 19 ? NIGHT : SMOKE;
     if (Q.light !== want) {
@@ -419,6 +438,28 @@ function gut() {
       walkTo(n, x, z, Math.PI, k > 0 && k < 1);
     }
   };
+  /* the warrant (10 October): a party of police comes up the track to Bogle's gate; at the shell and the drum the men come out of the chapel
+     and stand round them (owner, 23 November 2026: "dont see the police marching"). The report says police went with a warrant and were
+     held by some hundreds of men; here a few stand for them. */
+  for (let i = 0; i < 3; i++) crowd(Q, "mb_constable", 2.2 + (i % 2) * 0.9, 11.0 + i * 0.8, Math.PI, { kind: "watch", at: [8, 0], idles: ["IdleM"], react: [], every: [8, 12], when: [35, 36], police: i, uniform: "police" });   /* only for the scene: after it the police are let go down the hill */
+  Q.films.warrant = (t) => {
+    const all = Q.extras || [];
+    for (const n of all.filter((n) => n.police !== undefined)) {
+      if (t < 0) { n.amb.held = false; continue; }
+      const i = n.police, k = Math.max(0, Math.min(1, (t - 4) / 9)),
+        x0 = -0.6 + (i % 2) * 1.1, z0 = 13.4 + i * 0.5, x1 = 5.4 + i * 0.9, z1 = 2.4 + (i % 2) * 1.0;
+      walkTo(n, x0 + (x1 - x0) * k, z0 + (z1 - z0) * k, k < 1 ? Math.atan2(x1 - x0, z1 - z0) : face(x1, z1, 10, -3), k > 0 && k < 1);
+    }
+    const con = Q.people?.find((p) => p.id === "constable");
+    if (con && t >= 0) { const k = Math.max(0, Math.min(1, (t - 3) / 9)); con.x = 1.2 + 3.2 * k; con.z = 13 - 10 * k; con.m.position.set(con.x, 0, con.z); con.m.rotation.y = k < 1 ? Math.atan2(3.2, -10) : face(con.x, con.z, 12, -2); if (con.walkNow !== (k > 0 && k < 1)) { con.walkNow = k > 0 && k < 1; con.ctl.play(con.walkNow ? "Walk" : "IdleM"); } }
+    for (const n of all.filter((n) => n.rise !== undefined)) {
+      if (t < 0) { n.amb.held = false; n.m.visible = true; continue; }
+      if (n.home === undefined) n.home = [n.x, n.z];
+      const k = Math.max(0, Math.min(1, (t - 21 - n.rise * 0.5) / 5)), x0 = CHAPEL.x + (n.rise % 3) * 0.8 - 0.8, z0 = CHAPEL.z + 5.4;
+      n.m.visible = t >= 21 + n.rise * 0.5;
+      walkTo(n, x0 + (n.home[0] - x0) * k, z0 + (n.home[1] - z0) * k, k < 1 ? Math.atan2(n.home[0] - x0, n.home[1] - z0) : -Math.PI / 2, k > 0 && k < 1);
+    }
+  };
   /* the hour and what stands or has burned, by step */
   Q.enter = (stage) => {
     const night = (stage >= 30 && stage <= 34) || stage === 59,
@@ -459,9 +500,10 @@ function gut() {
       at("deacon", CHAPEL.x + 0.9, CHAPEL.z - 3.4, CHAPEL.x, CHAPEL.z - 4);
       at("father", CHAPEL.x - 1.2, CHAPEL.z - 0.6, CHAPEL.x, CHAPEL.z - 4.5);   /* on a bench inside, with the other men */
     } else if (stage >= 35 && stage < 40) {
-      at("father", 10.2, -0.4, 13, -4);
-      at("mother", H.x + 2.2, H.z + 1.4, 4, 2);
-      at("gran", H.x + 2.4, H.z - 0.6, 4, 2);
+      at("father", 13.4, -6.4, 14, -9);   /* in the yard, in the line of men (clear of the gap in the fence the player looks through) */
+      at("mother", H.x + 4.4, H.z + 0.6, 4, 2);   /* out from the wall, clear of the cook fire at (-3.8, 6.6), and a step from Sammy */
+      at("brother", H.x + 5.6, H.z + 2.2, 4, 2);
+      at("gran", H.x + 3.4, H.z - 1.5, 4, 2);   /* clear of the door leaf as it swings out (owner: she stood in the door) */
     } else if (stage >= 50 && stage < 55) {
       at("gran", H.x - 3.4, H.z + 0.6, -12, 8);
       at("brother", H.x - 3.2, H.z - 0.6, -12, 8);
@@ -469,7 +511,7 @@ function gut() {
       at("gran", CAVE.x - 1.0, CAVE.z + 0.2, 0, 0);
       at("brother", CAVE.x + 1.1, CAVE.z + 0.1, 0, 0);
     } else {
-      at("deacon", 2.0, -4.0, 2.4, -2.6);
+      at("deacon", 1.4, -4.7, 2.4, -2.6);
       at("father", -11.4, -1.4, -14, -4);
       at("mother", -3.2, 8.4, -3.8, 6.6);
       at("gran", -4.2, 2.6, -3.8, 6.6);
@@ -481,7 +523,7 @@ function gut() {
   person(Q, "mother", "mother", -3.2, 8.4, face(-3.2, 8.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
   person(Q, "father", "father", -11.4, -1.4, face(-11.4, -1.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "brother", "brother", -2.4, 5.0, 0, { kind: "wander", area: [-5.6, 3.2, -1.6, 8.4], pause: [2, 5] });
-  person(Q, "deacon", "deacon", 2.0, -4.0, face(2.0, -4.0, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
+  person(Q, "deacon", "deacon", 1.4, -4.7, face(1.4, -4.7, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "bogle", "bogle", 13.2, -2.4, face(13.2, -2.4, 9, -2), { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "constable", "constable", 4.4, 3.0, face(4.4, 3.0, 12, -2), { kind: "watch", at: [12, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 9] });
   /* the village: neighbours at their work, children */
@@ -491,7 +533,7 @@ function gut() {
   crowd(Q, "mb_woman", -2.0, -7.0, 0, { kind: "chat", group: "c", at: [-1.6, -7.4], when: [8, 29] });
   crowd(Q, "mb_man", -1.2, -7.8, 0, { kind: "chat", group: "c", when: [8, 29] });
   /* the men drilled in Bogle's yard (chapter 3, morning): lines of men with sticks */
-  for (let i = 0; i < 6; i++) crowd(Q, ["mb_man", "mb_man2", "mb_oldman", "mb_townman", "mb_man", "mb_man2"][i], 10 + (i % 3) * 1.8, -5.6 + Math.floor(i / 3) * 2.6, -Math.PI / 2, { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["Nod"], every: [6, 10], when: [35, 39] });
+  for (let i = 0; i < 6; i++) crowd(Q, ["mb_man", "mb_man2", "mb_oldman", "mb_oldman", "mb_townman", "mb_man"][i], 11.2 + (i % 3) * 1.5, -6.2 + Math.floor(i / 3) * 2.2, -Math.PI / 2, { kind: "watch", at: [14, -9], idles: ["IdleM"], react: ["Nod"], every: [6, 10], when: [35, 39], rise: i });   /* drilling toward Bogle's house, side-on to the fence */
   /* chapter 5: soldiers in the yard; one is the watcher */
   crowd(Q, "mb_soldier", 4.2, 0.6, -Math.PI / 2, { kind: "watch", at: [-10, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], watcher: true, uniform: "soldiers" });
   crowd(Q, "mb_soldier", 5.6, -1.8, Math.PI, { kind: "watch", at: [5.6, -6], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 8], when: [51, 55], uniform: "soldiers" });
@@ -759,7 +801,7 @@ function bay() {
   const KINDS = ["mb_man", "mb_woman", "mb_oldman", "mb_man2", "mb_woman2", "mb_townman"];
   for (let i = 0; i < 20; i++) crowd(Q, KINDS[((i % 4) + 2 * Math.floor(i / 4)) % 6], 15.5 + Math.floor(i / 4) * 1.5, 6.4 + (i % 4) * 1.3, -Math.PI / 2, { kind: "watch", at: [0, 0], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [46, 47], riot: true });
   /* the volunteers on the court-house steps */
-  for (let i = 0; i < 4; i++) crowd(Q, i === 0 ? "mb_vestryman" : "mb_constable", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
+  for (let i = 0; i < 4; i++) crowd(Q, i % 2 === 0 ? "mb_vestryman" : "mb_townman", -3 + i * 2.2, -5.6, 0, { kind: "watch", at: [0, 4], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [42, 47], vol: true, uniform: "volunteers", ...(i ? { held: "musket" } : {}) });
   /* chapter 6: soldiers at the temporary court-house, prisoners on its benches */
   crowd(Q, "mb_soldier", 6.2, 6.2, face(6.2, 6.2, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });
   crowd(Q, "mb_soldier", 16.2, 6.4, face(16.2, 6.4, 11, 3), { kind: "watch", at: [11, 3], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10], when: [60, 67], uniform: "soldiers" });

@@ -1,7 +1,7 @@
 /* Every word the player reads. Paul Bogle and George William Gordon were real; neither speaks in this game (their words come only from
    real documents, shown as documents). Hannah, her family, Miss Ada, Deacon Clarke and the clerk at King's House are fictional and their
    journal pages say so. Sources: docs/games/morant-bay.md; the Royal Commission's report of 1866 is cited by its printed page. */
-export const TITLE = "Morant Bay, 1865";
+export const TITLE = "The Morant Bay Rebellion, 1865";
 export const GAME = {
   id: "morant-bay",
   eye: 1.4,
@@ -33,7 +33,7 @@ export const TALK = {
   22: { father: [L("Papa", "Two days on the road. My feet are done."), L("You", "Is that the Governor's house?"), L("Papa", "King's House. Governor Eyre lives there."), L("Papa", "We only want him to hear us. About the land."), L("Papa", "Come. Walk with me to the door.")] },
   24: { secretary: [L("The clerk", "You are the people from St Thomas?"), L("You", "Yes, sir. We walked here to see the Governor."), L("The clerk", "The Governor will not see you."), L("The clerk", "Take your complaints to your own magistrates."), L("You", "The magistrates are who we complain about."), L("The clerk", "That is all. Good day.")] },
   26: { father: [L("Papa", "Two days to walk here. Two minutes at the door."), L("You", "What do we do now, Papa?"), L("Papa", "We walk home. We tell them what you saw."), L("Papa", "You read the door, Hannah. Tell it true.")] },
-  32: { deacon: [L("Deacon Clarke", "Shut the door. Speak low."), L("Deacon Clarke", "The men want their names written down."), L("You", "Why, Deacon?"), L("Deacon Clarke", "They are making a promise to stand together."), L("Deacon Clarke", "You write. I will read the names to you.")] },
+  32: { deacon: [L("Deacon Clarke", "Come in, child. Speak low."), L("Deacon Clarke", "The men want their names written down."), L("You", "Why, Deacon?"), L("Deacon Clarke", "They are making a promise to stand together."), L("Deacon Clarke", "You write. I will read the names to you.")] },
   34: { father: [L("Papa", "You wrote my name too?"), L("You", "Yes, Papa. Near the top. Like before."), L("Papa", "Then I am in it, whatever comes."), L("You", "What did they promise?"), L("Papa", "Not for you to carry. Go home to bed.")] },
   37: {
     mother: [L("Mama", "Stay in, Hannah. Police at Mr Bogle's yard."), L("Mama", "They came with a paper. A warrant, to take him."), L("You", "What happened?"), L("Mama", "The men came out of the chapel and the cane."), L("Mama", "Now the police are the ones held. Stay in.")],
@@ -164,7 +164,7 @@ export const FILMS = {
   meeting: {
     place: "gut", next: 32, journal: "names", title: "A night in late September",
     read: ["Two or three weeks before 11 October there were night meetings near Morant Bay.", "An oath was given and the names of the people sworn were written down. Nobody knows the words of the oath."],
-    captions: [[0, "A night in late September."], [6, "One by one, men come up the path to the chapel."], [13, "A lantern inside. The door shuts."], [18, "Deacon Clarke has sent for you. You can write."]],
+    captions: [[0, "A night in late September."], [6, "One by one, men come up the path to the chapel."], [13, "A lantern inside. The men speak low."], [18, "Deacon Clarke has sent for you. You can write."]],
     shots: [
       { t: 0, p: [-2, 5, 10], look: [6, 1.6, -6] },
       { t: 6, p: [2.6, 1.6, 0.4], look: [6, 1.4, -4] },
@@ -182,15 +182,16 @@ export const FILMS = {
     captions: [[0, "Tuesday 10 October 1865. Early morning."], [5, "Police come up the track with a warrant."], [11, "They have come to take Paul Bogle."], [16, "A shell blows. A drum."], [21, "Men come out of the chapel, out of the cane."], [27, "Now the police are the ones who are held."]],
     shots: [
       { t: 0, p: [0, 6, 16], look: [4, 1, 0] },
-      { t: 5, p: [-3.2, 1.6, 6.4], look: [3, 1.5, 1] },
-      { t: 11, p: [6, 1.7, 2.4], look: [13, 1.6, -2.6] },
+      { t: 5, p: [3.4, 1.8, 3.0], look: [0.4, 1.4, 13] },
+      { t: 9, p: [3.6, 1.8, 2.6], look: [2.6, 1.4, 7] },
+      { t: 12, p: [6, 1.7, 2.4], look: [13, 1.6, -2.6] },
       { t: 16, p: [3, 2.2, -1], look: [6, 2, -9] },
       { t: 21, p: [2, 2.4, 6], look: [10, 1.4, -3] },
       { t: 27, p: [-2.6, 1.4, 5.4], look: [4.4, 1.4, 3] },
     ],
-    fov: [[0, 50], [5, 42], [11, 36], [16, 44], [21, 46], [27, 40]],
-    acts: [[11, "bogle", "HeadTurn"], [21, "constable", "Scared"]],
-    sounds: [[1, "begin"], [6, "steps"], [16, "shell"], [17, "drum"], [18, "drum"], [22, "crowd"]],
+    fov: [[0, 50], [5, 34], [9, 40], [12, 36], [16, 44], [21, 46], [27, 40]],
+    acts: [[11, "bogle", "HeadTurn"], [23, "constable", "LookAround"]],
+    sounds: [[1, "begin"], [5, "steps"], [8, "steps"], [16, "shell"], [19, "drum"], [19.6, "drum"], [20.2, "drum"], [22, "crowd"]],
     duration: 32,
   },
   bay: {
@@ -249,16 +250,20 @@ export const FILMS = {
   burning: {
     place: "gut", next: 58, journal: "firestick", title: "From the cave mouth",
     read: ["On 19 October the soldiers burned the chapel at Stony Gut and about eight houses.", "Men were taken away. Many families never knew what happened to them."],
-    captions: [[0, "Thursday 19 October. From the cave mouth."], [6, "Smoke over the chapel."], [12, "Then your house. Then Mr Bogle's."], [20, "Night. Lanterns on the path."], [26, "Soldiers lead men away. One wears a hat like Papa's."]],
+    captions: [[0, "Thursday 19 October. From the cave mouth."], [6, "Smoke over the chapel."], [12, "The chapel roof falls in."], [15, "Then Mr Bogle's house. Then yours."], [23, "Night. Lanterns on the path."], [27, "Soldiers lead men away. One wears a hat like Papa's."]],
     shots: [
       { t: 0, p: [-16.8, 3.2, -11.6], look: [0, 2, -6] },
-      { t: 6, p: [-16.8, 3.2, -11.6], look: [6, 3, -9] },
-      { t: 12, p: [-16.8, 3.3, -11.6], look: [-6, 2.0, 3] },
-      { t: 20, p: [-16.8, 3.3, -11.4], look: [-10.6, 1, -8] },
-      { t: 26, p: [-16.8, 3.0, -11.4], look: [-10.6, 1.1, -2] },
-      { t: 31, p: [-16.8, 3.0, -11.4], look: [-10.6, 1.2, 4] },
+      { t: 5, p: [-15, 7.5, -4.5], look: [6, 2.4, -9] },
+      { t: 11, p: [-15, 7.5, -4.5], look: [6, 2.0, -9] },
+      { t: 14, p: [-15, 10.5, -4.5], look: [16.6, 1.8, -3] },
+      { t: 18.2, p: [-15, 10.5, -4.5], look: [16.6, 1.6, -3] },
+      { t: 19, p: [-0.5, 6.5, 6.5], look: [-7, 1.6, 4] },
+      { t: 22.4, p: [-0.5, 6.5, 6.5], look: [-7, 1.4, 4] },
+      { t: 23, p: [-16.8, 4.6, -11.6], look: [-10.6, 1, -6] },
+      { t: 27, p: [-16.8, 4.2, -11.4], look: [-10.6, 1.1, -1] },
+      { t: 31, p: [-16.8, 4.0, -11.4], look: [-10.6, 1.2, 4] },
     ],
-    fov: [[0, 44], [6, 34], [12, 36], [20, 34], [26, 32], [31, 34]],
+    fov: [[0, 44], [5, 26], [11, 24], [14, 22], [18.2, 22], [19, 30], [22.4, 30], [23, 32], [27, 32], [31, 34]],
     acts: [],
     sounds: [[1, "sad"], [6, "fire"], [12, "fire"], [20, "steps"], [24, "steps"]],
     duration: 32,
