@@ -196,7 +196,7 @@ function gut() {
     const h = add(Q, hen(sd), x, z, 0, sd * 1.7);
     Q.tickers.push((t) => h.userData.tick(t));
   }
-  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [7.4, 10.6, 13], [18.6, 7.4, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
   for (const [x, z, sd] of [[-11.6, 12.4, 21], [11.4, 12.0, 22], [2.6, -13.6, 23], [19.4, 1.8, 24], [-19.6, 4.0, 25], [9.8, -14.6, 26]]) solid1(Q, palm(8 + (sd % 3), sd), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => bush(i + 40, 0.9 + (i % 3) * 0.3), 26, [-24, -18, 24, 18], [[-21.5, -16.5, 21.5, 15.5]], 31);
   scatter(Q.group, (i) => tree(6 + (i % 3), i + 70, i % 2), 14, [-40, -40, 40, 40], [[-24, -18, 24, 18]], 37);
@@ -357,12 +357,21 @@ function gut() {
   };
   Q.danger.yard = { start: [H.x - 2.3, H.z, -Math.PI / 2], zone: [-21, -14, -2, 15], cover, grace: 2.2, look: cycle(9, 4.6, 2.6), show, shout: true, line: "A soldier shouts. You drop down and crawl back to cover." };
   /* the burning (chapter 5): the chapel and the houses catch one after another */
+  /* each building burns hard for a while, then its roof gives way: the building slumps and leans over two seconds (with a burst of sparks), then
+     only the burnt shell stands, still smoking, as the ward does in Eventide Home (owner, 23 November 2026: "look at the fire from eventide home
+     and the collapse of the building.. that is what we need to see in Morant Bay") */
+  const falls = [[ch, chB, fires[0], 5], [home, homeBurnt, fires[1], 13], [bh, bhB, fires[2], 9]];
+  for (const [w] of falls) w.userData.baseY = w.position.y;
   Q.films.burning = (t) => {
     const on = t >= 0;
-    const lv = (a) => (on ? Math.max(0, Math.min(1, (t - a) / 3)) : 0);
-    fires[0].userData.setLevel(lv(5));
-    fires[1].userData.setLevel(lv(13));
-    fires[2].userData.setLevel(lv(9));
+    for (const [w, b, f, a] of falls) {
+      if (!on) { w.scale.y = 1; w.rotation.z = 0; continue; }
+      const lit = Math.max(0, Math.min(1, (t - a) / 3)), u = Math.max(0, Math.min(1, (t - a - 7) / 2)), fell = t >= a + 9;
+      f.userData.setLevel(fell ? 0.42 : u > 0 ? 1 - 0.3 * u : lit);
+      w.visible = !fell; b.visible = fell;
+      w.scale.y = 1 - 0.5 * u * u;   /* the roof and walls sink as the roof gives way */
+      w.rotation.z = 0.08 * u * u;
+    }
     /* night comes; lanterns on the track; soldiers lead men away south, toward the Bay */
     const want = on && t >= 19 ? NIGHT : SMOKE;
     if (Q.light !== want) {

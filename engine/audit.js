@@ -97,7 +97,14 @@ export function auditPlace(place) {
       if ((cx * -Math.sin(place.start.yaw) + cz * -Math.cos(place.start.yaw)) / L2 < 0.5) continue;
     }
     if (d < 1.3) stuck.push(`a ${L[i].geo || 'thing'} ${sz.y.toFixed(1)} m tall stands ${d.toFixed(1)} m from the start (${place.start.x.toFixed(1)}, ${place.start.z.toFixed(1)}): in the player's face at the first view`); }
-  return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut), stuck };
+  /* a tree or plant growing up through a building (owner, 23 November 2026, Morant Bay: a banana plant came up through a cottage roof): a trunk
+     (a thin upright cylinder at least 1.5 m tall) whose foot stands inside the floor plan of another object that is a building (at least
+     3 m by 2.5 m and 2 m high) */
+  const tops = new Map(); L.forEach((m, i) => { if (big.includes(i)) return; const t = tops.get(m.top) || { b: new THREE.Box3(), trunks: [], wall: false, name: m.name }; t.b.union(m.b); if (size[i].y >= 1.6 && Math.min(size[i].x, size[i].z) >= 2.0 && !m.veg && !m.card && /Box|Extrude|Buffer/.test(m.geo)) { t.wall = true; (t.bodies || (t.bodies = [])).push(m.b); }   /* a solid body: the walls of a house as one block */ if (m.geo === 'CylinderGeometry' && size[i].y >= 1.5 && size[i].x < 0.5 && size[i].z < 0.5) t.trunks.push(m.b); tops.set(m.top, t); });
+  const plant = []; const builds = [...tops.entries()].filter(([, t]) => { const z = t.b.getSize(new THREE.Vector3()); return t.wall && Math.max(z.x, z.z) >= 3 && Math.min(z.x, z.z) >= 2.5 && z.y >= 2 && z.y < 14; });
+  for (const [k, t] of tops) if (!t.wall) for (const tb of t.trunks) {   /* a building's own posts are not trees */ const c = tb.getCenter(new THREE.Vector3()); if (tb.min.y > 0.5) continue;
+    for (const [k2, h] of builds) if (k2 !== k && h.bodies.some((bb) => tb.max.y > bb.max.y + 0.3 && c.x > bb.min.x - 0.6 && c.x < bb.max.x + 0.6 && c.z > bb.min.z - 0.6 && c.z < bb.max.z + 0.6)) {   /* inside it or under its eaves, and taller than its walls: it grows up through the roof (a pipe or a post inside a room stays inside) */   /* inside a solid body, not just inside the outline of a group of buildings or round a courtyard */ plant.push(`a tree or plant at (${c.x.toFixed(1)},${c.z.toFixed(1)}) grows up through a building${h.name ? ' (' + h.name + ')' : ''} at (${((h.b.min.x + h.b.max.x) / 2).toFixed(1)},${((h.b.min.z + h.b.max.z) / 2).toFixed(1)})`); break; } }
+  return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut, plant), stuck };
 }
 
 /* overlap: two separate solid things that cut into each other (a stool through a basket, a fence through a hut, a log through a rock, a pot sunk into a table).

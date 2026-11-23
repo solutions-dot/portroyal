@@ -1,5 +1,6 @@
 /* Development checks are stripped from public builds. */
 import { auditReveals } from "../../../engine/audit-reveal.js";
+import { lensBlocked, targetHidden } from "../../../engine/lens-check.js";
 import { auditProps } from "../../../engine/audit-props.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
@@ -121,6 +122,34 @@ export async function dev(A) {
     closeAll();
     return r;
   };
+  if (q.get("test") === "lens") {
+    /* ?test=lens: every camera scene sampled each half second, and every look moment, for a lens looking into a leaf, a roof or a wall
+       (engine/lens-check.js). LENS n at the end. */
+    A.begin();
+    for (const id of PLACE_IDS) await ensure(id);
+    const out = [], { FILMS } = await import("./content.js");
+    for (const key of Object.keys(FILMS)) {
+      const st = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === key);
+      if (!st) continue;
+      A.chapterState(st); await go(st); closeAll(); S.view = null;
+      A.DIR.start(key); A.DIR.paused = true; let lastBad = -9;
+      for (let t = 0; t <= FILMS[key].duration; t += 1) {
+        A.DIR.apply(t); A.camera.updateMatrixWorld(true);
+        const b = lensBlocked(A.camera, world().group, { near: 1.4 });
+        if (b.share >= 0.34 && t - lastBad > 2) { out.push("LENS film " + key + " at " + t.toFixed(1) + "s: " + Math.round(b.share * 100) + "% of the view blocked within 1.4 m by " + b.what); lastBad = t; }
+      }
+      A.DIR.stop?.();
+    }
+    for (const [id, lk] of Object.entries(LOOKS)) {
+      if (!lk.view) continue;
+      const st = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === id));
+      A.chapterState(st); await go(st); closeAll();
+      const h = targetHidden(lk.view.p, lk.view.look, world().group);
+      if (h) out.push("LENS look " + id + ": the view of it is blocked by " + h);
+    }
+    window.__RESULT = [...out, "LENS " + out.length, "AUTO END"];
+    return;
+  }
   if (q.get("test") === "face") {
     /* ?test=face: at the start of every step that sends the player somewhere, how far the player's view is turned from the way to the goal
        (owner, 23 November 2026: "many chapters the player is facing away from the objectives"). A turn over 35 degrees is reported. */
