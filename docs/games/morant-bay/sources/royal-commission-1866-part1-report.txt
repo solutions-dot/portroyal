@@ -1,0 +1,2497 @@
+ROYAL COMMISSION ON JAMAICA, 1866. REPORT, PART I (pdf pages 12 to 48).
+Source: Google Books scan of the University of Wisconsin copy, https://books.google.com/books?id=iDUe5-p_8IAC
+Out of copyright (1866). Em and en dashes in the OCR were replaced with hyphens to follow the repo's no-em-dash rule. Text is machine OCR: check any quotation against the page image before use.
+Printed page = PDF page minus 7. Markers below read [printed p.N | pdf p.M].
+
+
+=============== [printed p.front | pdf p.12] ===============
+167,599
+ JUL 11 1911
+ +F974
+ 1328
+
+COPY of a DESPATCH from Lieut. General Sir H. STORKS, G.C.B., to the
+ Right Honourable EDWARD CARDWELL, M.P.
+
+ Jamaica, King's House,
+ to 9th April 1866.
+ (Received 30th April 1866.)
+Sir,
+ I HAVE the honour to transmit herewith the Report of the Royal
+Commission of which I am President, together with the Notes of the Evidence
+taken.
+
+ Mr. Charles S. Roundell, the Secretary to the Royal Commission, will
+remain in Jamaica until the departure of the packet of the 24th instant, to
+enable him to arrange and complete the several documents forming the
+Appendix to the Report.
+
+ I have, &c.
+ (Signed) H. K. STORKS.
+
+ The Right Honourable
+ Edward Cardwell, M.P. ,
+ &c. &c.
+
+ B2
+
+=============== [printed p.front | pdf p.13] ===============
+SYNOPSIS OF REPORT.
+
+ {
+ Page
+ INTRODUCTION 7
+
+ THE ORIGIN AND OUTBREAK OF THE DISTURBANCES 10
+
+ MEASURES ADOPTED FOR THE SUPPRESSION OF THE DISTURBANCES 18
+
+ THE DESPATCH OF TROOPS. PROCLAMATION OF MARTIAL LAW 18
+
+ し
+ THE MILITARY OPERATIONS 19
+
+ Operations of which MORANT BAY was the centre 20
+
+ Operations of which MONKLANDS was the centre 21
+ σ
+
+ Operati which MANCHIONEAL was the centre 23 :
+
+ Operations'f the MAROONS 25
+
+ SUMMARY OF PUNISHMENTS DURING MARTIAL LAW 25
+
+ CONDUCT OF PERSONS ENGAGED IN THE SUPPRESSION OF THE
+ DISTURBANCES 26
+ 1
+ (1
+ COMMENTS ON PUNISHMENTS INFLICTED 26
+
+ COMMENTS ON THE COURTS MARTIAL 27
+
+ CASE OF MR. GEORGE WILLIAM GORDON 28
+
+ COMMENT ON THE CASE OF MR. GORDON 37
+
+ CASE OF THE POLITICAL PRISONERS 38
+
+ THE DURATION OF MARTIAL LAW 29
+
+ CONCLUSIONS 40
+
+P
+
+ト
+
+=============== [printed p.7 | pdf p.14] ===============
+REPORT
+
+ OF THE
+
+ JAMAICA ROYAL COMMISSION,
+ 1866.
+
+ TO THE QUEEN'S MOST EXCELLENT MAJESTY.
+
+ INTRODUCTION.
+:
+
+ WE Your Majesty's Commissioners appointed to make inquiry into the origin,
+ nature, and circumstances of certain late disturbances in the Island of Jamaica, and with
+ respect to the measures adopted in the course of their suppression, and being for the
+! purpose of such Inquiry authorized jointly or severally to collect evidence in the said
+ Island respecting the origin, nature, and circumstances of the said disturbances, and
+ respecting the means adopted in the course of the suppression of the same, and respecting
+ the conduct of those concerned in such disturbances and suppression ; and being required
+ to communicate to Your Majesty as well the said evidence, as any opinions which we
+ may think fit to express thereupon ; humbly report as follows :
+ 1. In obedience to Your Majesty's commands we have instituted a full and searching
+ inquiry into the subjects referred to us.
+ 2. In the course of such inquiry we have collected a large body of evidence, and have
+ also been furnished with certain Returns.
+ 3. The whole of the evidence, both oral and documentary, will be found in the
+ Appendix .
+ 4. Before entering upon our Report, it will be proper to state briefly the course
+ whichwehave pursued in conducting our Inquiry.
+ Ifwe encountered difficulties they have been such as have been inherent in the nature
+ ofthe case, and have not been attributable to other causes.
+ It is our duty, no less than our pleasure, to place upon record our sense of the
+ readiness with which all persons of all classes in Jamaica, upon the first announcement of
+ YourMajesty's intention to appoint a Commission of Inquiry, at once came forward to
+ promote the objects of such Commission.
+ Before indeed intelligence of the full constitution of the Commission had been received,
+ the Island Legislature had already invested the Commissioners with those statutory
+ powers for enforcing the attendance of witnesses, and taking their examination upon
+ oath, without which our proceedings would have been seriously impeded.
+ The readiness in fact with which, as soon as the purport of Your Majesty's Commissionbecame generally known, evidence was proffered, proved at first a source of some
+ embarrassment, and, together with other circumstances, which we proceed to narrate, led
+ to amodification ofour original plan .
+ Our intention, at the outset, was to have followed the order of events, which was also
+ the order prescribed by Your Majesty's Commission.
+ We proposed that each branch of the Inquiry should be kept separate and distinct ;
+ that all the evidence under each head should be taken consecutively ; and that no
+ subsequent subject should be entertained until all the evidence under the prior head had
+ been exhausted.
+ By this method we should have secured that order which tends so much to clearness
+ as well as to thoroughness in the investigation. We should also have been enabled
+ to present the body of evidence obtained in a convenient form for future reference.
+ But owing to a variety of causes, partly local and partly arising out of the strangeness
+ of the circumstances in which we were placed, we soon found that much delay was
+ caused by irregularity in the attendance ofwitnesses.
+
+=============== [printed p.8 | pdf p.15] ===============
+8
+
+ It then became necessary, in order to avoid expense and loss of time, and notwithstanding the inconvenience incident to the derangement of our plan, to take the evidence
+of such persons as were at hand, numbers of whom were daily presenting themselves
+before us, especially from the lately disturbed districts, for the purpose of tendering
+their evidence.
+ We were thus compelled, by the force of practical exigencies, to depart from the
+systematic arrangement which we had prescribed.
+ 5. So far, however, as 'circumstances permitted, we have endeavoured to marshal the
+evidence in order of subjects.
+ 6. We have, moreover, with a view to remedying the inconvenience of the defective
+arrangement of the evidence, appended to our Report a classified in addition to a general
+index of the witnesses.
+ 7. But besides the difficulty of enforcing adherence to method in the distribution of
+the evidence, we encountered one of a still more serious complexion in the nature of the
+evidence itself.
+ In many cases the witnesses manifested a singular ignorance of the nature and value
+of evidence, as well as a misconception of the proper scope of the Inquiry.
+ As regards the negroes, it is enough to recall the fact that they were for the most
+part uneducated peasants, speaking in accents strange to the ear, often in a phraseology
+oftheir own, with vague conceptions of number and time, unaccustomed to definiteness
+or accuracy of speech, and, in many cases, still smarting under a sense of injuries
+sustained.
+ Many of them, again, misconceived the object of the Commission, and came to tell
+their tale of houses burnt or property lost, in the undisguised hope of obtaining compensation. Some also heard of the money which was being paid out of the funds at
+our disposal to those who travelled to Spanish Town to give evidence.
+ Even as regards the other witnesses, many even of the educated class could often
+scarcely be restrained from giving opinions in general and positive terms as equivalent
+to facts, or from stating as facts within their own knowledge matter communicated to
+them by others .
+ A considerable body of evidence, especially in relation to the state of the Island, was
+thus tendered, which, on being sifted by us, proved of but little value.
+ The result of these tendencies on the part of so large a number of the witnesses has
+been the accumulation of a vast mass of evidence, much of which is vague, unimportant,
+and remote from the subject of Inquiry.
+ 8. Upon a review, however, of the evidence as a whole, and with a full appreciation
+of the gravity of the defects, in substance as well as in form, to which we have adverted,
+we are nevertheless satisfied that all such defects are more than compensated by their
+collateral results .
+ If we have erred on the side of a too great facility in giving audience to all persons,
+of whatever class, at whatever stage of the Inquiry they might present themselves, and
+in receiving evidence in many cases but little pertinent or material, and if, moreover,
+in consequence, the evidence taken is more or less wanting in order and somewhat
+redundant, we have yet the satisfaction offeeling that the Inquiry has beenboth thorough
+in fact, and thorough likewise in the estimation of the persons most concerned.
+ No difficulties in point of form have been suffered to bar access to our tribunal ; no
+material witness, of whatever colour or party, has been denied a patient hearing ; no
+material evidence has been excluded by a too rigid circumscription of the limits of the
+Inquiry ; and therefore we trust that any incidental formal defects will be thought of
+minor consequence, in comparison with the object which throughout we have regarded
+as paramount, that of the fullness, thoroughness, and impartiality of the inquiry.
+ 9. There is, however, yet another observation to be made, arising out of a circumstance not always appearing on the face of the evidence.
+ Some of the evidence which we have received was wholly unworthy of credit, and has
+been discarded by us in the preparation of our Report.
+ We should have been glad if we, who witnessed the deportment of witnesses, and had
+the opportunity of comparing their evidence with one another, could have distinguished
+those upon whose testimony we could not rely. To have done so, however, we must
+have entered minutely and at length into details which seemed to us to be inconsistent
+with the character of our Report.
+ 10. We proceed to give a brief account of the mode in which the evidence was
+presented to us, as well as to state the principle upon which we acted in defining the
+limits of the Inquiry.
+
+=============== [printed p.9 | pdf p.16] ===============
+9
+
+ 11. In any ordinary investigation of a judicial character, the conduct of the proceedings is vested in recognized officers with well understood functions, and by such a course
+ the great object of all such inquiries, the ascertainment of the truth, is best secured.
+ In the case, however, of the Inquiry which we have been commissioned to institute,
+ these ordinary aids towards the discovery of the truth were wanting.
+ To supply them, so far as the nature of the case admitted, we determined at the
+ outset to appoint a solicitor, to whom should be entrusted, subject to the superintendence
+ ofthe Secretary, the duty of marshalling the evidence, summoning witnesses, and taking
+ preliminary depositions .
+ Atthe same time we took an early opportunity of notifying that the Inquiry was an
+ open one ; that we were anxious to obtain the fullest information touching the subjects
+ referred to us ; that we desired to summon all such witnesses as might appear likely to
+ afford us information ; and that we should be glad to receive assistance from every
+ quarter in prosecuting our object.
+ We also publicly declared, that in our capacity as Your Majesty's Commissioners we
+ were to be regarded as the representatives of all classes equally of Your Majesty's
+ subjects in the Island.
+ 12. One of the most serious difficulties, however, with which we had to contend,
+ consisted in grappling with the vast mass of evidence which was tendered in support of
+ the allegation of excessive and unlawful severity in the suppression of the disturbances.
+ We were informed that there were some 300 witnesses to be examined with respect to
+ the graver cases comprised in that branch of the Inquiry, independently of the far more
+ numerous cases of the burning of houses.
+ The sufferers were mostly poor persons of the peasant class, living at a considerable
+ distance from Spanish Town. :
+
+ It became necessary to adopt some course which, while securing to ourselves the
+ proper control over the proceedings, should at the same time ensure a thorough and
+ searching inquiry into the extent and nature of the severities inflicted.
+ 13. We resolved, therefore, to institute, under our own direction, an official visitation
+ of the lately disturbed districts, with a view to a report being made to us of the number
+ and value of houses destroyed in the course of the suppression.
+ 14. Having thus provided for an exhaustive investigation of one main branch of the
+grievances alleged, we determined also to investigate on the spot all the other alleged
+cases of a grave kind involving loss of life, or circumstances of special hardship.
+ 15. In pursuance of this determination the Commission was opened on two several
+occasions in the parish of St. Thomas-in-the-East. On each occasion the Commissioner
+engaged in the investigation traversed the district, and was occupied for several days in
+examining witnesses .
+ All the graver cases of repression which have been brought to our knowledge have
+thus been individually investigated.
+ The results of the evidence so taken have been carefully digested, and compared with
+the official Returns, and will, together with the official Report on the subject of the
+houses destroyed, be found in the Appendix.
+ 16. We are thus enabled to present Returns, compiled or verified on the spot, for the
+accuracy of which we can vouch, and which will offer as near an approximation to the
+number of lives lost and houses destroyed in the course of the suppression, as we believe
+the nature of the case will admit.
+ 17. At an early period in our proceedings we were called upon to define some principle
+by which to guide ourselves in restraining the Inquiry within proper limits.
+ Under the terms of Your Majesty's Commission, which direct us to make inquiry into
+the " origin " of the disturbances, we were solicited to admit evidence with respect to a
+great variety of subjects, embracing almost the whole range of Island politics for several
+years past. The limitation, however, of the object of our Inquiry to the subject of the
+late disturbances in St. Thomas-in-the-East seemed to prescribe a natural limit to the
+range of the investigation. Accordingly we resolved, as far as we could, to confine ourselves to an examination of the causes which proximately and directly led to the
+disturbances .
+ While, therefore, we were ready to entertain any subject, however general in character,
+which seemed to satisfy this requirement, we made it our endeavour, on the other hand,
+to reject all evidence which either in point of time or place failed to conform to the above
+standard.
+ 18. Your Majesty's Commission was first fully constituted in Jamaica, on the arrival
+ at Kingston of those of us who joined the President of the Commission, on Saturday the
+ 20th of January.
+
+=============== [printed p.10 | pdf p.17] ===============
+10
+
+ The Commission was formally opened on the following Tuesday.
+ On Thursday the 25th of January we began to take evidence.
+ From that day until the 21st of March we sat from day to day continuously, with
+ scarcely an intermission.
+ Since the 21st of March we have held three additional sittings, for the purpose of
+ receiving further evidence.
+ In the course of the first-named period we paid several visits to the scene of the
+ late disturbances in St. Thomas-in-the-East.
+ On the first occasion we all visited Morant Bay and Stony Gut, and took evidence
+ on the spot.
+ On the second occasion Mr. Russell Gurney, availing himself of the power conferred by Your Majesty upon any one or more of us of holding a separate Court, visited
+ Morant Bay, Bath, and Manchioneal.
+ At each of those places he sat as Commissioner, and examined in all 140
+ witnesses from the several adjacent districts.
+e
+ On the last occasion Mr. Maule sat in the like capacity at Monklands, Leith Hall,
+ Golden Grove, and Morant Bay, and took the evidence of 82 witnesses.
+ On both occasions on which one of the Commissioners was thus engaged in
+ examining witnesses in St. Thomas-in-the-East sittings were concurrently held by the
+ others, as usual, at Spanish Town.
+ The total number of days occupied in the examination of witnesses has been fiftyone .
+
+ The total number of separate sittings amounts to 60.
+ The total number of witnesses examined before us in the course of the Inquiry
+ is 730.
+ 19. We have thus set forth a statement of the course which we have pursued in conducting the solemn Inquiry which Your Majesty has been pleased to entrust to us.
+ It has been our endeavour to investigate calmly, thoroughly, and impartially the
+ origin, nature, and circumstances of the lamentable events, the intelligence of which
+ affected Your Majesty with so much concern.
+ In the process of that investigation we have collected full evidence respecting the
+ disturbances, respecting the means adopted in the course of the suppression of the same,
+ and respecting likewise the conduct of those concerned in such disturbances and
+ suppression .
+ With the full information before us, derived from the evidence deduced upon each
+ and all of these important subjects, we have anxiously sought to arrive at a deliberate
+ and a just decision upon the whole case referred to us.
+ And lastly, in submitting for Your Majesty's information the body of evidence
+ which we have collected, we have also, in obedience to Your Majesty's commands, not
+ failed to report, with respect to the many grave and momentous issues directly involved,
+ the opinions which in the discharge of a difficult and painful public duty we have felt
+: ourselves bound to form upon the foundation of established facts.
+
+ THE ORIGIN AND OUTBREAK OF THE DISTURBANCES.
+
+ The first resistance to lawful authority occurred on Saturday the 7th October 1865 .
+ On that day, which was also market day, a Court of Petty Sessions was held at
+ Morant Bay.
+ The business which came before the magistrates during the early part of the day was
+ of an ordinary description, consisting principally of charges of assault, and of the use of
+ abusive language by negroes towards persons of the same class.
+ Among other cases of this description, there was a charge of assault, brought by a
+ woman against a boy. He was found guilty by the magistrates, and sentenced to a fine
+ of 4s., and the payment of the costs, which amounted to 12s. 6d.
+ When the defendant was called upon to pay this amount, a person of the name of
+ Geoghegan interfered, and told him to pay the amount of the fine only, and not to pay
+ the costs.
+ This caused so much disturbance in the court that business was for a time suspended,
+ and the magistrates ordered that Geoghegan, who was speaking very loud and causing
+ the disturbance, should be brought before them. The constables laid hold ofGeoghegan
+ for that purpose, but he was rescued by bystanders, and left the Court House. He was
+ followed by the police, who attempted to retake him ; but aconsiderable number ofpersons
+ having come to his assistance, the police were beaten, and compelled to retreat without
+
+ Γ
+
+=============== [printed p.11 | pdf p.18] ===============
+11
+
+ effecting their object. When order was in some degree restored, a summons in which
+ LewisMiller was the defendant was called on for hearing. This case, from the interest
+ whichwas felt in it, had caused a numerous attendance at the Court House on that day.
+ It arose out of a dispute relating to an estate in the neighbourhood of Stony Gut, not
+ far from Morant Bay, aportion ofwhich had been leased out to small occupiers. Some
+ years ago the occupiers had refused to pay rent for their holdings, on the ground that
+ the land was free, and the estate belonged to the Queen.
+ The question was then tried, and decided against the occupiers. During the last
+ summer there seems to have been a disposition again to raise the same question, and a
+ refusal to pay rent was accompanied by the statement that the land was free.
+ It was for a trespass on a part of this estate that Miller, who was one of the occupiers,
+was summoned.
+ The case was heard and decided against him, and notice given of an appeal against
+the decision.
+ On the following Monday, informations having been taken upon oath, warrants were
+issued for the apprehension of two persons of the name of Bogle, and several others who
+were stated to have taken an active part in the riot of the previous Saturday.
+ These warrants were placed in the hands of a policeman who,with five other policemen
+ and two rural constables, proceeded early on Tuesday morning the 10th of October to
+ Stony Gut, a Negro Settlement about five miles from Morant Bay, where Paul Bogle
+ and some other of the alleged rioters lived.
+ They found Paul Bogle in his yard, and told him that they had a warrant for his
+ apprehension.
+ He desired to have the warrant read to him, which was done. He then said that he
+ would not go, and upon one of the policemen proceeding to apprehend him he cried
+ out, " Help, here." At the same time a man named Grant, who was with him, and
+was addressed as " Captain," called out, " Turn out, men." Almost immediately
+a body of men, variously estimated at from 300 to 500, armed with cutlasses, sticks,
+and spikes, rushed out from a chapel where Bogle was in the habit of preaching, and
+ from an adjoining cane field, and attacked the policemen.
+ The policemenwere, of course, overpowered. Some of them were severely beaten.
+Three of the number were made prisoners, and detained for several hours, and were
+ultimately released only upon their taking an oath that henceforth they would " join
+their colour," that they would " cleave to the black."
+ It was stated by Bogle, in the presence of the policemen, that they had expected to
+go to Morant Bay that day, but that it was then late ; that on the morrow there was to
+be a vestry held at the Bay, and that they expected to come down. It was said by
+others that they intended to come down to the Bay " to kill all the white men and all
+" the black men that would not join them."'
+ Information of what had taken place, and of the threat to come down on the following
+day, was on the same Tuesday evening given to the Inspector of Police at Morant Bay,
+and to Baron Ketelhodt, the Custos of the Parish. In consequence of this information
+the Custos summoned the Volunteers of the district to assemble at Morant Bay, and at
+the same time wrote to the Governor for military aid.
+ On Wednesday the 11th of October the Vestry, consisting of certain elected members,
+and of the Magistrates, who were members ex officio, assembled in the Court House at
+Morant Bay at about 12 o'clock, and proceeded with their ordinary business till between
+three and four o'clock, when notice was given that a crowd of people was approaching.
+ The Volunteers were hastily called together, and almost immediately afterwards a
+body of men, armed with cutlasses, sticks, muskets, and bayonets, after having attacked
+the Police Station, and obtained possession of such arms as were there deposited, were
+seen entering a large open space facing the Court House in front of which the Volunteers
+had been drawn up. Baron Ketelhodt went out to the steps, and called to the people
+to know what they wanted. He received no answer, and his cries of " Peace, peace,"
+were met by cries from the crowd of " War."
+ As the advancing people drew near the Volunteers retired till they reached the steps
+of the Court House. The Custos then began to read the Riot Act. While he was in
+the act of reading it stones were thrown at the Volunteers, and Captain Hitchins, who
+commanded them, was struck in the forehead. The Captain, having received authority
+from the Custos, then gave the word to fire. The order was obeyed, and some of the
+people were seen to fall.
+ There was some conflict of evidence on the point, whether stones were thrown before
+ the firing commenced. That fact, however, was, as it appears to us, clearly established
+ 15573. C
+
+=============== [printed p.12 | pdf p.19] ===============
+12
+
+ by the testimony of a large number of witnesses, although there were some who stated
+ that they did not see any stones thrown until after the firing.
+ One witness fixes the time of the throwing of the stones. He saw stones thrown, and
+ immediately left the place before the firing commenced, which he heard but did
+ not see.
+
+ Another, again, who did not see the stones thrown, saw the face of the captain bleeding
+ before he gave the order to fire.
+ The apparent contradiction may,we think, be easily reconciled. It is possible that
+ the eyes of those who did not see the stones thrown were fixed on the main body who
+ were advancing towards the Volunteers, while the stones were apparently thrown by
+ women, who had been observed carrying them, and by others who were walking at the
+ side of the main body.
+ At the time of the discharge of the rifles, the mob were close upon the Volunteers.
+ The rioters instantly rushed upon them, and succeeded in disarming some of them. The
+ rest they compelled either to flee or to take shelter in the Court House.
+ Here were assembled the Magistrates and other members of the Vestry, with such of
+ the Volunteers as had succeeded in effecting an entrance.
+ Some escaped at once by the back windows, but the greater part remained for a
+ considerable time, being pelted with stones and fired at from the outside ; such of the
+ Volunteers as had retained their guns also firing from the inside.
+ A cry was then heard, "Go and fetch fire ;" " Burn the brutes out." Bogle in particular
+ said, " Let us put fire upon the Court House. If we don't, we will not manage the
+ " Volunteers and the Buckra. "
+ Very shortly afterwards men were seen to set fire to the School House, which adjoined
+ the Court House. Then, after a time, the fire spread from the roof of the one building
+ to that of the other.
+ As the roof of the Court House was beginning to fall in, the inmates were compelled
+ to leave the building, and it being now dark they sought to conceal themselves in
+ different places in the vicinity.
+ Some remained undiscovered throughout the night, but others were dragged from
+ their hiding places, and one by one either beaten to death or left for dead on the
+ground.
+ The number of persons killed by the rioters in or about the Court House appears to
+ have been 18, and the number of the wounded to have amounted to 31 .
+ After this the town remained in possession of the rioters. The gaolers were compelled
+ to throw open the prison doors, and 51 prisoners who were there confined were
+released.
+ Several stores were attacked, and from one of them a considerable quantity of gunpowder was taken. Previous to the attack upon the Volunteers, an unsuccessful attempt
+had been made to obtain gunpowder from the same store.
+ An attempt was made to force the door of the Magazine, where above 300 serviceable
+ stands of arms were stored. Happily the endeavour was not successful.
+ It became of course very important to ascertain whether what occurred on this day
+was an accidental riot, followed, when passion was excited in the heat of the contest, by
+the killing of opponents, or whether it had its origin in aplanned resistance to the constituted authorities, and whether the killings were premeditated murders.
+ In considering this point it is necessary to refer to the conduct and declarations of
+those who took an active part in the riot before and upon the 11th of October.
+ It was proved that two or three weeks before that time meetings had been held at
+some meeting houses in the neighbourhood of Morant Bay, at which an oath was
+administered, and the names of the persons sworn were taken down. The terms of the
+oath were not shown. All that was proved before us respecting it was that an oath
+was administered, a pledge of secrecy required, and the names of the persons sworn
+registered.
+ One witness was told by Alick Taylor (who was one of the persons sworn in his
+presence, and who moreover was during the sitting of the Commission convicted and
+sentenced to penal servitude for life for the part which he had taken in the disturbances,) that what they wanted was to have the back lands to work for nothing, and that
+they were going to kill the Buckra.
+ At the time too of the burning of the Court House it was stated by Moses Bogle to
+one person who had been invited by him to attend one of the meetings, " This is the
+same affair I sent to call you about. "
+ Another meeting, at which a similar course was pursued, was shown to have been held
+at Coley, a place about ten miles from Morant Bay, on the night of the 9th of October.
+ 1
+
+=============== [printed p.13 | pdf p.20] ===============
+13
+
+ Thosewho were present, and who went through the form of swearing, were told that
+ they were to go down to the Bay the next day, and that they would hear what it was for.
+ Åt another of these meetings Bogle stated that he must have 50 men from each place,
+ and a Captain to each set.
+ Moreover, one witness who attended a meeting on the 3d of October, at which an oath
+ was administered to him, and his name registered, was suddenly summoned from his bed
+ late at night on the 9th to go to Stony Gut. Upon his arrival there he was told that
+the Volunteers and Policemen were coming, and that he must assist in keeping guard.
+He remained in the chapel all night, and was one of those who answered to Bogle's call
+for help when the police arrived on the following morning.
+ It has already been mentioned that on the arrival of the Policemen at Stony Gut on
+that morning some of them were compelled to take an oath, and that the purport of
+that oath was that they would " cleave to the blacks."
+ It was admitted too by a very unwilling witness, that for a week before the 11th of
+October the person before described as Captain Grant had been in the habit of drilling
+the men at Stony Gut ; and it was stated by one of the constables who was detained in
+Bogle's house on the 10th that he saw a number of men drilled in companies by Moses
+Bogle and a person who was called Colonel Bowie. The account, in fact, which was
+given us of the proceedings on this occasion was so circumstantial that it deserves a
+placehere. Paul Bogle said, " Colonel Bowie, take the men out to drill." Immediately,
+ as we were told, about 300 men, armed with cutlasses, sticks, and lances, assembled
+ about Bogle's house in three companies ; one under Bowie, who appears to have taken
+the lead, a second under Moses Bogle, and the third under James Dacres.
+ One company at a time went out to drill ; the other two remaining in the yard of
+Bogle's house. " Colonel " Bowie's was the first company to be drilled ; he ordered his
+men to fall in in threes, and gave the word ofcommand, " March." They marched out
+in order with drum and shells, and practised marching and the use of their cutlasses,
+WhenBowie's men came back, Moses Bogle took out one of the other companies.
+ Altogether the drilling occupied about three quarters of an hour.
+ On the morning of the 10th small parties were seen going, with fife and drum, in the
+direction from Stony Gut towards Coley, Somerset, and Mount Lebanus, and some of
+them were again seen in the evening returning with greatly increased numbers.
+ The conduct of the rioters on Wednesday the 11th of October was also very
+significant. They came, or, as some of the witnesses described it, marched into Morant
+Bay in different parties. There were individuals who exercised over them some sort of
+authority, one being addressed as Colonel, another as Captain. The larger body came
+from Stony Gut, where they had been collected from different places in the immediate
+neighbourhood. Others came from a distance of several miles from beyond Bath, while
+one large body, nearly 100 in number, came from Torrington, a large negro settlement
+to the north of Stony Gut, and joined those from the latter place at the entrance
+toMorant Bay.
+ Here the first thing done was to attack the Police Station, and to obtain possession
+ofthe arms placed there, consisting of muskets, bayonets, and pistols.
+ The muskets, however, proved to be of little use, as they were without flints. Upon
+this being discovered by their new possessors they were heard to say, " How can they
+66
+ fight us when they have no flints to their guns."
+ It has already been stated that at this time an unsuccessful attempt was made to
+obtain gunpowder from a shop in the town.
+ Out of the very few persons assembled in the Court House who were allowed to
+escape, two were doctors, one of whom was told that if he had not been a doctor he
+would have been killed like the rest. Another pretended to be a doctor, and was let go
+by Bogle upon his swearing that he would not dress a white man's wound. A fourth
+was a Maroon.
+
+ There was manifested, indeed, throughout these disturbances, a great desire to
+conciliate the Maroons, and a great fear of offending them. " Be careful what you do
+" with this man, he is a Maroon," was sufficient to obtain the release of one of the
+Policemen who was taken before McLaren, " the Captain of the Guard," and of one of
+his companions for whom he interceded. " Don't kill this man ; he is a Maroon ; the
+" Maroon is our back " was the expression used by Bogle respecting one who had been
+takenprisoner.
+ " I am a Maroon, and if any one disturbs any one in my house I shall send for the
+" Maroons " was the exclamation of awoman, of itself sufficient to frighten away a crowd
+ofmen intent upon violence.
+ C2
+
+=============== [printed p.14 | pdf p.21] ===============
+14
+
+ We were unable to learn upon what foundation the hope of support from this singular
+people rested. Occupying as they do a mountainous district, difficult of access, and
+commanding the road from the north to the south of the Island, they had it in their
+power to afford most valuable assistance to any rising which might take place in
+St. Thomas-in-the-East. The only communication shown to us to have taken place
+between them and Bogle occurred three or four weeks before the 11th of October, when
+Bogle paid a visit to the Maroon settlement at Hayfield in the neighbourhood of Bath,
+accompanied by Bowie and Bailey, both of whom were shown to have taken an active
+part with him in subsequent proceedings.
+ In this visit Bogle spoke of the grievances under which he said the people laboured
+from nonpayment of sufficient wages and the undue imposition of taxes.
+ He does not, however, appear to have obtained any encouragement from his audience,
+or to have said anything as to any future plans.
+ Bowie, on the other hand, is represented to have said to one of the party that their
+intention was to beat the whites and browns out of the country,but that they were
+afraid of the Maroons, and wanted them not to interfere.
+ Among the members of the Vestry deliberately murdered in the course of the night
+of the 11th was a Mr. Price, a Negro, who had by his abilities raised himself to a
+position in life superior to that of most of his race.
+ When he was first caught, a discussion was overheard as to what should be his fate.
+One said, " Kill him." Another said, " Don't kill him ; we have orders to kill no black,
+only white." " He has a black skin but a white heart," was the reply, and he was beaten
+to death.
+ It was proved that after the murders Bogle returned to Stony Gut, and that there
+was a service in his chapel in which he returned thanks to God that he " went to this
+work, and that God had succeeded him in his work."
+ With this evidence before us it was impossible to avoid arriving at the conclusion that
+there was on the part of the leaders of the rioters a preconcerted plan, and that murder
+was distinctly contemplated.
+ We ought, however, to advert to the following letter signed by Bogle and 19 others,
+and addressed to the Governor :
+ " We, the petitioners of St. Thomas-in-the-East, send to inform your Excellency of
+" the mean advantages that has been taken of us from time to time, and more especially
+" this present time, when on Saturday, 7th of this month, an outrageous assault was
+" committed upon us by the policemen of this parish, by order of the Justices, which
+" occasion an outbreaking for which warrants have been issued against innocent person,
+" of which we were compelled to resist. We, therefore, call upon your Excellency for
+،،
+ protection, seeing we are Her Majesty's loyal subjects, which protection, if refused to
+" will be compelled to put our shoulders to the wheel, as we have been imposed upon
+" for a period of 27 years with due obeisance to the laws of our Queen and country,
+" and we can no longer endure the same, therefore is our object of calling upon your
+" Excellency as Governor-in-Chief and Captain of our Island, and your petitioners as in
+८८
+
+ duty bound will ever pray."
+ This letter was on the 10th of October, at some time after noon, given to a messenger,
+to be delivered to the Governor at Spanish Town, distant from Stony Gut about fifty
+miles, and was delivered at the Governor's house between 10 and 11 o'clock on the
+following morning.
+ It seemed to be relied upon as showing the peaceable intentions of the writers. We
+confess we cannot look upon it in that light.
+ Its language is that of scarcely concealed defiance, and looking at its terms, at the
+time at which it was written, and the acts by which it was accompanied and followed, it
+seems to us to partake rather of the character of a manifesto preparatory to and
+attempting to justify a recourse to violence.
+ The designs of some of the insurgents, and the hopes entertained by others, will
+more clearly appear from what passed during the three days following the rising on
+Wednesday the 11th.
+ During the evening and night of the 11th some of those who had escaped from the
+Court House were concealed in places where they had the opportunity of overhearing
+the conversation ofthe insurgents. One heard them say that on the following day they
+were to go to Bath. Another, who was close to what he described as their guard-room,
+to which their prisoners were taken, learned that they were to meet at Stony Gut at
+two o'clock in the morning ; that one party was to go and gather more men ; another to
+proceed to Port Morant and the Plantain Garden River District. These plans appear
+tohave been carried out. We find that there was a meeting at Bogle's in the course of
+
+=============== [printed p.15 | pdf p.22] ===============
+15
+
+the night, and that men were carried as prisoners by armed parties to Bogle's house ;
+that one was compelled to swear that he would leave the whites and cleave to the
+blacks ; that another was promised that if he would join Bogle he should have the
+land which he leased for his own from generation to generation ; that early on the
+following morning a party consisting of 200 men armed with guns and bayonets mounted
+onsticks, and with shells blowing, proceeded to Coley, a few miles to the north-west of
+ Stony Gut, endeavouring to obtain fresh support, and compelling persons, under the
+threat of immediate death, to swear that they would henceforth join the blacks ; that
+Bath and the estates in the Plantain Garden River District were attacked in the course
+ofthe day, and Port Morant on the day following.
+ The first party who entered Bath came in search of the ammunition belonging to
+the Volunteer Corps, which had been kept in the house of their late captain.
+ Later in the day a much larger party came marching in military order, with flags
+flying and drums beating. They had complete possession of the town till the following
+day,when on hearing the well-known horn of the Maroons, who at the request of a
+Magistrate resident there came to the relief of the inhabitants, they fled from the
+place.
+ The stores in the town were pillaged, and property to a large amount was taken or
+destroyed.
+ The few white and almost all the coloured inhabitants fled to the bush.
+ The estates attacked in the course ofthat day and night were all situated within a few
+miles of Bath .
+ At an estate in Blue Mountain Valley, a few miles on the west side of Bath, an
+ armed party of about 50 men, under the command of one addressed as Captain Wilson,
+ attacked the book-keeper, who received wounds, from the effects of which he shortly
+ afterwards died. The life of the son of the owner, who had lately arrived from
+ England, was threatened, and saved through the zealous intercession of his coloured
+ overseer.
+
+ At Amity Hall, on the other side of Bath, which was attacked by 400 men, Mr. Hire
+was murdered, and his son left for dead; while Mr. Jackson, the Stipendiary Magistrate,
+ and Mr. Creighton, were severely wounded, the latter so severely that it seemed scarcely
+possible that he should survive.
+ The account given by some of the actors themselves of their proceedings at Amity
+Hall is remarkable.
+ They said in the hearing of a witness that they had murdered Hire, and would kill
+his son ; that as soon as Jackson said he was a friend of Gordon they rubbed him up,
+and brought him to life ; and that they had set fire to Dr. Crowdy's bed, but that when
+they discovered that he was a doctor they put it out.
+ The houses upon the other estates in the neighbourhood were attacked and plundered,
+but in no other case was murder committed. Search, indeed, was made for different
+persons connected with the estates, and the intention of killing them if found was openly
+avowed, but the persons sought for either were absent, or succeeded in making their
+escape, being in most cases assisted by some of their own labourers.
+ In one case, " I am Manning of the Maroons " seems to have been sufficient to enable
+Mr. Manning to secure the safety of those for whom he was interested.
+ Monklands, which is about 16 miles up the valley from Morant Bay, was attacked
+by a party of above 50 men, armed with guns, cutlasses, bayonets, and swords.
+ At Hordley, an estate in the Plantain Garden River District, a large party of women
+and children, above 20 in number, were obliged to hide in the wood for the night, and to
+conceal themselves during the whole of the following day and night, until the advance
+of a small body of troops enabled them to reach a place of safety. And a faithful
+black servant, who assisted them in escaping, was herself compelled to flee in consequence
+of her life being threatened.
+ Whitehall, an estate in the Blue Mountain Valley, was attacked by a smaller party.
+The proprietor, Mr. Smith, was sought for, but escaped in the bush. He died shortly
+afterwards from the effects of exposure.
+ There was one curious exception to the rule generally followed of destroying the
+furniture found in the houses, and that was in the case of Golden Grove, one of the
+most valuable properties in the eastern part of the Island. When it was proposed by
+one to go over to what was called the Great House, the answer was, " that is to be saved
+ for Paul Bogle ; those were the orders of the general."
+ It is always difficult to know how far to rely on the accuracy of ordinary observers
+whenestimating numbers. But there were witnesses who gave evidence as to the number
+
+=============== [printed p.16 | pdf p.23] ===============
+16
+
+ of the insurgents on this day having been at one place 1,500, and at another as many
+ as 2,000, all or the great majority of whom were armed with various kinds of weapons.
+ It is impossible not to attach some importance also to the cries which were heard,
+ as not unfrequently the real object of the body of men from which they proceed is thereby
+disclosed. " Colour for Colour " was the cry everywhere during the short time that the
+disturbances lasted.
+ " Blood, blood," " We want blood," was heard at one place.
+ " We must humble the white man before us," " We are going to take the lives of the
+white men, but not to hurt the ladies," was what was said in the hearing of the widow of
+one of the persons killed at Morant Bay.
+ " Hurra ! Buckra country for us. Never mind the Buckra women ; we can get them :
+when we want," was the cry upon one estate.
+ " We want the Buckra men to kill, but we don't want the women now ; we will have
+them afterwards," was what was heard upon another, by a faithful woman, who succeeded
+in hiding her mistress and all the members of her family.
+ Again, " Don't burn the trash house ; we want sugar to make for ourselves ;" and
+" Don't set fire to the house ; only kill the white man, for when we have done that we
+have the house to live in for myself," were exclamations heard elsewhere.
+ The several estates to which reference has hitherto been made were all situated to the
+north or east of Morant Bay. The only movement in an opposite quarter which was
+made on this same day was in the direction of White Horses, a place four miles to the
+west of Morant Bay. There a party of 30 or 40 persons attacked a shop, plundered
+the house, and compelled the owners to promise to go over to the side of the
+blacks.
+ During the next three days the insurgents continued their course through Port Morant
+northward to Manchioneal, and on to Mulatto River and Elmwood, the last of which
+places is situated in the most northerly part of St. Thomas-in-the-East, where that
+parish abuts upon Portland.
+ As they advanced with the cry of " Colour for Colour " they were joined by a considerable number of the blacks, who readily assisted in the work of plundering. The
+houses and stores were sacked. The intention also of taking the lives of the whites
+was openly avowed, and diligent search was made for particular individuals. But in
+each case the imperilled persons had timely notice, and sought safety in flight.
+ Elmwood was the point furthest from Morant Bay to which the disturbances extended,
+as on Sunday the 15th the troops arrived at Port Antonio, and put a stop to the further
+progress of the insurgents northwards.
+ Thus it will be seen that in the course of these few days the insurgents had spread
+over a tract of country extending from White Horses, a few miles to the west of Morant
+Bay, to Elmwood, at a distance of upwards of thirty miles to the north-east of that
+place.
+ They seem to have been under the impression that they would be allowed to remain
+in possession of the estates.
+ Not only were the crops uninjured, and the buildings for the most part preserved, but
+the intention was openly avowed of proceeding to take up the crops.
+ "
+
+ " We are going down the river to take up the crops was the statement of one man
+at Manchioneal, who just before had been telling of the events in the district of the
+Plantain Garden River, and how he and others " had downed that fellow Hire."
+ And by several of a party of armed negroes who entered Manchioneal Bay it was
+openly said that they were going down next week to take off the crops, and take charge
+of the estates .
+ During these latter days very little was seen, by any of the witnesses, of Bogle or of
+those who were associated with him in the original outbreak.
+ It has been already mentioned that he returned to Stony Gut on the night of the
+11th. He was still there with Craddock, McLaren, and Bowie on the afternoon of
+the 12th. On that occasion a large number of men met in the chapel, some of whom
+were afterwards drilled. They were then addressed by Bogle and Craddock. They
+were told " that this country would belong to them, and that they were about getting
+،،
+
+ it, to take possession, that they had beenlong trodden under sandals," that the country
+" had long been theirs, and they must keep it wholly in possession."
+ When the people separated it was arranged that those who lived on the valley side
+should leave for their homes, and that " when the enemy came " they should send a
+messenger to let the men in Stony Gut know, and that if any came towards Stony Gut
+information should be given to the men in the valley.
+
+=============== [printed p.17 | pdf p.24] ===============
+17
+
+ The next day Bogle and McLaren were seen at Chigoe Foot Market, at the head of
+ 200 men, marching up the valley.
+ On the 15th he was at Mount Lebanus Chapel with more than 100 men, when the
+ alarım was given that the soldiers were coming.
+ He then gave directions to the men that they should get their arms loaded, and that
+ those who knew that their arms were not loaded should go and get powder and load
+ their guns.
+ Later in the day it was mentioned in the hearing of a witness, who was for several
+ days detained as a prisoner at Fonthill, that when on that day the troops were coming
+ over a hill in the immediate vicinity of the insurgents, Bogle was in force, and advanced
+ to give them battle, but that he was dissuaded by Cowell, one of the most active of his
+ associates, and that his followers then became panic stricken and took to flight.
+ In corroboration of this account it is in evidence that Bogle was seen, and pursued
+ by General Jackson, who accompanied the troops on that day, at a time when the
+ insurgents were seen to be dispersing.
+ On the following day he went with a very small number of followers to the Maroon
+ settlement at Hayfield, but found that all the men had left, and were employed in
+ guarding Bath.
+ From that time nothing appears to have been heard of him until the 23d, when he
+ was apprehended by the Maroons, and taken as a prisoner to Morant Bay.
+ In reporting the result of our Inquiry into the origin of the disturbances it is necessary
+ to allude to peculiar circumstances affecting the parish of St. Thomas-in-the-East.
+ Mr. Gordon was a proprietor, and had been a Magistrate in that parish, and had taken
+ an active part in parochial concerns.
+ Among other things he had complained of the unhealthy state of a building at Morant
+ Bayused as a lock-up house, and had caused inquiry to be made into the conduct of a
+ brother Magistrate in relation to that matter. The result of the inquiry was, that while
+ the building was condemned as unfit for its purpose, he was thought to have made
+ charges against the Magistrate which he must have known to be untrue. On this
+ ground he was dismissed by the Governor from the Magistracy, and his dismissal was
+ approved by the Home Government.
+ He had been also elected to fill the office of Churchwarden, but his right to act in that
+capacity was disputed on the ground of his not being a member of the Church of
+England.
+ This alleged want of qualification formed the subject of an action at law, in which
+Mr. Gordon was the plaintiff, and Baron Ketelhodt, the Custos of the parish, was the
+defendant.
+ The action was twice tried, and on each occasion a verdict was found for the
+defendant, and an application for a third trial was still pending in the month of
+October.
+ By the law of Jamaica the parochial expenses are not defrayed out of a local rate
+but out of the general funds of the Island, on the application of the Vestry, sanctioned
+by the approval of the Executive Government. As the Custos in questioning the right
+of Mr. Gordon to sit at the Vestry as Churchwarden had acted at the request and
+as the chairman of that body, they had included the costs incurred in defending the
+action brought by Mr. Gordon in their parochial estimate ; and the Executive Committee, after taking the advice of the Attorney General, had approved of the estimates
+so framed.
+
+ All these proceedings had produced considerable irritation in the western part of the
+parish, and especially among the members of the Native Baptist Communion to which
+Mr. Gordon belonged.
+ There were other causes for irritation existing alike in St. Thomas-in-the-East and in
+other parts of the Island. These arose from the alleged lowness of the rate of wages
+and irregularity in their payment, and the difficulty of obtaining relief from alleged
+injustice in consequence of the constitution of the Magistracy.
+ The Magistrates are principally planters and persons connected with the management
+of estates. Those who are not so connected are for the most part engaged in business,
+and their attendance is very irregular. The consequence is, that disputes between employers and labourers, and questions relating to the occupation of land, which are decided
+inthe first instance at Petty Sessions, are adjudicated upon by those whose interests and
+feelings are supposed to be hostile to the labourer and the occupier.
+
+=============== [printed p.18 | pdf p.25] ===============
+18
+
+ We had a great deal of evidence on these subjects, and it did not appear to us that
+the rate of wages was low, but rather that the smallness of the sums frequently received
+by the labourer at the end of the week arose from the unwillingness to labour for more
+than a very limited time.
+ Nor was it proved before us that there was unfairness on the part of the managers of
+estates in the payment ofwages.
+ Disputes, however, must frequently arise upon such subjects, and it was clear to'us
+that the difficulties in the way of seeking relief by law were very great, and it was not
+to be expected that, constituted as the Bench of Magistrates at present is, it would have
+the confidence of the labourers .
+ The evils resulting from the want of a good Master and Servant Act, by which
+summary relief might be obtained before an independent and impartial tribunal, are
+evidently very great.
+ But the originators of the outbreak do not appear generally to have belonged to
+the labouring class. They were for the most part what are called free settlers, occupying and cultivating small patches of land, and placed in better circumstances than the
+ordinary labourer.
+ Their great desire was to obtain, free from the payment of rent, what are called the
+" back lands."
+ " Soon we shall have the lands free, and then we shall have to pay no rent," was the
+answer received by one rent collector in the summer of 1865.
+ Other evidence of the same description was given, showing that there was both in
+St. Thomas-in-the-East, and in some other parts of the Island, a vague expectation
+that in some way the occupiers were in future to be freed from the payment of
+rent.
+
+ THE SUPPRESSION .
+
+ I.- The Measures adopted.
+ The Despatch of Troops. Proclamation of Martial Law.
+ It is right that we should now relate the means by which this apparently formidable
+insurrection was checked and finally suppressed.
+ The letter of Baron Ketelhodt, written on the 10th of October, and requesting
+military aid, was received by the Governor at Spanish Town on the following
+morning.
+ Expresses were immediately sent off to Major-General O'Connor at Kingston, requesting him to get ready 100 men for immediate embarkation, and to the Senior Naval
+Officer at Port Royal, requesting that a man-of-war might at once be sent up to
+Kingston to receive the troops, and convey them without delay to Morant Bay.
+ These requests were at once complied with, and the troops arrived at Morant Bay in
+time to preserve that place from a second attack by the insurgents.
+ On the following morning the Governor received information of the events of the 11th,
+that the Court House had been burnt down, many persons murdered, and the prisoners
+released ; and also that the insurgents were marching up the valley on the line of the
+ Yallahs River.
+ In consequence of this information an additional force was sent to Morant Bay, and
+troops were ordered to march from Newcastle towards the Blue Mountain Valley, to
+ stop the progress of the insurgents in that direction.
+ The Privy Council were then summoned. They met on the evening of the 12th, and
+ all the information which had been received up to that time was laid before them. They
+came unanimously to the conclusion that it would be desirable at once to proclaim
+ martial law. By an Act of the Local Legislature of 9 Vict. c. 35, after a recital that
+ the appearance of public danger by invasion or otherwise may sometimes render the
+ imposition of martial law necessary, but that, from experience of the mischief and
+ calamities attending it, it must ever be considered as amongst the greatest of evils, it is
+ provided that martial law should not in future be declared or imposed but by the opinion
+ and advice of a Council of War.
+ By another section of the same Act it was provided, that the Governor, the Members
+ of the Privy Council and of the House of Assembly, with certain Naval and Militia
+ Officers, should be Members of the Council of War, and that not less than twenty-one
+ should be a quorum .
+
+=============== [printed p.19 | pdf p.26] ===============
+19
+
+ This Council was summoned to meet on the morning of the 13th, and was attended by
+about thirty members, among whom were men of all parties in the Island.
+ The opinion of the Chief Justice was required by the Governor, and given, and it was
+unanimously resolved that martial law should be at once declared over the whole of the
+ county of Surry, with the exception of the town of Kingston.
+ The only point upon which any difference of opinion was manifested at this meeting
+was, as to whether Kingston should not be included. One witness, indeed, who was
+present, stated it to be his impression that the Governor had proposed that martial law
+should be declared over a more extended area. No one else, however, seems to have
+had this impression, and it is clear that it was the result of mistake.
+ The original draft of the Proclamation prepared by the Attorney General by the
+direction of the Governor was laid before us, and on comparing it with the actual
+Proclamation agreed to by the Council we found that the area agreed upon by the
+Council was somewhat more extensive than that originally suggested by the Governor.
+ The following is a copy of the Proclamation :Jamaica S.S.
+ Victoria, by the grace of God of the United Kingdom of Great Britain and Ireland
+ Queen, and of Jamaica Supreme Lady, Defender of the Faith.
+ To all Our loving subjects.
+ Whereas We are certified of the committal of grievous trespasses and felonies within
+ the parish of St. Thomas-in-the-East of this Our Island of Jamaica, and have reason for
+ expecting that the same may be extended to the neighbouring parishes of the county of
+ Surry ofOur said Island : We do hereby, by the authority to Us committed by the laws
+ of this Our Island, declare and announce to all whom it may concern that martial
+ law shall prevail throughout the said county of Surry, except in the city and parish of
+ Kingston; and that Our military forces shall have all power of exercising the rights of
+ belligerents against such of the inhabitants of the said county, except as aforesaid, as
+ Our military forces may consider opposed to Our government, and the well-being of Our
+ loving subjects.
+ Given at Head Quarter House, Kingston, on the 13th day of October in the year
+ of our Lord one thousand eight hundred and sixty-five, and in the 29th year
+ of Our reign.
+ Witness, his Excellency Edward John Eyre, Esq., Captain General and Governor-inChief in and over Our said Island of Jamaica, and other the territories thereon depending
+in America, Governor and Commander-in-Chief of the Colony of British Honduras,
+Chancellor of Our said Island of Jamaica, and Vice-Admiral of the same .
+ (Signed) E. EYRE.
+ By his Excellency's command.
+ (Signed) EDWARD JORDON,
+ Governor's Secretary.
+
+ We are of opinion that the Legislature of Jamaica in the recital to the Act just
+referred to have not in any sense exaggerated the magnitude of the evils attending
+martial law, and we are confirmed in that opinion by what is shown to have taken place
+in the Island during the few weeks of its continuance.
+ But with the full knowledge of all that has occurred we are nevertheless also of opinion
+that upon the information before them, and with the knowledge they possessed of the
+state and circumstances of the Island, the Council of War had good reason for the advice
+which they gave, and that the Governor was well justified in acting upon that advice.
+ The Military Operations.
+ When intelligence of the outbreak reached the Government, troops were immediately
+sent to the scene of action, the object being to limit the disturbances within certain
+bounds.
+ With this view, detachments composed of the West India regiments serving in Jamaica
+were despatched to Morant Bay and to Port Antonio, at each of which places military
+posts were established.
+ At the same time a party of the 2d Battalion 6th Regiment marched from Newcastle
+to proceed along the line of the Blue Mountain Valley, and endeavour to intercept the
+insurgents who were reported to be advancing by that route.
+ Seamen and marines were also landed at Morant Bay from Your Majesty's ship
+ " Wolverine," who co-operated with the regular troops.
+ 15573. D
+
+=============== [printed p.20 | pdf p.27] ===============
+20
+
+ Bodies of Maroons protected Port Antonio and Bath.
+ Troops were also sent to Linstead in St. Thomas-in-the-Vale, about 14 miles to the
+north of Spanish Town ; and Volunteers, pensioners, and special constables were enrolled
+for the protection of Kingston, and for the general maintenance of order.
+ These military arrangements appear to us to have been prompt andjudicious.
+ By confining the insurgents to the parish of St. Thomas-in-the-East and its neighbourhood the disturbances were kept in check, and were prevented from spreading to
+other parts of the Island.
+ Operations of which Morant Bay was the Centre.
+ On Friday the 13th of October Captain Luke was sent forward from Morant Bay
+with a force of 120 men of the 1st West India Regiment to Bath, which he reached on
+the following day.
+ At the " Rhine," an estate near Bath, he found nearly 100 refugees, consisting of the
+women and children of the families from the surrounding districts.
+ These refugees were escorted to Port Morant, whence they embarked for Kingston.
+Many of them had undergone severe privations, and some were severely wounded.
+ On the morning of the 14th a man was tried by Court-martial at Port Morant, and
+executed, who was said to be one of the leading rebels, and had threatened the life of the
+Collector of Customs at that place.
+ During the same day a party of 50 marines and sailors under Lieutenant Oxley,
+Royal Navy, advanced from Morant Bay, westwards as far as Easington. On the road
+two negroes were seen running away, and failing to stop, when ordered to do so, they
+were both shot. The same fate befel a prisoner, who, during the march, attempted to
+escape by flight. A fourth man was tried and executed, by order of Court-martial, at
+Easington, for having joined in the outbreak on the 11th.
+ On the 18th of October 90 men were sent up to Stony Gut from Morant Bay. This
+party, on their arrival, took possession of that place, and of the chapel belonging
+to Paul Bogle. On this occasion an act of cruelty towards a woman has been charged
+against this party.
+ As far, however, as the officer in command and his men were concerned, their acts
+appear to have been limited to this :-That they detained the woman during the day to
+act as cook for the troops, confining her to the spot by attaching a long cord to her
+wrist, the other end being fastened to the door of the building to prevent her escape.
+ Whatever else may have been done to her was done before the troops arrived, and is
+attributed to Mr. Gordon Ramsay, the Provost-Marshal, whose conduct will be referred
+to in a future part of our Report.
+ While this party of marines and sailors were advancing through the village of Stony
+Gut, a shot was fired at one of them from within one of the huts. A man who ran out
+of it directly afterwards was shot at and hit, but he succeeded in getting away. On
+the following day this force left Stony Gut, after burning the chapel and about eight
+cottages .
+ Easington was again occupied from the 21st to the 29th of October, with the view of
+keeping up communication with the troops who were posted under Colonel Hobbs in the
+Blue Mountain Valley.
+ By order of Brigadier-General Nelson, who was in command at Morant Bay, Lieutenant Adcock of the 6th Royal Regiment, and ten men, accompanied by a body of
+Volunteers and armed planters, marched northward from the Bay through Leith Hall to
+Golden Grove on the Plantain Garden River on the 21st of October.
+ On the morning of the same day Ensign Cullen was sent with 50 men of the 1st West
+India Regiment southward from Manchioneal to meet Lieutenant Adcock.
+ The orders issued by Brigadier-General Nelson to Lieutenant Adcock were, " to
+" make excursions in any direction supposed to be advantageous, care being taken that
+66
+
+ firing of huts and buildings be not carried to excess."
+ At Leith Hall a prisoner charged with having fired on the Volunteers at Morant Bay
+was tried and executed.
+ Near Harbour Head, on the road to Golden Grove, a man named Charles Mitchell
+was taken prisoner, and on the charge of having attempted the life of a person at
+Bowden on the 12th of October he was tried by drum-head Court-martial, and shot in his
+own yard. The circumstances of this man's case call for special notice. He was in the
+first instance charged with a minor offence, for which he was sentenced to be flogged,
+and was tied up to receive his punishment. While he was in that position fresh
+evidence was taken on a second and more serious charge, for which he was sentenced to
+be shot, which sentence was immediately carried into effect.
+
+=============== [printed p.21 | pdf p.28] ===============
+21
+
+ After Lieutenant Adcock had reached Golden Grove, and visited the neighbouring
+ estates that had been sacked, he ordered seven men to be tried by Court-martial, six of
+ whom were executed on the 24th of October. They were not executed until their trials
+ hadbeen reported to Brigadier Nelson at head quarters, and the following despatch had
+ been received in reply :
+ "Memo. Lieut. Adcock A.D.C., commanding detachment, is hereby authorized
+ " to carry out the sentences awarded on the prisoners brought in.
+ " It is not desirable now to inflict capital punishment, except on men actually found
+ " armed, or those who were ringleaders or murderers."
+ After this Lieutenant Adcock returned to Morant Bay.
+ The following General Order was next issued by Brigadier-General Nelson on the
+ 25th of October :
+ " Officers commanding respectively must forbid any man to enter a house in or near
+" his place under any pretext whatever, unless accompanied by a non-commissioned or
+ 66
+ a warrant officer. Any man found doing so to be handed over to the Provost" Marshal for summary punishment."
+ A party of 25 men detached from the Ist West India Regiment were ordered by
+Brigadier-General Nelson on the 31st of October to be sent from Manchioneal to
+ Golden Grove for permanent service ; and on the 2d of November an officer proceeded
+ from Morant Bay to take command of them, with the following orders given to him by
+ Brigadier Nelson :
+ "It will be necessary for you to exercise strict control over the men of your
+ " detachment, and not to permit any man to quit his quarters for the purpose of
+ 66
+ foraging.
+ " You are not sent to your post for the purpose of punishing the negro, but to
+ " maintain order, and to afford protection to the inhabitants generally. You are not
+ " authorized to inflict summary punishment. If any supposed rioter be sent as prisoner
+ " to you, be good enough to inquire into the case, and if you consider the same
+ “
+ as of a serious nature, send him to my head quarters with the evidence against
+" him.
+
+66
+ " You will doubtless have many prisoners brought before you, and some possibly
+“
+ through the animus of the inhabitants. Petty cases of larceny I cannot interfere with ;
+ they must hereafter be dealt with by the Civil Authority.
+“
+ " I am quite aware you will be much pressed to administer punishment to supposed
+ criminals, and you must be firm, temperate, and judicious in all communications with
+" civilians ."
+ At the time that the district of Plaintain Garden River was occupied by the
+military, 13 persons belonging to the neighbouring villages were shot without trial by
+parties of soldiers said to belong to the West India Regiment.
+ During the continuance of martial law, 149 cottages were destroyed by fire in the
+districts around Morant Bay and the Plaintain Garden River.
+ Ten persons appear to have been shot without trial or sentence of regular Courtmartial at Airey Castle and at Leith Hall, some by Maroons, and others by parties of
+black soldiers .
+ During the course of the operations of which Morant Bay was the head quarters the
+evidence and returns relating to trials of prisoners show that 187 executions were carried
+out in that place.
+ Operations of which Monklands was the Centre.
+ In the district of the Blue Mountain Valley 120 men of the 2d Battalion,
+6th Regiment, under Colonel Hobbs, occupied Monklands as head quarters on Sunday
+October 15th .
+ Monklands is a coffee estate near the head of the Blue Mountains Valley, and distant
+about 16 miles from Morant Bay.
+ During this week the troops made excursions down the valley to the neighbouring
+villages where the insurgents were said to be collected.
+ These villages lay along the line of the valley at distances varying from two to
+fourteen miles from head quarters.
+ Colonel Hobbs reported on the 16th of October to Major-General O'Connor, " that
+" numbers of the rebels had come in,having thrown away their arms, seeking protection,
+" and though worthy of death " that he " shrunk from the responsibility of executing
+" them, without first receiving the General's or Governor's wishes respecting them."
+ D2
+
+=============== [printed p.22 | pdf p.29] ===============
+22
+
+1
+ A despatch was sent the same day from the Major-General to Colonel Hobbs, which
+ crossed on the road the despatch last mentioned, stating that " Stony Gut was said to
+ " be a hot-bed of ruffians, and that it would be advisable ifhe looked it up."
+ 66
+ These instructions added " The Major-General would like you to be careful about
+ burning villages, and not to do so without it is clear that the inhabitants have joined
+ " the insurgents. The Major-General can give you no instructions, and leaves all to
+ 66
+ your own judgment."
+ On the evening of the 18th Colonel Hobbs, then at Monklands, received orders to
+ push on to Stony Gut at once. That place is about 14 miles from Monklands, lower
+ down the valley.
+ The troops started on the night of the 18th, and reached Chigoe Foot Market,
+ 10 miles off, at daybreak on the 19th, after effecting the march under great difficulties,
+ arising from the state of the weather, and the swollen condition of the rivers.
+ After halting at Chigoe Foot Market they went on in the morning to Stony Gut, four
+ miles in advance, but on reaching that place they found it deserted by the inhabitants,
+ and already occupied by a force from Morant Bay.
+ In the evening Colonel Hobbs returned to Chigoe Foot Market, and bivouacked there
+ during the night.
+ On the following day he returned with his detachment to Monklands, which was
+ reached at night, and there he found instructions from Major-General O'Connor to make
+ Monklands his head quarters, and the Major-General expressed a hope that the Colonel
+ would deal in a more summary manner with the rebels, and on no account to forward
+ prisoners to Kingston.
+ During this march through the valley 11 prisoners found at Chigoe Foot Market
+ on the morning of the 19th were tried and executed. They were charged with having
+ been engaged in the disturbances and murders at Morant Bay.
+ Colonel Hobbs reported these executions to Major-General O'Connor the same day,
+ stating that the men " were captured from the rebel camp," and that " finding their
+ 66
+
+ guilt clear, and being unable either to take or leave them, he had them shot."
+ The same evening on his return to Chigoe Foot Market a body of 50 prisoners was
+ found there, 27 of whom were selected as known rebels by a witness, who represented
+ himself to have been pressed into their company by Paul Bogle.
+ These 27 were tried and convicted on the morning of the 20th at Chigoe Foot Market,
+ and sentenced to death. They were carried on to Coley and Fonthill, two villages a
+ short distance up the valley, to which they respectively belonged, and of 16 brought
+ out for execution at Coley, 14 were shot, and two escaped. Nine others were shot, and
+ then hung up inside a chapel at Fonthill, which had belonged to McLaren, one of the
+ leaders of the insurgents. Wellington and another were taken to Monklands.
+ The execution of Arthur Wellington after trial, took place on the 21st of October, at
+ Monklands.
+ He belonged to Somerset, one of the settlements of the valley, and had the reputation
+ among the people around Somerset of being an " Obeah " man. To such a man these
+ people attribute the possession of supernatural evil powers over themselves, and the
+ faculty of being himself invulnerable. He is regarded with terror by his neighbours,
+ and has great influence among them. There is a local statute which makes the practice
+ of " Obeahism " a crime, and describes the offence as a pretence of possessing supernatural
+ power to effect designs, by falsely using omens, spells, charms, and incantations. Poison
+ was said to have been found in Wellington's house at Somerset.
+ The house and the works of Monklands are in the bottom of the valley, and the hills
+ on each side stand apart about half a mile.
+ Colonel Hobbs has stated that he hoped by means of the example of Arthur
+ Wellington's death to disabuse the other prisoners and the people in the valley of the
+ folly of their belief in the powers of the " Obeah " man.
+ In order that his execution might be seen by all who were watching upon the hills
+ as well as by the prisoners,he caused Wellington to be taken half way up the hill on
+ one side of Monklands.
+ This was done, and at a spot about 400 yards from the Barbacue occupied by the
+ firing party, the prisoner was stationed and shot.
+ He was there visible from the surrounding heights.
+ The effect of the volley which was firedwas very soon fatal, nor does any cruelty
+ appear to have attended his death.
+ A constable, without any authority for the act, severed the head from the body
+ prior to interment, and both head and body were afterwards buried in a trench at
+ the bottom of the hill.
+
+=============== [printed p.23 | pdf p.30] ===============
+23
+
+ Aheavy flood from the hill side during the night seems to have washed away the
+ head out of the grave, and carried it down the stream.
+ It is stated that the head was subsequently placed on a pole,but it does not appear
+ that this was done by or with the knowledge of any persons in authority.
+ The circumstances of this execution, and the accidental effect of the flood, were
+ adduced as proofs of intentional cruelty and barbarity; but the suggested object of
+ making au example, and the facts when explained relating to the head, have in our
+ opinion disposed of this charge.
+ The effect produced by the example given in this execution upon the other prisoners
+ is stated to have been very good, and many were heard to say that they never would
+ believe in " Obeah " again.
+ Colonel Hobbs, seeing this effect, felt at liberty to release a considerable number of
+ prisoners charged with minor offences.
+ A further charge of cruelty is also made connected with the execution of nine
+ prisoners at Monklands, who were placed kneeling in a line in front of the trench
+ prepared for their interment. One of these prisoners showed signs of life after the firing
+ party had discharged their rifles, and it is said that a pickaxe was then used to strike
+ him dead. It appears, however, that he was despatched by a close shot, and the person
+ who filled in the trench over the body has distinctly denied that either he or any one
+ else used a pickaxe in the manner alleged.
+ On the 21st of October Colonel Hobbs received a despatch from the Major-General,
+ dated the day before, in which the General informs him as follows : " I am much pleased
+ 66
+ by your adopting a decided course with regard to captured rebels ; the many you
+ " have sent into camp on mere suspicion or vague charges has caused some embarrass" ment. One of two courses seems to me, under martial law, to be the rule for your
+ " conduct ; if on careful investigation the captured persons are innocent, always giving
+ " them the advantage of a doubt, then release them; but if guilty, and taken red-handed,
+ 66
+
+ summary justice and execution of the sentence,"
+ About 32 other executions took place in Monklands before the troops were withdrawn,
+ all of which appear in the return ofdeaths.
+ During the operations along the valley about eight casual deaths were inflicted by
+ soldiers without authority, on inhabitants in some of the villages.
+ Some of these persons were shot in their houses, others while passing in the road, and
+ two of the number were infirm persons, incapable of resistance. One of the two latter,
+ however, suffered through a mistake. About 493 dwellings, situate in the various settlements of this district, were destroyed by fire during the same time.
+
+ Operations of which Manchioneal was the Centre.
+ Operations for suppressing the outbreak were at the same time carried on through the
+ country on the north side of the Island.
+ At mid-day of October 15th Captain Hole marched from Port Antonio with 40 men
+ of the 6th Regiment, and 60 men of the 1st West India Regiment under Ensign Cullen.
+ Captain Hole received orders from Brigadier-General Nelson to proceed to Manchioneal,
+about 20 miles eastward from Port Antonio, with directions " not to leave the line of
+" march in search of rebels, nor to allow prisoners to be brought in except leaders of
+" rebels ; and that those who were found with arms were to be shot."
+ Shortly afterwards, and before his departure, he got further orders from Governor
+Eyre, who directed him " to go off the road to meet any body of the rebels he heard of,
+" and to engage and make examples ofthem."
+ With this force Captain Hole advanced before night to a place named " Castle,” and
+early in themorning he reached Long Bay, and from that place he went on to Manchioneal
+during the day.
+ Just as the troops under Captain Hole were leaving Port Antonio on the 15th, six or
+seven soldiers of the West India Regiment, not of the numbers attached to his force,
+galloped past, stating that they had been ordered to come on.
+ Upon this they were told to go forward, and to join the advanced guard under
+Ensign Lewis .
+ Upon theirreaching the advanced guard they said that the Captain had ordered them
+to proceed to Long Bay, and they galloped forward, and were not seen again during
+the day.
+ While the troops were at the "Castle" a prisoner named Donaldson was brought
+there, and his execution calls for some special notice.
+
+=============== [printed p.24 | pdf p.31] ===============
+24
+
+ Murray, a man not in custody, but believed to be one of those who murdered Mr. Hire,
+was proved, and was admitted by Donaldson, to have come to his house a few days
+before, having with him Mr. Hire's horse and saddle.
+ Donaldson was called upon to give information of the place where Murray could be
+found, and of the time when he left him. This information Donaldson refused to give,
+and he was executed by order of Captain Hole for the offence of harbouring Murray.
+ Later on the march, a prisoner, who had been released by the insurgents from the
+Morant Bay Gaol, and who had been found with a cutlass and some stolen property,
+was brought in and shot ; and another prisoner, in possession of a flask of powder, was
+afterwards shot at Long Bay.
+ In consequence of an alarm given near Cog Hall of an expected attack by the insurgents, a skirmishing party was thrown forward, who shot two or three negroes.
+ In the course of the day Captain Hole found 11 or 12 dead bodies lying near the
+road. As these had not been shot by any of the troops under his command, it is supposed that they must have fallen by the hands of the mounted soldiers of the West India
+Regiment who had ridden forward contrary to orders the day before.
+ A great quantity of pillaged property was also found during the march scattered along
+the road, and deposited in the adjacent cottages of the negroes.
+ At Manchioneal, Courts-martial sat during 11 days, from the 17th October to the
+3d November.
+ Thirty-three prisoners were sentenced to death by these Courts and executed.
+ During the time that the troops under Captain Hole were at Manchioneal, a detachment of the 1st West India Regiment under Ensign Cullen was sent to a place in the
+Plantain Garden River District called Friendship. The guides led them to another
+place, and three soldiers became separated from the main body.
+ They were absent some days, and on their return they brought with them two
+waggon loads of property recovered from the plunder taken by insurgents from the
+houses of Mr. Hire and Mr. Shortridge .
+ These three soldiers reported to Captain Hole that during their absence they had shot
+ten rebels, three of whom had been concerned in murdering Mr. Hire.
+ On the 17th October a black soldier of the West India Regiment, who had deserted,
+was met on the road near Long Bay, going towards Port Antonio. He stopped three
+constables who were taking four prisoners under their charge.
+ The soldier took away the prisoners from these constables, and having placed them on
+the road at a convenient distance, he shot them in succession.
+ Later in the day a soldier, being alone, and supposed to be the same deserter, shot six
+other prisoners at a place near Manchioneal, in the presence of a head constable and some
+other persons.
+ These 10 deaths are attended with such barbarity on the part of the soldier, and such
+cowardice on the part of the constables and other persons who witnessed what was done
+without interfering to prevent it, as to call for special notice and condemnation.
+ There is ground for believing that this soldier may be identified.
+ At Port Antonio 54 prisoners were tried by Courts-martial, and suffered death during
+martial law .
+ The deaths by casual shooting along the line of march amount to 25.
+ In the villages of the district between Port Antonio and the country bordering on the
+Plaintain Garden River, 217 cottages were burnt.
+ Among the sentences of flogging awarded by Courts-martial at Manchioneal, about
+20 cases relate to the infliction of this punishment upon women.
+ Under any circumstances, the infliction of corporal punishment on females is to be
+reprobated.
+ It is right, however, to bear in mind the somewhat difficult position in which Captain
+Hole found himself placed. It was necessary to determine what course should be
+pursued with respect to women, who appear to have been the principal plunderers,
+as there was no prison in which they could be detained. The women were accordingly
+told that if they would give up the property they were shown to have taken they should
+at once be discharged. This offer was not accepted, and it is much to be regretted
+that even then it should have been thought right in such a case to resort to the punishment offlogging.
+ While Captain Hole was engaged in suppressing the disorders attending the outbreak,
+he found it necessary, by severe examples, to secure the discipline of those under his
+command. By this means he endeavoured to put a stop to acts of military lawlessness
+tending to aggravate the sufferings of the inhabitants. Two corporals at Manchioneal
+under his command were degraded for having been absent all night ; another soldier was
+
+=============== [printed p.25 | pdf p.32] ===============
+25
+
+tried and sentenced by Court-martial to seven years' penal servitude for having
+burnt houses in Long Bay. A fourth man was convicted of having been absent for
+several days without leave, and of having committed depredations. He was sentenced to
+ 56 days imprisonment, forfeiture of his good-conduct pay, and 50 lashes.
+ Operations of the Maroons.
+ A party of Maroons from the Hayfield Settlement occupied Bath on the evening of
+Friday, October 13th.
+ A body of 50 Maroons, armed at Port Antonio, and under command of Colonel Fyfe,
+marched on the 19th of October across the country, through Moortown, to which place
+they belonged.
+ On the following day they reached Bath, where Colonel Fyfe took command of the
+Hayfield Maroons, whom he found already there. The following verbal orders were
+given to Colonel Fyfe by Brigadier-General Nelson : " You are never to molest a woman
+"
+
+ or child, and you are not to shoot any man who surrenders."
+ Acting on intelligence that the rebels in force were occupying a fort they had made
+ at Torrington, Colonel Fyfe proceeded to march upon and attack that place, and as he
+ advanced several shots were fired at his party, and one man was wounded.
+ The steep and wooded nature of the ground made it necessary to act with caution.
+ The place was attacked on Saturday, October 21st, and the insurgents were driven out.
+ Seven of them were shot in the attack.
+ The huts of the settlement, in which large quantities of plunder were found, were
+ burnt ; but orders were given by Colonel Fyfe that in the burning of houses care should
+ be taken to leave some building as a place of shelter for women and children.
+ On proceeding through the country to Stony Gut a party of Maroons, under Colonel
+ Fyfe,
+ Ketelh
+ shot four men, one of whom was wearing the ring of the deceased Custos Baron
+ odt.
+ The insurgents had constructed in this part of the country, between Torrington and
+ Stony Gut, a rude field-work, by felling large trees, and throwing them as a barricade
+ across the angle of the road ; they were removed with considerable difficulty.
+ The total number of men shot by the Maroons during these excursions does not
+ appear to us to have exceeded 25. About 141 cottages of the villages situated near
+ this district were burnt by the Maroons, or by persons who alleged that they were acting
+ under their orders .
+ This concludes our Report of the military measures adopted for the suppression of
+ the disturbances .
+ It appears to us that the strategical positions taken up, the detachments posted in the
+ disturbed districts and in the Island generally, and the active co-operation of your
+Majesty's naval forces, produced a most beneficial effect ; and by the prompt and rapid
+ manner in which the different movements were executed the outbreak was overcome in
+ a very short period.
+
+ Summary of Punishments during Martial Law.
+ The total number of deaths caused by those engaged in the suppression amounted to
+439, and the total number of dwellings burned to 1,000.
+ With respect to the number of persons who were flogged, it is impossible to state it
+with any degree of accuracy. 60 appear to have been flogged by order of Courtsmartial ; one woman was sentenced to be flogged at Morant Bay, but Colonel Nelson
+refused to confirm the sentence. The numbers flogged without a Court-martial was
+much larger.
+ 73 were thus flogged at Port Antonio, 44 at Up-Park Camp, 20 at Manchioneal, 50 at
+Monklands and Golden Grove, and considerably above a 100 at Morant Bay.
+ A still larger number were flogged at Bath. Nearly 50 were flogged on one day, of
+whom 20 were women ; and it is stated that between 30 and 40 were flogged on other
+days. This did not, however, continue long, as Colonel Fyfe, who arrived a very few
+days after the floggings commenced, gave positive orders for the discontinuance of the
+practice.
+ The whole number subjected to this degrading punishment during the continuance of
+martial law we think could not have been less than 600.
+ The mode ofinflicting the punishment at Bath calls for special notice. Itwas ordered
+by alocal magistrate, after a very slight investigation, and frequently at the instance of
+book-keepers and others smarting under the sense of recent injury. At first an ordinary
+
+=============== [printed p.26 | pdf p.33] ===============
+26
+
+cat was used, but afterwards, for the punishment of men, wires were twisted round the
+cords, and the different tails so constructed were knotted.
+ Some of these were produced before us, and it was painful to think that any man
+should have used such an instrument for the torturing of his fellow creatures.
+ Upwards of 100 of those who were flogged were sentenced also to different terms of
+imprisonment, varying from six months to twelve years. As, however, from the time
+of the expiration of martial law there was no power to enforce these sentences, the
+persons so sentenced have been released.
+
+ II.- Conduct ofPersons engaged in the Suppression.
+ Comments on Punishments inflicted.
+
+ In considering the conduct of those engaged in the suppression of the disturbances
+in the several districts through which the military were moved, the first point to which
+our attention was directed was the sacrifice of human life occasioned by the measures
+then taken.
+ The number of persons executed at the several stations by order of Courts-martial
+have been ascertained by us from the returns made to amount to 354, and are thus
+distributed :At Morant Bay and Plantain Garden River District 194
+ ‫دو‬ Port Antonio and Manchioneal - 89
+ ‫دو‬ Monklands, &c. - 68
+ 3
+ ‫دو‬ Up-Park Camp 1
+ - - The numbers of those killed without any trial have been investigated by us with
+much labour and careful inquiry, by visiting the districts where the deaths occurred,
+and by examining the relatives of the deceased, and other witnesses in Spanish Town.
+ We believe that the return given in the Appendix furnishes as accurate an account
+ of all who perished as the circumstances of the events admit of, without affecting a
+ precision which it is impossible to command.
+ We carefully examined into every case in which it was alleged that a life had been
+ taken. It will be seen in the evidence that the same cases were repeatedly spoken to
+ by different witnesses, and that not a few of those deposed to are included in the
+ returns of persons executed by order of Courts-martial. It occasionally occurred that
+ one person was known by two names. Whenever we entertained a doubt both names
+ have been entered, and on that account the return may be relied on as showing all
+ deaths that were capable of proof.
+ Nearly all the cases returned in the official lists as of persons executed, “ names
+ unknown," have, by means of this investigation, been discovered and named, and the
+ result of inquiry on the spot has remarkably coincided with these official returns .
+ Comment has already been made on cases of destruction of life which happened under
+ exceptional circumstances.
+ The conduct of the black soldier on the road between Manchioneal and Port Antonio
+ caused the death of 10 persons without any inquiry or proof of guilt. The excuse
+ ofdread of the soldier, made by those who witnessed his acts,and might have interfered,
+ cannot be allowed.
+ One of the people shot on the advance on Torrington by the Maroons was a woman.
+ The Maroon by whom she was shot gave evidence before us with much frankness, and
+ it was clear to us that it was no act of wantonness, but that, seeing a figure behind a
+
+ bush, as he thought about to fire at him, he had himself fired, and that he did not
+ discover that it was a woman whom he had wounded until some time afterwards .
+ In none of the cases where deaths occurred from shots fired on the march, except in
+ the advance upon Torrington, does it appear that any actual resistance was offered to
+ the advance of the troops.
+ A good deal of our time was occupied in an inquiry into the case of an alleged
+ shooting of three men by a detachment of the 1st West India Regiment under the
+ command of Ensign Cullen. The evidence was most conflicting, and we do not feel
+ called upon to decide upon which side the truth lay. But we think that the character
+ ofthe service is so deeply involved in a question affecting the conduct and veracity of
+ two officers and several men that it may well form the subject of further inquiry.
+ The same observation applies to a charge of shooting a person named William Gray
+ by Staff Assistant-Surgeon Morris.
+
+=============== [printed p.27 | pdf p.34] ===============
+27
+
+ It will doubtless be observed that a great deal of evidence laid before us with a view
+of proving the use of undue severity during the existence of martial law has reference to
+the conduct of Mr. Gordon Ramsay, the Provost-Marshal. As he is now about to take
+his trial on a charge of wilful murder for an act done by him while he filled that office, it
+was not thought right by any of the parties concerned in the Inquiry that he should be
+asked any questions, the answers to which, or a refusal to answer which, might prejudice
+him on his trial.
+ It will be obvious that for the same reason it would not be right for us to make any
+remarks upon his conduct.
+ It is due to those under whom Mr. Ramsay acted to state that no complaints of the
+cruelties now charged against him, although stated to have been witnessed by many,
+were made to those who placed him in authority, and had the power, and undoubtedly
+would have had the will, to deprive him of that authority, if such cruelties had been
+shown to have been committed.
+ Further, we cannot help noticing the conduct of a Magistrate who states that he
+witnessed what in his opinion at the time appeared to be an act of murder without giving
+any intimation respecting it. He states that he was prevented by fear; but this did not
+prevent his making a formal complaint against Mr. Gordon Ramsay, when a comparatively trifling act of injustice was committed against himself; and it seems that he
+consented not to press his complaint in order that the public might not lose the services
+ofMr. Ramsay.
+ Brigadier - General Nelson, upon being made acquainted with the conduct of
+Mr. Ramsay towards this Magistrate, sent the following reprimand :
+66
+ " Having given Mr. Marshalleck's complaint and the Provost- Marshal's explanation
+ mygrave and serious consideration, it is my duty to inform the Provost-Marshal that
+ " in every way connected with the case he has exceeded his powers and adopted a
+ "
+
+ course I must strongly reprehend.......... Briefly, the Provost-Marshal in acting as
+" he did, is open to very severe censure, much of which I withhold in consequence of
+" the good service he has done, and because I hope that this error in dealing with
+ " Mr. Marshalleck was the result of over-zeal . I peremptorily forbid any
+ “
+
+ summary punishment being inflicted within the camp henceforth, and all cases of a
+ " serious nature are to be referred for my decision, or that of my aide-de-camp, to whom
+ " alone I shall delegate the authority to dispose of such."
+ Comments on the Courts-martial.
+
+ The number of executions by order of Courts-martial appeared to us so large that it
+became very important to ascertain, as far as we were able, the principles upon which
+the members constituting the Courts acted, and the sort of evidence upon which their
+decisions were pronounced.
+ Itwould be unreasonable to expect that in the circumstances under which these Courts
+were assembled there should be the same perfect regularity and adherence to technical
+rules which we are accustomed to witness in our ordinary tribunals ; but there are
+certain great principles which ought under no circumstances to be violated, and there is
+an amount of evidence which every tribunal should require before it pronounces a
+judgment which shall affect the life, liberty, or person of any human being.
+ In order to ascertain whether these principles have been adhered to, and whether in all
+cases this necessary evidence has been required, we have carefully read the notes of the
+evidence given before the different Courts, upon which notes the confirmations of the
+sentences were pronounced .
+ In the great majority of the cases the evidence seems to have been unobjectionable in
+character, and quite sufficient tojustify the finding of the Court. It is right also to
+state that the account given by the more trustworthy witnesses as to the manner and
+deportment of the inembers of the courts was decidedly favourable.
+ But we think it right also to call attention to cases in which either the finding
+or the sentence was not justified by any evidence appearing on the face of the
+proceedings.
+ The case of Mr. Gordon will be hereafter referred to.
+ In the cases of Samuel Clarke, George McIntosh, and William Grant, in all of which
+ the notes of the proceedings will be found fully set out in the Appendix, and in each of
+ which cases also some witnesses were examined before ourselves, the evidence appears
+ tous to have been wholly insufficient to justify the findings.
+ It appears also from the proceedings that one person was executed upon proof that he
+ was advising the rioters on the 7th of October how to act, and that he resisted the
+ andassisted
+ Police,1557 3.
+ in handcuffing them on the 10th.
+ D
+
+=============== [printed p.28 | pdf p.35] ===============
+28
+
+ Another on proof that he had resisted the Police on the 10th, having in his hand a
+cutlass and big stick, and that he had made use of the following expression : - “ You
+66
+ were taking my name down on Saturday, now I can take my revenge. If we did not
+" consider one thing we would take your head off."
+ Another for having assisted in rescuing Geoghegan on the 7th, and for having been
+one of the party who came down with a drum.
+ Three persons were convicted and executed upon the production and proof of affidavits
+made behind their backs by persons who, for anything that appears to the contrary, might
+perfectly well have given their evidence in open court.
+ At Port Antonio the evidence allowed to be given was of a most objectionable
+description.
+ William Troop gave evidence against William Mitchell of a confession made by the
+latter of his having assisted in the murder of Mr. Hire, and immediately afterwards was
+himself put upon his trial as an accessory to the same murder, and was convicted, upon
+the evidence of Mitchell, of a confession made to him, coupled with the affidavit of a
+person whose absence was not accounted for.
+ Both Mitchell and Troop were executed within a few hours of their trials.
+ Three persons were convicted and two were executed upon the evidence of a confession
+made by a man shortly before his execution, in which he stated that the prisoners had
+assisted in the murder for which he himself was about to suffer.
+ Five persons were convicted on the unconfirmed testimony of a man himself just
+convicted and sentenced to death as a spy, and for having incited others to join in the
+rebellion, one of the persons so convicted having himself given evidence to prove the
+case against the spy.
+ In other cases the sentences seem wholly disproportioned to the offence charged. The
+illegality, however, of these sentences, has happily prevented them from being carried out
+to their full extent. One man was sentenced to 50 lashes and three years' imprisonment
+for travelling without a pass, and not giving a satisfactory account of himself; another
+to 50 lashes and five years' imprisonment, upon proof that, in addition to not giving a
+satisfactory account of himself, he confessed " that he was coming from the residence of
+" the late rebel George William Gordon."
+ At Manchioneal also affidavits were regularly received as proof of the facts deposed
+to, and in some cases in which death was the sentence the affidavits constituted the
+only evidence.
+ At Up-Park Camp the trials seem to have been conducted with great regularity,
+and there were only three in which capital punishment was inflicted. But in one of these
+cases the only offence charged or proved was the use of the following expression by a convict
+in one of the cells of the Kingston Gaol : " I have seen too much gun. Creoles are fools.
+" If it (meaning the present rebellion) had been in Africa we would have known what to
+" do immediately. If Ihad but five of my countrymen I would make you see something.
+" If I had a sword I would kill Mr. Shaw and Mr. Horton. The black man ought to
+" rise like St. Domingo to take Jamaica from the Buckras."
+ The above observations are founded exclusively on the proceedings themselves,
+which were submitted for confirmation to the commanding officer, and on which it would
+appear that his confirmation of the sentence was founded.
+ It is right, however, to make mention of the fact stated by some of the officers who
+appeared before us, that other evidence than that which appears on the face of the
+proceedings was sometimes given, and that the commanding officer was aware of such
+additional evidence having been given.
+ We ought also to mention that in one of the cases above referred to, where the evidence
+upon which the prisoner was convicted appears most objectionable, the guilt of the
+prisoner was incidentally proved in the course of our inquiry.
+ THE CASE OF MR. GEORGE WILLIAM GORDON.
+
+ We felt ourselves bound to inquire whether the outbreak had a merely local origin, or
+ whether there existed throughout the Island awide spread conspiracy for a general rising
+ against the Government at some future time, of which conspiracy the outbreak in
+ St. Thomas-in-the-East was a premature explosion, precipitated by local causes. It was
+ with the view of determining this question that in one case we departed from our
+ ordinary course of not inquiring into the guilt or innocence of particular persons who
+ had been tried by Courts-martial. We considered that we were concerned with particular cases so tried only so far as to determine whether those broad general rules of
+ evidence which ought to govern all tribunals had been observed ; whether in fact the
+
+=============== [printed p.29 | pdf p.36] ===============
+29
+
+conduct of those who presided at such Courts, as illustrated by the proceedings, was open
+to animadversion.
+ The case of Mr. Gordon, however, appeared to us to be be different from all others.
+He was intimately connected with Bogle the leader of the insurrection.
+ He had attended and taken a leading part in certain meetings in different parts of the
+Island which had been held in the course of the summer of 1865, and which were thought
+to be connected with the supposed conspiracy. He formed, moreover, the only probable
+link between the plotters of Stony Gut and the supposed conspirators in other parts of
+the Island.
+ At an early period, therefore, of the Inquiry we came to the conclusion that if conspiracy had in fact existed, Mr. Gordon must have been a party to it, and therefore
+we determined to admit any evidence which might be tendered in proof of his complicity, whether it had or had not been laid before the court-martial by which he was
+tried.
+ We propose, therefore, to set out that evidence with considerable fullness.
+ The affairs of the parish of St. Thomas-in-the- East were the subject of great interest
+ among many of the parishioners who were friends of Mr. Gordon. Many looked to
+ him for advice, which they relied on and followed.
+ Among these was Paul Bogle, who cultivated a few acres of land at Stony Gut, a
+ village in the hills about six miles inland from Morant Bay.
+ Achapel belonging to him of small dimensions stood on his land, and was opened
+ about Christmas 1864. He was a member of the " Native Baptists," a sect so called as
+ being independent of and distinguished from the London Baptist Mission. Mr. Gordon
+ was an intimate friend and correspondent of Bogle.
+ Mr. Gordon had himself become a Baptist, and had a Tabernacle of his own on the G. Fouché,
+ Parade at Kingston. To Paul Bogle he addressed a short note when about to become 29th day.
+ such member, as follows :" Mr. Paul Bogle, 11th December 1861 .
+ " I am to be baptized on Christmas Day, this day two weeks. Remember me on
+ " that day."
+ " G. W. GORDON."
+
+ In 1862 Paul Bogle, James Bowie, and George B. Clarke sent the following letter to
+ Mr. Gordon from Stony Gut : " Stony Gut, 25th July 1862.
+ " (All hearts burnt) to hear the way you are treated for our cause. But in
+ "
+
+ suffering their (sic) are CONCILATION (sic) for their (sic) is a Rest is Provide for those
+ " who toil and Bear (sic) persecution for truth sake in heaven."
+ " We want to see you at our vilage (sic), which is Exceedingly small, But sufficient
+ to intertain (sic) you, For we have Plans to Arange (sic) with you. Come up, we
+" beseech you as quick as Posible (sic), so that we may arange (sic) how the Baptism
+" is to go on at Spring Before the ending of this month, so that we may get up a
+ " meeting to meet you, if Coming notice Mr. Warren with best wiches (sic) .
+ " Yours truly
+ " PAUL BOGLE,
+ " JAMES BOWIE,
+ " GEORGE B. CLARKE."
+
+ Spring, mentioned in this letter, was landed property of Mr. Gordon, a mile from
+ StonyGut, and partly adjoining it.
+ The people connected with the small holdings at Stony Gut wrote, through Paul
+ Bogle, to Mr. Gordon on 25th July 1862, to ask him to lend them 150l., in order to
+ paythe tax which would qualify them to be registered as voters of the parish.
+ The postscript to this letter is as follows :" P.S. The above amount is to pay for Registrations too Answer us by the First Post
+ " without delay, for we who have to go in the mountain district are to go by Tuesday
+ 6
+
+ evening, we are nothing to do with those in the Bay, For they appears to us as
+ " decevers (sic).
+ " PAUL BOGLE,
+ " Chairman in behalf of the Meeting."
+ On the 26th February 1864 Mr. Gordon wrote from Kingston to Paul Bogle at
+ Stony Gut, as follows (inter alia) :E2
+
+=============== [printed p.30 | pdf p.37] ===============
+30
+
+" Dear Bogle,
+ 66
+ Things are bad in Jamaica, and will require a great deal of purging."
+ Again, in the same month he wrote,66
+
+ Dear Bogle, " Morant Bay, 22nd February 1864.
+66
+ " I have again to contend with Rector Cooke's annoyance ; he is trying to get
+66
+ me out of the churchwarden's office, but I have no doubt he will fail also this time.
+66
+ I am busy in Kingston, and have to return for the Port Royal business. I have not
+ yet seen Chisholm .
+ " Yours very truly,
+ 66
+ GEO. W. GORDON."
+ Mr. Gordon had been appointed churchwarden for St. Thomas-in-the-East, and the
+fact of his having become a " Native Baptist," and ceased to communicate as member
+of the Church of England in Jamaica, had, as before mentioned, been advanced as
+disqualifying him for the office. The same fact subsequently led to the action brought
+by him against the Custos, Baron Ketelhodt, by whom he had been forcibly removed
+from the Vestry. This subject was one which caused great irritation in the parish.
+ Paul Bogle was on the 5th March 1865 made deacon of the " Native Baptists." On
+that day Mr. Gordon signed the following certificate as acting secretary :
+ 66
+
+ Kingston, 5th March 1865.
+ " To all whom it may concern. This is to certify that Paul Bogle has been this day
+" ordained by me in the presence of the whole congregation, to be made Kingston
+" Jamaica (sic) to the office of deacon in Christ's church, and that he has been fully
+66
+
+66
+ charged and has also undertaken faithfully to discharge the duties of the said office of
+66
+ deacon, and in all things to be obedient to the rules of the Church, devoting himself
+66
+ through the grace of God faithfully to the work, and that he is hereby authorized to
+ execute and discharge all the duties appertaining to the office of deacon.
+ " Given under my hand, at Kingston, Jamaica, this 5th day of March 1865.
+ " RICHARD WARREN.
+ " GEO. W. GORDON,
+ 66
+ Acting Secretary."
+ Paul Bogle wrote to Mr. Gordon a letter addressed to him at Morant Bay on 12th July
+1865, in which, after referring to the writer's health, he says, " You will be pleased to
+61
+
+ remember the horse that you did promise to give me to ride out on business.
+" We expect to have a meeting at Bogle House, at Cottage Penns, next Tuesday, and
+66
+ your attendants (sic) will require. I am, yours truly, PAUL BOGLE."
+ When Paul Bogle's house was searched in October, a list of ten names was found there
+in the handwriting of Mr. Gordon. Mr. Gordon's own name was at the head of this
+list, and the nine other names were those of persons connected with Bogle's party.
+A much larger list of names, most of which were original signatures or marks,
+was afterwards taken from the private writing-table of Mr. Gordon at Cherry Garden.
+This last list was headed by the name of Paul Bogle, and contained 148 other
+names, many of which belonged to persons who were implicated in the outbreak at
+Morant Bay .
+ We attach no great importance to these lists, as they may merely show the political
+connexion of Mr. Gordon with Bogle and his friends.
+ Mr. Henry James Lawrence was Mr. Gordon's manager and resident agent on his
+ estate called " Rhine " near Bath, in St. Thomas-in-the-East, and in letters addressed
+ to him the interest in parish matters felt by Mr. Gordon in common with many of his
+ adherents there, is expressed strongly in respect of the conduct of members of the vestry
+towards himself.
+66
+ Writing to Lawrence on 30th January 1865, he remarks, " BARON and Herschell are
+ busy publishing lies againt me in Spanish Town, so as to get the grant of money,
+ " 262/. I shall be obliged to speak in very plain terms on the subject. Can you send
+66
+ me Nibs on the subject ? which may help me. They are a very wicked band, and the
+" Lord will yet reward them all I note what you say of •
+ He is a
+" sort of fiend who altho' chastised has remained hardened. We can afford to spare
+"
+ him, and perhaps England will better agree with him. Mark, the reign of others will
+" also soon be cut short."
+ Again, on 6th March 1865, he writes to Mr. Lawrence :
+ " I note what you say re Oxford and Walker and Ketelhodt,-the parish will be well
+" rid of Walker, but the evil will be doubled (?) in Baron, and I quite agree with your
+" sentiments . We must wait and see what the end will be of all these evil doers ! • •
+
+=============== [printed p.31 | pdf p.38] ===============
+31
+
+" Thanks also for arranging with Kirkland. I shall treat him as he merits. What an
+" unreliable SETT (sic) they all are. I am DISGUSTED with them and must try to keep
+" aloof and above them. The Ex. Com. Gov. and Bishop ! what a set, can any reliance
+ " be placed on these ? and can matters go on with such men at the helm. Herschell,
+ " Baron, Cookes, and a lot of others are against me, and some of low mark, ignorant
+ " coloured men, who wo'nt value their own position, countenance such proceedings, - 
+ " do you not see that I have good reason to complain and be on the alert? "
+ Again he writes to his manager:-" 27th April 1865."
+ " The case of Gordon v. Ketelhodt was a great triumph to Baron and all the Cookes,
+" for in spite of everything which was clearly in my favor they got a jury of five to
+ “
+
+“
+ give a verdict for defendant. What a fresh victory is this for them all ? How well it
+ looks, and how diminished is my head! but wait, it is not yet all over ! •
+
+" The Attorney-General disgraced himself by low conduct. Sneddes proved a traitor
+" and M'Kenzie a most worthless lying fellow. Have nothing to do with the man, he is
+"
+ a great villain (sic) .
+ And again on the 29th April 1865." I have no doubt there are dual actions and strong undercurrents against me, but
+" wait and see the end of it, be not cast down, the Lord is at hand There is
+"
+
+“
+ a sort of present exultation in the Baron, Herschell, Cooke, &c., all their points
+ being carried .
+
+ Inote the great and glorious gathering at Rhine House,
+" this is very beautiful."
+ " Messrs. Warmington and Henry Seymour Kennedy are new J. P's. for St. Thomas"
+ y'-East, and some few more are expecting. All very beautiful. Great concerns for
+ great men ! Keep you quiet and see the end of it all."
+66
+ On the 4th of May he wrote, " I know the inveterate dislike of Herschell and all his
+ confreres. They will soon all find their level, and go like chaff against the wind."
+ Mr. Gordon was staying at Hordley in the Plaintain Garden district of the Mr. T.
+parish in June 1865, and in conversation there with Mr. Harrison, he was spoken to Harrison,
+about the state ofthe feeling among the people, and told that he could not control it. In 5th day.
+reply " Oh ! " said Mr. Gordon, " if I wanted a rebellion I could have had one long
+"
+
+ ago. I have been asked several times to head a rebellion, but there is no fear of that.
+" I will try first a demonstration of it, but I must upset that fellow Herschell, and kick
+" him out of the Vestry, and the Baron also, or bad will come of it."
+ On 13th of July he wrote to Lawrence at the Rhine, " Herschell has got another 40l.
+" for pews at Bath Church, through the aid of his friend Price. What will these ( ? )
+“
+
+ men, surely some calamity will come on them."
+ About the same time, conversing with Mr. Arthur Beckwith at Kingston, about a Mr. A.
+meeting held on the subject of labourers and wages, Mr. Gordon was told it was calcu- Berkwith,
+lated to excite a spirit of disaffection amongst the people ; to which Mr. Gordon 9th day.
+answered, " Ah ! well, we must have it some way or the other; this is the great
+"
+
+ movement; and if we do not secure it in this way, in six months there will be a
+" revolution in the country, and as I have always stood by the people I will stand by
+" them then."
+ He wrote from Kingston on the 10th of August to Lawrence, " I must go to the east,
+" and start this evening for Morant Bay, hoping to be there early to-morrow, and be at
+" the Rhine by Saturday some time. The Baron has taken upon himself to postpone
+" the public meeting until further notice.
+“
+ This is improper; it is not his meeting, but
+"
+ theirs, and he has not the power of postponing. I am getting quite tired of it, and
+ must now bring the business to a close ; and if the Baron won't do what is right we
+" must do so for him."
+ On 11th August a printed address to the people of St. Thomas-in-the-East, headed Mr. A. K.
+" State of the Island," was posted up on a cotton tree in the main road at Morant Bay, Mudie,
+opposite William Chisholm's house. The original draft of this address, in the writing of 51st day.
+Mr. Gordon, was given by him to a compositor at Kingston shortly before, to be set up JohnSharpe,
+in type, with directions to forward copies to one Rodney at St. Ann's Bay, others to 50th day.
+James Sullivan at Bath, and further copies to Paul Bogle and to William Chisholm at
+MorantBay.
+ These copies were sent. In this address is found the following passage :"
+
+ People of St. Thomas-in-the-East ! You have been ground down too long already ;
+" shake off your sloth, and speak like honourable and free men at your meeting. Let
+"
+
+ not a crafty, jesuitical priesthood deceive you. Prepare for your duty. Remember
+" the destitution in the midst of your families, and your forlorn condition. The
+" Government have taxed you to defend your own rights against the enormities of an
+"
+
+ unscrupulous and oppressive foreigner, Mr. Custos Ketelhodt. You feel this. It is
+
+=============== [printed p.32 | pdf p.39] ===============
+32
+
+ “ no wonder you do. You have been dared in this provoking act, and it is sufficient to
+ 66
+
+ 66
+ extinguish your long patience. This is not time when such deeds should be perpe66
+ trated, but as they have been it is your duty to speak out and to act too. We advise
+ you to be up and doing, and to maintain your cause. You must be united in
+ 66
+ your efforts."
+W Ander- An open air meeting on Saturday, August 12th, held in the market place in front of
+son, 11th the Court House, at Morant Bay, under a gynnep tree, was presided over by
+day.
+ Mr. Gordon, at which Paul Bogle and Moses Bogle were present. Resolutions on the
+See Appen conduct of the Government, and on the depressed state of the labouring classes, and the
+dix.
+ price of labour, and low rate of wages, were passed ; and in reference to the circular
+ called the " Queen's advice to the people." Mr. Gordon said that " The Queen's
+ 66
+A.K.Moodie, message to the working classes of Jamaica is not true ; I say it is not true ; it is a
+46th day. " lie ; it does not come from the Queen ; the Queen does not know anything about it."
+ One of the resolutions passed at this meeting is as follows : 66
+ " That this meeting views with alarm, and denounces the unconstitutional and
+ unprecedented act of the Government in having provided the sum of 250l. to defend
+ " the Baron Ketelhodt in his illegal and oppressive conduct towards the rights of the
+ 66
+
+ constituency of this parish and the Island generally, in interfering with the office of
+ " churchwarden, and that a committee be now appointed to take all necessary steps in
+ " this matter in defence of the rights and privileges of the electors."
+ A committee, and a deputation, including Paul Bogle, James M'Laren, and others,
+ were appointed to wait upon the Governor.
+ “
+ The meeting then further resolved " that they were of opinion that the generally
+ arbitrary, illegal, and inconsistent conduct of the Custos was destructive to the peace
+ " and prosperity of the affairs of the parish."
+ At the time ofthis meeting Mr. Gordonwas staying at his cottage on the Rhine estate,
+ 16 miles from Morant Bay.
+ In familiar conversation with Mrs. Major, the wife of Dr. Major, his tenant of part of
+Mrs. E.
+Major,
+ that estate, he was told by her that in his speeches which she had recently been reading
+5th day. he was certainly guilty of high treason, and she would accuse him of it. He replied,
+ 66
+
+ Oh no they have printed it wrong ; I never made use of such expressions, and you
+ " can't do it. I havejust gone as far as I can go, but no further. "
+ In this conversation he spoke of the Governor as " a wicked man," and said " that it
+ " would be a blessing to the country if some one would shoot him ;" and that
+ Mr. Herschell and the Baron were " bad and wicked men, and it would be a blessing if
+ " these three men were removed ."
+
+W. E. Ward, On the night of the 15th of August a meeting was held at a house belonging to
+13th day. Mr. Gordon at Morant Bay, opposite the Wesleyan Chapel, at which James M'Laren
+A. R.Mudie, acted as Secretary, with about 30 persons present ; from this meeting five persons were
+46th day. turned away as spies, who had not previously attended the meeting on the 12th of
+ August.
+ Mr. G. W. Gordon attended, and spoke at a meeting held at the " Alley " in Vere on
+ the 4th of September. He is thus reported to have spoken, amongst other matters.
+J.F.Humber, 66
+ They report to the Queen that you are thieves... The notice that is said to
+26th day. " be the Queen's advice is all trash ; it is no advice of the Queen at all............ I was
+W. R. Peart, ،، told by some of you that your overseers said that if any of you attended this meeting
+29th day, 66
+
+part 1. 66
+ they would tear down your houses. Tell them that I George William Gordon say
+ they dare not do it. It is tyranny. You must do what Hayti does. You have a
+ " bad name now, but you will have a worse one then."
+ Dr. Bruce, a friend and political supporter of Mr. Gordon, who introduced him to the
+ meeting, and took a part in it, and some others, deny that Mr. Gordon ever made
+ use of the words " You must do what Hayti does."
+ The speech, however, containing these words, was taken down at the time in some
+ careful notes by a witness (Peart), who produced the same before us. These notes were
+ well and distinctly written. It would further appear that this speech must have contained
+ some matter at least calculated to excite some alarm of disturbance, from the following
+ passage in a letter addressed to Dr. Bruce by Mr. Sydney Levien, the editor of a local
+ newspaper, in reference to this Vere meeting. " I could scarcely command vital thought
+ 66
+
+ 66
+ enough yesterday to do justice to your meeting, and against the wish of William I
+ 66
+ wrote the feeble editorial that appeared to second the noble exertions of the Vere
+Dr. R. S.
+ 66
+ people. All I desire is to shield you and them from the charge of anarchy and
+Bruce , tumult, which in a short time must follow these fearful demonstrations. How I
+35th day. " succeeded you mustjudge for yourself."
+
+=============== [printed p.33 | pdf p.40] ===============
+33
+
+ Dr. Bruce employed a reporter to attend and take notes of the speeches, and before
+ the speech of Mr. Gordon was published the draft was submitted to Dr. Bruce for
+ approval. This version of the speech was published in the " County Union " newspaper,
+ and contains no expression that could provoke the remarks of Mr. Levien's letter, and
+ Dr. Bruce himself in his evidence stated that he had said " that he would not attend any
+ more meetings," because he did not like the way in which Mr. Gordon spoke against the
+ Government and Governor Fyre.
+ This version of the speech as reported by Mr. Peart was read to Dr. Bruce, and was
+ accepted by him as correct, saving the words referring to Hayti, and one other expression
+ quite immaterial. This version wholly differs from that which appeared in the County
+ Union.
+ About three weeks before the events at Morant Bay, and shortly after his speech at
+ Vere, Mr. Gordon was at the Bank of Jamaica at Kingston, conversing with Mr. James
+ Ford, the Secretary, on the subject of that speech ; and Mr. Ford then said to him,
+ "
+
+ “
+ Supposing, Mr. Gordon, the people were to be such fools as to rise in rebellion, do D.
+ Mr.Ford,
+ James
+ you think that even in the event of their being successful in their cutting all our 23dday.
+ " throats, which is perfectly possible, in the first rising if they took us by surprise,
+ " that England either could not, or would not, avenge us amply, so that everyone of
+ " them would be killed and done away with ?" Mr. Gordon said, " Ah, Mr. Ford, you
+ 66
+ are quite mistaken there, all the powers of the Great Napoleon could not put down
+ " the rising in Hayti, and that was successful, for the troops died of disease before they
+ " could meet the people in the mountains." Mr. Ford then said, " But in India, a very
+ " short time ago, an organized armed and formidable rebellion of millions arose against
+ " the Government, and we know how they were successful at first, but it was very
+ quietly, steadily, and determinedly put down, and England's power has been kept,
+ " and so it would be here." Mr. Gordon then replied, " Mr. Ford, India is not at all
+ “
+
+ a case in point, for India is a flat country, and the English troops would overrun it
+ " and conquer it ; but this country is a mountainous country, and before the British
+ “
+ troops could reach the people in the mountains they would die of disease here."
+ He then went away observing, " Of course, this is mere abstract talking."
+ Mr. Lawrence, writing from the Rhine on the 8th of September to Mr. Gordon on
+private business, makes the following remark on local affairs, " I see by the papers that
+ " Mount Pleasant and Hall Head have been offered for sale by the Hon. W. P.
+ "
+
+ Georges. I suppose this green bay tree ( Honble. W. P. Georges) will
+ " continue to spread, while the day of retribution draws nigh for his numerous trans“
+
+ gressions, and the ex-member ofAssembly (Mr. D.) humbled."
+ On the 11th of September Mr. Gordon forwarded a letter to Mr. Lawrence, written
+on the 23d August, but mislaid, in which he says, " The case of Gordon and Ketelhodt
+" terminated yesterday again for defendant ; it seemed foredetermined. I was greatly
+66
+
+"
+ prepared for it, from what I had perceived early in the day,-more anon on this
+66
+ subject. The prejudices are very strong against me, but it shall not rest there.
+ These multiplications ofwrong are only the gatherings up of future troubles."
+ On the same 11th of September he writes, " The fact is, St. Thomas-y'-East is
+" about the very worst parish in the Island, and now the Governor has given another
+" cheer to magisterial oppression, as if it were forcing matters to a point. Verily, this
+" Governor is an evil-doer. The Lord will plenteously reward him. Again and again
+" the Baron and the Cookes are gratified."
+66
+ On the 14th of September he wrote to Mr. Lawrence at the Rhine Estate, “ I fear
+ we cannot mend public matters in St. Thomas-ye-East, so we better look to cur
+" individual circumstances more clearly. I believe the Governor and his nest or
+"
+
+ Custodes are capable of anything, but the Lord will soon scatter them as the chaff
+" before the wind." " There is just now great exultation, and a second verdict
+"
+
+“
+ against me, and Jackson removed to satisfy the Baron ! " Anguis in herba." I fancy
+66
+ you know that this means the character you refer to, and I have apprehensions that
+ your opinions may be correct. Let it all go on! Just wait and see the result
+" I do not think we were ever in more dismal times than at present in Jamaica. The
+“ ‫دو‬
+
+ Governor succours wrong and oppression to the fullest extent in every quarter.'
+ Again, on the 18th of September, he wrote to Lawrence,-" The enemies now exult,
+" and justice is silenced for the time, but it will raise its head. . The Lord will
+“
+
+ soon pluck his hand out of his bosom, and so confound the whole band of oppressors.
+" I believe this to be about one of their last flickers. Let us wait and see."
+“
+ And again, on the 21st of September, " The oppression still continues in St. Thomasye-East, and there appears every effort put forth to exasperate the poor people !
+“ Their plan is to pray to God for deliverance. You may laugh at this, and call
+
+=============== [printed p.34 | pdf p.41] ===============
+34
+
+ " it cant, but I assure you it is the most effectual plan, if you know the number of ways
+ " in which God can and often does destroy the evil-doer ! ”
+ On the 28th of September he wrote to Mr. Lawrence : " Poor Jackson was in the
+ " midst of conspiracy. Rector Cooke will get up a charge of conspiracy against any
+ 66
+
+ one over whom the Governor has power, and get him dismissed. The man, Mr. Eyre,
+ " is an arch liar, and he supports all his emissaries. The wicked shall be
+ 66
+ destroyed. This is decreed. God is our refuge and strength, a very pleasant (sic)
+ " help in trouble."
+ The news of the events of Wednesday evening the 11th of October did not reach
+ Kingston till Thursday the 12th of October at noon.
+ On the 11th October, Mr. G. W. Gordon was residing at his property, " Cherry
+ Garden," in St. Andrews, a short distance from Kingston. He was engaged in trade,
+ and had business offices in that town, where he went on that day, returning home in the
+ evening. On his return he is said by his wife to have informed her of the outbreak at
+ Morant Bay.
+ As the outbreak took place at a distance of more than thirty miles, late on the afternoon of the 11th, and was not known in Kingston till the middle of the following day,
+ it was suggested to Mrs. Gordon that probably it was on Thursday the 12th that
+ Mr. Gordon first spoke to her on the subject. Upon this she replied that " Wednesday
+ 66
+ evening he brought the news," and that " Mr. Gordon came up on the 12th, and said
+ " the outbreak at Morant Bay was true that we had heard of on the Wednesday." He
+ added, " that the feeling seemed to be so strong to put (sic) a pistol to him, and get rid
+ " of him, as they did the President of America.'
+Hon. H.
+ When the news of the events of October 11th reached Kingston on the following
+Heslop,
+18th day.
+ day, they were not fully believed by many persons there in the first instance.
+ On this day, about 2 o'clock, Mr. Lee, a friend of Mr. Gordon, mentioned to him
+ the news of what had happened at Morant Bay, and Mr. Gordon seemed much
+ distressed.
+Mr. W. Lee, Mr. Lee said, " George, I fear your agitation at Morant Bay has been the cause of
+50th day. " all this." Mr. Gordon said, " I never gave them bad advice. I only told them the
+ " Lord would send them a day of deliverance." And when speaking of Baron Ketelhodt
+ being killed, Mr. Gordon added, " I told him not to go, but he was such an obstinate
+ 66
+ man."
+Dr. Major, Dr. Major, Mr. Gordon's tenant at the Rhine, about 16 miles from Morant Bay,
+4th day. was at 7 o'clock on the morning of October 11th leaving the Rhine, in order to attend
+ the meeting of the Vestry at Morant Bay. He met Mr. Lawrence as he came out of
+ the gate, who tried to dissuade him from going, by saying, " I should strongly advise
+Mrs. Major, you not to go." Dr. Major went, however, and about 2 o'clock Mrs. Major sent to
+4th day. Lawrence for intelligence, at which hour he called on her at the Rhine, saying that " he
+ " heard nothing further than that there was a great disturbance, but that she need be
+ " under no apprehension about the Doctor, he would be quite safe, but the Baron and
+ " and Mr. Herschell he feared were doomed." This conversation was in point of time
+ before the fight had begun at Morant Bay, where, according to all the evidence, the
+ Baron and Mr. Herschell were not killed till after 5 o'clock.
+ About 3 o'clock the same afternoon Mrs. Major againmade inquiry by note sent by
+Dorothy her servant to Lawrence, and he then sent word by the servant to her " that the Doctor
+Johnson,
+4th day.
+ " would be quite safe, but Mr. Herschell and the Baron he had no hope of." About
+ the same time he also wrote to her the following note :
+ " Dear Madam,
+ " Things seem in a fearful way ; the Doctor did not seem to know of the rebellion
+ " at Morant Bay till I told him, but I beg you will not be troubled. I have no doubt
+ " the feeling will be quieted. The Volunteer force moved on the scene of action this
+ " morning at one o'clock. I will let you know if anything more transpires."
+ This note was received before four o'clock on the 11th of October, and at that time the
+ events had not yet ended in the deaths of the Custos and Mr. Herschell, nor could
+ the news of what had happened at Morant Bay have reached the Rhine at a distance of
+ sixteen miles .
+ On the 12th October, the next day, Lawrence wrote to Mrs. Major as follows : " Dear Madam,
+ " I am sorry I have no reliable news for you. I have heard a good deal, but
+ " think much of what I hear is false. There is a report about the Doctor, but the same
+ " is not true. The negroes know full well who fit for retribution."
+
+=============== [printed p.35 | pdf p.42] ===============
+35
+
+ The financial difficulties in which Mr. Gordon found himself at the time are seen from
+ some passages in the above letters.
+ On the 30th January 1865 he writes to Lawrence : " Your promise to me in the way
+ " of remittances from all quarters are getting in arrears, but I trust soon to find them
+ "
+
+ being redeemed. It wont do to put off too long, for my own necessities seem to
+ " increase, and the hope I had of relief is not realised."
+ On the 29th of April he wrote, " The Spring rents do not come in as they ought.
+ " I thank you for one pound remitted."
+ On the 10th August he wrote, " I amjust returned from the north side, and find none
+ " of your letters. I had expected one with some money of which I now stand greatly
+ " in need."
+
+ Again, on the 14th September, " At Bogg matters must be doing very badly when
+" I get no remittances ! really too bad. I had been fully expecting some money from
+“
+ you, and feel great disappointment. I am sucked dry at present."
+ And on the 18th September :-" All my sources of supply fail while I continue being
+" drawn on. I expected something from BoGG and ditto from SPRING, and I hope at
+ " Rhine you will have something to assist me with taxes. Bogg concerns are now
+" too bad."
+ On the 21st September he writes, " We are all suffering from fever and the want
+“
+ " of of (sic) money ; send me some if perchance there be any to help me out by
+ Saturday."
+ Again on the 28th instant, " I note that you are without money, and that the weather
+" is heavy. This is rather a bad state to be in ; can we raise nothing in aid of the
+" taxes ? This is also a serious question."
+ His landed property was under mortgage, and his admitted liabilities amounted to George
+above 35,000l. Airey,
+ On the 12th October he enclosed a bill of exchange on Mr. Lawrence for his 35th day.
+acceptance to reduce and retire a bill for 160l. becoming mature on the 19th of that
+month, and requested him to send what money he could as he was much in need.
+ On the 12th October Mr. Gordon wrote to Mr. Lawrence from Kingston, " I hear
+" terrible things are doing at Morant Bay. I know nothing of the proceedings or the
+"
+
+"
+ particulars, but here I am blamed for it all. I feel for the poor people of Morant
+ Bay. A steamer with detachments of troops has gone up. I wonder how it will all
+" end. The Lord have mercy. I regret that the people have acted unadvisedly.
+" This is sad matter to contemplate."
+ On Friday morning, the 13th October, he went over to Spanish Town before
+10 o'clock in the morning. The case of Gordon v. Ketelhodt had been fixed for
+argument in Court there that day. He called at the office of his attorney there, and
+asked how the matter stood, and was told that the suit was at end, in consequence
+of the death of the Baron if that fact was true. He then made inquiries as to the costs
+of the suit, whereupon his attorney declined under the serious existing circumstances to
+enter into such details. A person then present remarked to him that there was plenty
+of time for him to go to St. Thomas-in-the-East, and to exercise his influence on the
+side of order ; to which Mr. Gordon replied, " If I go to St. Thomas-in-the-East the
+" moment Martial Law is proclaimed I shall be the first man hung."
+ On Saturday the 14th October Mr. Gordon left " Cherry Garden " to pay a short Mrs. Gorvisit at Kingston with his wife, intending to return home on the following Monday don.
+the 16th.
+ Amid the excitement in that town which arose on and after the 12th October, upon
+the confirmation of the account first received from Morant Bay, Mr. Gordon's name was
+quickly associated with the authors of the disturbances. His friends and relations Mrs. Shanthereupon suggested to him on Monday the 16th to retire at once, but he positively non,
+refused, and remained where he was. On the following morning, having been sought 35th day.
+for by the Police without success, he went to the house of the Major-General commanding the troops to give himself up. There he was shortly after met by Governor Eyre Dr. Fiddes,
+and the Custos of Kingston, and by them arrested. 23dday.
+ From Kingston he was sent by sea to Morant Bay where he was put on shore, a General
+ Majorprisoner, on Friday evening the 20th October. O'Connor,
+ The next day a Court-martial was sitting for trial of prisoners there, consisting partly 31stday.
+of Members of the Legislature. Brigadier General Nelson, however, having deemed it Lt. -Colonel
+right that Mr. Gordon should not be tried by a Court composed of persons who might Nelson,
+be supposed to be influenced by local prejudices, adjourned that Court, and another 31st day.
+was convened, before which, about two o'clock the same afternoon, Mr. Gordon was
+brought for trial.
+ 15573. F
+
+=============== [printed p.36 | pdf p.43] ===============
+36
+
+ This Court consisted of Lieutenant Brand of Her Majesty's Ship " Onyx," President,
+ Lieutenant Errington, R.N., and Ensign Kelly, 4th West India Regiment, members.
+ The charges against the prisoner were for furthering the massacre at Morant Bay, and
+ at divers periods previously inciting and advising with certain insurgents, and thereby by
+ his influence tending to cause the riot.
+ Two heads of offence were drawn up, one for High Treason, the other for complicity with certain parties engaged in the rebellion, riot, and insurrection at Morant Bay.
+George F. One witness has stated that more than once during this trial, at the opening and
+Judah, during its progress, Mr. Gordon made application to postpone the trial on the ground of
+38th day.
+ want of jurisdiction of the Court to try him, and also on account of the absence of
+ material witnesses for the defence.
+ The witness, however, who deposes to this, seemed wholly unworthy of credit.
+ Neither the person who independently reported the trial for publication at the time, nor
+ the documents of the Court recording the proceedings and particulars of the trial itself,
+ make any mention of such an application, one of such importance as could hardly have
+George escaped notice.
+Young, Other persons present at the trial who heard all that passed there deny that any such
+50th day. application was made.
+ After the case against the prisoner had closed, Mr. Gordon inquired for Dr. Major,
+ who he said could prove that the state of his health had prevented him from attending
+ the Vestry meeting at Morant Bay on the 11th October.
+G. D. Ram- The Provost Marshal was sent from the Court to look for the Doctor, and on returning
+sey, 31stday. shortly afterwards said to Mr. Gordon, " Dr. Major is not in the Bay." The witness
+ Theodore Testard was then called by Mr. Gordon to prove the saine fact, but he had
+ no knowledge on the subject.
+ Considering the importance then attached to Mr. Gordon's absence from the Vestry on
+ the 11th of October it would have been much more satisfactory if some delay had been
+ allowed in order that Dr. Major might have been sent for to speak to the state of his
+ health on that day.
+ The evidence taken consisted of documents and oral testimony.
+ Some of these documents were selected from the papers of Mr. Gordon by BrigadierGeneral Nelson, and others were statements of persons taken and sworn before Magistrates, and then forwarded to Mr. Ramsay, the Provost Marshal. All these were laid
+ before the Court by the Provost Marshal .
+ They consisted of1st. Statements of 21st October separately made and sworn to by John Anderson
+ and James Gordon before a Justice of the Peace of St. Thomas-in-the-East.
+ These two persons were prisoners, and were sworn and examined orally by
+ the Court.
+ 2d. A statement of the 17th of October, purporting to be a dying declaration of
+ Thomas Johnson .
+ 3d. A joint statement of 19th October, on oath, by W. R. Peart and J. F. Humber,
+ made before a Justice of the Peace.
+ 4th. A statement of 19th October, on oath, of Charles Chevannes, at Kingston,
+ before a Justice of the Peace.
+ 5th. A statement of 18th October, of George Thomas, on oath.
+ 6th. Printed placard headed " State of the Island," above referred to.
+ 7th. Statement of 17th October, of Elizabeth Jane Gough, sworn at Kingston. She
+ was also orally examined by the Court.
+ 8th. Three letters of Mr. Gordon, to Chisholm September 11th 1865, to
+ E. C. Smith October 14th 1865, to Chisholm June 19th 1865.
+ William Robertson Peart and James Fyfe Humber, whose joint statement was read,
+ deposed to the matter spoken by Mr. Gordon at the Vere Meeting in September.
+ Both of these persons were in Jamaica at the time of the trial, and might have been
+ summoned to give oral testimony.
+ Charles Chevannes and George Thomas might also have been called as witnesses, as
+ they were living in Jamaica.
+ The written statements of these four persons had been taken in the absence of
+ Mr. Gordon, and were inadmissible as proofs against him according to the rules that
+ regulate evidence in English Courts, either Civil or Military.
+ With regard to the written statements of J. Anderson, James Gordon, and Elizabeth
+ Jane Gough, they were not legal evidence, but those persons were sworn and examined :
+
+ at the same trial.
+
+=============== [printed p.37 | pdf p.44] ===============
+37
+
+ The printed placard headed " State of the Island " is a duplicate of that above mentioned as posted up on a tree in August at Morant Bay, the original draft of which was
+proved tohave been in the handwriting of Mr. G. W. Gordon.
+ Five witnesses were sworn and examined for the prosecution, and one on behalf of the
+prisoner.
+ The evidence, oral and documentary, appears to us to be wholly insufficient to establish
+the charge upon which the prisoner took his trial.
+ He was found guilty, and sentenced to death after six hours trial.
+ After having approved and confirmed the finding and sentence, Brigadier Nelson
+forwarded the proceedings of the trial to Major General O'Connor, under cover of a
+despatch, dated 21st October 1865, 8 p.m.
+ In this despatch he states for the information of the Major General, that he considered
+it his duty fully to approve the finding and confirm the sentence, and adds, " To-morrow
+"
+ being Sunday, and there existing no military reason why the sentence should not be
+" deferred, I have preferred to delay its execution till Monday morning next at 8 o'clock. "
+The whole proceedings of the Court were enclosed for the General's information.
+ These proceedings reached the General at Kingston on the morning of the
+22d October, who, after reading them to two members of the Executive Committee,
+forwarded them the same day to Governor Eyre, with a request that he would return
+them with as little delay as possible. These proceedings were returned to the General
+the same day by Governor Eyre, who wrote at the same time that he fully concurred in
+the justice of the sentence, and in the policy of carrying it into effect.
+ On the same day Governor Eyre wrote the following letter to Brigadier-General
+Nelson from Spanish Town, dated 6 p.m.:
+ 66
+ My dear Brigadier,
+ " Your report of the trial of George William Gordon has just reached me through
+" the General, and I quite concur in the justice of the sentence, and the necessity of
+"
+
+ carrying it into effect."
+ This letter reached Brigadier Nelson before the execution of Mr. Gordon.
+ On the 23d October Brigadier General Nelson sent a despatch to Major-General
+O'Connor, announcing the execution of Mr. Gordon at 7.10 a.m. that morning.
+ On the 24th October General O'Connor transmitted, in letters to the Secretary of
+State for War and to the Military Secretary at the Horse Guards, a copy of BrigadierGeneral Nelson's despatch reporting the trial, sentence, and execution of Mr. Gordon,
+and in both letters he adds, " A copy of his Excellency the Governor's letter approving
+" the same is enclosed, in which I fully coincide."
+ Evidence was given of indignities offered to Mr. Gordon at the time of his execution,
+but those on whom most reliance can be placed negative that such was the case.
+
+ Comment on the case of Mr. Gordon .
+ Upon a careful review of this evidence we have formed the opinion that the true
+explanation of Mr. Gordon's conduct is to be found in the account which he has given
+ofhimself. " I have just gone as far as I can go, but no further." " If I wanted a
+" rebellion I could have had one long ago." " I have been asked several times to head
+"
+
+“
+ a rebellion, but there is no fear of that. I will try first a demonstration of it, but I
+"
+ must first upset that fellow Herschell, and kick him out of the Vestry, and the Baron
+ also, or bad will come of it."
+ Mr. Gordon might know well the distinction between a " rebellion" and a " demonstration of it. " He might be able to trust himself to go as far as he could with safety,
+and no further. But that would not be so easy to his ignorant and fanatical followers.
+They would find it difficult to restrain themselves from rebellion when making a
+demonstration of it.
+ If a man like Paul Bogle was in the habit of hearing such expressions as those contained in Gordon's letters, as that the reign of their oppressors would be short, and that
+the Lord was about to destroy them, it would not take much to convince him that he
+might be the appointed instrument in the Lord's hand for effecting that end ; and it is
+clear that this was Bogle's belief, as we find that after the part he had taken in the
+massacre at Morant Bay he, in his chapel at Stony Gut, returned thanks to God that
+" he had gone to do that work, and that God had prospered him in his work."
+ It is clear too that the conduct of Gordon had been such as to convince both friends
+and enemies of his being a party to the rising.
+ Welearn from Mr. Gordon himself, that in Kingston, where he carried on business,
+this was the general belief as soon as the news of the outbreak was received.
+ F2
+
+=============== [printed p.38 | pdf p.45] ===============
+38
+
+ But it was fully believed also by those engaged in the outbreak. Bogle did not
+hesitate to speak of himself as acting in concert with him. When Dr. Major was
+dragged out of his hiding place on the night of the 11th of October, he saved himself
+by exclaiming that Mr. Gordon "would not wish to have him injured," and when
+Mr. Jackson made a similar appeal for his own life to the murderers of Mr. Hire it
+appears to have been equally successful. The effect which was likely to follow the
+meetings which took place during the Spring and Summer of 1865, in some of which
+Mr. Gordon took a part, was foreseen by one of his most ardent supporters, who, writing
+to a common friend on the subject of an article he had inserted in a newspaper respecting
+the Vere meeting, used these words, " All I desire is to shield you from the charge of
+"
+ anarchy and tumult, which in a short time must follow these fearful demonstrations."
+ Although, therefore, it appears exceedingly probable that Mr. Gordon, by his words
+and writings, produced a material effect on the minds of Bogle and his followers, and
+did much to produce that state of excitement and discontent in different parts of the
+Island, which rendered the spread of the insurrection exceedingly probable, yet we
+cannot see, in the evidence which has been adduced, any sufficient proof either of his
+complicity in the outbreak at Morant Bay or of his having been a party to a general
+conspiracy against the Government.
+ On the assumption that, if there was in fact a wide spread conspiracy, Mr. G. W. Gordon must have been a party to it, the conclusion at which we have arrived in his case is
+decisive as to the non-existence of such a conspiracy.
+ The only evidence beyond that of vague rumours in any degree tending to show an
+intended rising at some future time was given by one witness, who deposed to a statement made by an insurgent engaged in attacking a property in the neighbourhood of
+Bath, that " it was not their time ; that Christmas was their time, and they were
+66
+
+“
+ preparing for it, but as it had come on so soon they must go on and mash down
+ everything, and kill all the white and brown."
+ It appears also that in one parish two or three threatening letters were addressed to
+several persons, and that drillings were supposed to be taking place.
+ Notwithstanding the alleged fact that threatening letters were previously unknown in
+the Island, we were unable to attach any importance to those brought to our notice. As
+regards the drillings it was found upon investigation at the time that they were wholly
+unconnected with illegal objects.
+ Respecting an alleged change in the manner and deportment of the negroes, the
+evidence was very conflicting.
+ We think, however, that various meetings had been held in the course of the summer,
+at which speeches were made, tending to cause excitement and discontent. The effect of
+these speeches was the greater from being addressed to an ill-educated and impulsive
+people.
+ Upon this point also the evidence of Mr. Fyfe, a Stipendiary Magistrate long resident
+in the Island, is deserving of attention.
+ He speaks of an opinion which he formed and communicated at the time to the
+Government. He says, " There was a general excitement that led me to think there
+" would be a disturbance, and I wrote to Mr. Hosack to that effect, after the meeting
+" in Vere, to say that I thought the Law Officers of the Crown ought to interfere ; that
+66
+
+ things were going too far , that is, the meetings held by Mr. Gordon; that we had no
+" Police, and that aconspiracy might be hatched next door to our Police Station, without
+66
+
+ our knowing anything about it."
+
+ CASE OF THE POLITICAL PRISONERS .
+
+ Among the papers of Mr. G. W. Gordon in the hands of the Government were_found
+documents the contents of which induced Mr. Eyre to direct the arrest of Mr. Levien
+and Dr. Bruce.
+ These were political friends of Mr. G. W. Gordon.
+ At the time of their arrest they were living out of the district in which Martial Law
+was in operation, and were sent to Morant Bay.
+ They were kept in prison there until after the expiration of Martial Law, when they
+procured their own discharge by writ of habeas corpus.
+ Some other persons who were arrested in Kingston for political offences were also sent
+to Morant Bay, and there kept prisoners.
+ Doubts, however, were entertained by Brigadier-General Nelson as to his power to
+bring these prisoners to trial before a Court-martial.
+
+=============== [printed p.39 | pdf p.46] ===============
+39
+
+ He accordingly decided on his own responsibility not to do so, and communicated his
+ decision to Major General O'Connor.
+ The Major General " coincided in this view," and expressed his opinion that " although
+ " there might be authority to try them by Court-martial, they would not be justified in
+ " doing so.
+ Mr. Eyre considered Brigadier General Nelson " had exercised a wise and just
+ " discrimination in coming to this determination, if he had satisfied himself in each case
+ " that there was no evidence directly connecting the prisoners with the immediate
+ " outbreak at St. Thomas-in-the-East.'
+
+ THE DURATION OF MARTIAL LAW.
+
+ We have now narrated the means used for the suppression of the insurrection, and
+ have commented on the conduct of some of those engaged in the suppression.
+ The number of persons concerned in the original outbreak, and in the deeds of
+ violence by which it was accompanied and followed, was undoubtedly large; the
+ number also of those who availed themselves of a time of disorder to plunder their
+ neighbours was far larger ; but the punishments inflicted seem to us to have been far
+ greater than the necessity required. Nor can we shut our eyes to the fact that among
+ the sufferers during the existence of martial law there were many who were neither
+ directly or indirectly parties to the disturbances which it was the object of those placed
+ in authority to suppress.
+ We fear that this to a certain extent must ever be the case when the ordinary laws,
+ framed for the suppression of wrong-doing and the protection of the well-doer, are for a
+ time suspended.
+ The circumstances which are supposed to render necessary their suspension are almost
+ sure to be such as to excite both fear and passion ; and some injustice, and we fear some
+ cruelties will be certain at such times to be perpetrated ; but we think that much which
+is now lamented might have been avoided if clear and precise instructions had been
+given for the regulation of the conduct of those engaged in the suppression, and every
+officer had been made to understand that he would be held responsible for the slightest
+departure from those instructions. It does not seem reasonable to send officers upon a
+very difficult, and perfectly novel, service without any instructions, and to leave everything to their judgment.
+ But as under any circumstances, however carefully instructions may be prepared, and
+however implicitly obeyed, the evils of martial law must be very great, we are driven
+to consider whether martial law might not have been terminated at an earlier period
+than the expiration of the 30 days allowed by the statute.
+ We know how much easier it is to decide this question after than before the event,
+and we are aware, too, that sometimes the success of the measures adopted for the
+prevention of an evil deprive the authors of those measures of the evidence they would
+otherwise have had of their necessity.
+ We have endeavoured therefore to place ourselves as far as is possible in the position
+of the Governor and his Advisers at the time their determination was arrived at. It was
+not till the 21st of October that the Maroons marched to Torrington, which evidently
+was the stronghold of the insurgents, and which place, from the marks of preparation
+found there, it had been intended to defend.
+ After, however, firing a few shots, they fled at the approach of the Maroons, and on
+the following Monday, the 23d, Paul Bogle was apprehended with his few remaining
+followers, and on the 24th was conveyed as a prisoner to Morant Bay.
+ From this time it must have been clear to all that the rising in St. Thomas-in-theEast was put down, and that the only thing to be feared was simultaneous risings in
+other parts of the Island. The question to be considered in deciding upon the conduct
+of the Government is not whether such risings were in fact likely to take place, but
+whether the Government, with the information then in their hands, had reasonable
+grounds for apprehending that they might take place.
+ It will be seen that they were receiving almost daily reports from different parts of the
+Island which must have led them to the conclusion that considerable danger of such
+risings existed. They could not at the time investigate, as we have, the grounds on
+which those reports rested.
+ They were forwarded by the custodes of different parishes, in whom the Government
+was bound to place a certain amount of confidence, and they would have incurred a serious
+responsibility if, with this information before them, they had thrown away the advantage
+
+=============== [printed p.40 | pdf p.47] ===============
+40
+
+of the terror which the very name of martial law is calculated to create in a population
+such as that which exists in this Island.
+ But there was a course which might have been pursued by which that advantage
+would have been secured, and yet many of the evils ordinarily attendant upon martial
+law avoided.
+ On the 30th of October it was formally stated by the Governor that the wicked
+rebellion lately existing in certain parts of the County of Surry had been subdued, and
+that the chief instigators thereof and actors therein had been visi ed with the punishment due to their heinous offences, and that he was certified that the inhabitants of the
+districts lately in rebellion were desirous to return to their allegiance.
+ From this day at any rate there could have been no necessity for that promptitude in
+the execution of the law which almost precluded a calm inquiry into each man's guilt or
+innocence .
+ Directions might and ought to have been given that courts-martial should discontinue their sittings ; and the prisoners in custody should then have been handed
+over for trial by the ordinary tribunals.
+ We cannot conclude our inquiry without expressing our regret at the tone of levity
+which is to be found in the letters and language of some of the officers while engaged
+in serious and responsible duties.
+
+ CONCLUSIONS.
+
+ Upon the subjects proposed for our inquiry we have come to the following conclusions :
+ I.
+
+ That the disturbances in St. Thomas-in-the-East had their immediate origin in a
+planned resistance to lawful authority.
+ II .
+
+ That the causes leading to the determination to offer that resistance were manifold :(1.) That a principal object of the disturbers of order was the obtaining of land
+ free from the payment of rent.
+ (2.) That an additional incentive to the violation of the law arose from the want of
+ confidence generally felt by the labouring class in the tribunals before w hich
+ most of the disputes affecting their interests were carried for adjudication.
+ (3.) That some, moreover, were animated by feelings of hostility towards political
+ and personal opponents, while not a few contemplated the attainment of their
+ ends by the death or expulsion of the white inhabitants of the Island.
+ III .
+
+ That though the original design for the overthrow of constituted authority was confined to a small portion of the parish of St. Thomas-in-the-East, yet that the disorder in
+fact spread with singular rapidity over an extensive tract of country, and that such was
+the state of excitement prevailing in other parts of the Island that had more than a
+momentary success been obtained by the insurgents, their ultimate overthrow would
+have been attended with a still more fearful loss of life and property.
+ IV .
+
+ That praise is due to Governor Eyre for the skill, promptitude, and vigour which he
+manifested during the early stages of the insurrection ; to the exercise of which qualities
+its speedy termination is in a great degree to be attributed.
+ V.
+
+ That the Military and Naval operations appear to us to have been prompt and
+judicious .
+
+=============== [printed p.41 | pdf p.48] ===============
+41
+
+ VI .
+
+ That by the continuance of martial law in its full force to the extreme limit of its
+statutory operation the people were deprived for a longer than the necessary period of
+the great constitutional privileges by which the security of life and property is provided
+for.
+
+ Lastly.
+ That the punishments inflicted were excessive.
+ (1.) That the punishment of death was unnecessarily frequent.
+ (2.) That the floggings were reckless, and at Bath positively barbarous.
+ (3.) That the burning of 1,000 houses was wanton and cruel.
+ All which we humbly submit to Your Majesty's gracious consideration.
+
+ (Signed) H. K. STORKS, Lt. General.
+ RUSSELL GURNEY.
+
+ J. B. MAULE .
+
+ CHARLES S. ROUNDELL, Secretary,
+ King's House, Spanish Town, 9th April 1866.
