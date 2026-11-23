@@ -14,7 +14,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 const out = path.resolve("build/morant-bay-people"),
-  models = "games/_morant-bay/site/models";
+  models = "games/morant-bay/site/models";
 mkdirSync(out, { recursive: true });
 mkdirSync(models, { recursive: true });
 /* --repack (or REPACK=1): pack again from the bodies already built in build/morant-bay-people, with no Blender (after a change to tools/people/pack.mjs). */

@@ -1,12 +1,12 @@
-# Morant Bay, 1865 (working title) (`games/_morant-bay/`, first playable build)
+# Morant Bay, 1865 (working title) (`games/morant-bay/`, first playable build)
 
 The next game (owner, 23 November 2026). It tells the Morant Bay rebellion and what followed, from Stony Gut in St Thomas-in-the-East, through a fictional girl. It is a **Mature 13+** game. Build it in a folder that starts with `_` so `tools/dist.mjs` does not publish it, and drop the `_` only when the owner says.
 
-**Status (23 November 2026):** a first playable build of all six chapters is in `games/_morant-bay/` (not published: the folder starts with `_`). It plays from start to end in the autoplayer (`?auto=1`, AUTO END 71), and the audit, faces, layout and held checks report 0 in all three places (`node tools/review/run-test.mjs _morant-bay audit,layout,held`). Everything marked "to check" is unconfirmed. See "What is built" below.
+**Status (23 November 2026):** a first playable build of all six chapters is in `games/morant-bay/` (on the menu since 23 November 2026, at the owner's request, under Mature 13+). It plays from start to end in the autoplayer (`?auto=1`, AUTO END 71), and the audit, faces, layout and held checks report 0 in all three places (`node tools/review/run-test.mjs morant-bay audit,layout,held`). Everything marked "to check" is unconfirmed. See "What is built" below.
 
 ## What is built (23 November 2026)
 
-- **The kit:** the Mad Master's story kit (story table, places, director, journal, quiz) in `games/_morant-bay/src/`: `steps.js` (the story table), `content.js` (every word), `places.js` (Stony Gut, Morant Bay, Spanish Town), `mbscenery.js` (the 1865 buildings), `cast.js`.
+- **The kit:** the Mad Master's story kit (story table, places, director, journal, quiz) in `games/morant-bay/src/`: `steps.js` (the story table), `content.js` (every word), `places.js` (Stony Gut, Morant Bay, Spanish Town), `mbscenery.js` (the 1865 buildings), `cast.js`.
 - **People:** 19 bodies in `tools/morant-bay/people/`, built by `tools/garvey/era.py` (`BPY_PYTHON=~/venv/bin/python3 node tools/morant-bay/build-people.mjs`). Country clothes after the 1865 album photographs: head ties, white cotton, rolled trousers, bare feet, low straw hats (the new recipe keys `crown` and `wrapoff`, docs/PIPELINE.md). Hannah's family, Miss Ada and Deacon Clarke are fictional.
 - **Bogle** (`mb_bogle`): first pass at the 1959 photograph: a long face with high cheekbones, a broad nose, full lips, close-cropped hair, a dark three-piece suit (the fitted suit) with an open white collar; the photograph's light neckcloth is not made yet. The owner should judge the face against the photograph. He never speaks; tapping him gives Hannah's own thought.
 - **Gordon** (`mb_gordon`): built, but not yet shown in a scene. The recipe asks for spectacles and side-whiskers that `era.py` does not make yet: **work to do** before he appears.
@@ -162,7 +162,7 @@ All reference images are in `docs/games/morant-bay/images/` (see `INDEX.md` ther
 **Research still open:** Heuman, *The Killing Time* (a lending copy on [archive.org](https://archive.org/details/killingtimemoran0000heum), not read: who captured Bogle, the oath); Part II of the report for Bogle's and Gordon's courts-martial, Mrs Geoghegan's trial, the courthouse and Stony Gut; check each Voice on the page image; Eyre's January 1866 despatch against the Blue Book; 1865 uniforms and clothes.
 
 **Build order** (`docs/STANDARD.md` section 5):
-1. Start `games/_morant-bay/` from `games/_template/` and wire the checks (`?test=audit`, `held`, `layout`, `cloth`, `walkers`, `skin`, `flow`, `resume`) before the first pull request.
+1. Start `games/morant-bay/` from `games/_template/` and wire the checks (`?test=audit`, `held`, `layout`, `cloth`, `walkers`, `skin`, `flow`, `resume`) before the first pull request.
 2. A vertical slice first: the Parade and courthouse at 3 to 4 pm on 11 October, Hannah, the crowd, and the chapter 4 cinematic behind its card. Show it to the owner.
 3. Recipes in `tools/morant-bay/people/`: Hannah, Mother, Gran, Father, the little brother, Bogle (the photograph), Gordon (the note), market women, villagers, constables, Volunteers, soldiers and marines, Maroons. Stand-ins are listed in the game's doc and marked as work to do (rule 3).
 4. The other chapters, the journal ("Dig deeper" carries the Commission's findings), the menu card (`data-year` 1865, `data-age="13"`, `data-warn`), the autoplayer, and the facts check against the sources here.
