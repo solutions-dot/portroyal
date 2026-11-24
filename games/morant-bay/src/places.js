@@ -481,7 +481,7 @@ function gut() {
   };
   /* the hour and what stands or has burned, by step */
   Q.enter = (stage) => {
-    const night = (stage >= 30 && stage <= 34) || stage === 59,
+    const night = (stage >= 30 && stage <= 34) || stage === 58 || stage === 59,   /* 58 too: the cave film ends at night, and day came back for one step before night again */
       morn = stage >= 35 && stage < 40,
       martial = stage >= 50,
       burnt = stage >= 58;
@@ -792,10 +792,17 @@ function bay() {
   /* listening for the shells (chapter 4): the camera looks east up the road, a far line of people appears in the dust */
   const far = add(Q, S.farCrowd(30, 10, 4), 60, 6.4, 0, Math.PI / 2);
   far.visible = false;
+  /* the dust they raise on the road (the look's own words: "Dust over the road from the east") */
+  const dust = add(Q, S.smoke(14, { rise: 1.2, spread: 7, size: 5.5, tint: 0xa88a62, opacity: 0.7 }), 62, 6.4, 1.2);
+  dust.visible = false;
+  dust.traverse((o) => (o.userData.noAudit = true));
   Q.reveal.shells = (seen) => {
     const k = K(seen);
     far.visible = k > 0.2 && k < 1;
     far.position.x = mix(80, 58, span(k, 0.2, 1));
+    dust.visible = far.visible;
+    dust.position.x = far.position.x + 2.5;
+    if (dust.visible) dust.userData.tick(k * 9);
   };
   point(Q, "road", 19, 4.6, "the east road");
   /* the notice nailed to the shed post (chapter 6) */

@@ -825,7 +825,7 @@ export function farCastle(s = 1) {
   return g;
 }
 /* smoke from a chimney or a cook fire: a few soft puffs that rise and thin. tick(t) moves them; nothing is made per frame. */
-export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8b0a8 } = {}) {
+export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8b0a8, opacity = 0.34 } = {}) {
   const g = grp(),
     puffs = [];
   for (let i = 0; i < n; i++) {
@@ -840,7 +840,7 @@ export function smoke(n = 6, { rise = 3.4, spread = 0.7, size = 1.2, tint = 0xb8
         s = puffs[i];
       s.position.set(Math.sin(i * 2.3 + k * 2) * spread * k + k * spread * 1.4, k * rise, Math.cos(i * 1.7) * spread * k * 0.6);
       s.scale.setScalar(size * (0.5 + k * 1.3));
-      s.material.opacity = 0.34 * Math.sin(k * Math.PI);
+      s.material.opacity = opacity * Math.sin(k * Math.PI);
     }
   };
   g.userData.tick(0);
