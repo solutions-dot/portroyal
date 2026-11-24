@@ -43,10 +43,13 @@ function facesOf(o) {
   return [...map.values()];
 }
 const nameOf = (o) => { for (let p = o; p; p = p.parent) if (p.name && !/^(Scene|Group|Object3D)$/.test(p.name)) return p.name; return o.geometry.type; };
-export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}) {
+function collect(root) {   /* every flat, axis-square face of the place, measured once */
   root.updateMatrixWorld(true);
   const all = [];
   root.traverse((o) => { if (skip(o)) return; for (const f of facesOf(o)) all.push({ ...f, o }); });
+  return all;
+}
+export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}, all = collect(root)) {
   const groups = new Map();
   for (const f of all) { const key = f.k + ':' + f.s; (groups.get(key) || groups.set(key, []).get(key)).push(f); }
   const out = [], seen = new Set();
@@ -74,8 +77,9 @@ export function settleFights(root, opts) {
      walked: owner, Spanish Town in The Mad Master.) Up to sixteen rounds catch faces that only fight once others are settled. */
   const MAXL = 48, level = (o) => Math.round(-offset(o) / 4);
   let n = 0;
+  const all = collect(root);   /* the faces do not move while they are settled, only their materials change: measured once (each round measured every triangle again, and the whole-place audit timed out) */
   for (let round = 0; round < 16; round++) {
-    const fights = findFights(root, opts);
+    const fights = findFights(root, opts, all);
     if (!fights.length) break;
     const under = new Map();   /* outer mesh -> the inner meshes it must sit over */
     for (const f of fights) {
