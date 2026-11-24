@@ -120,6 +120,71 @@ if (!Q.has('nohaze')) {
   const prev = THREE.Material.prototype.onBeforeCompile;
   THREE.Material.prototype.onBeforeCompile = function (shader, r) { if (shader.uniforms && 'fogColor' in shader.uniforms) Object.assign(shader.uniforms, HAZE); if (prev) prev.call(this, shader, r); };
 }
+{ const p2 = THREE.Material.prototype.onBeforeCompile; THREE.Material.prototype.onBeforeCompile = function (shader, r) { p2.call(this, shader, r); const k = clothKind(this); if (k) addCloth(shader, k); else if (grainOK(this)) addGrain(shader); }; }
+
+/* ---------- 7. cloth with a weave ---------- */
+/* clothes read as cloth, not plastic: a fine weave and a little unevenness of colour, drawn by the shader from each point's place on the body at rest (the
+   clothes have no texture coordinates), so it stays on the cloth as it bends. Wool (coats, jackets, waistcoats, breeches, caps): a diagonal twill and a
+   heathered colour; linen and cotton (shirts, skirts, aprons, neckcloths, wraps): a plain weave. The weave fades away where it is finer than a pixel, so it
+   shows in close-ups and talk scenes and never shimmers far off. Matched by material name, on the full bodies only (the phone and crowd copies share one
+   material). ?noweave to compare. */
+const WOOL = /^(Coat|Jacket|Waistcoat|Breeches|Cap|Cardigan|Vest|Facings|Lapels|Tam)$/, LINEN = /^(Shirt|Skirt|Apron|Bands|Wrap|Collar|Scarf|Sock|Pocket|ArmBand|Bonnet)$/;
+const clothKind = (m) => (Q.has('noweave') || !m || !m.isMeshStandardMaterial ? 0 : WOOL.test(m.name) ? 1 : LINEN.test(m.name) ? 2 : 0);
+const CLOTH_GLSL = `
+varying vec3 vClothPos;
+float cHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float cNoise(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(cHash(i), cHash(i + vec3(1,0,0)), f.x), mix(cHash(i + vec3(0,1,0)), cHash(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(cHash(i + vec3(0,0,1)), cHash(i + vec3(1,0,1)), f.x), mix(cHash(i + vec3(0,1,1)), cHash(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float cWeave(vec3 p, float kind) {      /* thread height, 0..1 */
+  float u = (p.x + p.z), v = p.y;
+  if (kind < 1.5) { float per = 0.0026; float d = (u + v) / per; return 0.5 + 0.5 * sin(d * 6.2831) * (0.75 + 0.25 * sin(v / per * 3.1416)); }
+  float per = 0.0018; return 0.5 + 0.25 * (sin(u / per * 6.2831) + sin(v / per * 6.2831));
+}
+vec3 cBump(vec3 pos, vec3 n, float h) {
+  vec3 dpx = dFdx(pos), dpy = dFdy(pos); float dhx = dFdx(h), dhy = dFdy(h);
+  vec3 r1 = cross(dpy, n), r2 = cross(n, dpx); float det = dot(dpx, r1);
+  vec3 g = sign(det) * (dhx * r1 + dhy * r2); return normalize(abs(det) * n - g);
+}`;
+function addCloth(shader, kind) {
+  shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vClothPos;').replace('#include <begin_vertex>', '#include <begin_vertex>\n\tvClothPos = position;');
+  shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\n' + CLOTH_GLSL)
+    .replace('#include <color_fragment>', `#include <color_fragment>
+	float cFw = length(fwidth(vClothPos));
+	float cMot = mix(0.5, cNoise(vClothPos / 0.006), 1.0 - smoothstep(0.0015, 0.004, cFw)) * 0.5 + cNoise(vClothPos / 0.025) * 0.5;      /* uneven threads and slubs, the fine ones only where they are several pixels across (finer, they sparkled) */
+	diffuseColor.rgb *= 1.0 + ${kind === 1 ? '0.12' : '0.06'} * (cMot - 0.5) * (1.0 - smoothstep(0.008, 0.02, cFw));`)
+    .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+	{ float cK = ${kind}.0, cPer = cK < 1.5 ? 0.0026 : 0.0018;
+	  float cAmp = (1.0 - smoothstep(cPer * 0.08, cPer * 0.16, cFw)) * 0.00012;      /* only where a thread is eight pixels or more: finer, the weave beat against the pixels in moire bands */
+	  float cSl = (1.0 - smoothstep(0.0015, 0.004, cFw)) * 0.0003;      /* the slubs, as soft bumps, where they are several pixels across */
+	  if (cAmp + cSl > 0.0) normal = cBump(-vViewPosition, normal, cAmp * cWeave(vClothPos, cK) + cSl * cMot); }`);
+}
+/* ---------- 6. grain on plain surfaces ---------- */
+/* every plain-coloured surface of a place (no picture of its own, not see-through, not glowing, not metal, not a body; a place's surfaces merged by engine/batch.js count) gets a gentle grain from its place in
+   the world, so it needs no texture coordinates and nothing to download: broad weathering over a metre or two, mottling of a few centimetres, and a fine
+   roughness that shows only close up and fades where it is finer than a pixel. A wall, a floor or the ground is no longer one flat colour. A material
+   marked userData.noGrain keeps its plain colour. ?nograin to compare. */
+const grainOK = (m) => !Q.has('nograin') && m && (m.isMeshStandardMaterial || m.isMeshLambertMaterial || m.isMeshPhongMaterial) && !m.map && (!m.vertexColors || /_colours$/.test(m.name || '')) && !m.transparent
+  && !(m.userData && m.userData.noGrain) && !(m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > 0.05) && !((m.metalness || 0) > 0.5) && m.side !== THREE.BackSide && !clothKind(m);
+const GX = (+Q.get('grainx') || 1.8).toFixed(2);   /* ?grainx=5: the grain made stronger, to see where it lands */
+function addGrain(shader) {
+  shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vGrainPos;').replace('#include <begin_vertex>',
+    '#include <begin_vertex>\n\t{ vec4 gp = vec4( transformed, 1.0 );\n\t#ifdef USE_INSTANCING\n\tgp = instanceMatrix * gp;\n\t#endif\n\tvGrainPos = ( modelMatrix * gp ).xyz; }');
+  const fn = CLOTH_GLSL.replace('varying vec3 vClothPos;', 'varying vec3 vGrainPos;');
+  shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\n' + fn)
+    .replace('#include <color_fragment>', `#include <color_fragment>
+	float gFw = length(fwidth(vGrainPos));
+	float gBroad = cNoise(vGrainPos / 1.6) * 0.6 + cNoise(vGrainPos / 0.45) * 0.4;
+	float gMid = mix(0.5, cNoise(vGrainPos / 0.05), 1.0 - smoothstep(0.004, 0.012, gFw));
+	diffuseColor.rgb *= 1.0 + ${GX} * (0.10 * (gBroad - 0.5) + 0.07 * (gMid - 0.5));`)
+    .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+	#ifndef FLAT_SHADED
+	{ float gA = (1.0 - smoothstep(0.0012, 0.0035, gFw)) * 0.0004;
+	  if (gA > 0.0) normal = cBump(-vViewPosition, normal, gA * cNoise(vGrainPos / 0.008)); }
+	#endif`);
+}
+const ckPrev = THREE.Material.prototype.customProgramCacheKey;
+THREE.Material.prototype.customProgramCacheKey = function () { const k = clothKind(this); return ckPrev.call(this) + (k ? '|cloth' + k : grainOK(this) ? '|grain' : ''); };
 
 /* ---------- 2. the colour grade ---------- */
 /* a gentle grade over the finished picture, on every device, worked out from the place's own lights each frame and eased between moods: a low, warm sun gives
@@ -200,6 +265,41 @@ function composerFor(renderer, scene, camera, st) {
   return st.comp;
 }
 
+/* ---------- 8. the sky: the sun, its halo and the glow of the horizon ---------- */
+/* over whatever sky a game draws, a large dome round the camera adds light where the sky shows (nothing nearer is in front, so buildings, hills and trees
+   hide it): a sun disc with a soft halo (blooming on computers), and when the sun is low a warm glow along the horizon on its side, as at sunrise and sunset;
+   at night (the game's sun is then the moonlight) only a faint halo. Colours and strength come from the place's own sun. A game's own moon, stars and
+   clouds stay. ?nosun to compare. */
+const SKYGLOW = {
+  uniforms: { sunDir: { value: new THREE.Vector3(0, 1, 0) }, sunCol: { value: new THREE.Color() }, disc: { value: 1 }, low: { value: 0 }, halo: { value: 1 } },
+  vertexShader: 'varying vec3 vDir; void main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform vec3 sunDir, sunCol; uniform float disc, low, halo; varying vec3 vDir;
+    void main() { vec3 d = normalize(vDir); float c = max(dot(d, sunDir), 0.0);
+      float g = halo * (0.11 * pow(c, 10.0) + 0.3 * pow(c, 80.0)) + disc * smoothstep(0.99955, 0.99975, c) * 6.0;
+      vec2 h = normalize(d.xz + 1e-5), s = normalize(sunDir.xz + 1e-5);
+      g += low * exp(-abs(d.y + 0.02) * 9.0) * pow(max(dot(h, s), 0.0), 2.0) * 0.55;
+      gl_FragColor = vec4(sunCol * g * step(-0.05, d.y), 1.0); }`,
+};
+function skyGlow(scene, camera, st) {
+  if (Q.has('nosun')) return;
+  if (!st.glowSky) {
+    const m = new THREE.ShaderMaterial({ ...SKYGLOW, uniforms: THREE.UniformsUtils.clone(SKYGLOW.uniforms), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, depthTest: true, fog: false, side: THREE.BackSide });
+    st.glowSky = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), m);
+    Object.assign(st.glowSky, { frustumCulled: false, renderOrder: -1, name: 'skyGlow' }); st.glowSky.raycast = () => {};
+    st.glowSky.userData.noAudit = st.glowSky.userData.noAO = st.glowSky.userData.noShadow = true;
+  }
+  const g = st.glowSky; if (g.parent !== scene) scene.add(g);
+  const sun = st.sun; g.visible = !!(sun && sun.intensity > 0 && camera.isPerspectiveCamera);
+  if (!g.visible) return;
+  const r = camera.far * 0.9; g.scale.setScalar(r); g.position.copy(camera.position);
+  const u = g.material.uniforms, d = u.sunDir.value.copy(sun.position); if (sun.target) d.sub(sun.target.position); if (d.lengthSq() < 1e-6) d.set(0, 1, 0); d.normalize();
+  const night = 1 - Math.min(1, sun.intensity / 1.2), warm = Math.max(0, sun.color.r - sun.color.b);
+  u.sunCol.value.copy(sun.color).multiplyScalar(Math.min(1.5, sun.intensity / 2));
+  u.disc.value = (1 - night) * (d.y > -0.02 ? 1 : 0);
+  u.halo.value = 1 - 0.6 * night;
+  u.low.value = (1 - night) * Math.min(1, Math.max(0, (0.45 - d.y) / 0.35)) * Math.min(1, warm / 0.3 + 0.2);
+}
+
 /* ---------- the frame ---------- */
 export function draw(renderer, scene, camera) {
   let st = ST.get(renderer); if (!st) ST.set(renderer, (st = { seen: 0 }));
@@ -210,6 +310,7 @@ export function draw(renderer, scene, camera) {
     HAZE.fogSunColor.value.copy(st.sun.color).multiplyScalar(Math.min(1, st.sun.intensity / 2.5));
   } else HAZE.fogSunColor.value.setRGB(0, 0, 0);
   easeMood(st, dt);
+  skyGlow(scene, camera, st);
   if (!Q.has('nocontact')) contactShadows(scene, !renderer.shadowMap.enabled || !st.sun || !st.sun.castShadow);   /* 5. a soft shadow under people where no sun shadow is drawn */
   let e0, i0, hi0;
   if (h) {
