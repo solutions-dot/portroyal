@@ -16,11 +16,12 @@ async function model(n) { await script(dir + n + '.js'); const b = atob(window._
   return new Promise((res, rej) => loader.parse(u.buffer, '', (g) => res(repairLegacyVertexColours(g)), rej)); }
 /* torn cloth: an edge of a garment (not skin, hair or eyes) that is more than 2.6 times, and 3 cm, longer than at rest. A joint stretches cloth a little; a point that follows
    the wrong bone pulls a long spike out of it. Returns how many such edges and the worst ratio. */
+const WHERE = new URLSearchParams(location.search).has('where');
 function torn(body) { let n = 0, worst = 0; const a = new THREE.Vector3(), b = new THREE.Vector3(), ra = new THREE.Vector3(), rb = new THREE.Vector3(); let worstAt = '';
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible) return; const nm = o.material.name || o.name; if (/^(Skin|Body|Hair|Human|Beard|Moustache|Locks|Crowd)/.test(nm)) return; const pos = o.geometry.attributes.position, idx = o.geometry.index; if (!idx) return; const seen = new Set();
     for (let t = 0; t < idx.count; t += 3) for (let k = 0; k < 3; k++) { const i = idx.getX(t + k), j = idx.getX(t + (k + 1) % 3), key = i < j ? i * 1e6 + j : j * 1e6 + i; if (seen.has(key)) continue; seen.add(key);
       ra.fromBufferAttribute(pos, i); rb.fromBufferAttribute(pos, j); const r = ra.distanceTo(rb); if (r < 0.004) continue; a.copy(ra); b.copy(rb); o.applyBoneTransform(i, a); o.applyBoneTransform(j, b); const d = a.distanceTo(b);
-      if (d > r * 2.6 && d - r > 0.03) { n++; if (d / r > worst) { worst = d / r; worstAt = nm; } } } });
+      if (d > r * 2.6 && d - r > 0.03) { n++; if (d / r > worst) { worst = d / r; worstAt = nm + (WHERE ? ' at rest ' + ra.toArray().map((v) => v.toFixed(3)).join(',') : ''); } } } });   /* with &where, the worst edge's place at rest too */
   return { n, worst, worstAt }; }
 /* hats: each hat a body carries, measured on the standing body against its own skull. A crown more than 6.5 cm above the top of the skull is too tall (a top hat is the one
    kind that may be: it is listed in the baseline); a hat whose lowest point is less than 4.5 cm below the top of the skull rides high; one wider than 2.3 heads is too wide. */

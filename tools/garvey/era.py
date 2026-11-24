@@ -297,6 +297,19 @@ parts.append(('shirt',piece('Shirt','helper-tights',lambda c:c.z>((HIP+0.095 if 
 def smooth_shoulders(bm):      # the later coat: where the thin sleeve meets the thicker body cloth, a few points over the shoulder stood up as small fins; even them out
     vs=[v for v in bm.verts if SX*0.75<abs(v.co.x)<SX*1.15 and v.co.z>NECK-0.16*s]
     for _ in range(4): bmesh.ops.smooth_vert(bm,verts=vs,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    # then the shoulder slopes (handoff item 12, 24 November 2026: the shoulders stood out square, like a pad): from the neck out to the armhole the cloth is drawn
+    # down toward the body's own slope, so the 22 mm of room it has over the chest falls away to about 8 mm at the shoulder point. Only the top of the shoulder moves
+    # (above the armpit and outside the neck), and never into the body: a ray to the skin limits each point
+    _sb=bmesh.new(); _sb.from_mesh(h.data); _sd=_sb.verts.layers.deform.verify(); bmesh.ops.delete(_sb,geom=[f for f in _sb.faces if not all(v[_sd].get(GI['body'],0)>0 for v in f.verts)],context='FACES'); tree=BVHTree.FromBMesh(_sb); _sb.free(); top=[v for v in bm.verts if SX*0.45<abs(v.co.x)<SX*1.08 and v.co.z>SH.z-0.06*s and v.co.z<NECK+0.01*s]      # the skin alone: the mesh also holds MakeHuman's helper shapes, which stand clear of it
+    _sl=[]
+    for v in top:
+        k=sstep(SX*0.45,SX*0.85,abs(v.co.x))*sstep(SH.z-0.06*s,SH.z+0.01*s,v.co.z)
+        hit=tree.ray_cast(v.co,Vector((0,0,-1)),0.06)
+        if hit[0] is None or k<=0: continue
+        gap=(v.co-hit[0]).length; want=0.008+0.004*(1-k)
+        if gap>want: v.co.z-=(gap-want)*k*0.85; _sl.append(round((gap-want)*k*850,1))
+    for _ in range(2): bmesh.ops.smooth_vert(bm,verts=top,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    print('COAT SHOULDER SLOPED',len(top),'points,',len(_sl),'lowered, most',max(_sl) if _sl else 0,'mm')
     bm.normal_update()
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -819,6 +832,7 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
             shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*(1-0.35*sstep(J('Hips').y-0.02,J('Hips').y+0.08,v.co.y))      # a little less at the back (owner, 23 November 2026: running, the back leg kicks up and the hem tied to the shin was flung up and torn); seated and kneeling she wears the seated skirt
+            if G.get("apron"): shin*=1-0.97*sstep(0.17,0.02,abs(v.co.x))*sstep(J('Hips').y+0.02,J('Hips').y-0.03,v.co.y)      # under an apron (which is cut from this skirt and takes these weights), the middle strip follows the two thighs, not the two shins: running, one shin kicks back as the other swings forward, the blend of the two collapsed the 2 cm between skirt and apron and the skirt came through the apron's hem (a thin slit; 24 November 2026). Only aproned skirts, and only the front: there the strip is hidden under the apron (all round, the open back of the hem tore more when running)
         for n,val in (('Hips',1-leg),('LeftUpLeg',leg*left*(1-shin)),('RightUpLeg',leg*(1-left)*(1-shin)),('LeftLeg',leg*left*shin),('RightLeg',leg*(1-left)*shin)):
             if val>0.001: B[n].add([v.index],val,'REPLACE')
     if k=='skirt' and not OLD: _smooth_bones(o,lambda c:c.z<KNEE+0.10,10)      # evened out along the lower skirt, so no two neighbouring points follow different legs (the hem broke into a sawtooth when running)
