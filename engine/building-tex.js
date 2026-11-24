@@ -21,7 +21,7 @@ export function loadBuildingTex() {
   return (loading ||= script(FILE).then(() => { for (const k of Object.keys(pics)) decode(k); }).catch(() => {}));
 }
 function decode(key) {
-  const p = pics[key], src = window.__tex?.[key];
+  const p = pics[key], src = typeof window !== 'undefined' ? window.__tex?.[key] : null;
   if (!p || p.image || !src) return;
   p.image = 'loading';
   const im = new Image();

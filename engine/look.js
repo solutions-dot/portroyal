@@ -25,7 +25,8 @@ import { contactShadows } from './contact.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const SKY_SHARE = 0.6;
-export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: Q.has('glow') && !Q.has('noglow'), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
+const PHONE = typeof window !== 'undefined' && isPhone();   /* the engine is also loaded by Node tests (engine/batch.js imports this through surfaces.js), where there is no screen */
+export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !PHONE), glow: Q.has('glow') && !Q.has('noglow'), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
 const ST = new WeakMap();
 const CAM = Q.has('cam') ? [...Q.get('cam').split(','), ...(Q.get('at') || '0,0,0').split(',')].map(Number) : null;
 if (typeof window !== 'undefined') window.__LOOK = LOOK;   /* for a check or a test view */

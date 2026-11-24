@@ -90,7 +90,7 @@ function worldUVm(geo, mw, tile, roof = false) {
   return g;
 }
 export function dressSurfaces(root) {
-  if (Q.has('nosurf') || !root) return 0;
+  if (Q.has('nosurf') || !root || typeof document === 'undefined') return 0;   /* only in a browser: Node tests batch scenes too */
   SURF.calls++; const why = (r) => { SURF.skip[r] = (SURF.skip[r] || 0) + 1; };
   loadBuildingTex();
   root.updateMatrixWorld(true);
