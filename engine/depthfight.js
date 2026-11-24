@@ -68,13 +68,13 @@ export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}) {
 export function settleFights(root, opts) {
   /* each face that fights is lifted only above the faces it really overlaps: for every pair, the outer one (along the way they face; in one plane
      the smaller) must sit one step over the inner one, and a face's level is one more than the highest level beneath it (a road over a yard over the
-     ground: levels 0, 1, 2). Each step is 4 units of offset, with a fixed slope factor of -1, at most 8 steps.
+     ground: levels 0, 1, 2). Each step is 4 units of offset, with a fixed slope factor of -1, at most 48 steps (a run of ground patches can be deep; with the slope factor fixed, many small steps are harmless).
      (Until 24 November 2026 every face in a whole chain of touching faces took a step, and the slope factor grew with it: a house's body, through its
      roof edge, reached factor -30, and seen at an angle its front wall leapt in front of the windows 5 cm before it, so they came and went as you
-     walked: owner, Spanish Town in The Mad Master.) Up to eight rounds catch faces that only fight once others are settled. */
-  const MAXL = 8, level = (o) => Math.round(-offset(o) / 4);
+     walked: owner, Spanish Town in The Mad Master.) Up to sixteen rounds catch faces that only fight once others are settled. */
+  const MAXL = 48, level = (o) => Math.round(-offset(o) / 4);
   let n = 0;
-  for (let round = 0; round < 8; round++) {
+  for (let round = 0; round < 16; round++) {
     const fights = findFights(root, opts);
     if (!fights.length) break;
     const under = new Map();   /* outer mesh -> the inner meshes it must sit over */
@@ -89,6 +89,13 @@ export function settleFights(root, opts) {
       let moved = false;
       for (const [o, ins] of under) { let want = get(o); for (const u of ins) want = Math.max(want, get(u) + 1); want = Math.min(MAXL, want); if (want !== get(o)) { lv.set(o, want); moved = true; } }
       if (!moved) break;
+    }
+    /* a loop (box A over B on their tops, B over C on their sides, C over A on their fronts) has no order: any pair still on one step is split by
+       lifting its outer face one more, so no two faces that fight share a step */
+    for (let pass = 0; pass < 6; pass++) {
+      let split = false;
+      for (const [o, ins] of under) for (const u of ins) if (get(o) === get(u)) { lv.set(o, get(u) + 1); split = true; }
+      if (!split) break;
     }
     for (const [o, L] of lv) {
       if (L <= level(o)) continue;

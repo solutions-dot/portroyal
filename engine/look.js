@@ -329,7 +329,7 @@ function composerFor(renderer, scene, camera, st) {
       const grt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }); grt.__look = true;
       st.gcomp = new EffectComposer(renderer, grt); for (const t of [st.gcomp.renderTarget1, st.gcomp.renderTarget2]) t.__look = true;
       st.gcomp.renderToScreen = false; st.grp = new RenderPass(scene, camera); st.grp.clearColor = new THREE.Color(0, 0, 0); st.grp.clearAlpha = 1; st.gcomp.addPass(st.grp);
-      st.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), Q.has('glowview') ? 3 : 0.55, 0.45, 0.2); st.gcomp.addPass(st.bloom);
+      st.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), Q.has('glowview') ? 3 : 0.28, 0.3, 0.25);   /* soft and close to each light: at 0.55 a lit window shone like a floodlight (owner, 24 November 2026: "isnt this a bit too bright") */ st.gcomp.addPass(st.bloom);
       st.glowMix = new ShaderPass(GlowMixShader); st.comp.addPass(st.glowMix);
     }
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
