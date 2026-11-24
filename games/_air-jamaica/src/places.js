@@ -159,6 +159,13 @@ function apron() {
   [...left, ...right].forEach((x, i) =>
     crowd(Q, looks[i % looks.length], x, lineZ + (i % 2) * 0.12, 0, { kind: "watch", at: [0, 14], react: ["Wave"], every: [5, 9] }, { line: true }),
   );
+  /* a white flight bag at each crew member's feet, beside her (the 1969 advertisement), Aunt Marcia's too */
+  for (const [i, x] of [...left, -8.0, ...right].entries()) {
+    const z = lineZ + (x === -8.0 ? 0 : ([...left, ...right].indexOf(x) % 2) * 0.12);
+    add(Q, P.flightBag(), x + 0.37, z + 0.05, 0, 0);
+    wall(Q, x + 0.3, z - 0.14, x + 0.44, z + 0.24);
+    void i;
+  }
   /* families who came to see the first flight, waiting on the apron on this special morning (docs/games/air-jamaica.md: how close the public could get) */
   const fam = [[-20, 20, "wr_bman62"], [-18.4, 20.6, "wr_bwoman62"], [-19.2, 19.2, "wr_bboy62"], [18, 22, "wr_sam62"], [19.4, 22.4, "wr_lwoman62"], [-6, 21, "wr_may62"]];
   fam.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, -6, -2), { kind: "watch", at: [-6, -2], react: ["Wave"], every: [4, 8] }));

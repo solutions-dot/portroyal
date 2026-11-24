@@ -15,9 +15,9 @@
     "firmness": 0.55
   },
   "garments": {
-    "sleeve": 0.3,
+    "sleeve": 0.8,
     "shoes": true,
-    "collar": false,
+    "collar": "turn",
     "hairvol": 0.55,
     "hat": [],
     "woman": true,

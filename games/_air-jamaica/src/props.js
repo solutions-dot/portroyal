@@ -161,6 +161,20 @@ export function held(kind) {
   }
   return null;
 }
+/* a stewardess's white flight bag, standing on the ground (the 1969 advertisement: one at each crew member's feet): a soft box with two handles and a
+   small orange tag. Its long side runs along z. */
+export function flightBag() {
+  const g = grp(), white = solid(0xf2f0ea, 0.6);
+  box(0.13, 0.26, 0.36, white, 0, 0.13, 0, g);
+  for (const z of [-0.06, 0.06]) {
+    const hnd = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 12, Math.PI), white);
+    hnd.position.set(0, 0.26, z);
+    hnd.rotation.y = Math.PI / 2;
+    g.add(hnd);
+  }
+  box(0.004, 0.05, 0.035, solid(0xe0662b, 0.6), 0.067, 0.18, 0.12, g);
+  return dynamic(g);
+}
 /* a thing the player picks up and carries (steps.js TASKS): none yet in chapter 1 */
 export function item(id) {
   return dynamic(box(0.2, 0.2, 0.2, solid(0xd0c8b4), 0, 0.1, 0));

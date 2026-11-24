@@ -51,7 +51,7 @@ export const LOOKS = {
     place: "apron", at: [-16.0, 1.6], label: "Look along the line", title: "The crew",
     sound: "cheer",
     say: ["The crew stand in a long bright line.", "Yellow, pink and green, side by side."],
-    lines: ["Yellow, hot pink and lime green dresses, one after another.", "They wear white gloves.", "Marguerite Kirkpatrick, a former Miss Jamaica, designed the uniforms."],
+    lines: ["Yellow, hot pink and lime green dresses, one after another.", "They wear white gloves. A white flight bag stands at each one's feet.", "Marguerite Kirkpatrick, a former Miss Jamaica, designed the uniforms."],
   },
 };
 LOOKS.panel = {

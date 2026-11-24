@@ -61,8 +61,8 @@ export const TALK = {
       L("Captain Ross", "Good morning, young lady. Come to see us off?"),
       L("You", "Are you the pilot, sir?"),
       L("Captain Ross", "I am the captain. I fly this jet."),
-      L("Captain Ross", "Some pilots here are Jamaican."),
-      L("Captain Ross", "Some come from Air Canada to help at first."),
+      L("Captain Ross", "Air Canada lends the new airline some captains."),
+      L("Captain Ross", "Jamaican pilots fly with us too."),
       L("You", "Where is the plane going?"),
       L("Captain Ross", "Up over the sea, and then north."),
       L("Captain Ross", "Your Mum is up in the waving gallery."),
@@ -150,14 +150,14 @@ export const JOURNAL = [
   },
   {
     id: "uniforms", title: "The first crew",
-    simple: ["There were 58 stewardesses on the first day.", "Their short dresses were yellow, hot pink and lime green.", "A former Miss Jamaica, Marguerite Kirkpatrick, designed them and trained the crew."],
+    simple: ["There were 58 stewardesses on the first day.", "Their short dresses were yellow, hot pink and lime green.", "Each one had a white flight bag.", "A former Miss Jamaica, Marguerite Kirkpatrick, designed them and trained the crew."],
     deeper: ["On long flights the crew modelled clothes and swimwear by Jamaican designers, with island music.", "The way the airline showed these women, as \"rare tropical birds\", was copied from American airlines, and many people today think it was unfair to them.", "The people in the game wear stand-in clothes, not the real uniforms, until bodies are made for them."],
     source: "wilson",
   },
   {
     id: "captain", title: "The captain",
-    simple: ["A captain is the pilot in charge of the plane.", "At the start, some pilots came from Air Canada to help.", "More and more Jamaican pilots took over."],
-    deeper: ["Captain Ross in this game is fictional.", "The Daily Gleaner wrote that the new jets would be flown by Jamaican pilots, partly at first, before full Jamaican crews came."],
+    simple: ["A captain is the pilot in charge of the plane.", "At the start, Air Canada lent the airline some of its captains.", "Jamaican pilots flew too, and more and more took over."],
+    deeper: ["Captain Ross in this game is fictional.", "A 1969 Air Jamaica advertisement said Air Canada was \"putting men in the left-hand seat\", where the captain sits.", "The Daily Gleaner wrote that the new jets would be flown by Jamaican pilots, partly at first, before full Jamaican crews came."],
     source: "wilson",
   },
   {
