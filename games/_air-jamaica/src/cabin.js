@@ -176,8 +176,8 @@ export function lidPlace(i, k) {
   return [x0 + (x1 - x0) * e, y0 + (y1 - y0) * e + Math.sin(e * Math.PI) * 0.22, z0 + (z1 - z0) * e];
 }
 
-/* SkyWritings, Air Jamaica's in-flight magazine (docs/games/air-jamaica.md, "SkyWritings"). The name is real; the cover and the two pages are made for
-   this game (no real issue has been looked at yet), and the journal page says so. The facts on the page are the sourced ones of the earlier chapters. */
+/* SkyWritings, Air Jamaica's in-flight magazine (docs/games/air-jamaica.md, "SkyWritings"). The name and the cover's layout are real (a 2008
+   cover the owner sent); the cover painting and the two story pages are made for this game, and the journal page says so. The facts on the page are the sourced ones of the earlier chapters. */
 export const MAG = { page: [0.19, 0.25], tray: [-0.69, 0.852, 0.87], pocket: [-0.785, 0.56, 0.783] };
 function magTexture(kind) {
   return cv(608, 800, (x, W, H) => {
@@ -188,23 +188,40 @@ function magTexture(kind) {
       x.lineWidth = r * 0.08; x.beginPath(); x.moveTo(cx + r * 0.1, cy - r * 0.05); x.quadraticCurveTo(cx + r * 0.6, cy + r * 0.2, cx + r * 0.1, cy + r * 0.6); x.stroke();
     };
     if (kind === "cover") {
-      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#3d8fd6"); g.addColorStop(0.62, "#9fd0f0"); g.addColorStop(0.62, "#1f7fa8"); g.addColorStop(1, "#155f80");
-      x.fillStyle = g; x.fillRect(0, 0, W, H);
-      x.fillStyle = "#2f7a3a"; x.beginPath(); x.moveTo(0, H * 0.64); x.quadraticCurveTo(W * 0.3, H * 0.48, W * 0.55, H * 0.6); x.quadraticCurveTo(W * 0.8, H * 0.5, W, H * 0.62); x.lineTo(W, H * 0.66); x.lineTo(0, H * 0.66); x.fill();
-      x.fillStyle = "#ffe08a"; x.beginPath(); x.arc(W * 0.78, H * 0.3, 46, 0, 7); x.fill();
-      { /* a jet climbing over the hills: body, swept wings, tail fin */
-        x.save(); x.translate(W * 0.36, H * 0.4); x.rotate(-0.12); x.fillStyle = "#ffffff";
-        x.beginPath(); x.ellipse(0, 0, 130, 13, 0, 0, 7); x.fill();
-        x.beginPath(); x.moveTo(10, 0); x.lineTo(-40, 62); x.lineTo(-62, 62); x.lineTo(-20, 0); x.fill();
-        x.beginPath(); x.moveTo(10, -2); x.lineTo(-30, -48); x.lineTo(-48, -48); x.lineTo(-22, -2); x.fill();
-        x.beginPath(); x.moveTo(-100, -4); x.lineTo(-128, -52); x.lineTo(-112, -52); x.lineTo(-80, -6); x.fill();
-        x.fillStyle = "#e0662b"; x.fillRect(-90, -3, 190, 5); x.restore();
-      }
-      x.fillStyle = "rgba(255,255,255,0.92)"; x.fillRect(0, 0, W, 150);
-      text("SkyWritings", W / 2, 100, 92, "#1d2a44", "bold italic", "center");
-      text("AIR JAMAICA'S OWN MAGAZINE", W / 2, 140, 26, "#e0662b", "bold", "center", "Arial, sans-serif");
-      bird(W - 70, H - 80, 40);
-      text("Our Own Wings: the story of the airline", 36, H - 70, 28, "#ffffff", "bold", "left", "Arial, sans-serif");
+      /* laid out as on a real cover of July/August 2008, "Our Music Issue", that the owner sent (24 November 2026), the nearest in time to this chapter
+         (the airline's look of 2004 may have differed a little): a picture to every edge, the airJamaica logo with its roundel at the top left, the
+         issue line at the top right, "SkyWritings" in big letters shading from yellow-orange to pink and purple, and the cover lines at the foot in
+         yellow and pink. That cover's picture is a real musician; this one is a Jamaican river and waterfall in the forest, like the scene behind
+         him. An older cover the owner sent (white, with periwinkle letters and a painting of a hillside village; year not known) is noted in the doc. */
+      const R = (n) => ((Math.sin(n * 12.9898) * 43758.5453) % 1 + 1) % 1;
+      const sky = x.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#5d8f4a"); sky.addColorStop(0.5, "#3f6f36"); sky.addColorStop(1, "#2c4f2a");
+      x.fillStyle = sky; x.fillRect(0, 0, W, H);
+      for (let k = 0; k < 500; k++) { x.fillStyle = ["#4f8a3c", "#6aa04a", "#356b2e", "#88b85a", "#2d5a28"][k % 5]; x.beginPath(); x.ellipse(R(k) * W, R(k + 600) * H * 0.75, 10 + R(k + 50) * 22, 5 + R(k + 70) * 9, R(k + 90) * 3, 0, 7); x.fill(); }
+      x.fillStyle = "#8d8676"; for (let k = 0; k < 26; k++) { x.beginPath(); x.ellipse(R(k + 200) * W, H * (0.62 + R(k + 300) * 0.3), 30 + R(k + 400) * 40, 14 + R(k + 450) * 14, 0, 0, 7); x.fill(); }
+      const fall = (fx, fw, top, bot) => { /* water spilling over a ledge: widening as it falls, in streaks, with mist at its foot */
+        x.fillStyle = "rgba(230,245,245,0.5)"; x.beginPath(); x.moveTo(fx, top); x.lineTo(fx + fw, top); x.lineTo(fx + fw * 1.4, bot); x.lineTo(fx - fw * 0.4, bot); x.fill();
+        x.strokeStyle = "rgba(255,255,255,0.9)"; x.lineWidth = 3;
+        for (let k = 0; k < 14; k++) { const t = k / 13, x0 = fx + fw * t, x1 = fx - fw * 0.4 + fw * 1.8 * t; x.beginPath(); x.moveTo(x0, top + R(k + 1000) * 20); x.lineTo(x1, bot - R(k + 1100) * 30); x.stroke(); }
+        x.fillStyle = "rgba(255,255,255,0.55)"; for (let k = 0; k < 8; k++) { x.beginPath(); x.arc(fx + fw / 2 + (R(k + 1200) - 0.5) * fw * 2.2, bot - 6, 14 + R(k + 1250) * 18, 0, 7); x.fill(); }
+      };
+      fall(W * 0.68, 70, H * 0.18, H * 0.6); fall(W * 0.2, 40, H * 0.42, H * 0.7);
+      const pool = x.createLinearGradient(0, H * 0.66, 0, H); pool.addColorStop(0, "#7fc4c0"); pool.addColorStop(1, "#3f8f8c");
+      x.fillStyle = pool; x.beginPath(); x.moveTo(0, H * 0.72); x.quadraticCurveTo(W * 0.5, H * 0.62, W, H * 0.7); x.lineTo(W, H); x.lineTo(0, H); x.fill();
+      x.strokeStyle = "rgba(255,255,255,0.6)"; x.lineWidth = 3; for (let k = 0; k < 14; k++) { const yy = H * (0.74 + R(k + 800) * 0.22), xx = R(k + 850) * W; x.beginPath(); x.moveTo(xx, yy); x.lineTo(xx + 50, yy); x.stroke(); }
+      /* the logo: a purple roundel with a small bird, and "airJamaica" in white */
+      x.fillStyle = "#5a2d82"; x.beginPath(); x.arc(46, 46, 22, 0, 7); x.fill();
+      x.strokeStyle = "#ffd23f"; x.lineWidth = 4; x.beginPath(); x.arc(46, 46, 14, 0, 7); x.stroke();
+      text("airJamaica", 76, 56, 30, "#ffffff", "bold italic", "left", "Arial, sans-serif");
+      text("A story of the airline", W - 24, 54, 24, "#ffffff", "bold", "right", "Arial, sans-serif");
+      /* the title, shading from yellow-orange to pink to purple, with a dark edge */
+      x.font = "bold italic 116px Georgia, serif"; x.textAlign = "center"; x.lineJoin = "round";
+      x.lineWidth = 12; x.strokeStyle = "#3a1f4a"; x.strokeText("SkyWritings", W / 2, 190);
+      const tg = x.createLinearGradient(0, 110, 0, 200); tg.addColorStop(0, "#ffc531"); tg.addColorStop(0.5, "#f0548f"); tg.addColorStop(1, "#8a3fc0");
+      x.fillStyle = tg; x.fillText("SkyWritings", W / 2, 190);
+      /* the cover lines */
+      x.lineWidth = 6; x.strokeStyle = "#3a1f4a"; x.textAlign = "left";
+      x.font = "bold 50px Arial, sans-serif"; x.strokeText("Our Own Wings", 36, H - 110); x.fillStyle = "#ffd23f"; x.fillText("Our Own Wings", 36, H - 110);
+      x.font = "bold 36px Arial, sans-serif"; x.strokeText("From 1969 to the flying chef", 36, H - 58); x.fillStyle = "#ff7fbf"; x.fillText("From 1969 to the flying chef", 36, H - 58);
     } else if (kind === "left") {
       x.fillStyle = "#fbf8ef"; x.fillRect(0, 0, W, H);
       text("SKYWRITINGS", 40, 50, 20, "#e0662b", "bold", "left", "Arial, sans-serif");

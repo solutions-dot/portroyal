@@ -193,7 +193,7 @@ export const JOURNAL = [
   {
     id: "skywritings", title: "SkyWritings",
     simple: ["SkyWritings was Air Jamaica's own magazine.", "Passengers read it on the plane.", "It told stories about the places the airline flew to."],
-    deeper: ["It came out every two months. In 2009 it was named Magazine of the Year in Jamaica, and its publisher said about 500,000 people read each issue.", "A copy from September 1972 shows it was already in print in the airline's early years.", "The cover and the story pages in this game were made for the game. No real issue has been copied."],
+    deeper: ["It came out every two months. In 2009 it was named Magazine of the Year in Jamaica, and its publisher said about 500,000 people read each issue.", "A copy from September 1972 shows it was already in print in the airline's early years.", "The cover in the game is laid out like a real issue of 2008: the airline's logo, the big shaded title and a picture to every edge. Its picture and the story pages were made for the game."],
     source: "sflcn2009",
   },
   {
