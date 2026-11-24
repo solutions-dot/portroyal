@@ -13,6 +13,7 @@
    sea.setLevel(y) moves the patch (Port Royal's earthquake); sea.height(x, z, t) is the water height at a point, from the same waves the shader draws, for things
    that float. */
 import * as THREE from "three";
+import { lookHaze } from './look.js';
 
 function cv(w, h, draw, repeat, srgb = true) {
   const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h);
@@ -109,8 +110,8 @@ function seaLook(mat, o) {
   const u = { uDeep: { value: new THREE.Color(o.deep) }, uRefl: { value: o.refl }, uSwell: { value: o.swell || 0 }, uRip: { value: o.rip }, uHalf: { value: o.half || 1 }, uOff: { value: new THREE.Vector2(...(o.off || [0, 0])) } };
   const n = o.waves || 0, key = "sea" + n + (o.lite ? "l" : "");
   mat.customProgramCacheKey = () => key;
-  mat.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, sharedU, u);
+  mat.onBeforeCompile = (sh, r) => {
+    Object.assign(sh.uniforms, sharedU, u); lookHaze(sh, r, mat);   /* the haze toward the sun, as on the land (engine/look.js) */
     let w = "";
     for (let i = 0; i < n; i++) {
       const s = SWELL[i];

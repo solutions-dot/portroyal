@@ -60,7 +60,7 @@ export function shadeDoc(doc) {
       const P = p.getAttribute('POSITION'), I = p.getIndices(); if (!P || !I) continue;
       const n = P.getCount(), w = new Float32Array(n * 3), e = [0, 0, 0];
       for (let i = 0; i < n; i++) { P.getElement(i, e); w[i * 3] = m[0] * e[0] + m[4] * e[1] + m[8] * e[2] + m[12]; w[i * 3 + 1] = m[1] * e[0] + m[5] * e[1] + m[9] * e[2] + m[13]; w[i * 3 + 2] = m[2] * e[0] + m[6] * e[1] + m[10] * e[2] + m[14]; }
-      parts.push({ p, m, w, idx: I.getArray(), n });
+      parts.push({ p, m, w, idx: I.getArray(), n, joints: node.getSkin() ? node.getSkin().listJoints().map((j) => j.getName()) : null });
     }
   }
   let nt = 0; for (const q of parts) nt += q.idx.length / 3;
@@ -70,6 +70,11 @@ export function shadeDoc(doc) {
   for (const q of parts) {
     const C = q.p.getAttribute('COLOR_0'), N = q.p.getAttribute('NORMAL'); if (!C || !N) continue;
     const F = q.p.getAttribute('_FACE'), occ = new Float32Array(q.n), e = [0, 0, 0], nn = [0, 0, 0], mm = q.m;
+    /* the head: points that follow the head bone more than half. era.py's _FACE marks are stripped by the packer before this runs, so the head bone is what
+       tells a face (without it the face was shaded as hard as cloth, and eye sockets and the corners of the mouth went dark: rule 9) */
+    const J = q.p.getAttribute('JOINTS_0'), Wt = q.p.getAttribute('WEIGHTS_0'), head = new Set();
+    if (J && Wt && q.joints) q.joints.forEach((nm, k) => { if (/Head$/.test(nm)) head.add(k); });
+    const headW = (i) => { if (!head.size) return 0; const jj = [0, 0, 0, 0], ww = [0, 0, 0, 0]; J.getElement(i, jj); Wt.getElement(i, ww); let h = 0; for (let k = 0; k < 4; k++) if (head.has(jj[k])) h += ww[k]; return h; };
     for (let i = 0; i < q.n; i++) {
       N.getElement(i, e); nn[0] = mm[0] * e[0] + mm[4] * e[1] + mm[8] * e[2]; nn[1] = mm[1] * e[0] + mm[5] * e[1] + mm[9] * e[2]; nn[2] = mm[2] * e[0] + mm[6] * e[1] + mm[10] * e[2];
       const l = Math.hypot(nn[0], nn[1], nn[2]) || 1; nn[0] /= l; nn[1] /= l; nn[2] /= l;
@@ -90,7 +95,7 @@ export function shadeDoc(doc) {
     for (let k = 0; k < 2; k++) { const nx = new Float32Array(q.n); for (let i = 0; i < q.n; i++) { let s = cur[i] * 2, w = 2; for (const j of nb[i]) { s += cur[j]; w++; } nx[i] = s / w; } cur = nx; }
     const col = [0, 0, 0, 0], fe = [0];
     for (let i = 0; i < q.n; i++) {
-      const face = F ? (F.getElement(i, fe), fe[0] > 0.5) : false;
+      const face = F ? (F.getElement(i, fe), fe[0] > 0.5) : headW(i) > 0.5;
       const k = Math.max(FLOOR, 1 - (face ? FACE : STRENGTH) * cur[i]);
       C.getElement(i, col); col[0] *= k; col[1] *= k; col[2] *= k; C.setElement(i, col);
     }

@@ -18,7 +18,6 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { isPhone, PERF } from './perf.js';
@@ -26,7 +25,7 @@ import { contactShadows } from './contact.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const SKY_SHARE = 0.6;
-export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: !Q.has('noglow') && (Q.has('glow') || !isPhone()), grading: !Q.has('nograde'), post: true, grade: null, aoOff: '' };
+export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: !Q.has('noglow') && (Q.has('glow') || !isPhone()), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
 const ST = new WeakMap();
 if (typeof window !== 'undefined') window.__LOOK = LOOK;   /* for a check or a test view */
 
@@ -52,9 +51,12 @@ function skyData(sky, ground, sunDir, sunCol, glow) {
   t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.LinearSRGBColorSpace; t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
 }
+const onStage = (o, scene) => { for (let q = o; q; q = q.parent) { if (!q.visible) return false; if (q === scene) return true; } return false; };
 function lightsOf(scene, st) {
-  if (st.scene === scene && st.seen > 0) { st.seen--; return; }
-  st.scene = scene; st.seen = 120; st.hemi = null; st.sun = null;
+  /* looked up again every half second, and at once when a light we use is taken away or hidden (a new place, a chapter, indoors): with a two-second wait the
+     old place's sky lit the new place for a moment */
+  if (st.scene === scene && st.seen > 0 && (!st.hemi || onStage(st.hemi, scene)) && (!st.sun || onStage(st.sun, scene))) { st.seen--; return; }
+  st.scene = scene; st.seen = 30; st.hemi = null; st.sun = null;
   scene.traverseVisible((o) => {   /* only lights that are really on: a hidden place's own lights are left out */
     if (o.isHemisphereLight && (!st.hemi || o.intensity > st.hemi.intensity)) st.hemi = o;
     if (o.isDirectionalLight && (!st.sun || o.intensity > st.sun.intensity)) st.sun = o;
@@ -120,7 +122,26 @@ if (!Q.has('nohaze')) {
   const prev = THREE.Material.prototype.onBeforeCompile;
   THREE.Material.prototype.onBeforeCompile = function (shader, r) { if (shader.uniforms && 'fogColor' in shader.uniforms) Object.assign(shader.uniforms, HAZE); if (prev) prev.call(this, shader, r); };
 }
-{ const p2 = THREE.Material.prototype.onBeforeCompile; THREE.Material.prototype.onBeforeCompile = function (shader, r) { p2.call(this, shader, r); const k = clothKind(this); if (k) addCloth(shader, k); else if (grainOK(this)) addGrain(shader); }; }
+/* The extra pass is drawn exactly as the screen would be: each material tone maps and turns its colour into display colour itself (three does both only when
+   drawing straight to the screen), into a target marked as display colour, and the last pass hands the picture to the screen unchanged. So see-through layers
+   (light pools, moss and grass patches, glass, smoke) blend as they always did, and materials drawn without tone mapping (the gold guide arrow) keep their
+   colours. (Blended in linear colour first, Bog Walk's night ground turned grey-green and the guide arrow came out duller.) */
+const TONEFN = { [THREE.ACESFilmicToneMapping]: 'ACESFilmicToneMapping', [THREE.AgXToneMapping]: 'AgXToneMapping', [THREE.ReinhardToneMapping]: 'ReinhardToneMapping', [THREE.CineonToneMapping]: 'OptimizedCineonToneMapping', [THREE.NeutralToneMapping]: 'NeutralToneMapping' };
+function toneInPass(mat, shader, r) {
+  const t = r && r.getRenderTarget(), fs = shader.fragmentShader;
+  if (!t || !t.__look || !fs.includes('#include <colorspace_fragment>')) return;
+  const fn = TONEFN[r.toneMapping], tone = fn && mat.toneMapped !== false && fs.includes('#include <tonemapping_fragment>');
+  let out = fs;
+  if (tone) {
+    const pars = fs.includes('vec3 ' + fn) ? '' : THREE.ShaderChunk.tonemapping_pars_fragment;   /* three leaves the curves out when it does not tone map */
+    out = out.replace('void main() {', pars + '\nvoid main() {').replace('#include <tonemapping_fragment>', '#include <tonemapping_fragment>\n\tgl_FragColor.rgb = ' + fn + '( gl_FragColor.rgb );');
+  }
+  /* and display colour, just where the screen path makes it (before fog, as three does) */
+  shader.fragmentShader = out.replace('#include <colorspace_fragment>', '#include <colorspace_fragment>\n\tgl_FragColor = sRGBTransferOETF( gl_FragColor );');
+}
+/* the sea (engine/sea.js) has its own shader hook, so it calls this for the haze toward the sun (or it showed plain fog beside the hazed land) and the tone mapping above */
+export function lookHaze(shader, r, mat) { if (shader.uniforms && 'fogColor' in shader.uniforms) Object.assign(shader.uniforms, HAZE); if (mat) toneInPass(mat, shader, r); }
+{ const p2 = THREE.Material.prototype.onBeforeCompile; THREE.Material.prototype.onBeforeCompile = function (shader, r) { p2.call(this, shader, r); const k = clothKind(this); if (k) addCloth(shader, k); else if (grainOK(this)) addGrain(shader); toneInPass(this, shader, r); }; }
 
 /* ---------- 7. cloth with a weave ---------- */
 /* clothes read as cloth, not plastic: a fine weave and a little unevenness of colour, drawn by the shader from each point's place on the body at rest (the
@@ -183,8 +204,11 @@ function addGrain(shader) {
 	  if (gA > 0.0) normal = cBump(-vViewPosition, normal, gA * cNoise(vGrainPos / 0.008)); }
 	#endif`);
 }
+/* the game's tone mapping, part of every shader's identity: three notices a change of it only when drawing straight to the screen, so in the extra pass a sky
+   kept the tube's tone mapping after Bog Walk switched it off outdoors (draw() marks every material for rebuilding when it changes) */
+const TM = { now: -1 };
 const ckPrev = THREE.Material.prototype.customProgramCacheKey;
-THREE.Material.prototype.customProgramCacheKey = function () { const k = clothKind(this); return ckPrev.call(this) + (k ? '|cloth' + k : grainOK(this) ? '|grain' : ''); };
+THREE.Material.prototype.customProgramCacheKey = function () { const k = clothKind(this); return ckPrev.call(this) + (k ? '|cloth' + k : grainOK(this) ? '|grain' : '') + '|tm' + TM.now; };
 
 /* ---------- 2. the colour grade ---------- */
 /* a gentle grade over the finished picture, on every device, worked out from the place's own lights each frame and eased between moods: a low, warm sun gives
@@ -236,7 +260,8 @@ function composerFor(renderer, scene, camera, st) {
   const pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
   if (!st.comp) {
     const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });   /* keeps the anti-aliasing the canvas had */
-    st.comp = new EffectComposer(renderer, rt);
+    rt.__look = true;   /* materials write display colour into it, as to the screen (toneInPass) */
+    st.comp = new EffectComposer(renderer, rt); for (const t of [st.comp.renderTarget1, st.comp.renderTarget2]) t.__look = true;   /* the scene may be drawn into either */
     st.rp = new RenderPass(scene, camera); st.comp.addPass(st.rp);
     if (LOOK.ao) {
       st.ao = new SoftCorners(scene, camera, 1, 1);
@@ -251,8 +276,7 @@ function composerFor(renderer, scene, camera, st) {
       if (Q.has('aoview')) st.ao.output = GTAOPass.OUTPUT.Denoise;   /* ?aoview: the shading alone, white where nothing is closed in */
       st.comp.addPass(st.ao);
     }
-    if (LOOK.glow) { st.glow = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.32, 0.55, 1.05); st.comp.addPass(st.glow); }
-    st.comp.addPass(new OutputPass());
+    if (LOOK.glow) { st.glow = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.16, 0.35, 0.965); st.comp.addPass(st.glow); }   /* on display colours, so only the very brightest (flames, lamps, the sun) pass 0.965; at 0.86 windows and a bright sky blew out */
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
     st.w = st.h = st.pr = 0;
   }
@@ -261,7 +285,7 @@ function composerFor(renderer, scene, camera, st) {
   if (st.ao) { st.ao.scene = scene; st.ao.camera = camera; st.ao.enabled = LOOK.ao; }
   if (st.glow) st.glow.enabled = LOOK.glow;
   const u = st.grade.uniforms; u.gain.value.copy(MOOD.gain); u.lift.value.copy(MOOD.lift); u.sat.value = MOOD.sat; u.contrast.value = MOOD.contrast; u.vig.value = MOOD.vig;
-  st.grade.enabled = LOOK.grading;
+  if (!LOOK.grading) { u.gain.value.set(1, 1, 1); u.lift.value.set(0, 0, 0); u.sat.value = 1; u.contrast.value = 1; u.vig.value = 0; }   /* the last pass always runs: it hands the picture to the screen */
   return st.comp;
 }
 
@@ -293,16 +317,21 @@ function skyGlow(scene, camera, st) {
   if (!g.visible) return;
   const r = camera.far * 0.9; g.scale.setScalar(r); g.position.copy(camera.position);
   const u = g.material.uniforms, d = u.sunDir.value.copy(sun.position); if (sun.target) d.sub(sun.target.position); if (d.lengthSq() < 1e-6) d.set(0, 1, 0); d.normalize();
-  const night = 1 - Math.min(1, sun.intensity / 1.2), warm = Math.max(0, sun.color.r - sun.color.b);
+  const moon = sun.color.b > sun.color.r + 0.02;   /* a blue light is the game's moonlight: no sun disc, no glow on the horizon (it drew a second moon) */
+  const night = moon ? 1 : 1 - Math.min(1, sun.intensity / 1.2), warm = Math.max(0, sun.color.r - sun.color.b);
   u.sunCol.value.copy(sun.color).multiplyScalar(Math.min(1.5, sun.intensity / 2));
   u.disc.value = (1 - night) * (d.y > -0.02 ? 1 : 0);
-  u.halo.value = 1 - 0.6 * night;
+  u.halo.value = moon ? 0 : 1 - 0.6 * night;
   u.low.value = (1 - night) * Math.min(1, Math.max(0, (0.45 - d.y) / 0.35)) * Math.min(1, warm / 0.3 + 0.2);
 }
 
 /* ---------- the frame ---------- */
 export function draw(renderer, scene, camera) {
   let st = ST.get(renderer); if (!st) ST.set(renderer, (st = { seen: 0 }));
+  if (renderer.toneMapping !== TM.now) {
+    if (TM.now !== -1) scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) m.needsUpdate = true; });
+    TM.now = renderer.toneMapping;
+  }
   const now = performance.now(), dt = Math.min(0.1, (now - (st.last || now)) / 1000); st.last = now;
   const h = LOOK.sky ? sky(renderer, scene, st) : (lightsOf(scene, st), null);
   if (st.sun) {
@@ -320,8 +349,15 @@ export function draw(renderer, scene, camera) {
   }
   if (PERF.drops > 0 && LOOK.ao) { LOOK.ao = false; LOOK.aoOff = 'slow frames'; }
   else if (PERF.drops > 1 && LOOK.glow) { LOOK.glow = false; LOOK.aoOff = 'slow frames'; }
+  else if (PERF.drops > 1 && LOOK.grading && isPhone()) { LOOK.grading = false; LOOK.aoOff = 'slow frames'; }   /* on a phone the grade is the one extra pass: it goes before the picture gets coarser */
   try {
-    if (LOOK.post && camera.isPerspectiveCamera && (LOOK.ao || LOOK.glow || LOOK.grading || Q.has('forcepost'))) composerFor(renderer, scene, camera, st).render();
+    if (LOOK.post && camera.isPerspectiveCamera && (LOOK.ao || LOOK.glow || LOOK.grading || Q.has('forcepost'))) {
+      /* three gives the background colour and the fog colour in display colour only when drawing to the screen: for the extra pass they are converted here
+         (the materials make display colour themselves, toneInPass), and put back after */
+      const bg = scene.background && scene.background.isColor ? scene.background : null, fc = scene.fog && scene.fog.color, b0 = bg && bg.clone(), f0 = fc && fc.clone();
+      if (bg) bg.convertLinearToSRGB(); if (fc && fc !== bg) fc.convertLinearToSRGB();   /* a game may use one colour object for both (Bog Walk): once only */
+      try { composerFor(renderer, scene, camera, st).render(); } finally { if (bg) bg.copy(b0); if (fc && fc !== bg) fc.copy(f0); }
+    }
     else renderer.render(scene, camera);
   } catch (err) {
     LOOK.post = false; LOOK.aoOff = String(err && err.message || err); renderer.setRenderTarget(null); renderer.render(scene, camera);
