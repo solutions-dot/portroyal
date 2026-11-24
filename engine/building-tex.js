@@ -21,16 +21,25 @@ export function loadBuildingTex() {
   return (loading ||= script(FILE).then(() => { for (const k of Object.keys(pics)) decode(k); }).catch(() => {}));
 }
 function decode(key) {
-  const p = pics[key], src = window.__tex?.[key];
+  const p = pics[key], src = typeof window !== 'undefined' ? window.__tex?.[key] : null;
   if (!p || p.image || !src) return;
   p.image = 'loading';
   const im = new Image();
   im.onload = () => { p.image = im; for (const t of p.tex) { t.image = im; t.needsUpdate = true; } };
   im.src = src;
 }
+/* until the pictures arrive, each shows as its own mean colour (a normal map as flat), so a surface is never drawn black while the file loads */
+const MEANC = { brick: [172, 99, 67], plaster: [209, 198, 173], stone: [171, 165, 149], wood: [105, 89, 73], clay: [115, 54, 33], shingle: [83, 77, 68] };
+const holders = {};
+function holder(key) {
+  if (holders[key] || typeof document === 'undefined') return holders[key] || null;
+  const c = document.createElement('canvas'); c.width = c.height = 2; const x = c.getContext('2d'), m = key.endsWith('_n') ? [128, 128, 255] : MEANC[key] || [128, 128, 128];
+  x.fillStyle = `rgb(${m[0]},${m[1]},${m[2]})`; x.fillRect(0, 0, 2, 2); return (holders[key] = c);
+}
 function tex(key, color) {
   const p = (pics[key] ||= { tex: [], image: null });
-  const t = new THREE.Texture();
+  const t = new THREE.Texture(holder(key) || undefined);
+  if (t.image) t.needsUpdate = true;
   t.flipY = false;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;

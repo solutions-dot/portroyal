@@ -6,6 +6,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { weld, simplify, prune, meshopt } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptDecoder, MeshoptSimplifier } from 'meshoptimizer';
 import fs from 'fs';
+import { shadeDoc } from './shade.mjs';
 await MeshoptEncoder.ready; await MeshoptDecoder.ready; await MeshoptSimplifier.ready;
 const io = () => new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 const A = process.argv.slice(2), opt = (k, d) => { const i = A.indexOf(k); return i >= 0 ? A[i + 1] : d; };
@@ -168,6 +169,7 @@ for (const n of names) {
       await doc.transform(prune({ keepAttributes: false, keepLeaves: true }));
       if (light) liftLayers(doc);
     }
+    if (!A.includes('--noshade')) shadeDoc(doc);   /* corner shading baked into the colours (tools/people/shade.mjs, graphics step 1): every device, phones included */
     const t1 = tris(doc); await doc.transform(meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
     return { bin: await io().writeBinary(doc), t0, t1 };
   };
