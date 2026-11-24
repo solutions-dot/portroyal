@@ -22,11 +22,12 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { isPhone, PERF } from './perf.js';
 import { contactShadows } from './contact.js';
+import { givesLight } from './lightkind.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const SKY_SHARE = 0.6;
 const PHONE = typeof window !== 'undefined' && isPhone();   /* the engine is also loaded by Node tests (engine/batch.js imports this through surfaces.js), where there is no screen */
-export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !PHONE), glow: Q.has('glow') && !Q.has('noglow'), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
+export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !PHONE), glow: !Q.has('noglow') && (Q.has('glow') || !PHONE), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
 const ST = new WeakMap();
 const CAM = Q.has('cam') ? [...Q.get('cam').split(','), ...(Q.get('at') || '0,0,0').split(',')].map(Number) : null;
 if (typeof window !== 'undefined') window.__LOOK = LOOK;   /* for a check or a test view */
@@ -255,13 +256,54 @@ function easeMood(st, dt) {
   MOOD.gain.lerp(t.gain, k); MOOD.lift.lerp(t.lift, k); MOOD.sat += (t.sat - MOOD.sat) * k; MOOD.contrast += (t.contrast - MOOD.contrast) * k; MOOD.vig += (t.vig - MOOD.vig) * k;
 }
 
-/* ---------- 3. glow ---------- */
-/* OFF by default (24 November 2026): tone mapped, a sunlit white beach or a bright sky is as white as a lamp, and additive haze over it goes past white in the
-   extra pass, so a glow by brightness washed whole edges of the picture white (the Shark Papers quay). Lamps and flames keep the halos the games draw
-   themselves, and the sun its own (step 8). A selective glow (only lamps, flames and windows, drawn into their own buffer) is the way to bring it back.
-   ?glow turns this one on to compare. */
-/* bright things (flames, lamps, lit windows, the sun on white sails) get a soft halo, on computers and tablets. Only light well above white glows, so an
-   ordinary lit wall does not. */
+/* ---------- 3. glow: only lights glow ---------- */
+/* Lamps, flames, lit windows and anything else that gives light get a soft glow, on computers and tablets (owner, 24 November 2026: "do it"). A glow by
+   brightness could not tell a lamp from a sunlit beach or a white sky once tone mapped, and washed the Shark Papers quay white; so this one is selective.
+   The lights are found by what they are: an additive glow (a flame, a lamp's halo), a material that gives light (emissive, at least a quarter bright), an
+   unlit surface in a bright warm colour (lamp glass, a lit window), or
+   anything a game marks userData.glow. Each frame they alone are drawn into a small buffer, with everything else drawn black (so a wall or a person still
+   hides a lamp behind it; see-through things are left out, so a lamp glows through glass), the buffer is blurred, and the glow is added to the picture.
+   Nothing that is not a light can ever glow. A light marked userData.noGlow is left out. ?noglow, ?glowview (four times stronger, to see what glows). */
+const DARK = new Map();
+function darkFor(m) {      /* black, but with the same faces and cut-outs, so it hides a light exactly as the real thing does */
+  const key = (m.side ?? 0) + ':' + (m.alphaTest > 0 && m.map ? m.map.uuid + ':' + m.alphaTest : '');
+  let d = DARK.get(key);
+  if (!d) { d = new THREE.MeshBasicMaterial({ color: 0x000000, side: m.side, fog: false, ...(m.alphaTest > 0 && m.map ? { map: m.map, alphaTest: m.alphaTest } : {}) }); d.userData.noGlow = true; DARK.set(key, d); }
+  return d;
+}
+const GlowMixShader = {
+  uniforms: { tDiffuse: { value: null }, tGlow: { value: null }, strength: { value: 1 } },
+  vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  /* the glow is added where the picture is dark and fades out where it is already bright, so a lit window keeps its glazing bars */
+  fragmentShader: 'uniform sampler2D tDiffuse, tGlow; uniform float strength; varying vec2 vUv; void main() { vec4 c = texture2D(tDiffuse, vUv)' + (Q.has('glowonly') ? ' * 0.0' : '') + '; vec3 g = texture2D(tGlow, vUv).rgb * strength; gl_FragColor = vec4(c.rgb + g * (1.0 - c.rgb) * (1.0 - c.rgb), c.a); }',
+};
+function glowSources(scene, st) {
+  if (st.glowScene === scene && st.glowAge-- > 0) return st.glowList;
+  st.glowScene = scene; st.glowAge = 30; st.glowList = [];
+  scene.traverse((o) => { if ((o.isMesh || o.isSprite || o.isPoints) && givesLight(o, Array.isArray(o.material) ? o.material[0] : o.material)) st.glowList.push(o); });
+  return st.glowList;
+}
+/* draws the lights alone into st.gcomp's buffer: every other mesh black (or hidden, if see-through, a sprite or points), no fog, a black background */
+function drawGlow(renderer, scene, camera, st) {
+  const lights = glowSources(scene, st); let any = false;
+  for (const o of lights) { let v = true; for (let q = o; q; q = q.parent) if (!q.visible) { v = false; break; } if (v) { any = true; break; } }
+  if (!any) return false;
+  const swapped = [], hidden = [], keep = new Set(lights), bg = scene.background, fog = scene.fog;
+  scene.traverseVisible((o) => {
+    if (keep.has(o) || !(o.isMesh || o.isSprite || o.isPoints || o.isLine)) return;
+    const m = o.material, m0 = Array.isArray(m) ? m[0] : m;
+    if (!o.isMesh || !m0 || m0.transparent || m0.colorWrite === false || o.name === 'skyGlow') { hidden.push(o); return; }
+    swapped.push([o, m]); o.material = Array.isArray(m) ? m.map(darkFor) : darkFor(m);
+  });
+  for (const o of hidden) o.visible = false;
+  scene.background = null; scene.fog = null;
+  try { st.gcomp.render(); } finally {
+    for (const [o, m] of swapped) o.material = m;
+    for (const o of hidden) o.visible = true;
+    scene.background = bg; scene.fog = fog;
+  }
+  return true;
+}
 
 function composerFor(renderer, scene, camera, st) {
   const pr = renderer.getPixelRatio(), size = renderer.getSize(new THREE.Vector2());
@@ -283,22 +325,24 @@ function composerFor(renderer, scene, camera, st) {
       if (Q.has('aoview')) st.ao.output = GTAOPass.OUTPUT.Denoise;   /* ?aoview: the shading alone, white where nothing is closed in */
       st.comp.addPass(st.ao);
     }
-    if (LOOK.glow && st.ao) {
-      st.glow = new UnrealBloomPass(new THREE.Vector2(256, 256), Q.has('glowview') ? 3 : 0.2, 0.3, +(Q.get('glowt') || 0.985));   /* ?glowview: four times stronger, to see where it starts */
-      /* only things in the place glow, never the sky: tone mapped, a bright sky near the sun is as white as a lamp, and its glow washed over the scene
-         (the Shark Papers quay). The corner-shading pass draws the place's depth without the sky (back-faced domes and sprites are left out), so its
-         depth picture is the mask. */
-      const hp = st.glow.materialHighPassFilter; hp.uniforms.tMask = { value: null };
-      hp.fragmentShader = hp.fragmentShader.replace('void main() {', 'uniform sampler2D tMask;\nvoid main() {').replace('gl_FragColor = mix( outputColor, texel, alpha );', 'gl_FragColor = mix( outputColor, texel, alpha ) * step( texture2D( tMask, vUv ).x, 0.9999 );');
-      hp.needsUpdate = true; st.comp.addPass(st.glow);
-    }   /* on display colours, so only the very brightest (flames, lamps, the sun) pass 0.985; at 0.86 windows and a bright sky blew out, at 0.965 pale sunlit sand */
+    if (LOOK.glow) {      /* the lights' own buffer, half size, blurred; then added to the picture */
+      const grt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType }); grt.__look = true;
+      st.gcomp = new EffectComposer(renderer, grt); for (const t of [st.gcomp.renderTarget1, st.gcomp.renderTarget2]) t.__look = true;
+      st.gcomp.renderToScreen = false; st.grp = new RenderPass(scene, camera); st.grp.clearColor = new THREE.Color(0, 0, 0); st.grp.clearAlpha = 1; st.gcomp.addPass(st.grp);
+      st.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), Q.has('glowview') ? 3 : 0.28, 0.3, 0.25);   /* soft and close to each light: at 0.55 a lit window shone like a floodlight (owner, 24 November 2026: "isnt this a bit too bright") */ st.gcomp.addPass(st.bloom);
+      st.glowMix = new ShaderPass(GlowMixShader); st.comp.addPass(st.glowMix);
+    }
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
     st.w = st.h = st.pr = 0;
   }
-  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); st.w = size.x; st.h = size.y; st.pr = pr; }
+  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); if (st.gcomp) { st.gcomp.setPixelRatio(pr * 0.5); st.gcomp.setSize(size.x, size.y); } st.w = size.x; st.h = size.y; st.pr = pr; }
   st.rp.scene = scene; st.rp.camera = camera;
   if (st.ao) { st.ao.scene = scene; st.ao.camera = camera; st.ao.enabled = LOOK.ao; }
-  if (st.glow) { st.glow.enabled = LOOK.glow && LOOK.ao; st.glow.materialHighPassFilter.uniforms.tMask.value = st.ao.depthTexture; }   /* without the corner shading's depth there is no mask: no glow */
+  if (st.gcomp) {
+    st.grp.scene = scene; st.grp.camera = camera;
+    const on = LOOK.glow && drawGlow(renderer, scene, camera, st);
+    st.glowMix.enabled = on; if (on) { st.glowMix.uniforms.tGlow.value = st.gcomp.readBuffer.texture; st.glowMix.uniforms.strength.value = 1; }
+  }
   const u = st.grade.uniforms; u.gain.value.copy(MOOD.gain); u.lift.value.copy(MOOD.lift); u.sat.value = MOOD.sat; u.contrast.value = MOOD.contrast; u.vig.value = MOOD.vig;
   if (!LOOK.grading) { u.gain.value.set(1, 1, 1); u.lift.value.set(0, 0, 0); u.sat.value = 1; u.contrast.value = 1; u.vig.value = 0; }   /* the last pass always runs: it hands the picture to the screen */
   return st.comp;

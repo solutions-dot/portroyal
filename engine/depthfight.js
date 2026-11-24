@@ -66,31 +66,43 @@ export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}) {
   return out;
 }
 export function settleFights(root, opts) {
-  /* faces that fight are gathered into stacks (a road over a yard over the ground, all within a few millimetres); in each stack the faces are
-     ordered from the inside out (along the way they face; in one plane the larger first) and each one out gets its own step of offset, so the
-     layers never fight each other either. Up to eight rounds catch a face that sits in two stacks. */
+  /* each face that fights is lifted only above the faces it really overlaps: for every pair, the outer one (along the way they face; in one plane
+     the smaller) must sit one step over the inner one, and a face's level is one more than the highest level beneath it (a road over a yard over the
+     ground: levels 0, 1, 2). Each step is 4 units of offset, with a fixed slope factor of -1, at most 48 steps (a run of ground patches can be deep; with the slope factor fixed, many small steps are harmless).
+     (Until 24 November 2026 every face in a whole chain of touching faces took a step, and the slope factor grew with it: a house's body, through its
+     roof edge, reached factor -30, and seen at an angle its front wall leapt in front of the windows 5 cm before it, so they came and went as you
+     walked: owner, Spanish Town in The Mad Master.) Up to sixteen rounds catch faces that only fight once others are settled. */
+  const MAXL = 48, level = (o) => Math.round(-offset(o) / 4);
   let n = 0;
-  for (let round = 0; round < 8; round++) {
+  for (let round = 0; round < 16; round++) {
     const fights = findFights(root, opts);
     if (!fights.length) break;
-    const faces = new Map();
-    const id = (f) => { if (!faces.has(f.o)) faces.set(f.o, f); return f.o; };
-    const par = new Map(), find = (x) => { while (par.get(x) !== x) { par.set(x, par.get(par.get(x))); x = par.get(x); } return x; };
-    for (const f of fights) { const a = id(f.a), b = id(f.b); for (const x of [a, b]) if (!par.has(x)) par.set(x, x); par.set(find(a), find(b)); }
-    const stacks = new Map();
-    for (const o of par.keys()) { const r = find(o); (stacks.get(r) || stacks.set(r, []).get(r)).push(faces.get(o)); }
-    for (const list of stacks.values()) {
-      list.sort((p, q) => p.c * p.s - q.c * q.s || q.area - p.area);
-      const base = Math.min(0, ...list.map((f) => offset(f.o)));
-      list.forEach((f, k) => {
-        if (k === 0) return;
-        const want = base - 4 * k, o = f.o;
-        if (offset(o) <= want) return;
-        const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone();
-        m.polygonOffset = true; m.polygonOffsetFactor = want / 4; m.polygonOffsetUnits = want; m.userData = { ...m.userData, settled: true };
-        if (Array.isArray(o.material)) o.material = o.material.map((x, i) => (i === 0 ? m : x)); else o.material = m;
-        n++;
-      });
+    const under = new Map();   /* outer mesh -> the inner meshes it must sit over */
+    for (const f of fights) {
+      const A = f.a, B = f.b, outerB = B.c * B.s > A.c * A.s + 1e-6 || (Math.abs(B.c * B.s - A.c * A.s) <= 1e-6 && B.area < A.area);
+      const [inner, outer] = outerB ? [A.o, B.o] : [B.o, A.o];
+      (under.get(outer) || under.set(outer, new Set()).get(outer)).add(inner);
+    }
+    const lv = new Map();
+    const get = (o) => (lv.has(o) ? lv.get(o) : level(o));
+    for (let pass = 0; pass < MAXL + 2; pass++) {   /* longest path from the bottom, relaxed; a loop stops at the cap */
+      let moved = false;
+      for (const [o, ins] of under) { let want = get(o); for (const u of ins) want = Math.max(want, get(u) + 1); want = Math.min(MAXL, want); if (want !== get(o)) { lv.set(o, want); moved = true; } }
+      if (!moved) break;
+    }
+    /* a loop (box A over B on their tops, B over C on their sides, C over A on their fronts) has no order: any pair still on one step is split by
+       lifting its outer face one more, so no two faces that fight share a step */
+    for (let pass = 0; pass < 6; pass++) {
+      let split = false;
+      for (const [o, ins] of under) for (const u of ins) if (get(o) === get(u)) { lv.set(o, get(u) + 1); split = true; }
+      if (!split) break;
+    }
+    for (const [o, L] of lv) {
+      if (L <= level(o)) continue;
+      const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone();
+      m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -4 * L; m.userData = { ...m.userData, settled: true };
+      if (Array.isArray(o.material)) o.material = o.material.map((x, i) => (i === 0 ? m : x)); else o.material = m;
+      n++;
     }
   }
   return n;

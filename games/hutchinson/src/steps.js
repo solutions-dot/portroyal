@@ -74,17 +74,20 @@ export const STEPS = {
 };
 /* Things the player carries. start: where the thing lies at first [x, y, z]; from: where you stand to pick it up; to: where you stand to
    put it down; at: where it is left [x, y, z]. */
+const V = (p, look, fov = 42) => ({ p, look, fov });   /* a camera framing: where it stands, what it looks at, its lens */
 export const TASKS = {
   fodder: { place: "road", item: "fodder", start: [10.6, 0.02, -2.5], from: [10.2, -1.6], to: [5, -10.4], at: [5, 0.62, -11.5], label: "Take a bundle of cut grass", put: "Put the grass in the rack" },
   peg: { place: "road", item: "peg", start: [-13.8, 0, 9.3], from: [-13.2, 8.4], to: [-16, 4.4], at: [-16, 0, 3.3], label: "Pick up the peg", put: "Set the peg in its hole" },
   cask: { place: "road", item: "cask", start: [2.6, 0, 1.3], from: [2.6, 0.2], to: [5.4, 8.0], at: [7.0, 0.76, 9.1], label: "Take the empty cask", put: "Hand the cask up to Sampson" },
   water: { place: "castle", item: "pail", start: [-13.5, 0.86, 1.26], from: [-13.5, 2.3], to: [11.6, 12.1], at: [11.9, 0.8, 13.2], label: "Take the pail of water", put: "Set the water on the cart" },
-  stone: { place: "hole", item: "stone", start: [5.2, 0.02, 7.7], from: [5.2, 6.9], to: [0, -3.0], at: [0, 0.1, -5.4], label: "Pick up a stone", put: "Drop the stone", hideAfter: true },
+  /* dropping the stone is a close-up (owner rule 13; owner, 24 November 2026: "needs a cinematic view for when you throw the rock down the sinkhole"):
+     the camera eases to the lip and looks down the shaft, the stone falls away into the dark knocking on the rock, fainter and fainter, then nothing */
+  stone: { place: "hole", item: "stone", start: [5.2, 0.02, 7.7], from: [5.2, 6.9], to: [0, -3.0], at: [0, 0.1, -5.4], label: "Pick up a stone", put: "Drop the stone", hideAfter: true,
+    shot: { view: V([0.5, 3.1, -4.6], [0, -18, -5.9], 50), act: 4.6, sound: "stone", say: ["You let the stone go.", "It knocks on the rock as it falls.", "Fainter. Fainter. Then nothing."] } },
 };
 /* Things the player looks at (owner rule 13: a close-up action). at: where you stand. view: the close framing the camera eases to
    (engine/lookshot.js); the place moves the thing while you watch (Q.reveal[id](k), k from 0 to 1, over act seconds) and plays sound; say: a
    short story line or two in the lower bar; then the card says what you found. Town spots are in the turned square's frame. */
-const V = (p, look, fov = 42) => ({ p, look, fov });
 export const LOOKS = {
   pond: { place: "road", at: [-8.2, -5.4], label: "Test the mud with a stick", title: "The dry pond", view: V([-7.6, 1.05, -5.5], [-8.35, 0.25, -6.8], 42), sound: "stick", say: ["You push the stick into the mud."], lines: ["Cracked mud. Hoof marks baked as hard as brick.", "A hand deep, and still no wet."], page: "pen" },
   packmule: { place: "road", at: [-6.6, 5.0], label: "Look in the pack", title: "A mule with no master", view: V([-6.9, 2.2, 4.9], [-7.1, 1.4, 3.3], 40), sound: "flap", say: ["You lift the flap of the pack."], lines: ["A bedroll. A tin cup. A shirt, folded small.", "Somebody packed this for a long ride. The mule came back alone."], page: "road" },

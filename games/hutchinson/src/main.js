@@ -603,6 +603,7 @@ const LOOK_SFX = {
     tone(196, 180, 1.6, "sine", 0.04, 0, 4.4);
   },
   seal: () => noiseHit(160, 1.5, 0.25, 0.25, 0, 1.2),   /* the seal pressed on the paper */
+  stone: () => [0.35, 0.85, 1.4, 2.0, 2.7, 3.5].forEach((d, i) => noiseHit(1700 - i * 170, 2.5, 0.09, 0.16 * Math.pow(0.62, i), (i % 2 ? 0.25 : -0.25) * (1 - i / 6), d)),   /* the stone striking the shaft, deeper and fainter each time, then silence */
   shutter: () => {
     [0.3, 1.0, 1.7].forEach((d) => noiseHit(700, 3, 0.15, 0.1, 0.4, d));
     for (let i = 0; i < 5; i++) tone(150 + i * 12, 140 + i * 10, 0.5, "triangle", 0.012, 0.4, 2 + i * 0.35);   /* voices from the court, words you cannot make out */
@@ -648,7 +649,7 @@ async function lookAt(id) {
   }
   card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
 }
-function action(id) {
+async function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
   if (LOOKS[id]) return lookAt(id);
   const t = TASKS[id],
@@ -672,6 +673,12 @@ function action(id) {
   carry.place(o, { parent: Q.group, at: t.at });
   S.hand = null;
   S.placed[id] = true;
+  if (t.shot) {      /* a thing put down that does something worth watching (the stone down the sinkhole): a close-up, then back to you */
+    const st = S.stage, y0 = t.at[1];
+    await LS.play({ view: t.shot.view, act: t.shot.act, sound: t.shot.sound, lines: t.shot.say, reveal: (k) => { o.position.y = y0 - 38 * k * k; o.rotation.x = k * 9; o.visible = k < 0.96; } });
+    if (S.stage !== st) return;
+    await LS.back();
+  }
   applyPlaced(Q, id);
   S.completed[id] = true;
   story.done(id);
