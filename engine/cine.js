@@ -6,6 +6,7 @@
 
      renderFramed(renderer, scene, camera, cine)   in place of renderer.render(scene, camera); cine: is a camera scene playing now
      cineFov(fov, aspect)                          the field of view used, for a check or a test view */
+import { draw } from './look.js';   /* the picture itself: light from the sky and soft shading in corners (engine/look.js) */
 const D = Math.PI / 180;
 export function cineFov(fov, aspect) {
   if (!(aspect > 0) || aspect >= 1) return fov;
@@ -13,10 +14,10 @@ export function cineFov(fov, aspect) {
   return Math.max(fov, Math.min(96, v));
 }
 export function renderFramed(renderer, scene, camera, cine) {
-  if (!cine || !camera.isPerspectiveCamera || camera.aspect >= 1) { renderer.render(scene, camera); return; }
+  if (!cine || !camera.isPerspectiveCamera || camera.aspect >= 1) { draw(renderer, scene, camera); return; }
   const f0 = camera.fov, f = cineFov(f0, camera.aspect);
-  if (f === f0) { renderer.render(scene, camera); return; }
-  camera.fov = f; camera.updateProjectionMatrix(); renderer.render(scene, camera); camera.fov = f0; camera.updateProjectionMatrix();
+  if (f === f0) { draw(renderer, scene, camera); return; }
+  camera.fov = f; camera.updateProjectionMatrix(); draw(renderer, scene, camera); camera.fov = f0; camera.updateProjectionMatrix();
 }
 
 let skipButton, dismissSkip;
