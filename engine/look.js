@@ -27,6 +27,7 @@ const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search)
 export const SKY_SHARE = 0.6;
 export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: Q.has('glow') && !Q.has('noglow'), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
 const ST = new WeakMap();
+const CAM = Q.has('cam') ? [...Q.get('cam').split(','), ...(Q.get('at') || '0,0,0').split(',')].map(Number) : null;
 if (typeof window !== 'undefined') window.__LOOK = LOOK;   /* for a check or a test view */
 
 /* ---------- 1. the sky ---------- */
@@ -341,10 +342,7 @@ function skyGlow(scene, camera, st) {
 /* ---------- the frame ---------- */
 export function draw(renderer, scene, camera) {
   let st = ST.get(renderer); if (!st) ST.set(renderer, (st = { seen: 0 }));
-  if (renderer.toneMapping !== TM.now) {
-    if (TM.now !== -1) scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) m.needsUpdate = true; });
-    TM.now = renderer.toneMapping;
-  }
+  if (CAM) { camera.position.set(CAM[0], CAM[1], CAM[2]); camera.lookAt(CAM[3], CAM[4], CAM[5]); camera.updateMatrixWorld(); }
   const now = performance.now(), dt = Math.min(0.1, (now - (st.last || now)) / 1000); st.last = now;
   const h = LOOK.sky ? sky(renderer, scene, st) : (lightsOf(scene, st), null);
   if (st.sun) {

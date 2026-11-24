@@ -18,7 +18,10 @@ const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search)
 const MEAN = { brick: [172, 99, 67], plaster: [209, 198, 173], stone: [171, 165, 149], wood: [105, 89, 73] };
 const TILE = { brick: 1.6, plaster: 2.4, stone: 1.4, wood: 1.0 };
 /* how strongly each picture shows: the plaster picture is a weathered, stained limewash, too blotchy at full strength for a kept room (Rose Hall's great hall) */
-const SHOW = { brick: 1, plaster: 0.4, stone: 0.7, wood: 0.85 };
+const SHOW = { brick: 0.7, plaster: 0.25, stone: 0.45, wood: 0.6 };      /* softer again (owner, 24 November 2026: "the walls can soften a bit more") */
+/* a roof face (facing up, on a wall, house block or ceiling slab) shows its picture only faintly, almost the plain colour it had, so walls and roof never
+   match (owner: "soften the roofs to almost look solid like the original"). It is marked by lifting its texture coordinates by ROOF, which survives merging. */
+const ROOF = 4096, ROOF_SHOW = 0.08;   /* far above any place's own coordinates (a few hundred metres at most) */
 const toLin = (c) => Math.pow(c / 255, 2.2);
 export const SURF = { calls: 0, dressed: 0, skip: {}, kinds: {}, sample: [] };
 if (typeof window !== 'undefined') window.__SURF = SURF;   /* for a check: how many surfaces were dressed, and why others were not */
@@ -52,9 +55,9 @@ function matFor(kind, m) {
     out.userData = { ...m.userData, surface: kind };
     const meanL = new THREE.Vector3(...MEAN[kind].map(toLin)), show = SHOW[kind];
     out.onBeforeCompile = (sh, r) => {      /* the picture blended toward its own mean colour by SHOW; then the engine's haze and extra-pass handling, as for every material */
-      sh.uniforms.surfMean = { value: meanL }; sh.uniforms.surfShow = { value: show };
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 surfMean; uniform float surfShow;')
-        .replace('#include <map_fragment>', '#ifdef USE_MAP\n\tvec4 sampledDiffuseColor = texture2D( map, vMapUv );\n\tsampledDiffuseColor.rgb = mix( surfMean, sampledDiffuseColor.rgb, surfShow );\n\tdiffuseColor *= sampledDiffuseColor;\n#endif');
+      sh.uniforms.surfMean = { value: meanL }; sh.uniforms.surfShow = { value: show }; sh.uniforms.surfRoof = { value: ROOF_SHOW };
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 surfMean; uniform float surfShow; uniform float surfRoof;')
+        .replace('#include <map_fragment>', `#ifdef USE_MAP\n\tvec4 sampledDiffuseColor = texture2D( map, vMapUv );\n\tsampledDiffuseColor.rgb = mix( surfMean, sampledDiffuseColor.rgb, vMapUv.y > ${ROOF / 2}.0 ? surfRoof : surfShow );\n\tdiffuseColor *= sampledDiffuseColor;\n#endif`);
       lookHaze(sh, r, out);
     };
     out.customProgramCacheKey = () => 'surface' + kind + show + lookKey();
@@ -74,14 +77,14 @@ function squareShare(geo, mw) {
   }
   return all ? sq / all : 0;
 }
-function worldUVm(geo, mw, tile) {
+function worldUVm(geo, mw, tile, roof = false) {
   const g = geo.index ? geo.toNonIndexed() : geo.clone(), p = g.attributes.position, n = g.attributes.normal, uv = new Float32Array(p.count * 2);
   const nm = new THREE.Matrix3().getNormalMatrix(mw), v = new THREE.Vector3(), w = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i).applyMatrix4(mw); w.fromBufferAttribute(n, i).applyMatrix3(nm);
     const ax = Math.abs(w.x), ay = Math.abs(w.y), az = Math.abs(w.z);
     const [a, b] = ay >= ax && ay >= az ? [v.x, v.z] : ax >= az ? [v.z, v.y] : [v.x, v.y];
-    uv[i * 2] = a / tile; uv[i * 2 + 1] = b / tile;
+    uv[i * 2] = a / tile; uv[i * 2 + 1] = b / tile + (roof && w.y > 0.7 * w.length() ? ROOF : 0);   /* a face looking up on a wall, block or ceiling slab is its roof */
   }
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   return g;
@@ -108,7 +111,7 @@ export function dressSurfaces(root) {
     const sh = shape === 'floor' && _b.min.y - base > 1.8 ? 'ceiling' : shape;   /* a slab high up is a ceiling */
     const pale = shape === 'floor' && sh === 'floor' && (m.color.getHSL(_hsl, THREE.SRGBColorSpace), _hsl.l >= 0.66);
     const kind = pale ? 'stone' : kindOf(m, sh, _s.y); if (!kind) return why('colour ' + sh + ' #' + m.color.getHexString());   /* a pale floor is stone flags */
-    o.geometry = worldUVm(o.geometry, o.matrixWorld, TILE[kind]);
+    o.geometry = worldUVm(o.geometry, o.matrixWorld, TILE[kind], sh !== 'floor');
     o.material = matFor(kind, m);
     o.userData.surfaced = kind; n++; SURF.dressed++; const kk = kind + ' ' + sh; SURF.kinds[kk] = (SURF.kinds[kk] || 0) + 1;
     if (SURF.sample.length < 40) SURF.sample.push(kk + ' ' + (o.name || o.parent?.name || '?') + ' ' + [_s.x, _s.y, _s.z].map((v) => v.toFixed(1)).join('x') + ' #' + m.color.getHexString() + ' at ' + [_b.min.x, _b.min.y, _b.min.z].map((v) => v.toFixed(0)).join(','));
