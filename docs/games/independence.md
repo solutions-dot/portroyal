@@ -7,6 +7,8 @@ Every date, name and fact below is a **starting point to verify at source** befo
 ## Owner decisions so far
 
 - Bustamante and Norman Manley **appear** in the game (owner, 24 November 2026).
+- They **can speak**, including in the stadium scene (owner, 24 November 2026). See "How the leaders appear" for how their words are kept honest.
+- The **1938 memory stays a short playable scene** inside chapter 1 (owner, 24 November 2026).
 - The story may run **longer than 5 to 6 August 1962**, back through 1938 and the Federation vote, "if needs be" (owner, 24 November 2026).
 
 ## Idea
@@ -50,7 +52,7 @@ Rule 3 allows real people to say **imagined everyday words** that complete a sce
 - **Both leaders are shown fairly and in equal measure.** The two parties disagreed, and the game says that plainly and gently. No hero, no villain. Neither is shown winning an argument the sources do not show.
 - **Rule 3 on looks**: each is modelled on photographs of that very person and period (face, build, clothes, hair), with the sources listed here. Until then they are stand-ins and the doc says so. Bodies follow `docs/PEOPLE.md` and rule 15's full check.
 - The Governor-General and the royal representative appear only as far as photographs and accounts support, with no invented words.
-- Open question for the owner: should the leaders speak at all in the stadium scene, or only be seen and heard in sourced radio or newspaper words? Safest default is sourced words only.
+- **They speak (owner, 24 November 2026).** Anything that is a statement of politics or history uses a real, sourced line, quoted exactly. Anything that only completes the scene (greeting the crowd, a thank-you, a short remark that fits the facts and the person) may be imagined, short, plain, and marked as imagined on the journal page. No invented speeches, no invented famous quotes, and neither leader is given the last word over the other.
 
 ## Sources to read first (none read yet)
 
@@ -78,7 +80,7 @@ Verify and record each source here with date checked and what it confirmed.
 
 ## Next steps
 
-1. Owner confirms the open questions (leaders' speech in the stadium, memory scope).
+1. Done: leaders may speak and the 1938 memory stays short and playable (owner, 24 November 2026).
 2. Read the sources, fill in each "verify", write a short research file in `docs/games/independence/`.
 3. Chapter-by-chapter script following `docs/CONTENT.md` (short lines, plain words).
 4. Only then copy `games/_template/`, wire the audits before the first PR (rule 8), and add the menu card.
