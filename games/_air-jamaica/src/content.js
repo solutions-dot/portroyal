@@ -14,13 +14,13 @@ export const GAME = {
 };
 export const CHAPTERS = [
   {
-    id: "apron", name: "A flag in the sky", year: "1 April 1969", first: 10, last: 18, place: "apron",
+    id: "apron", name: "A flag in the sky", year: "1 April 1969", first: 10, last: 19, place: "apron",
     caption: "Palisadoes Airport, Kingston · 1 April 1969",
     intro: "Your Aunt Marcia starts work today. Jamaica's own airline begins to fly.",
   },
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
-export const PEOPLE = { marcia: "Aunt Marcia", hines: "Mr Hines", ross: "Captain Ross" };
+export const PEOPLE = { marcia: "Aunt Marcia", hines: "Mr Hines", ross: "Captain Ross", mum: "Mum" };
 const L = (who, text) => ({ who, text });
 export const TALK = {
   10: {
@@ -55,11 +55,23 @@ export const TALK = {
       L("Captain Ross", "Some come from Air Canada to help at first."),
       L("You", "Where is the plane going?"),
       L("Captain Ross", "Up over the sea, and then north."),
-      L("Captain Ross", "Stand back and watch. It is something to see."),
+      L("Captain Ross", "Your Mum is up in the waving gallery."),
+      L("Captain Ross", "Go and wave. We leave very soon."),
     ],
   },
 };
+TALK[15] = {
+  mum: [
+    L("Mum", "Dee, up here! Come to the rail."),
+    L("You", "Mum, what is this place?"),
+    L("Mum", "The waving gallery. Families come to wave."),
+    L("Mum", "We stand up high and watch the planes leave."),
+    L("You", "Can Aunt Marcia see us?"),
+    L("Mum", "Maybe. Wave anyway. Here she goes!"),
+  ],
+};
 export const FLAVOUR = {
+  mum: ["Wave, Dee, wave!", "What a day for Jamaica."],
   marcia: ["Wave to me when we go!", "I am so proud today."],
   hines: ["Clear of the steps, please.", "Heavy bags, light hearts."],
   ross: ["Engines are warm.", "A fine morning for flying."],
@@ -69,6 +81,7 @@ export const SOURCES = {
   wilson: { name: "Phil Tiemeyer, Stewardess as Aerial Ambassador (Wilson Center, with the Daily Gleaner of 9 February and 1 April 1969)", url: "https://www.wilsoncenter.org/blog-post/stewardess-aerial-ambassador-what-gender-can-reveal-about-us-jamaican-foreign-relations" },
   gleaner: { name: "Jamaica Gleaner, 1 May 2010: Air Jamaica celebrates for the last time", url: "https://jamaica-gleaner.com/gleaner/20100501/lead/lead1.html" },
   gleaner2: { name: "Jamaica Gleaner, Pieces of the Past: History of Aviation in Jamaica, Part II", url: "https://old.jamaica-gleaner.com/pages/history/story0071.html" },
+  nlj: { name: "National Library of Jamaica, photographs of Palisadoes Airport and its waving gallery (D0002830, D0002829)", url: "https://nljdigital.nlj.gov.jm/items/show/1296" },
   jamaicans: { name: "Jamaicans.com, On this day: Air Jamaica A.K.A. The Love Bird is Born", url: "https://jamaicans.com/on-this-day-in-jamaican-history-air-jamaica/" },
 };
 export const JOURNAL = [
@@ -102,6 +115,12 @@ export const JOURNAL = [
     source: "wilson",
   },
   {
+    id: "gallery", title: "The waving gallery",
+    simple: ["The waving gallery was a high open deck at Palisadoes Airport.", "You climbed steps on the outside of the building to reach it.", "Families stood at the rail to wave and to watch the planes leave."],
+    deeper: ["The National Library of Jamaica keeps photographs of the gallery, with people standing along its rail.", "Many people remember that, once the public could no longer walk out to the planes, the gallery was where most of them watched. The year of that change is still to be found.", "Mum in this game is fictional."],
+    source: "nlj",
+  },
+  {
     id: "today", title: "A Jamaican airline",
     simple: ["A book of 1969 said Air Jamaica was \"a Jamaican airline for the Jamaican people\".", "People were proud of it.", "It flew for many years."],
     deeper: ["The airline began in 1966 on planes leased from BOAC and BWIA, and became Air Jamaica Ltd, with Air Canada, in 1969.", "In 2010 it was sold to Caribbean Airlines. That is part of the story to come."],
@@ -114,10 +133,10 @@ export const CARDS = {
 };
 export const FILMS = {
   takeoff: {
-    place: "apron", next: 17, journal: "plane", title: "The first flight leaves",
+    place: "gallery", next: 18, journal: "plane", title: "The first flight leaves",
     read: ["On 1 April 1969 Air Jamaica began flying its own jets from Kingston and Montego Bay to New York and Miami.", "The ground crew pulled away the steps, the DC-8 taxied to the runway, and then it took off."],
     captions: [
-      [0, "Palisadoes Airport, Kingston. 1 April 1969."],
+      [0, "The waving gallery, Palisadoes Airport. 1 April 1969."],
       [3.5, "The crew wave. The steps are pulled away."],
       [8, "The first Air Jamaica jet starts to roll."],
       [17, "It turns out onto the runway."],
@@ -126,17 +145,17 @@ export const FILMS = {
       [41, "Jamaica falls away below."],
     ],
     shots: [
-      { t: 0, p: [-3, 1.5, 14], look: [-6, 2.6, -7] },
-      { t: 5, p: [11, 2.2, 16], look: [-6, 2.8, -8] },
-      { t: 11, p: [-14, 2.4, 6], look: [-22, 2.8, -8] },
-      { t: 18, p: [-34, 2.6, 2], look: [-46, 2.6, -28] },
-      { t: 25, p: [-28, 2.4, -62], look: [-34, 2.4, -83] },
-      { t: 31, p: [28, 1.7, -74], look: [62, 2.4, -83] },
-      { t: 37, p: [96, 3.0, -72], look: [116, 7, -83] },
-      { t: 42, p: [140, 9, -64], look: [232, 28, -83] },
-      { t: 46, p: [150, 11, -62], look: [330, 50, -83] },
+      { t: 0, p: [38.6, 5.9, 31.0], look: [4, 3.2, -8] },
+      { t: 6, p: [38.2, 5.9, 31.0], look: [0, 3.0, -8] },
+      { t: 12, p: [37.6, 5.9, 31.0], look: [-18, 2.8, -8] },
+      { t: 19, p: [37.0, 5.9, 31.0], look: [-44, 2.8, -20] },
+      { t: 26, p: [36.6, 5.9, 31.0], look: [-46, 2.6, -60] },
+      { t: 31, p: [36.2, 5.9, 31.0], look: [-36, 2.6, -81] },
+      { t: 37, p: [36.0, 5.9, 31.0], look: [60, 3.0, -83] },
+      { t: 41, p: [36.0, 5.9, 31.0], look: [150, 8, -83] },
+      { t: 46, p: [36.0, 5.9, 31.0], look: [300, 36, -83] },
     ],
-    fov: [[0, 50], [11, 44], [25, 42], [31, 36], [37, 44], [46, 50]],
+    fov: [[0, 36], [12, 30], [26, 24], [31, 20], [37, 16], [46, 14]],
     acts: [],
     sounds: [[0.3, "begin"], [8, "drum"], [26, "jet"], [33, "jet"]],
     duration: 46,

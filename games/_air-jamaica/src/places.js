@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { T, std, solid, plane, grp, batchStatic } from "./gfx.js";
 import * as P from "./props.js";
 import { dc8, dc9, DC8 } from "./planes.js";
-import { airport } from "./airport.js";
+import { airport, GALLERY } from "./airport.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
 
 const base = (id, bounds, start) => ({
@@ -55,29 +55,28 @@ export const APRON = {
   line: { z: -3.2 }, // the crew's line along the fuselage
 };
 
-function apron() {
-  const Q = base("apron", [-34, -5.5, 36, 30], [-3, 25, 0]);
+/* what both places share: the airport, the DC-8 at the steps, the DC-9 behind it, the ground gear. Returns the parts the first-flight scene moves. */
+function scene(Q, { deck = false } = {}) {
   Q.beds = { wind: 0.04, crowd: 0.03 };
   Q.light = { top: 0x4f9ed6, hor: 0xe6eee4, fog: [0xd8e6e6, 260, 1400], sun: [0xfff2d0, 2.8, -40, 60, 40], hemi: [0xffffff, 0x8aa0a0, 2.6] };
-  /* the concrete apron, a large pale slab, with the grass and sea set round it by airport() */
+  /* the concrete apron: a large pale slab, with the grass and sea set round it by airport() */
   const ap = plane(150, 130, std(T.concrete([60, 52], [168, 165, 154])), 0, 0.001, 8, Q.group);
   ap.rotation.x = -Math.PI / 2;
   ap.name = "terrain";
-  airport(Q);
+  airport(Q, { deck });
   /* the DC-8, nose west, the port side (the door side) toward the terminal */
   const jet = dc8();
   add(Q, jet, APRON.plane.x, APRON.plane.z, 0, Math.PI);
   P.dynamic(jet);
   Q.props.plane = jet;
-  Q.props.jetHome = { x: APRON.plane.x, z: APRON.plane.z, ry: Math.PI };
-  /* its walls: the fuselage, the two port engines, the nose gear is inside the fuselage footprint, the port main gear */
+  /* its walls: the fuselage, the two port engines, the port main gear (the nose gear is inside the fuselage footprint) */
   wall(Q, APRON.plane.x - 22.9, APRON.plane.z - 1.9, APRON.plane.x + 23.0, APRON.plane.z + 1.9);
   for (const [lz, lx] of [[7.4, -0.69], [13.2, -4.0]]) {
     const ex = APRON.plane.x - lx, ez = APRON.plane.z + lz;
     wall(Q, ex - 2.3, ez - 0.75, ex + 2.3, ez + 0.75);
   }
   wall(Q, APRON.plane.x + 3 - 1.0, APRON.plane.z + 3.6 - 0.45, APRON.plane.x + 3 + 1.0, APRON.plane.z + 3.6 + 0.45);
-  /* the DC-9 behind it, another of the airline's first four jets, parked nose west, well off to the side */
+  /* the DC-9 east of it, another of the airline's first four jets, parked nose west */
   const small = dc9();
   add(Q, small, 66, -12, 0, Math.PI);
   P.dynamic(small);
@@ -88,41 +87,14 @@ function apron() {
   P.dynamic(steps);
   Q.props.stairs = steps;
   wall(Q, APRON.stairs.x - 0.75, APRON.plane.z + 1.9, APRON.stairs.x + 0.75, APRON.stairs.z + 4.7);
-  /* ground gear: a power cart at the nose, chocks at the main wheels, cones at the wing tip */
+  /* ground gear: a power cart at the nose, chocks at the main wheels, cones */
   const cart = P.powerCart();
   add(Q, cart, -17.5, -2.5, 0, 0.2);
   wall(Q, -18.4, -3.0, -16.6, -2.0);
   for (const dx of [-0.5, 0.5]) add(Q, P.chock(), APRON.plane.x + 3 + dx * 1.3, APRON.plane.z + 3.6 + 0.9, 0, 0);
   for (const [x, z] of [[6.0, 14.5], [17.0, 14.5], [-14.5, -1.4], [3.5, -2.2]]) add(Q, P.cone(), x, z, 0, 0);
-  /* the people. The crew stand in a line along the plane, facing the terminal, as in the photograph; Aunt Marcia is the one nearest the
-     steps. Captain Ross stands by the nose wheel; Mr Hines is at the foot of the steps with his loading sheet. */
-  const lineZ = APRON.line.z;
-  person(Q, "marcia", "marcia", -8.0, lineZ, 0, { kind: "idle" });
-  person(Q, "hines", "hines", -4.4, 0.5, face(-4.4, 0.5, -6.2, 0.0), { kind: "idle" }, { held: "clipboard", raw: true });
-  person(Q, "ross", "ross", -12.4, 0.0, face(-12.4, 0.0, -2, 6), { kind: "idle" }, { held: "bag", raw: true });
-  const looks = ["wr_lwoman62", "wr_bwoman62", "wr_may62", "wr_pearl62"];
-  const left = [-13.6, -12.5, -11.4, -10.3, -9.2], right = [-4.4, -3.3, -2.2, -1.1, 0.0, 1.1, 2.2, 3.3];
-  [...left, ...right].forEach((x, i) =>
-    crowd(Q, looks[i % looks.length], x, lineZ + (i % 2) * 0.12, 0, { kind: "watch", at: [0, 14], react: ["Wave"], every: [5, 9] }, { line: true }),
-  );
-  /* a few passengers in the terminal forecourt, and the families who came to see the first flight */
-  const fam = [[-20, 20, "wr_bman62"], [-18.4, 20.6, "wr_bwoman62"], [-19.2, 19.2, "wr_bboy62"], [18, 22, "wr_sam62"], [19.4, 22.4, "wr_lwoman62"], [24, 17, "wr_may62"], [25.2, 17.8, "wr_bman62"], [-6, 21, "wr_pearl62"]];
-  fam.forEach(([x, z, look], i) =>
-    crowd(Q, look, x, z, face(x, z, -6, -2), { kind: "watch", at: [-6, -2], react: ["Wave", "Clap"], every: [4, 8] }),
-  );
-  /* keep the way clear from the player's start to the steps and the crew */
-  Q.keepOff = [{ pts: [[-3, 25], [-3, 12], [-5, 2]], w: 1.4 }];
-  /* looks: where the camera goes for each thing the player is sent to see (steps.js LOOKS names them) */
-  const sockY = DC8.Y0;
-  void sockY;
-  Q.lookViews = {
-    tail: { p: [23.5, 2.4, 5.5], look: [24.0, sockY + 6.8, -7.9], fov: 38 },
-    crew: { p: [-15.6, 1.45, 2.2], look: [-2.2, 1.35, lineZ], fov: 46 },
-    steps: { p: [-3.2, 1.7, 3.4], look: [-6.2, 2.4, -4.6], fov: 44 },
-    nose: { p: [-19.0, 1.7, 1.8], look: [-14.4, 3.1, -8.0], fov: 44 },
-  };
-  /* the first flight (content.js FILMS.takeoff): the crew wave, the steps are pulled away, the DC-8 taxis west, turns out to the runway at z -83, rolls
-     east and lifts off. keys: [time, x, z, yaw, height, pitch]; the plane's yaw is its heading (west is pi, north is pi/2, east is 0). */
+  /* the first flight (content.js FILMS.takeoff): the crew wave, the steps are pulled away, the DC-8 taxis west, turns out to the runway at
+     z -83, rolls east and lifts off. keys: [time, x, z, yaw, height, pitch]; the plane's yaw is its heading (west is pi, north is pi/2, east is 0). */
   const smooth = (k) => k * k * (3 - 2 * k);
   const KEYS = [
     [0, 8, -8, Math.PI, 0, 0],
@@ -149,13 +121,58 @@ function apron() {
     jet.position.set(x, y, z);
     jet.rotation.set(0, yaw, pitch, "YXZ");
     steps.visible = t < 0 || t < 5;
-    if (steps.visible) steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
+    steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
     if (t < 0) steps.position.z = APRON.stairs.z;
+  };
+  return { jet, steps };
+}
+
+/* 1. The apron: the crew stand in a line along the plane, facing the terminal, as in the photograph of the first crew; Aunt Marcia is the one nearest
+   the steps. Captain Ross stands by the nose wheel; Mr Hines is at the foot of the steps with his loading sheet. */
+function apron() {
+  const Q = base("apron", [-34, -5.5, 36, 27.2], [-3, 24, 0]);
+  scene(Q);
+  const lineZ = APRON.line.z;
+  person(Q, "marcia", "marcia", -8.0, lineZ, 0, { kind: "idle" });
+  person(Q, "hines", "hines", -4.4, 0.5, face(-4.4, 0.5, -6.2, 0.0), { kind: "idle" }, { held: "clipboard", raw: true });
+  person(Q, "ross", "ross", -12.4, 0.0, face(-12.4, 0.0, -2, 6), { kind: "idle" }, { held: "bag", raw: true });
+  const looks = ["wr_lwoman62", "wr_bwoman62", "wr_may62"];
+  const left = [-13.6, -12.5, -11.4, -10.3, -9.2], right = [-4.4, -3.3, -2.2, -1.1, 0.0, 1.1, 2.2, 3.3];
+  [...left, ...right].forEach((x, i) =>
+    crowd(Q, looks[i % looks.length], x, lineZ + (i % 2) * 0.12, 0, { kind: "watch", at: [0, 14], react: ["Wave"], every: [5, 9] }, { line: true }),
+  );
+  /* families who came to see the first flight, waiting on the apron on this special morning (docs/games/air-jamaica.md: how close the public could get) */
+  const fam = [[-20, 20, "wr_bman62"], [-18.4, 20.6, "wr_bwoman62"], [-19.2, 19.2, "wr_bboy62"], [18, 22, "wr_sam62"], [19.4, 22.4, "wr_lwoman62"], [-6, 21, "wr_may62"]];
+  fam.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, -6, -2), { kind: "watch", at: [-6, -2], react: ["Wave"], every: [4, 8] }));
+  Q.keepOff = [{ pts: [[-3, 24], [-3, 12], [-5, 2]], w: 1.4 }];
+  Q.lookViews = {
+    tail: { p: [23.5, 2.4, 5.5], look: [23.6, DC8_Y0() + 6.8, -7.9], fov: 38 },
+    crew: { p: [-15.6, 1.45, 2.2], look: [-2.2, 1.35, lineZ], fov: 46 },
   };
   Q.enter = () => {};
   return Q;
 }
-const builders = { apron };
+const DC8_Y0 = () => 3.2;
+
+/* 2. The waving gallery: an open deck on the roof of a low building at the end of the terminal canopy, reached by a staircase outside. Families stand
+   at its rail to wave and to watch the planes leave. Mum is there; Aunt Marcia is aboard. The first flight is watched from here. */
+function gallery() {
+  const G = GALLERY;
+  const Q = base("gallery", [G.x0 + 0.5, G.z0 + 0.55, G.x1 - 0.5, G.z1 - 0.5], [G.x1 - 2.2, G.z1 - 1.2, 0]);
+  scene(Q, { deck: true });
+  Q.deck = G.top; /* the player's eye and the guide arrow stand on the deck (main.js deckY) */
+  Q.ground = () => G.top; /* the audits and the people stand on it too */
+  Q.groundAt = Q.ground;
+  /* Mum and the other families stand along the front rail, looking out over the apron */
+  person(Q, "mum", "mum", G.x1 - 3.9, G.z0 + 1.0, face(G.x1 - 3.9, G.z0 + 1.0, 8, -8), { kind: "idle" }, { ground: G.top });
+  const spots = [[G.x0 + 1.4, G.z0 + 0.9, "wr_bman62"], [G.x0 + 2.8, G.z0 + 0.9, "wr_bwoman62"], [G.x1 - 7.1, G.z0 + 1.6, "wr_bboy62"], [G.x1 - 1.6, G.z0 + 1.0, "wr_lwoman62"]];
+  spots.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 8, -8), { kind: "watch", at: [8, -8], react: ["Wave"], every: [3, 6] }, { ground: G.top }));
+  Q.keepOff = [];
+  Q.lookViews = {};
+  Q.enter = () => {};
+  return Q;
+}
+const builders = { apron, gallery };
 export const PLACE_IDS = Object.keys(builders);
 export function buildPlace(id, opts = {}) {
   const Q = builders[id](opts);

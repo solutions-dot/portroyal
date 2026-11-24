@@ -115,6 +115,8 @@ const worlds = {},
   keys = new Set(),
   stick = { id: null, dx: 0, dy: 0 },
   look = { id: null };
+/* a place may stand on a raised floor (the waving gallery's deck): Q.deck is its height, and the eye rises with it */
+const deckY = () => worlds[current]?.deck || 0;
 const world = () => worlds[current],
   carry = createCarry({ camera, fit: true });
 addEventListener("resize", carry.fitView);
@@ -580,7 +582,7 @@ const LS = createLookShot({
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
   reduced,
-  home: () => ({ pos: new THREE.Vector3(S.x, GAME.eye, S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
+  home: () => ({ pos: new THREE.Vector3(S.x, GAME.eye + deckY(), S.z), quat: _lq.setFromEuler(_le.set(S.pitch, S.yaw, 0, "YXZ")) }),
 });
 async function lookAt(id) {
   const lk = LOOKS[id],
@@ -893,7 +895,7 @@ function hint(now) {
   const quiet = S.started && !busy && !openPanel() && !DIR.on,
     h = story.tick(now, quiet);
   $("nudge").hidden = true;
-  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => 0, eye: () => GAME.eye });   /* the arrow is laid out for this game's eye height */
+  if (!GUIDE) GUIDE = createGuide({ scene, camera, ground: () => deckY(), eye: () => GAME.eye });   /* the arrow is laid out for this game's eye height */
   /* a gold arrow on the ground points the way, a gold ring marks the place */
   if (h.show && quiet) GUIDE.point(now, { x: h.x, z: h.z, tx: h.target[0], tz: h.target[1], final: h.final });
   else GUIDE.hide(now);
@@ -940,7 +942,7 @@ function tick(dt, now = performance.now()) {
     camera.position.set(T.pos[0] + Math.sin(k) * 0.6, T.pos[1] + Math.sin(k * 1.7) * 0.06, T.pos[2] + Math.sin(k * 0.8) * 0.35);
     camera.lookAt(...T.look);
   } else {
-    camera.position.set(S.x, GAME.eye, S.z);
+    camera.position.set(S.x, GAME.eye + deckY(), S.z);
     camera.rotation.set(S.pitch, S.yaw, 0, "YXZ");
   }
   findNear();

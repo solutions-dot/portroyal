@@ -14,10 +14,11 @@ export const STEPS = {
   12: t("apron", "Talk to Mr Hines at the foot of the steps.", ["hines"], 13, { show: ALL, journal: "plane" }),
   13: l("apron", "Look along the line of crew.", ["crew"], 14, { show: ALL, journal: "uniforms" }),
   14: t("apron", "Talk to Captain Ross by the nose.", ["ross"], 15, { show: ALL, journal: "captain" }),
-  15: w("apron", "The first flight leaves.", "film", 16, { film: "takeoff", show: ALL }),
-  16: w("apron", "The first flight leaves.", "playing", 17, { film: "takeoff", show: ALL }),
-  17: w("apron", "What did you learn?", "quiz", 18, { journal: "today" }),
-  18: w("apron", "The first morning is over.", "end", null, { end: true }),
+  15: t("gallery", "Join Mum in the waving gallery.", ["mum"], 16, { show: ["mum"], journal: "gallery" }),
+  16: w("gallery", "The first flight leaves.", "film", 17, { film: "takeoff", show: ["mum"] }),
+  17: w("gallery", "The first flight leaves.", "playing", 18, { film: "takeoff", show: ["mum"] }),
+  18: w("gallery", "What did you learn?", "quiz", 19, { journal: "today" }),
+  19: w("gallery", "The first morning is over.", "end", null, { end: true }),
 };
 export const TASKS = {};
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
