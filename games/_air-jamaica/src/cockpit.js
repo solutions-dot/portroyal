@@ -21,6 +21,8 @@ const M = {
   knob: solid(0x0e0e0e, 0.5),
   red: solid(0xc3281f, 0.5),
   frame: solid(0x20262a, 0.7),
+  post: solid(0xb9bcbc, 0.35, 0.7),
+  glassIn: (() => { const m = new THREE.MeshStandardMaterial({ color: 0x9fb8c4, transparent: true, opacity: 0.12, roughness: 0.05, metalness: 0.2, depthWrite: false }); m.userData.noGlow = true; return m; })(),
 };
 /* the instrument panel's picture: left pilot's six main dials, the engine strip in the middle (four columns for four engines), the right pilot's six */
 function dialsTexture(kind = "pilot") {
@@ -95,58 +97,85 @@ function overheadTexture() {
 }
 export function buildCockpit() {
   const g = grp();
-  /* the shell: floor, side walls, ceiling, back wall with the door, and the front wall as a frame with three open windows */
-  box(2.9, 0.05, 3.8, M.floor, 0, -0.025, -0.5, g);
-  /* the side walls, each with a window opening beside its pilot (a sliding window: sill 0.95 m, head 1.75 m, from z -1.9 to z -0.5), framed in dark trim */
+  /* the shell: floor, ceiling, back wall with the door; the nose and its windscreen, the side walls with their windows */
+  /* The nose, as in the 1969 photograph of a DC-8 flight deck (Finnair OH-LFV; docs/games/air-jamaica.md, "Cockpit"): the room narrows toward the front,
+     and the windscreen is six panes round it on slanting posts: two facing ahead, two angled each side, and the pilot's sliding window behind those.
+     Points of the windscreen's foot, from the left side round to the right: x, z. Sill at 1.02 m, head at 1.72 m; the posts lean back 0.12 m at the top. */
+  const SILL = 1.02, HEAD = 1.72, LEAN = 0.12;
+  const FOOT = [[-1.45, -1.25], [-1.15, -1.9], [-0.55, -2.32], [0.0, -2.38], [0.55, -2.32], [1.15, -1.9], [1.45, -1.25]];
+  const seg = (a, b, y0, y1, mat, t = 0.05, lean = 0, inset = 0) => { /* a slab between two foot points, from y0 to y1, leaning back at the top */
+    const [ax, az] = a, [bx, bz] = b, len = Math.hypot(bx - ax, bz - az), ang = Math.atan2(bz - az, bx - ax);
+    const nx = Math.sin(ang), nz = -Math.cos(ang); /* the outward normal of this side (the room is inside) */
+    const m = box(len, y1 - y0, t, mat, (ax + bx) / 2 - nx * inset, (y0 + y1) / 2, (az + bz) / 2 - nz * inset, g);
+    m.rotation.order = "YXZ"; m.rotation.y = -ang; m.rotation.x = lean ? -Math.atan2(lean, y1 - y0) : 0;
+    if (lean) { m.position.x += nx * (-lean / 2); m.position.z += nz * (-lean / 2); }
+    return m;
+  };
+  for (let i = 0; i < FOOT.length - 1; i++) {
+    seg(FOOT[i], FOOT[i + 1], 0, SILL, M.wall, 0.06); /* the nose's lining under the windscreen */
+    seg(FOOT[i], FOOT[i + 1], SILL, HEAD, M.glassIn, 0.02, LEAN, 0.0); /* the pane */
+    seg(FOOT[i], FOOT[i + 1], SILL - 0.03, SILL + 0.03, M.post, 0.07); /* the sill rail */
+    seg(FOOT[i], FOOT[i + 1], HEAD - 0.03, HEAD + 0.05, M.post, 0.07, 0, -LEAN); /* the head rail, set back by the lean */
+  }
+  for (const [x, z] of FOOT.slice(1, -1)) { /* the posts between the panes: polished metal, leaning back as in the photograph */
+    const p = box(0.06, HEAD - SILL + 0.06, 0.06, M.post, x, (SILL + HEAD) / 2, z, g);
+    const r = Math.hypot(x, z + 0.4) || 1; p.rotation.order = "YXZ"; p.rotation.y = Math.atan2(x, -(z + 0.4)); p.rotation.x = -Math.atan2(LEAN, HEAD - SILL);
+    void r;
+  }
+  /* the side walls behind the windscreen, each with the pilot's sliding window (sill 1.02 m, head 1.72 m, from z -1.25 to z -0.45) */
   for (const s of [-1, 1]) {
     const wx = s * 1.45;
-    box(0.06, 0.95, 3.8, M.wall, wx, 0.475, -0.5, g);
-    box(0.06, 0.3, 3.8, M.wall, wx, 1.9, -0.5, g);
-    box(0.06, 0.8, 0.5, M.wall, wx, 1.35, -2.15, g);
-    box(0.06, 0.8, 1.9, M.wall, wx, 1.35, 0.45, g);
-    for (const z of [-1.9, -0.5]) box(0.1, 0.84, 0.06, M.frame, wx - s * 0.02, 1.35, z, g);
-    for (const y of [0.95, 1.75]) box(0.1, 0.06, 1.46, M.frame, wx - s * 0.02, y, -1.2, g);
-    box(0.08, 0.04, 0.5, M.metal, wx - s * 0.03, 1.0, -0.75, g); /* the window's sliding catch on the sill */
+    box(0.06, SILL, 2.65, M.wall, wx, SILL / 2, 0.075, g);
+    box(0.06, 2.05 - HEAD, 2.65, M.wall, wx, (HEAD + 2.05) / 2, 0.075, g);
+    box(0.06, HEAD - SILL, 1.85, M.wall, wx, (SILL + HEAD) / 2, 0.475, g);
+    for (const z of [-1.25, -0.45]) box(0.1, HEAD - SILL + 0.04, 0.06, M.frame, wx - s * 0.02, (SILL + HEAD) / 2, z, g);
+    for (const y of [SILL, HEAD]) box(0.1, 0.06, 0.86, M.frame, wx - s * 0.02, y, -0.85, g);
+    box(0.08, 0.04, 0.5, M.metal, wx - s * 0.03, SILL + 0.04, -0.85, g); /* the sliding window's catch */
   }
-  box(2.9, 0.06, 3.8, M.ceiling, 0, 2.05, -0.5, g);
+  box(2.9, 0.05, 3.9, M.floor, 0, -0.025, -0.5, g);
+  box(2.9, 0.06, 2.45, M.ceiling, 0, 2.05, 0.2, g);
   box(2.9, 2.05, 0.06, M.wall, 0, 1.025, 1.4, g);
   box(0.8, 1.7, 0.04, M.panelLight, 0, 0.9, 1.36, g); /* the door to the cabin */
   box(0.08, 0.3, 0.05, M.metal, 0.28, 0.95, 1.33, g);
-  /* the front wall: a sill under the windows, a beam over them, and three posts */
-  box(2.9, 0.95, 0.08, M.frame, 0, 0.475, -2.4, g);
-  box(2.9, 0.2, 0.08, M.frame, 0, 1.95, -2.4, g);
-  for (const x of [-1.45, -0.5, 0.5, 1.45]) box(0.1, 1.0, 0.08, M.frame, x, 1.45, -2.4, g);
-  /* the glareshield, black, over the panel, and the panel itself in front of each pilot, tilted back */
-  box(2.8, 0.08, 0.5, M.black, 0, 0.98, -2.15, g);
+  /* the glareshield: a narrow black hood over the panel, with the autopilot's strip of knobs and small windows along its top (as in the photograph) */
+  box(2.3, 0.07, 0.36, M.black, 0, 0.98, -1.98, g);
+  box(0.95, 0.12, 0.12, M.panelLight, 0, 1.06, -1.9, g);
+  for (let i = 0; i < 8; i++) cyl(0.016, 0.016, 0.03, M.knob, -0.38 + i * 0.11, 1.08, -1.83, g, 8).rotation.x = Math.PI / 2;
+  /* the main panel: flat across the front, tilted back, the pilots' dials either side and the engine dials in a block of four columns in the middle */
   const dialTex = dialsTexture();
-  const pan = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 0.95), new THREE.MeshStandardMaterial({ map: dialTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: dialTex, emissiveIntensity: 0.16 }));
-  pan.position.set(0, 0.55, -1.86);
-  pan.rotation.x = -0.3;
+  const pan = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.82), new THREE.MeshStandardMaterial({ map: dialTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: dialTex, emissiveIntensity: 0.16 }));
+  pan.position.set(0, 0.56, -1.83);
+  pan.rotation.x = -0.22;
   g.add(pan);
-  box(2.8, 0.75, 0.3, M.panel, 0, 0.45, -2.05, g);
-  /* the centre pedestal: the four throttle levers with black knobs, the flap lever and the red speed-brake lever, the trim wheel */
-  box(0.52, 0.5, 1.2, M.panelLight, 0, 0.25, -1.0, g);
-  box(0.46, 0.04, 1.1, M.panel, 0, 0.52, -1.0, g);
+  box(2.34, 0.92, 0.3, M.panel, 0, 0.5, -1.99, g);
+  /* the centre pedestal, wide and long, running back between the seats: the four throttle levers with black knobs at its front, the flap lever, the red
+     speed-brake lever, then the radio panels with rows of knobs further back (as in the photograph) */
+  box(0.62, 0.62, 1.5, M.panelLight, 0, 0.31, -0.98, g);
+  const top = box(0.58, 0.04, 1.46, M.panel, 0, 0.63, -0.98, g); top.rotation.x = 0.06;
   for (let i = 0; i < 4; i++) {
     const x = -0.15 + i * 0.1;
-    const l = box(0.025, 0.025, 0.34, M.metal, x, 0.64, -1.18, g);
+    const l = box(0.025, 0.025, 0.34, M.metal, x, 0.76, -1.42, g);
     l.rotation.x = -0.5;
-    mesh(new THREE.SphereGeometry(0.035, 10, 8), M.knob, x, 0.74, -1.04, g);
+    mesh(new THREE.SphereGeometry(0.035, 10, 8), M.knob, x, 0.86, -1.28, g);
   }
-  const fl = box(0.025, 0.025, 0.3, M.metal, 0.22, 0.62, -1.0, g); fl.rotation.x = -0.35;
-  mesh(new THREE.SphereGeometry(0.03, 8, 6), M.knob, 0.22, 0.7, -0.88, g);
-  const sb = box(0.025, 0.025, 0.28, M.metal, -0.22, 0.62, -0.9, g); sb.rotation.x = -0.3;
-  mesh(new THREE.SphereGeometry(0.032, 8, 6), M.red, -0.22, 0.69, -0.78, g);
-  const tw = cyl(0.07, 0.07, 0.03, M.trim, 0.0, 0.56, -0.5, g, 14); tw.rotation.z = Math.PI / 2;
+  const fl = box(0.025, 0.025, 0.3, M.metal, 0.25, 0.74, -1.22, g); fl.rotation.x = -0.35;
+  mesh(new THREE.SphereGeometry(0.03, 8, 6), M.knob, 0.25, 0.82, -1.1, g);
+  const sb = box(0.025, 0.025, 0.28, M.metal, -0.25, 0.74, -1.12, g); sb.rotation.x = -0.3;
+  mesh(new THREE.SphereGeometry(0.032, 8, 6), M.red, -0.25, 0.81, -1.0, g);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 5; c++) cyl(0.017, 0.017, 0.02, M.knob, -0.2 + c * 0.1, 0.66 + r * 0.008, -0.86 + r * 0.14, g, 8);
+  const tw = cyl(0.07, 0.07, 0.03, M.trim, 0.31, 0.62, -0.7, g, 14); tw.rotation.z = Math.PI / 2;
   /* control columns, a wheel on each; rudder pedals under the panel; seats; the overhead panel */
   for (const s of [-1, 1]) {
     const x = s * 0.7;
     cyl(0.03, 0.03, 0.85, M.metal, x, 0.425, -1.2, g, 8);
-    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.016, 8, 24), M.black);
-    wheel.position.set(x, 0.86, -1.08);
+    /* the control wheel, open at the top in a ram's horn (as in the photograph): the lower half of a ring and two upright grips, on a hub */
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.018, 8, 24, Math.PI), M.black);
+    wheel.rotation.z = Math.PI;
+    wheel.position.set(x, 0.88, -1.08);
     g.add(wheel);
-    box(0.34, 0.025, 0.025, M.black, x, 0.86, -1.08, g);
-    for (const dx of [-0.17, 0.17]) cyl(0.022, 0.022, 0.1, M.black, x + dx, 0.86, -1.08, g, 6).rotation.x = Math.PI / 2;
+    for (const dx of [-0.17, 0.17]) cyl(0.022, 0.022, 0.14, M.black, x + dx, 0.95, -1.08, g, 8);
+    box(0.12, 0.08, 0.06, M.black, x, 0.88, -1.1, g);
+    box(0.16, 0.09, 0.01, solid(0xcfd0c7, 0.7), x, 0.87, -1.07, g); /* the clip for the checklist card */
     for (const dx of [-0.08, 0.08]) box(0.1, 0.18, 0.02, M.metal, x + dx, 0.12, -1.55, g).rotation.x = -0.4;
     /* the seat: a cushion, a back with a headrest, two arms, a post to the floor */
     const sx = x, sz = -0.15;
@@ -167,10 +196,12 @@ export function buildCockpit() {
   ep.rotation.y = -Math.PI / 2;
   g.add(ep);
   /* the overhead panel */
-  box(1.5, 0.12, 0.9, M.panel, 0, 1.96, -1.35, g);
-  const oh = new THREE.Mesh(new THREE.PlaneGeometry(1.46, 0.86), new THREE.MeshStandardMaterial({ map: overheadTexture(), roughness: 0.6 }));
-  oh.position.set(0, 1.895, -1.35);
-  oh.rotation.x = Math.PI / 2;
+  /* the overhead panel, large and crowded with switches, sloping down to the top of the windscreen (as in the photograph) */
+  const ohSlab = box(1.6, 0.12, 1.25, M.panel, 0, 1.9, -1.45, g); ohSlab.rotation.x = -0.18;
+  const oh = new THREE.Mesh(new THREE.PlaneGeometry(1.56, 1.2), new THREE.MeshStandardMaterial({ map: overheadTexture(), roughness: 0.6 }));
+  oh.position.set(0, 1.835, -1.45);
+  oh.rotation.x = Math.PI / 2 - 0.18;
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 11; c++) { const k = box(0.03, 0.05, 0.03, (r + c) % 5 ? M.metal : M.knob, -0.6 + c * 0.12, 1.79 + r * 0.04, -1.95 + r * 0.22, g); k.rotation.x = -0.18; }
   g.add(oh);
   /* ---- lighting and small things that make it a working room ---- */
   const lamp = (x, y, z, hex, r = 0.016) => {

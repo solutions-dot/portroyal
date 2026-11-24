@@ -65,7 +65,7 @@ export const DC9 = {
   gear: { noseX: 13.4, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
   stripeEnd: 12.6, roofEnd: 15.0,
   title: { x: 4.9, w: 5.6 },
-  flag: { x: -3.0 },
+  flag: { x: -3.0, onEngine: true }, /* the flag is on the engine pod (photograph 6Y-JIJ) */
   cockpit: { x: 14.6, dx: 0.5, n: 3, dy: 0.92, front: 16.4 },
 };
 
@@ -120,12 +120,14 @@ function fuselage(S, holes = []) {
   /* the rings along the body and the lines round it, with the edges of every hole added exactly, so a cut-out has straight, clean edges */
   const xs = [], as = [];
   for (let i = 0; i <= 150; i++) xs.push(lerp(x0, x1, i / 150));
+  for (let x = x0; x < S.lift.from + 0.5; x += 0.06) xs.push(x); /* where the tail cone rises, the stripes cross the rings on a slant: fine rings keep their edges smooth */
   for (let j = 0; j < 160; j++) as.push((j / 160) * TAU);
   const wrap = (a) => ((a % TAU) + TAU) % TAU;
   for (const h of holes) { xs.push(h.x0, h.x1); as.push(wrap(h.a0), wrap(h.a1)); }
   xs.sort((p, q) => p - q); as.sort((p, q) => p - q);
   const inHole = (x, a) => holes.some((h) => { const lo = wrap(Math.min(h.a0, h.a1)), hi = wrap(Math.max(h.a0, h.a1)); return x > h.x0 && x < h.x1 && (lo <= hi ? a > lo && a < hi : a > lo || a < hi); });
-  const pos = [], col = [], Mn = as.length;
+  const pos = [], uvs = [], Mn = as.length, DY = 2.2; /* the paint is a picture: u along the body, v the height above the centre line (from -DY to +DY), so every stripe's edge is sharp per pixel */
+  const UV = (q) => [(q[0] - x0) / (x1 - x0), (q[1] - centreY(S, q[0]) + DY) / (2 * DY)];
   const P = (x, a) => { const r = radiusAt(S, x), cy = centreY(S, x); return [x, cy + Math.cos(a) * r, Math.sin(a) * r]; };
   for (let i = 0; i < xs.length - 1; i++) {
     if (xs[i + 1] - xs[i] < 1e-5) continue;
@@ -136,13 +138,12 @@ function fuselage(S, holes = []) {
       if (inHole(xm, wrap(am))) continue;
       const p00 = P(xs[i], a0), p01 = P(xs[i], a1), p10 = P(xs[i + 1], a0), p11 = P(xs[i + 1], a1);
       pos.push(...p00, ...p01, ...p10, ...p01, ...p11, ...p10); /* wound so the faces point outward */
-      const c = paint(P(xm, am)[1] - centreY(S, xm), xm);
-      for (let k = 0; k < 6; k++) col.push(c.r, c.g, c.b);
+      for (const q of [p00, p01, p10, p01, p11, p10]) uvs.push(...UV(q));
     }
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
   geo.computeVertexNormals();
   /* smooth shading across the faces: normals from the round body itself, not from each flat face */
   const n = geo.attributes.normal, p = geo.attributes.position;
@@ -150,7 +151,19 @@ function fuselage(S, holes = []) {
     const x = p.getX(k), dy = p.getY(k) - centreY(S, x), dz = p.getZ(k), l = Math.hypot(dy, dz) || 1;
     n.setXYZ(k, 0, dy / l, dz / l);
   }
-  const o = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.36, metalness: 0.1, side: THREE.DoubleSide }));
+  const tex = cv(2048, 1024, (x, W, H) => {
+    const img = x.createImageData(W, H), d = img.data;
+    for (let j = 0; j < H; j++) {
+      const dy = DY - (j / (H - 1)) * 2 * DY; /* canvas rows run top down; v = 1 is the top */
+      for (let i = 0; i < W; i++) {
+        const c = paint(dy, x0 + (i / (W - 1)) * (x1 - x0)), k = (j * W + i) * 4;
+        d[k] = Math.round(Math.pow(c.r, 1 / 2.2) * 255); d[k + 1] = Math.round(Math.pow(c.g, 1 / 2.2) * 255); d[k + 2] = Math.round(Math.pow(c.b, 1 / 2.2) * 255); d[k + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0);
+  });
+  tex.anisotropy = 8; tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  const o = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.36, metalness: 0.1, side: THREE.DoubleSide }));
   o.name = "fuselage";
   return o;
 }
@@ -356,10 +369,10 @@ export function makeJet(S, opts = {}) {
     return m;
   };
   {
-    const xa = C.front - 1.0, xb = C.front + 0.55;
-    patch(xa - 0.06, xb + 0.06, -0.97, 0.97, M.frame, 0.006); /* the pale frame, a little larger than the glass */
-    patch(xa, xb, -0.9, -0.05, M.glass, 0.014);
-    patch(xa, xb, 0.05, 0.9, M.glass, 0.014);
+    const xa = C.front - 0.7, xb = C.front + 0.35, A = 0.6; /* two panes each side of a centre post, about 35 degrees round the nose each way (photograph 6Y-JIJ) */
+    patch(xa - 0.05, xb + 0.05, -A - 0.05, A + 0.05, M.frame, 0.006);
+    patch(xa, xb, -A, -0.04, M.glass, 0.014);
+    patch(xa, xb, 0.04, A, M.glass, 0.014);
   }
   /* Doors. A closed door is painted with the plane, so only its outline shows: a thin dark seam on the curve of the skin. The open boarding door (opts.doorOpen)
      is a real opening: the skin is cut away (holes, above), a reveal 14 cm deep lines its four sides, the cabin shows inside (a dim wall, a lit ceiling
@@ -391,7 +404,7 @@ export function makeJet(S, opts = {}) {
     const ya = cy + Math.cos(H.a0) * radiusAt(S, cx), yb = cy + Math.cos(H.a1) * radiusAt(S, cx), yLo = Math.min(ya, yb), yHi = Math.max(ya, yb);
     const zIn = side * Math.sqrt(Math.max(0.01, inner * inner - 0.0));
     box(H.x1 - H.x0 + 0.8, yHi - yLo + 0.3, 0.04, M.cabin, cx, (yLo + yHi) / 2, side * (radiusAt(S, cx) - 1.0), g);
-    const lit = box(H.x1 - H.x0 + 0.8, 0.08, 0.05, M.cabinLight, cx, yHi - 0.12, side * (radiusAt(S, cx) - 1.0) + side * 0.03, g); lit.userData.glow = true;
+    const lit = box(H.x1 - H.x0 + 0.8, 0.08, 0.05, M.cabinLight, cx, yHi - 0.12, side * (radiusAt(S, cx) - 1.0) + side * 0.03, g); lit.userData.noGlow = true; /* bright, but no halo: the halo was drawn through the skin as a dot by the door */
     { const r0 = radiusAt(S, cx), zs = Math.sqrt(Math.max(0.01, r0 * r0 - (yLo - cy) ** 2)) - 0.16; box(H.x1 - H.x0 + 0.6, 0.04, zs - (r0 - 1.0), M.floor, cx, yLo + 0.02, side * ((zs + r0 - 1.0) / 2), g); } /* the floor stops inside the skin */
     void zIn;
     /* the door: a curved slab 9 cm thick, its outer face painted like the skin round it, swung forward to lie 25 cm off the body */
@@ -430,9 +443,16 @@ export function makeJet(S, opts = {}) {
     const x = S.title.x, o = onSide(S, x, 0.05, s), t = decal(S.title.w, S.title.w * 0.1774, title);
     t.position.set(x, o.y, o.z + s * 0.025); t.rotation.set(s > 0 ? -o.tilt : o.tilt, s > 0 ? 0 : Math.PI, 0);
     g.add(t);
-    const fx = S.flag.x, fo = onSide(S, fx, 0.15, s), f = decal(0.7, 0.46, flag);
-    f.position.set(fx, fo.y, fo.z + s * 0.025); f.rotation.set(s > 0 ? -fo.tilt : fo.tilt, s > 0 ? 0 : Math.PI, 0);
-    g.add(f);
+    if (S.flag.onEngine) {
+      const E = S.engines, f = decal(0.6, 0.4, flag);
+      f.position.set(E.x + 0.6, S.Y0 + E.y + 0.12, s * (E.z + E.r + 0.012));
+      if (s < 0) f.rotation.y = Math.PI;
+      g.add(f);
+    } else {
+      const fx = S.flag.x, fo = onSide(S, fx, 0.15, s), f = decal(0.7, 0.46, flag);
+      f.position.set(fx, fo.y, fo.z + s * 0.025); f.rotation.set(s > 0 ? -fo.tilt : fo.tilt, s > 0 ? 0 : Math.PI, 0);
+      g.add(f);
+    }
   }
   /* wings: swept slabs, tilted up toward the tip; a leading edge with its slat line, flaps and an aileron on the trailing edge, spoiler lines,
      a navigation light and a fuel vent at the tip */
