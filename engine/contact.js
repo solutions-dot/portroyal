@@ -10,9 +10,13 @@ const MAX = 160, ST = new WeakMap();
 let TEX = null;
 function tex() {
   if (TEX) return TEX;
-  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-  g.addColorStop(0, 'rgba(0,0,0,0.42)'); g.addColorStop(0.45, 'rgba(0,0,0,0.24)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+  /* a smooth falloff worked out pixel by pixel, (1 - r^2)^3, never above 30 per cent: a canvas gradient with a few stops left a visible rim and read as a dark disc (owner, 24 November 2026) */
+  const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), im = x.createImageData(N, N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const u = (i + 0.5) / N * 2 - 1, v = (j + 0.5) / N * 2 - 1, r2 = u * u + v * v, a = r2 >= 1 ? 0 : 0.3 * Math.pow(1 - r2, 3), k = (j * N + i) * 4;
+    im.data[k] = im.data[k + 1] = im.data[k + 2] = 0; im.data[k + 3] = Math.round(a * 255);
+  }
+  x.putImageData(im, 0, 0);
   TEX = new THREE.CanvasTexture(c); TEX.colorSpace = THREE.SRGBColorSpace; return TEX;
 }
 const BONE = (sk, re) => sk.bones.find((b) => re.test(b.name));
@@ -47,7 +51,7 @@ export function contactShadows(scene, on) {
     if (!vis) continue;
     p.hips.getWorldPosition(_h); p.l.getWorldPosition(_a); p.r.getWorldPosition(_b); p.hd.getWorldPosition(_hd);
     const foot = Math.min(_a.y, _b.y), tall = Math.max(0.4, _hd.y - foot);   /* head above the feet: about 1.5 m for a grown-up */
-    const s = 0.62 * tall / 1.5 + 0.25 * Math.hypot(_a.x - _b.x, _a.z - _b.z);
+    const s = 0.5 * tall / 1.5 + 0.35 * Math.hypot(_a.x - _b.x, _a.z - _b.z);   /* about half a metre under a grown-up standing: the faint edge reaches past the feet, the dark middle stays under them */
     if (s < 0.05) continue;
     _o.position.set((_h.x + (_a.x + _b.x) / 2) / 2, foot - p.toe, (_h.z + (_a.z + _b.z) / 2) / 2); _o.scale.set(s, 1, s); _o.updateMatrix();
     mesh.setMatrixAt(n++, _o.matrix);
