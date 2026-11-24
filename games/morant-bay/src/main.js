@@ -538,7 +538,7 @@ async function waits(st) {
   if (kind === "film") {
     /* one card before a scene (engine/scene-warning.js): what happens, the standard lines if it may be frightening, Watch scene or Read instead */
     const data = CARDS[row.film];
-    sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
+    sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, hurt: !!data.hurt, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
   } else if (kind === "playing") DIR.start(row.film);
   else if (kind === "note") {
     const data = CARDS[row.note];

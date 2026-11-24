@@ -26,3 +26,8 @@ test('every game uses the standard card and writes no scary wording of its own',
   }
   assert.deepEqual(users.sort(), games.filter((g) => g !== 'garvey').sort(), 'every game with a cinematic uses the card (Garvey has none)');
 });
+
+test('a warning card never says nobody is hurt twice, and leaves it out where people are hurt on screen', () => {
+  assert.deepEqual(warningLines(['Nobody is hurt in front of you.']), ['Nobody is hurt in front of you.', 'It may be scary.']);
+  assert.deepEqual(warningLines(['People fall, far off.'], true, { hurt: true }), ['People fall, far off.', 'It may be scary.']);
+});

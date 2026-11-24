@@ -4,7 +4,7 @@
    choice: scary: false leaves the two lines out. The buttons are always "Watch scene" and "Read what happened instead". There is no calm mode
    (the owner, 21 November 2026): sceneIsCalm() is always false, kept so the games' calls still work.
 
-     sceneWarning(card, { title, what, scary = true, watch, read, pairs = false })
+     sceneWarning(card, { title, what, scary = true, hurt = false, watch, read, pairs = false })   hurt: people are hurt on the screen (no "Nobody is hurt" line)
        card     the game's card(title, lines, buttons, { col }); buttons are { t, go } objects, or [label, fn] pairs with pairs: true
        what     a line or a list of lines: what happens, in plain words
      warningText(what, scary)                           the card's one paragraph (warningLines: the same as a list)
@@ -37,11 +37,15 @@ function centre(cardEl) {
 const uncentre = () => { for (const el of document.querySelectorAll('.scene-card')) el.classList.remove('scene-card'); };
 export function endSceneWarning() {}
 
-export function warningLines(what, scary = true) {
-  return [...[].concat(what || []), ...(scary ? SCARY_LINES : [])];
+/* hurt: people are hurt on the screen in this scene (Morant Bay's volley, where people fall far off): "Nobody is hurt on the screen." would
+   not be true, so it is left out. A line the card already says (its own "Nobody is hurt in front of you.") is not said twice (24 November 2026). */
+export function warningLines(what, scary = true, { hurt = false } = {}) {
+  const own = [].concat(what || []), said = own.join(' ');
+  const std = scary ? SCARY_LINES.filter((l) => !(/nobody is hurt/i.test(l) && (hurt || /nobody is hurt|no one is hurt/i.test(said)))) : [];
+  return [...own, ...std];
 }
 /* the lines run together as one paragraph, not stacked one per line (owner, 21 November 2026) */
-export function warningText(what, scary = true) { return warningLines(what, scary).join(' '); }
+export function warningText(what, scary = true, opts) { return warningLines(what, scary, opts).join(' '); }
 
 export function addSceneWarningOptions(body, watchButton, readButton, watch, read) {
   if (body) body.replaceChildren();
@@ -57,10 +61,10 @@ export function addSceneWarningOptions(body, watchButton, readButton, watch, rea
   watchButton.focus({ preventScroll: true });
 }
 
-export function sceneWarning(card, { title, what, scary = true, watch, read, pairs = false }) {
+export function sceneWarning(card, { title, what, scary = true, hurt = false, watch, read, pairs = false }) {
   const noop = () => {};
   const buttons = pairs ? [[WATCH, noop], [READ, noop]] : [{ t: WATCH, go: noop }, { t: READ, go: noop }];
-  card(title, [warningText(what, scary)], buttons, { col: true });
+  card(title, [warningText(what, scary, { hurt })], buttons, { col: true });
   const [watchButton, readButton] = document.getElementById('cbtns').children;
   addSceneWarningOptions(null, watchButton, readButton, watch, read);
 }

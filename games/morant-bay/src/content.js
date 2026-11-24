@@ -104,7 +104,7 @@ export const CARDS = {
   meeting: { title: "A night in late September", lines: ["Men come to the chapel at night, one by one."], scary: false },
   warrant: { title: "The warrant", lines: ["Police come up the hill to take Paul Bogle. Hundreds of men come out. A constable is pushed and held. Nobody is hurt in front of you."] },
   bay: { title: "Morant Bay", lines: ["Morant Bay on a Wednesday afternoon. The Volunteers stand outside the court-house."], scary: false },
-  riot: { title: "The eleventh of October", lines: ["A crowd with sticks, cutlasses and guns comes to the court-house. Stones are thrown. The Volunteers fire. People fall, far off, in smoke. Buildings burn.", "You see it from under a market stall. There is no blood."] },
+  riot: { title: "The eleventh of October", hurt: true, lines: ["A crowd with sticks, cutlasses and guns comes to the court-house. Stones are thrown. The Volunteers fire. People fall, far off, in smoke. Buildings burn.", "You see it from under a market stall. There is no blood."] },
   soldiers: { title: "The eighteenth of October", lines: ["Soldiers march into Stony Gut. People run. Nobody is hurt in front of you."] },
   burning: { title: "From the cave mouth", lines: ["Soldiers burn the chapel and the houses. At night, men are taken away. You see lanterns and fire, far off."] },
   courts: { title: "Under martial law", lines: ["Soldiers judge prisoners in a shed. A man is tied to a post to be flogged. The camera turns away before the whip comes down. You hear it."] },

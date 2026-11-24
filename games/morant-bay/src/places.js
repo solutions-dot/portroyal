@@ -534,8 +534,8 @@ function gut() {
       at("brother", CAVE.x + 1.1, CAVE.z + 0.1, 0, 0);
     } else {
       at("deacon", 1.4, -4.7, 2.4, -2.6);
-      at("father", -11.4, -1.4, -14, -4);
-      at("mother", -3.2, 8.4, -3.8, 6.6);
+      at("father", -10.2, -0.4, -14, -4);   /* behind and beside the dig close-up's camera, not in it (his legs filled it) */
+      at("mother", -2.4, 7.4, -3.8, 6.6);   /* out of the tin-box close-up (bent at her work, she filled half of it) */
       at("gran", -4.2, 2.6, -3.8, 6.6);
       at("brother", -2.4, 5.0, -3.6, 7);
     }
@@ -546,8 +546,8 @@ function gut() {
   };
   /* people. Story people (person) by the house, the chapel and the yard; the village (crowd) by the step that brings them. */
   person(Q, "gran", "gran", -4.2, 2.6, face(-4.2, 2.6, -3.8, 6.6), { kind: "watch", at: [-3.8, 6.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
-  person(Q, "mother", "mother", -3.2, 8.4, face(-3.2, 8.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
-  person(Q, "father", "father", -11.4, -1.4, face(-11.4, -1.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
+  person(Q, "mother", "mother", -2.4, 7.4, face(-2.4, 7.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
+  person(Q, "father", "father", -10.2, -0.4, face(-10.2, -0.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "brother", "brother", -2.4, 5.0, 0, { kind: "wander", area: [-5.6, 3.2, -1.6, 8.4], pause: [2, 5] });
   person(Q, "deacon", "deacon", 1.4, -4.7, face(1.4, -4.7, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "bogle", "bogle", 13.2, -2.4, face(13.2, -2.4, 9, -2), { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
