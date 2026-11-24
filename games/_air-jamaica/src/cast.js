@@ -2,8 +2,10 @@
    her first day; Mr Hines works on the apron; Captain Ross flies the DC-8; Mum waits in the waving gallery. The player is Dee, a child.
    Bodies made for this game (tools/air-jamaica/people, built by tools/garvey/era.py from the Windrush 1962 recipes): the 1969 crew in short, fitted
    dresses of yellow, hot pink or lime green, with a mix of straight hair, buns and afros (owner, 24 November 2026) and lipstick; the captain and his
-   crew in navy jackets and caps (a general picture: the 1969 captain's uniform is not yet sourced). The families on the apron are the Windrush 1962
-   townspeople, the right period for them. Still to add: the crew's white gloves (the builder has no gloves yet). */
+   crew in the early pilot uniform from the owner's photograph (docs/games/air-jamaica.md, "Early pilot uniforms"): a navy double-breasted jacket with
+   gold buttons, gold sleeve rings (four for the captain, three for the first officer, two for the flight engineer), gold wings, and a white-topped cap
+   with a gold band and a round orange-red badge. The families on the apron are the Windrush 1962
+   townspeople, the right period for them. */
 export const CAST = {
   marcia: { base: "aj_marcia", sex: "f", who: "Aunt Marcia" },
   hines: { base: "aj_hines", sex: "m", who: "Mr Hines", idle: "IdleM" },

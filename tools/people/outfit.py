@@ -392,7 +392,7 @@ elif OUTFIT_PHASE == 'finish':
                         bb.faces.new((a_, b_, c_, d_))
             _on_jacket('Rings', bb, 'Rings'); print('OUTFIT sleeve rings', nr)
         if _UF.get('wings'):
-            loc, nrm = _front(0.095 * s, J('Spine2').z + 0.07 * s)
+            loc, nrm = _front(0.128 * s, J('Spine2').z + 0.05 * s)      # clear of the lapel's edge (at 9.5 cm it sat on the lapel and cut into it as the lapel moved)
             if loc is not None:
                 bb = bmesh.new(); R = nrm.to_track_quat('Z', 'Y').to_matrix().to_4x4(); base = Matrix.Translation(loc + nrm * 0.0018) @ R
                 bmesh.ops.create_circle(bb, cap_ends=True, segments=12, radius=0.0075 * s, matrix=base)
