@@ -135,6 +135,11 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
             tone(784, 780, 1.6, "sine", 0.02, 0);
           } else if (what === "drum") {
             noiseHit(90, 0.9, 0.5, 0.35, 0, 0);
+          } else if (what === "jet") {
+            /* a jet's roar rising: broad noise that swells, with a low note under it */
+            noiseHit(260, 0.5, 6, 0.3, 0, 0);
+            noiseHit(1100, 0.8, 5, 0.1, 0, 0.3);
+            tone(70, 160, 5, "sawtooth", 0.05, 0);
           } else if (what === "creak") shipCreak();
           else if (what === "gull") gullCry();
           else if (what === "page") uiSound("page");

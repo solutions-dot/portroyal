@@ -1,7 +1,7 @@
 import { touchFirst } from '../../../engine/device.js';
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
-/* An all-ages mystery on the shared engine. It plays like every other game (walk, talk, do, watch a scene). Everything that differs from one mature game
+/* A true story for all ages on the shared engine. It plays like every other game (walk, talk, do, watch a scene). Everything that differs from one mature game
    to the next is data: content.js (words), steps.js (the story table), places.js (the world) and cast.js (the people). */
 import { renderFramed } from "../../../engine/cine.js";
 import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
@@ -23,7 +23,7 @@ import { createStory, createCarry, needList } from "../../../engine/story.js";
 import { createGuide } from "../../../engine/guide.js";   /* the gold arrow on the ground that shows the way (every game) */
 import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit, shipCreak } from "../../../engine/audio.js";
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
 import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
@@ -34,7 +34,6 @@ import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } 
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
-import { cockedHat } from "./ships.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
@@ -154,7 +153,6 @@ function body(spec) {
   spreadArms(m, spec.sex === "f" ? 0.1 : 0.08);
   groundFeet(m);
   if (spec.held) holdThing(m, spec.held);
-  if (spec.hat) wearHat(m, spec.hat);
   const hips = m.getObjectByName("mixamorigHips");
   if (hips) {
     m.updateMatrixWorld(true);
@@ -175,18 +173,6 @@ function holdThing(m, kind) {
   if (!h) return;
   grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8 });
   m.userData.held = [{ obj: h.obj, bone: "RightHand", label: h.label }];
-}
-/* a hat modelled in the game's own code (an officer's cocked hat, ships.js), set on the head bone so that it turns with the head */
-function wearHat(m, kind) {
-  const head = m.getObjectByName("mixamorigHead"),
-    top = m.getObjectByName("mixamorigHeadTop_End");
-  if (!head || kind !== "cocked") return;
-  m.updateMatrixWorld(true);
-  const hat = cockedHat(),
-    s = head.getWorldScale(new THREE.Vector3()).x || 1;
-  hat.scale.setScalar(1 / s);
-  hat.position.set(0, (top ? top.position.y : 0.18 / s) * 0.8, (0.012 / s));
-  head.add(hat);
 }
 function ensure(id) {
   return worlds[id]
@@ -572,12 +558,8 @@ function talk(n) {
 /* a thing to look at: it changes where you can see it (a cloth pulled back, a lid lifted), then a card says what you found */
 /* the sound of each look (engine/lookshot.js plays it as the thing moves): gentle, made in code like the rest of the game's sound */
 const LOOK_SFX = {
-  bell: () => [0, 0.45, 1.3, 1.75].forEach((d) => { tone(1320, 1310, 1.6, "sine", 0.045, 0, d); tone(2630, 2620, 0.8, "sine", 0.016, 0, d); }),   /* two pairs: ding-ding, ding-ding */
-  glass: () => { noiseHit(3000, 2, 0.25, 0.06, 0.2, 0); noiseHit(2400, 2, 0.2, 0.05, 0.2, 0.35); },   /* the brass tubes drawn out */
-  line: () => { noiseHit(1200, 0.6, 1.2, 0.12, -0.3, 0.2); noiseHit(600, 1.2, 0.5, 0.1, -0.3, 0.9); },   /* the line runs out, then jerks tight */
-  paper: () => [0.2, 0.6, 1.0].forEach((d) => noiseHit(3400, 0.5, 0.3, 0.1, 0, d)),   /* old paper unfolded */
-  flags: () => { [0, 0.4, 0.8, 1.2].forEach((d) => tone(900, 1100, 0.12, "sine", 0.02, -0.4, d)); noiseHit(1800, 0.6, 0.6, 0.06, -0.4, 1.7); },   /* a halyard block squeaks, the flags shake out */
-  canvas: () => { noiseHit(2200, 0.5, 1.2, 0.1, 0.2, 0.1); shipCreak(); },   /* canvas drawn back over the hatch */
+  engine: () => { noiseHit(380, 0.6, 2.4, 0.1, 0, 0); noiseHit(1500, 1.2, 1.4, 0.04, 0.2, 0.4); },   /* a jet turbine far off, winding up */
+  cheer: () => [0, 0.35, 0.8].forEach((d) => noiseHit(900 + d * 400, 1.5, 0.5, 0.05, 0, d)),   /* the crew's soft hurrah, and their gloves */
 };
 const _lq = new THREE.Quaternion(),
   _le = new THREE.Euler();
