@@ -35,7 +35,7 @@ export const STEPS = {
   56: w("cabin", "The flying chef.", "end", null, { end: true, show: CABIN_ALL }),
 };
 export const TASKS = {
-  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.75], at: [0.69, 0.71, -1.95], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
+  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [0.69, 0.85, -1.98], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
 };
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while it happens. lines: the card after. */

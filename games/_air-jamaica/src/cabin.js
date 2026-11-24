@@ -10,7 +10,7 @@ import { grp, mesh, box, cyl, solid, cv } from "./gfx.js";
 export const CABIN = {
   half: 1.85, // the side walls (the cabin is 3.7 m wide)
   aisle: 0.46, // half the aisle's width
-  rows: [-2.4, -1.6, -0.8, 0.0, 0.8, 1.6], // each row's seat cushion centre, along z
+  rows: [-2.4, -1.45, -0.5, 0.45, 1.4], // each row's seat cushion centre, along z: 95 cm apart, so a passenger has room for knees, hands and a tray (at 80 cm, with these thick seats, the seat ahead was against his chest: owner, 24 November 2026)
   seatX: [0.69, 1.15, 1.61], // the three seats of a side, from the aisle out
   seatTop: 0.48,
   front: -4.7, // the front wall of the galley
@@ -52,12 +52,12 @@ function skyTexture() {
 function seat(g, x, z, trayDown = false) {
   const s = grp(g, x, 0, z);
   box(0.44, 0.12, 0.46, M.seat, 0, CABIN.seatTop - 0.06, 0, s);
-  const back = box(0.44, 0.74, 0.1, M.seat, 0, 0.84, 0.25, s);
+  const back = box(0.44, 0.74, 0.07, M.seat, 0, 0.84, 0.25, s);
   back.rotation.x = -0.12;
   const hc = box(0.4, 0.2, 0.012, M.head, 0, 1.08, 0.18, s);
   hc.rotation.x = -0.12;
   box(0.36, 0.42, 0.11, M.seatDark, 0, 0.21, 0.02, s);
-  if (trayDown) box(0.38, 0.02, 0.3, M.tray, 0, 0.7, 0.45, s); /* the tray, down, for the passenger behind */
+  if (trayDown) box(0.38, 0.02, 0.26, M.tray, 0, 0.84, 0.42, s); /* 84 cm up: over the thighs and the hands resting on them, with room (at 70 cm it lay in the passenger's lap) */ /* the tray, down, for the passenger behind */
   else { const t = box(0.34, 0.26, 0.02, M.tray, 0, 0.9, 0.31, s); t.rotation.x = -0.12; }
   return s;
 }

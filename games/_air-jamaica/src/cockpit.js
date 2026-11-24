@@ -197,9 +197,9 @@ export function buildCockpit() {
     cyl(0.06, 0.08, 0.44, M.metal, sx, 0.22, sz, g, 8);
   }
   /* the flight engineer: a seat behind the first officer turned to face the side panel, and the panel on the right-hand wall */
-  box(0.46, 0.12, 0.46, M.seat, 1.0, 0.5, 0.55, g);
-  box(0.1, 0.7, 0.46, M.seat, 1.22, 0.9, 0.55, g);
-  cyl(0.06, 0.08, 0.44, M.metal, 1.0, 0.22, 0.55, g, 8);
+  box(0.46, 0.12, 0.46, M.seat, 0.68, 0.5, 0.55, g);
+  box(0.1, 0.7, 0.46, M.seat, 0.46, 0.9, 0.55, g); /* the back behind him, on the side away from his panel (it stood on the panel side, so he faced his own seat back) */
+  cyl(0.06, 0.08, 0.44, M.metal, 0.68, 0.22, 0.55, g, 8);
   box(0.12, 1.15, 1.35, M.panel, 1.37, 1.0, 0.1, g);
   const engTex = engineerTexture();
   const ep = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1), new THREE.MeshStandardMaterial({ map: engTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: engTex, emissiveIntensity: 0.14 }));
@@ -260,13 +260,13 @@ export function buildCockpit() {
   }
   const list = box(0.2, 0.01, 0.28, solid(0xece8d8, 0.8), 0.0, 0.535, -0.7, g);
   list.rotation.x = -0.15;
-  /* a headset hung on a hook behind each pilot, lap and shoulder straps on each seat */
+  /* a headset hung over each pilot's headrest, lap and shoulder straps on each seat */
   for (const s of [-1, 1]) {
     const x = s * 0.7;
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 16, Math.PI), M.black);
-    band.position.set(x, 1.55, 0.2);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.175, 0.012, 6, 16, Math.PI), M.black); /* hung over the top of the seat's headrest (it floated in the air where a hook was never drawn) */
+    band.position.set(x, 1.43, 0.13);
     g.add(band);
-    for (const dx of [-0.1, 0.1]) cyl(0.04, 0.04, 0.03, M.black, x + dx, 1.52, 0.2, g, 10).rotation.z = Math.PI / 2;
+    for (const dx of [-0.175, 0.175]) cyl(0.04, 0.04, 0.03, M.black, x + dx, 1.4, 0.13, g, 10).rotation.z = Math.PI / 2;
     box(0.04, 0.5, 0.01, solid(0x1b1d1c, 0.9), x - 0.18, 0.95, 0.04, g);
     box(0.04, 0.5, 0.01, solid(0x1b1d1c, 0.9), x + 0.18, 0.95, 0.04, g);
   }
@@ -285,4 +285,4 @@ export function buildCockpit() {
   g.userData.parts = { pedestal: [0, 0.5, -1.0] };
   return g;
 }
-export const SEATS = { captain: { x: -0.7, z: -0.15, top: 0.56 }, first: { x: 0.7, z: -0.15, top: 0.56 }, engineer: { x: 1.0, z: 0.55, top: 0.56 } };
+export const SEATS = { captain: { x: -0.7, z: -0.15, top: 0.56 }, first: { x: 0.7, z: -0.15, top: 0.56 }, engineer: { x: 0.68, z: 0.55, top: 0.56 } };

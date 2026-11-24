@@ -220,7 +220,7 @@ function cockpit() {
   wall(Q, -1.0, -0.45, -0.4, 0.15);
   wall(Q, 0.4, -0.45, 1.0, 0.15);
   wall(Q, -0.27, -1.6, 0.27, -0.4);
-  wall(Q, 0.75, 0.3, 1.3, 0.85);
+  wall(Q, 0.4, 0.3, 1.3, 0.85);
   wall(Q, -1.2, 1.0, -0.6, 1.4);
   Q.view = { pos: [0.05, 1.5, 0.75], look: [0.0, 1.05, -2.2] };
   Q.lookViews = {
@@ -283,7 +283,7 @@ function cabin() {
   person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]), { raw: true });
   crowd(Q, "wr_man18", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
   /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
-  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, 1.95);
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   wall(Q, -0.42, CABIN.trolley.z - 0.17, 0.42, CABIN.trolley.z + 0.17);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };

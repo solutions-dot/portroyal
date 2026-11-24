@@ -7,6 +7,7 @@ import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
 import ANIM_CLIPS from "../anim-clips.json";
 import {
   auditPlace,
+  auditSeated,
   auditCloth,
   auditWalk,
   auditHeld,
@@ -327,7 +328,10 @@ export async function dev(A) {
       const twins = faceCheck(
         [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
+      /* seated people on their seats, with room in front of them (engine/audit.js auditSeated): the flight deck's crew and the cabin's passengers */
+      const seated = [];
+      for (const n of [...Q.people, ...Q.extras]) if (n.m?.userData.seatAnchor && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); seated.push(...auditSeated(n.id, n.m, Q.snap, 0, [])); }
+      const errors = [...seated, ...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

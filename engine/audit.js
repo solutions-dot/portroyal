@@ -386,7 +386,8 @@ export function auditGarments(id, body) {
      - sits too low (the hip joint should be about 12 cm above the seat, scaled by body size; 7 cm lower than that and the seat passes through the thighs),
      - cuts into any other box, such as the back of the seat or an arm (real skinned vertices against the exact box),
      - hangs in the air (hips more than 30 cm above the seat under them, or above the floor with no seat at all),
-     - faces the back of a seat (a thin, tall board close in front of them).
+     - faces the back of a seat (a thin, tall board close in front of them),
+     - has no room in front (a solid within 15 cm of the chest, or a tray or shelf within 6 cm of the thighs and hands on the lap).
    stats (optional array) collects one line per person, for tuning. */
 export function auditSeated(id, body, snap, ground = 0, stats) {
   if (snap.inst && snap.inst.some((m) => m.lb)) snap = snap.concat(snap.inst.filter((m) => m.lb));   /* rows of chairs drawn as instanced boxes are seats too (Garvey's Liberty Hall: people on them were reported as sitting on nothing) */
@@ -406,6 +407,21 @@ export function auditSeated(id, body, snap, ground = 0, stats) {
       if (n >= Math.max(3, pts.length * 0.01)) out.push(`${id} cuts into a ${sz.x.toFixed(2)}x${sz.y.toFixed(2)}x${sz.z.toFixed(2)} box at y ${m.b.min.y.toFixed(2)} to ${m.b.max.y.toFixed(2)} (up to ${(deep * 100).toFixed(0)} cm deep, ${n} points)`);
     }
     if (upright && (!under || m.b.intersectsBox(under.b.clone().expandByScalar(.09)))) { const c = m.b.getCenter(new THREE.Vector3()), dx = c.x - hips.x, dz = c.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (ahead > 0.2 && ahead < 0.9 && side < 0.6 && m.b.min.y < hips.y + 0.3 && m.b.max.y > hips.y + 0.2) out.push(`${id} faces the back of a seat (a board ${(ahead * 100).toFixed(0)} cm ahead at ${c.x.toFixed(2)},${c.z.toFixed(2)})`); }
+  }
+  /* room in front (owner, 24 November 2026, of a passenger on a plane: "He has no space"): nothing solid may stand within 15 cm of a seated person's chest,
+     and a tray or shelf over the lap must clear the thighs and the hands resting on them by 6 cm. Both are measured on the posed body's real points. */
+  {
+    let chest = -1e9, lap = [];
+    for (const p of pts) { const dx = p.x - hips.x, dz = p.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (side > 0.3) continue; if (p.y > hips.y + 0.2 && p.y < hips.y + 0.55) chest = Math.max(chest, ahead); if (ahead > 0.05 && ahead < 0.6 && p.y < hips.y + 0.3) lap.push([p, ahead]); }
+    const cs = [new THREE.Vector3()];
+    for (const m of near) {
+      if (m === under) continue; const sz = m.b.getSize(new THREE.Vector3()); if (sz.x > 8 || sz.z > 8 || Math.max(sz.x, sz.y, sz.z) < 0.15) continue;
+      let lo = 1e9, sMin = 1e9; for (let i = 0; i < 8; i++) { cs[0].set(i & 1 ? m.b.max.x : m.b.min.x, 0, i & 2 ? m.b.max.z : m.b.min.z); const dx = cs[0].x - hips.x, dz = cs[0].z - hips.z; lo = Math.min(lo, dx * fwd.x + dz * fwd.z); }
+      const c = m.b.getCenter(new THREE.Vector3()), side = Math.abs((c.x - hips.x) * fwd.z - (c.z - hips.z) * fwd.x) - Math.max(sz.x, sz.z) / 2; void sMin;
+      if (side > 0.2 || lo <= 0) continue;
+      if (m.b.min.y < hips.y + 0.5 && m.b.max.y > hips.y + 0.25 && lo > chest - 0.02 && lo - chest < 0.15) out.push(`${id} has no room in front: a ${sz.x.toFixed(2)}x${sz.y.toFixed(2)}x${sz.z.toFixed(2)} box ${((lo - chest) * 100).toFixed(0)} cm from the chest`);
+      if (sz.y < 0.08 && m.b.min.y > hips.y - 0.15 && m.b.min.y < hips.y + 0.3) { let top = -1e9; for (const [p] of lap) if (p.x > m.b.min.x && p.x < m.b.max.x && p.z > m.b.min.z && p.z < m.b.max.z) top = Math.max(top, p.y); if (top > -1e9 && m.b.min.y - top < 0.06 && m.b.min.y - top > -0.03) out.push(`${id} has a tray or shelf on the lap: ${((m.b.min.y - top) * 100).toFixed(0)} cm over the thighs and hands`); }
+    }
   }
   /* the seat under the hips: the lowest part of the pelvis may sink a little into a cushion, but not far, and the person must not hover */
   let lowBack = 1e9, lowThigh = 1e9; for (const p of pts) { const dx = p.x - hips.x, dz = p.z - hips.z, ahead = dx * fwd.x + dz * fwd.z, side = Math.abs(dx * fwd.z - dz * fwd.x); if (side > 0.3 || p.y < hips.y - 0.45) continue; if (ahead > -0.25 && ahead < 0.05) lowBack = Math.min(lowBack, p.y); else if (ahead >= 0.05 && ahead < 0.35) lowThigh = Math.min(lowThigh, p.y); }
