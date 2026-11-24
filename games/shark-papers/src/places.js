@@ -1213,21 +1213,21 @@ function court() {
   for (const x of [-4.6, 4.6]) add(Q, sash(1.2, 2.2), x, -Z + 0.205, 2.6, 0);
   add(Q, W.makeDoor({ w: 1.5, h: 2.5, kind: "six", leaves: 2, color: 0x2f3b33, frame: 0xe2d9c2, handle: "knob" }), 0, Z - 0.21, 0, Math.PI);
   /* ---- the bench: a raised floor across the end of the room, a panelled front, the judge's chair under a canopy, the royal arms above.
-     The judge is not named in any source found, so the chair is empty. ---- */
+     The judge sits in it. No source found names him, and he has no words (owner, 23 November 2026: a trial needs a presiding judge). ---- */
   const dais = grp();
   box(7.4, 0.42, 1.9, S.SM.woodDark, 0, 0.21, 0, dais);
   box(7.5, 0.05, 2.0, S.SM.wood, 0, 0.43, 0, dais);
   box(1.6, 0.21, 0.5, S.SM.woodDark, -3.0, 0.105, 1.2, dais);   /* the step up */
-  box(4.6, 1.2, 0.09, panel(4.6, 1.2, 3), 0, 1.05, 0.62, dais);
-  box(4.8, 0.07, 0.6, S.SM.woodDark, 0, 1.68, 0.4, dais);   /* the desk top */
-  for (const s of [-1, 1]) box(0.09, 1.2, 0.6, panel(0.6, 1.2, 1), s * 2.3, 1.05, 0.36, dais);
+  box(4.6, 0.8, 0.09, panel(4.6, 0.8, 3), 0, 0.85, 0.62, dais);
+  box(4.8, 0.07, 0.6, S.SM.woodDark, 0, 1.28, 0.4, dais);   /* the desk top, at the seated judge's chest, so he is seen over it (it stood 1.2 m over the bench floor and hid him) */
+  for (const s of [-1, 1]) box(0.09, 0.8, 0.6, panel(0.6, 0.8, 1), s * 2.3, 0.85, 0.36, dais);
   /* the chair: a tall back with a carved top, red leather seat */
-  box(0.7, 0.5, 0.62, S.SM.woodDark, 0, 0.7, -0.35, dais);
-  box(0.62, 0.08, 0.56, solid(0x7a2a24, 0.7), 0, 0.98, -0.34, dais);
+  box(0.7, 0.42, 0.62, S.SM.woodDark, 0, 0.66, -0.35, dais);   /* the seat 48 cm over the bench floor, an ordinary chair's height, so the judge's feet rest on the floor */
+  box(0.62, 0.08, 0.56, solid(0x7a2a24, 0.7), 0, 0.9, -0.34, dais);
   box(0.7, 1.4, 0.1, S.SM.woodDark, 0, 1.68, -0.64, dais);
   box(0.5, 0.9, 0.03, solid(0x7a2a24, 0.7), 0, 1.6, -0.585, dais);
   mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 12, 1, false, 0, Math.PI), S.SM.woodDark, 0, 2.38, -0.64, dais).rotation.set(Math.PI / 2, 0, Math.PI / 2, "ZYX");   /* the carved half-round top, facing the room (in the default order it stood edge-on, a post up into the royal arms) */
-  for (const s of [-1, 1]) box(0.08, 0.3, 0.5, S.SM.woodDark, s * 0.36, 1.12, -0.36, dais);
+  for (const s of [-1, 1]) box(0.08, 0.3, 0.5, S.SM.woodDark, s * 0.36, 1.04, -0.36, dais);
   /* the canopy and its back board */
   box(2.2, 2.3, 0.06, panel(2.2, 2.3, 2), 0, 2.4, -0.86, dais);
   box(2.5, 0.14, 1.0, S.SM.woodDark, 0, 3.6, -0.44, dais);
@@ -1238,10 +1238,10 @@ function court() {
   arms.scale.setScalar(0.62);
   dais.add(arms);
   /* on the desk: an inkstand, a quill, a sand box, a bell, two books */
-  cyl(0.05, 0.06, 0.07, S.SM.lead, -0.6, 1.75, 0.4, dais, 8);
-  S.spar([-0.6, 1.78, 0.4], [-0.5, 2.02, 0.3], 0.006, 0.02, S.SM.white, dais);
-  cyl(0.04, 0.04, 0.06, S.SM.brass, -0.4, 1.745, 0.45, dais, 8);
-  for (const [x, c] of [[0.7, 0x4a2f24], [0.74, 0x2f3b4a]]) box(0.26, 0.05, 0.34, solid(c, 0.8), x, 1.74 + (c === 0x2f3b4a ? 0.05 : 0), 0.4, dais).rotation.y = 0.2;
+  cyl(0.05, 0.06, 0.07, S.SM.lead, -0.6, 1.35, 0.4, dais, 8);
+  S.spar([-0.6, 1.38, 0.4], [-0.5, 1.62, 0.3], 0.006, 0.02, S.SM.white, dais);
+  cyl(0.04, 0.04, 0.06, S.SM.brass, -0.4, 1.345, 0.45, dais, 8);
+  for (const [x, c] of [[0.7, 0x4a2f24], [0.74, 0x2f3b4a]]) box(0.26, 0.05, 0.34, solid(c, 0.8), x, 1.34 + (c === 0x2f3b4a ? 0.05 : 0), 0.4, dais).rotation.y = 0.2;
   solid1(Q, dais, 0, -Z + 1.2, 7.6, 2.1);
   wall(Q, -3.0, -Z + 2.4, 1.6, 0.5);
   /* ---- the clerk's table under the bench: ledgers, an inkstand, a candle; and the registrar's stool ---- */
@@ -1370,11 +1370,14 @@ function court() {
   box(0.5, 0.05, 0.4, S.SM.woodDark, 0, 0.5, 0, stool);
   for (const x of [-0.2, 0.2]) for (const z of [-0.15, 0.15]) box(0.04, 0.5, 0.04, S.SM.woodDark, x, 0.25, z, stool);
   solid1(Q, stool, 4.3, 0.9, 0.55, 0.45);
-  /* the court decides, as a camera scene: the clerk reads out the decision; the judge's chair stays empty */
+  /* the court decides, as a camera scene: the clerk reads out the decision; the judge sits on the bench */
   Q.films.verdict = filmHold(Q, ["clerk", "fitton"]);
   /* people */
   person(Q, "clerk", "clerk", -3.6, -0.5, face(-3.6, -0.5, 2, 2), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn", "Nod"], every: [5, 9] }, { held: "ledger" });
   person(Q, "fitton", "fitton", 3.5, -0.6, face(3.5, -0.6, 0, 1), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
+  /* the judge (unnamed in every source found; no words), seated on the bench in a black gown with white bands and a powdered wig. The gown
+     and the wig are stand-ins: a knee-length black coat and white powdered hair, until the builder makes a gown and a wig (docs/games/shark-papers.md) */
+  crowd(Q, "sp_judge", 0, -Z + 1.2 - 0.34, 0, { kind: "sit", seat: { top: 0.94, x: 0, z: -Z + 1.2 - 0.34, ry: 0 }, clips: ["SitIdle"] });   /* SitIdle2 pressed his fingers into his thighs (rule 15 check) */
   const sit = (look, bi, dx) => crowd(Q, look, BEN[bi][0] + dx, BEN[bi][1], Math.PI, { kind: "sit", seat: { top: 0.475, x: BEN[bi][0] + dx, z: BEN[bi][1], ry: Math.PI }, clips: ["SitIdle", "SitIdle2"], group: "pub" + bi });
   sit("sp_merchant", 0, 0.9);
   sit("sp_merchant2", 0, -0.2);
