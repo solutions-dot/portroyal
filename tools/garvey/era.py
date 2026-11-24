@@ -1491,6 +1491,36 @@ if G.get('coat') and OLD and G.get('coatsleeves',True) and not (LATE and G.get('
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         cols.append([bm.verts.new(q) for q in col])
     quadstrip(bm,[list(r) for r in zip(*cols)]); _cn=soft('CoatNeck',bm,'Coat',only=TORSO+('LeftArm','RightArm')); ring_weights(_cn,seg+1,len(cols[0]))      # evened round the neck too (dark flaps stood up from it when walking)
+if G.get('coat') and OLD and LATE and G.get('bands') and G.get('coatsleeves',True):
+    # A low standing collar round the sides and back of a later coat, as coats of the 1770s and 1790s had: the coat's neck edge stood off the shoulders there, and looking
+    # down between it and the stock met bare skin (pink points from behind, owner, 24 November 2026: "lets get the characters out the way"). It rises from 1 cm under the
+    # coat's edge, lying on the coat, to 4 mm over the foot of the stock, just outside it, and takes the coat's own weights, so it moves with the coat. Its ends taper
+    # away at the sides, well behind the chin, where the old full facing (CoatNeck) stood up in tufts.
+    _cb=bmesh.new(); _cb.from_mesh(PART['coat'].data); _NB=36; _E=[[] for _ in range(_NB)]
+    for v in _cb.verts:      # the coat's neck edge: its height and distance from the neck at each angle
+        if v.is_boundary and v.co.z>NECK-0.07*s and math.hypot(v.co.x,v.co.y-NJ.y)<0.14*s: _E[int((math.atan2(v.co.x,-(v.co.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB].append((v.co.z,math.hypot(v.co.x,v.co.y-NJ.y)))
+    _cb.free(); bm=bmesh.new(); seg=28; a0=1.0; cols=[]
+    def _edge(a):
+        k=int((a/(2*math.pi)+0.5)*_NB)%_NB
+        for d in (0,1,-1,2,-2):
+            L=_E[(k+d)%_NB]
+            if L: return sum(z for z,_r in L)/len(L),sum(r for _z,r in L)/len(L)
+        return None
+    for k in range(seg+1):
+        a=a0+(2*math.pi-2*a0)*k/seg; a=math.atan2(math.sin(a),math.cos(a)); e=sstep(0.0,0.07,min(k,seg-k)/seg); E=_edge(a)
+        b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.009); rf=math.hypot(b0.x,b0.y-NJ.y)+0.003; d=Vector((math.sin(a),-math.cos(a),0)); C=Vector((0,NJ.y,0))
+        if E is None: ze,re=b0.z-0.01*s,rf+0.03
+        else: ze,re=E
+        def on_skin(r,lift):
+            x,y=math.sin(a)*r,NJ.y-math.cos(a)*r; hh=tree.ray_cast(Vector((x,y,b0.z+0.015)),Vector((0,0,-1)),0.08)[0]; return Vector((x,y,(hh.z if hh else b0.z)+lift))      # (from just over the stock's foot: from higher up the ray met the jaw and the collar's ends stood up in spikes)
+        top=Vector((math.sin(a)*rf,NJ.y-math.cos(a)*rf,b0.z+0.009*s))
+        mid=on_skin((rf+re)/2,0.003); mid.z=min(max(mid.z,min(top.z,ze)-0.004),max(top.z,ze)+0.002)
+        lo=Vector((math.sin(a)*(re+0.0015),NJ.y-math.cos(a)*(re+0.0015),ze+0.001)); lo2=Vector((math.sin(a)*(re+0.003),NJ.y-math.cos(a)*(re+0.003),ze-0.010*s))
+        _o2=Vector((0,NJ.y,lo2.z)); _h=_CT.ray_cast(_o2,d)[0] if False else None
+        col=[top.lerp(lo,1-e),mid.lerp(lo,1-e),lo,lo2]      # (each end flattens into the coat's edge: cut off square it showed as a step on the shoulder)
+        cols.append([bm.verts.new(q) for q in col])
+    quadstrip(bm,[list(r) for r in zip(*cols)])
+    soft('CoatCollar',bm,'Coat',src=PART['coat'])
 if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the coat's front, from the neck to the waist
     CT=tree_of(PART['coat']); bm=bmesh.new(); z1=NECK-0.085*s; z0=HIP+0.075; nb=max(4,int((z1-z0)/(0.052*s)))
     for i in range(nb+1):
