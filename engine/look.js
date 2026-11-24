@@ -25,7 +25,7 @@ import { contactShadows } from './contact.js';
 
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export const SKY_SHARE = 0.6;
-export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: !Q.has('noglow') && (Q.has('glow') || !isPhone()), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
+export const LOOK = { sky: !Q.has('nosky'), ao: !Q.has('noao') && (Q.has('ao') || !isPhone()), glow: Q.has('glow') && !Q.has('noglow'), grading: !Q.has('nograde'), post: !Q.has('nopost'), grade: null, aoOff: '' };
 const ST = new WeakMap();
 if (typeof window !== 'undefined') window.__LOOK = LOOK;   /* for a check or a test view */
 
@@ -207,6 +207,7 @@ function addGrain(shader) {
 /* the game's tone mapping, part of every shader's identity: three notices a change of it only when drawing straight to the screen, so in the extra pass a sky
    kept the tube's tone mapping after Bog Walk switched it off outdoors (draw() marks every material for rebuilding when it changes) */
 const TM = { now: -1 };
+export const lookKey = () => '|tm' + TM.now;   /* for a material with its own shader key (engine/surfaces.js) */
 const ckPrev = THREE.Material.prototype.customProgramCacheKey;
 THREE.Material.prototype.customProgramCacheKey = function () { const k = clothKind(this); return ckPrev.call(this) + (k ? '|cloth' + k : grainOK(this) ? '|grain' : '') + '|tm' + TM.now; };
 
@@ -253,6 +254,10 @@ function easeMood(st, dt) {
 }
 
 /* ---------- 3. glow ---------- */
+/* OFF by default (24 November 2026): tone mapped, a sunlit white beach or a bright sky is as white as a lamp, and additive haze over it goes past white in the
+   extra pass, so a glow by brightness washed whole edges of the picture white (the Shark Papers quay). Lamps and flames keep the halos the games draw
+   themselves, and the sun its own (step 8). A selective glow (only lamps, flames and windows, drawn into their own buffer) is the way to bring it back.
+   ?glow turns this one on to compare. */
 /* bright things (flames, lamps, lit windows, the sun on white sails) get a soft halo, on computers and tablets. Only light well above white glows, so an
    ordinary lit wall does not. */
 
@@ -276,14 +281,22 @@ function composerFor(renderer, scene, camera, st) {
       if (Q.has('aoview')) st.ao.output = GTAOPass.OUTPUT.Denoise;   /* ?aoview: the shading alone, white where nothing is closed in */
       st.comp.addPass(st.ao);
     }
-    if (LOOK.glow) { st.glow = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.16, 0.35, 0.965); st.comp.addPass(st.glow); }   /* on display colours, so only the very brightest (flames, lamps, the sun) pass 0.965; at 0.86 windows and a bright sky blew out */
+    if (LOOK.glow && st.ao) {
+      st.glow = new UnrealBloomPass(new THREE.Vector2(256, 256), Q.has('glowview') ? 3 : 0.2, 0.3, +(Q.get('glowt') || 0.985));   /* ?glowview: four times stronger, to see where it starts */
+      /* only things in the place glow, never the sky: tone mapped, a bright sky near the sun is as white as a lamp, and its glow washed over the scene
+         (the Shark Papers quay). The corner-shading pass draws the place's depth without the sky (back-faced domes and sprites are left out), so its
+         depth picture is the mask. */
+      const hp = st.glow.materialHighPassFilter; hp.uniforms.tMask = { value: null };
+      hp.fragmentShader = hp.fragmentShader.replace('void main() {', 'uniform sampler2D tMask;\nvoid main() {').replace('gl_FragColor = mix( outputColor, texel, alpha );', 'gl_FragColor = mix( outputColor, texel, alpha ) * step( texture2D( tMask, vUv ).x, 0.9999 );');
+      hp.needsUpdate = true; st.comp.addPass(st.glow);
+    }   /* on display colours, so only the very brightest (flames, lamps, the sun) pass 0.985; at 0.86 windows and a bright sky blew out, at 0.965 pale sunlit sand */
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
     st.w = st.h = st.pr = 0;
   }
   if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); st.w = size.x; st.h = size.y; st.pr = pr; }
   st.rp.scene = scene; st.rp.camera = camera;
   if (st.ao) { st.ao.scene = scene; st.ao.camera = camera; st.ao.enabled = LOOK.ao; }
-  if (st.glow) st.glow.enabled = LOOK.glow;
+  if (st.glow) { st.glow.enabled = LOOK.glow && LOOK.ao; st.glow.materialHighPassFilter.uniforms.tMask.value = st.ao.depthTexture; }   /* without the corner shading's depth there is no mask: no glow */
   const u = st.grade.uniforms; u.gain.value.copy(MOOD.gain); u.lift.value.copy(MOOD.lift); u.sat.value = MOOD.sat; u.contrast.value = MOOD.contrast; u.vig.value = MOOD.vig;
   if (!LOOK.grading) { u.gain.value.set(1, 1, 1); u.lift.value.set(0, 0, 0); u.sat.value = 1; u.contrast.value = 1; u.vig.value = 0; }   /* the last pass always runs: it hands the picture to the screen */
   return st.comp;
