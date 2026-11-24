@@ -17,10 +17,18 @@ const M = {
   dark: solid(0x1c2120, 0.6),
   seam: solid(0x55595a, 0.7),
   tyre: solid(0x1b1d1c, 0.92),
-  glass: solid(0x16262e, 0.15, 0.4),
-  frame: solid(0xdcdad2, 0.5, 0.1),
-  red: solid(0xcc2020, 0.4),
-  green: solid(0x20b040, 0.4),
+  glass: solid(0x0f1a20, 0.12, 0.5),
+  frame: solid(0x2a2f31, 0.5, 0.2),
+  rim: solid(0x3a3f42, 0.45, 0.3),
+  reveal: (() => { const m = solid(0xb8bcb9, 0.6, 0.2); m.side = THREE.DoubleSide; return m; })(),
+  cabin: solid(0x5a5650, 0.9),
+  cabinLight: new THREE.MeshBasicMaterial({ color: 0xfff1d6 }),
+  floor: solid(0x3c4a5a, 0.95),
+  doorSkin: solid(0xf1efe8, 0.4, 0.1),
+  doorInner: solid(0xb3b6b2, 0.7, 0.2),
+  doorEdge: (() => { const m = solid(0x9ea2a0, 0.5, 0.4); m.side = THREE.DoubleSide; return m; })(),
+  red: (() => { const m = new THREE.MeshBasicMaterial({ color: 0xff3a2a }); m.userData.glow = true; return m; })(),
+  green: (() => { const m = new THREE.MeshBasicMaterial({ color: 0x3aff6a }); m.userData.glow = true; return m; })(),
 };
 const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 
@@ -31,7 +39,7 @@ export const DC8 = {
   profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [14.0, 1.85], [17.0, 1.78], [19.4, 1.55], [21.2, 1.15], [22.3, 0.62], [22.9, 0.1]],
   Y0: 3.2, lift: { from: -11, over: 12, up: 0.55 },
   windows: { from: -17.0, to: 18.2, step: 0.78, dy: 0.7 },
-  doors: [{ x: 14.2, side: -1, w: 0.9, h: 1.85, sill: 2.9, main: true }, { x: 14.2, side: 1, w: 0.8, h: 1.7, sill: 2.9 }, { x: -13.4, side: -1, w: 0.8, h: 1.7, sill: 2.9 }, { x: -13.4, side: 1, w: 0.8, h: 1.7, sill: 2.9 }],
+  doors: [{ x: 14.2, side: -1, w: 0.86, h: 1.8, sill: 2.4, main: true }, { x: 14.2, side: 1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 2.45 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
   overwing: [{ x: -3.2, side: -1 }, { x: -3.2, side: 1 }, { x: -5.4, side: -1 }, { x: -5.4, side: 1 }],
   cargo: [{ x: 9.0, side: 1 }, { x: -9.4, side: -1 }],
   wing: { root: [3.0, -7.5], tip: [-9.0, -11.8], span: 21.2, y: 2.3, tilt: 0.05, thick: 0.34 },
@@ -48,7 +56,7 @@ export const DC9 = {
   profile: [[-18.2, 0.07], [-17.5, 0.3], [-15.0, 0.8], [-12.0, 1.3], [-9.0, 1.62], [-6.0, 1.67], [10.5, 1.67], [13.0, 1.58], [15.0, 1.3], [16.7, 0.85], [17.7, 0.4], [18.2, 0.08]],
   Y0: 2.9, lift: { from: -8, over: 10, up: 0.6 },
   windows: { from: -12.0, to: 12.6, step: 0.7, dy: 0.62 },
-  doors: [{ x: 11.2, side: -1, w: 0.85, h: 1.75, sill: 2.55, main: true }, { x: 11.2, side: 1, w: 0.75, h: 1.6, sill: 2.55 }, { x: -10.6, side: -1, w: 0.7, h: 1.5, sill: 2.55 }],
+  doors: [{ x: 11.2, side: -1, w: 0.82, h: 1.7, sill: 2.15, main: true }, { x: 11.2, side: 1, w: 0.75, h: 1.55, sill: 2.2 }, { x: -10.6, side: -1, w: 0.7, h: 1.5, sill: 2.25 }],
   overwing: [{ x: -2.4, side: -1 }, { x: -2.4, side: 1 }],
   cargo: [{ x: 6.2, side: 1 }, { x: -7.0, side: 1 }],
   wing: { root: [2.2, -5.0], tip: [-5.6, -7.6], span: 14.2, y: 2.0, tilt: 0.04, thick: 0.28 },
@@ -78,46 +86,71 @@ function onSide(S, x, dy, s) {
   const dz = Math.sqrt(Math.max(0.0001, r * r - d * d));
   return { y: cy + d, z: s * dz, tilt: Math.asin(d / r) };
 }
-function fuselage(S) {
-  const N = 150, Mn = 160, pos = [], idx = [];
+/* the skin's panel work, laid over the paint: frames every 0.53 m round the body, lap joints along it, rows of rivets, and a little grime under the belly.
+   u runs along the body (0 at the tail), v round it (0 at the top). Light grey on white, so the paint's colours stay as they are. */
+const _skins = {};
+function skinTexture(len) {
+  const key = Math.round(len);
+  if (_skins[key]) return _skins[key];
+  const W = 2048, H = 512, frames = Math.round(len / 0.53);
+  return (_skins[key] = cv(W, H, (x) => {
+    x.fillStyle = "#ffffff"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "rgba(90,96,100,0.12)"; x.lineWidth = 1.0;
+    for (let i = 0; i <= frames; i++) { const u = (i / frames) * W; x.beginPath(); x.moveTo(u, 0); x.lineTo(u, H); x.stroke(); }
+    for (const v of [0.16, 0.34, 0.5, 0.66, 0.84]) { x.beginPath(); x.moveTo(0, v * H); x.lineTo(W, v * H); x.stroke(); }
+    x.fillStyle = "rgba(80,86,90,0.10)";
+    for (let i = 0; i <= frames; i++) for (let k = 0; k < H; k += 9) x.fillRect((i / frames) * W - 3.5, k, 1.6, 1.6);
+    const g = x.createLinearGradient(0, H * 0.38, 0, H * 0.62);
+    g.addColorStop(0, "rgba(120,110,95,0)"); g.addColorStop(0.5, "rgba(120,110,95,0.10)"); g.addColorStop(1, "rgba(120,110,95,0)");
+    x.fillStyle = g; x.fillRect(0, H * 0.38, W, H * 0.24); /* the belly (v about 0.5) picks up a little grime */
+  }));
+}
+function fuselage(S, holes = []) {
   const C = (h) => new THREE.Color(h);
-  /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows;
-     every face takes one flat colour, so the edges of the stripes are crisp */
-  /* the stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and the yellow roof band at the windscreen */
+  /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows; every face takes one flat
+     colour, so the edges of the stripes are crisp. The stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and
+     the yellow roof band at the windscreen. */
   const paint = (dy, x) => {
     if (x > S.roofEnd) return C(WHITE);
     if (dy > 1.0) return C(YELLOW);
     if (x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE);
     return dy > 0.84 ? C(ORANGE) : dy > 0.5 ? C(RED) : dy > 0.4 ? C(WHITE) : dy > 0.3 ? C(PINK) : C(WHITE);
   };
-  const x0 = S.profile[0][0], x1 = S.profile[S.profile.length - 1][0];
-  for (let i = 0; i <= N; i++) {
-    const x = lerp(x0, x1, i / N), r = radiusAt(S, x), cy = centreY(S, x);
+  const x0 = S.profile[0][0], x1 = S.profile[S.profile.length - 1][0], TAU = Math.PI * 2;
+  /* the rings along the body and the lines round it, with the edges of every hole added exactly, so a cut-out has straight, clean edges */
+  const xs = [], as = [];
+  for (let i = 0; i <= 150; i++) xs.push(lerp(x0, x1, i / 150));
+  for (let j = 0; j < 160; j++) as.push((j / 160) * TAU);
+  const wrap = (a) => ((a % TAU) + TAU) % TAU;
+  for (const h of holes) { xs.push(h.x0, h.x1); as.push(wrap(h.a0), wrap(h.a1)); }
+  xs.sort((p, q) => p - q); as.sort((p, q) => p - q);
+  const inHole = (x, a) => holes.some((h) => { const lo = wrap(Math.min(h.a0, h.a1)), hi = wrap(Math.max(h.a0, h.a1)); return x > h.x0 && x < h.x1 && (lo <= hi ? a > lo && a < hi : a > lo || a < hi); });
+  const pos = [], col = [], Mn = as.length;
+  const P = (x, a) => { const r = radiusAt(S, x), cy = centreY(S, x); return [x, cy + Math.cos(a) * r, Math.sin(a) * r]; };
+  for (let i = 0; i < xs.length - 1; i++) {
+    if (xs[i + 1] - xs[i] < 1e-5) continue;
     for (let j = 0; j < Mn; j++) {
-      const a = (j / Mn) * Math.PI * 2;
-      pos.push(x, cy + Math.cos(a) * r, Math.sin(a) * r);
+      const a0 = as[j], a1 = j + 1 < Mn ? as[j + 1] : as[0] + TAU;
+      if (a1 - a0 < 1e-5) continue;
+      const xm = (xs[i] + xs[i + 1]) / 2, am = (a0 + a1) / 2;
+      if (inHole(xm, wrap(am))) continue;
+      const p00 = P(xs[i], a0), p01 = P(xs[i], a1), p10 = P(xs[i + 1], a0), p11 = P(xs[i + 1], a1);
+      pos.push(...p00, ...p01, ...p10, ...p01, ...p11, ...p10); /* wound so the faces point outward */
+      const c = paint(P(xm, am)[1] - centreY(S, xm), xm);
+      for (let k = 0; k < 6; k++) col.push(c.r, c.g, c.b);
     }
   }
-  for (let i = 0; i < N; i++)
-    for (let j = 0; j < Mn; j++) {
-      const a = i * Mn + j, b = i * Mn + ((j + 1) % Mn), c2 = (i + 1) * Mn + j, d = (i + 1) * Mn + ((j + 1) % Mn);
-      idx.push(a, c2, b, b, c2, d);
-    }
-  let geo = new THREE.BufferGeometry();
+  const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-  geo.setIndex(idx);
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  geo = geo.toNonIndexed();
-  const P = geo.attributes.position, col = new Float32Array(P.count * 3);
-  for (let t = 0; t < P.count; t += 6) {
-    /* both triangles of a quad take the colour of the quad's middle, so a stripe edge runs along the body and does not follow the diagonals */
-    let sx = 0, sy = 0;
-    for (let k = 0; k < 6; k++) { sx += P.getX(t + k); sy += P.getY(t + k); }
-    const c = paint(sy / 6 - centreY(S, sx / 6), sx / 6);
-    for (let k = 0; k < 6; k++) { col[(t + k) * 3] = c.r; col[(t + k) * 3 + 1] = c.g; col[(t + k) * 3 + 2] = c.b; }
+  /* smooth shading across the faces: normals from the round body itself, not from each flat face */
+  const n = geo.attributes.normal, p = geo.attributes.position;
+  for (let k = 0; k < p.count; k++) {
+    const x = p.getX(k), dy = p.getY(k) - centreY(S, x), dz = p.getZ(k), l = Math.hypot(dy, dz) || 1;
+    n.setXYZ(k, 0, dy / l, dz / l);
   }
-  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  const o = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.1, side: THREE.DoubleSide }));
+  const o = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.36, metalness: 0.1, side: THREE.DoubleSide }));
   o.name = "fuselage";
   return o;
 }
@@ -243,6 +276,7 @@ function pod(parent, x, y, z, len, r) {
   const pipe = cyl(r * 0.62, r * 0.5, 0.8, M.steel, -len / 2 - 0.3, 0, 0, e, 16); pipe.rotation.z = Math.PI / 2;
   const cone = mesh(new THREE.ConeGeometry(r * 0.28, 0.8, 10), M.metal, -len / 2 - 0.55, 0, 0, e); cone.rotation.z = Math.PI / 2;
   for (const dx of [-0.8, 0.9]) { const s = cyl(r * 1.005, r * 1.005, 0.025, M.seam, dx, 0, 0, e, 20); s.rotation.z = Math.PI / 2; }
+  const soot = cyl(r * 0.92, r * 0.9, 0.5, solid(0x3a3c3c, 0.9, 0.2), -len / 2 + 0.25, 0, 0, e, 20); soot.rotation.z = Math.PI / 2; /* the tail of the cowl, darkened by the exhaust */
   return e;
 }
 /* a wing-mounted pylon: a tapered fairing from the pod's top up to the wing's underside */
@@ -251,31 +285,39 @@ function pylon(parent, x, y, z, len, top) {
   p.position.set(x - len * 0.35, y, z);
   parent.add(p);
 }
-export function makeJet(S) {
+export function makeJet(S, opts = {}) {
   const g = grp();
   g.userData.noBatch = true;
   g.userData.spec = S.name;
-  g.add(fuselage(S));
+  /* the open boarding door's hole in the skin, in angles round the body (see the doors, below) */
+  const ang = (x, y, side) => { const r = radiusAt(S, x), dy = Math.max(-0.98 * r, Math.min(0.98 * r, y - centreY(S, x))); return side * Math.acos(dy / r); };
+  const holes = [];
+  if (opts.doorOpen) {
+    const d = S.doors.find((q) => q.main), a0 = ang(d.x, d.sill + d.h, d.side), a1 = ang(d.x, d.sill, d.side);
+    g.userData.hole = { x0: d.x - d.w / 2, x1: d.x + d.w / 2, a0: Math.min(a0, a1), a1: Math.max(a0, a1), side: d.side };
+    holes.push(g.userData.hole);
+  }
+  g.add(fuselage(S, holes));
   const wg = S.wing, TILT = wg.tilt, lead = (z) => lerp(wg.root[0], wg.tip[0], z / wg.span), trail = (z) => lerp(wg.root[1], wg.tip[1], z / wg.span);
-  /* windows: a framed pane each, along the window line on both sides, skipping the doors and the over-wing exits */
+  /* cabin windows: small dark rounded panes set into the stripe, as in the photographs (no light frame round them; a thin darker rim only) */
   const W = S.windows, skip = [...S.doors.map((d) => d.x), ...S.overwing.map((d) => d.x)];
   const xs = [];
   for (let x = W.from; x <= W.to; x += W.step) if (!skip.some((k) => Math.abs(k - x) < 0.9)) xs.push(x);
-  const glassG = roundRect(0.3, 0.42, 0.1), frameG = roundRect(0.38, 0.5, 0.12);
-  const gi = new THREE.InstancedMesh(glassG, M.glass, xs.length * 2), fi = new THREE.InstancedMesh(frameG, M.frame, xs.length * 2);
+  const glassG = roundRect(0.24, 0.33, 0.09), rimG = roundRect(0.28, 0.37, 0.1);
+  const gi = new THREE.InstancedMesh(glassG, M.glass, xs.length * 2), fi = new THREE.InstancedMesh(rimG, M.rim, xs.length * 2);
   const q = new THREE.Quaternion(), p = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), m4 = new THREE.Matrix4(), euler = new THREE.Euler();
   xs.forEach((x, i) =>
     [-1, 1].forEach((s, k) => {
       const o = onSide(S, x, W.dy, s);
       euler.set(s > 0 ? -o.tilt : o.tilt, s > 0 ? 0 : Math.PI, 0, "XYZ");
       q.setFromEuler(euler);
-      p.set(x, o.y, o.z + s * 0.012);
+      p.set(x, o.y, o.z + s * 0.004);
       fi.setMatrixAt(i * 2 + k, m4.compose(p, q, one));
-      p.set(x, o.y, o.z + s * 0.02);
+      p.set(x, o.y, o.z + s * 0.008);
       gi.setMatrixAt(i * 2 + k, m4.compose(p, q, one));
     }),
   );
-  gi.name = "windows"; fi.name = "windowFrames";
+  gi.name = "windows"; fi.name = "windowRims";
   g.add(fi, gi);
   /* the flight deck's windows, high on the nose above the cabin window line: on each side a short row of panes with pale frames, and across the top of
      the nose the windscreen itself, a dark glazed block that slopes down to the front (as in the photograph of 6Y-JIJ) */
@@ -308,6 +350,7 @@ export function makeJet(S) {
     geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     geo.setIndex(idx);
     geo.computeVertexNormals();
+    if (!mat.userData.twoSided) { mat.side = THREE.DoubleSide; mat.userData.twoSided = true; } /* the patch's winding depends on its side of the body: draw both faces */
     const m = new THREE.Mesh(geo, mat);
     g.add(m);
     return m;
@@ -318,30 +361,67 @@ export function makeJet(S) {
     patch(xa, xb, -0.9, -0.05, M.glass, 0.014);
     patch(xa, xb, 0.05, 0.9, M.glass, 0.014);
   }
-  /* doors: a proud panel with a dark seam on its four edges; the main passenger door has a small window and a handle */
-  const doorFor = (d) => {
-    const mid = d.sill + d.h / 2, o = onSide(S, d.x, mid - centreY(S, d.x), d.side), z = o.z + d.side * 0.02;
-    const tilt = d.side > 0 ? -o.tilt : o.tilt;
-    const panel = box(d.w, d.h, 0.05, M.grey, d.x, o.y, z, g); panel.rotation.x = tilt;
-    for (const [w, h, dx, dy] of [[d.w + 0.05, 0.03, 0, d.h / 2], [d.w + 0.05, 0.03, 0, -d.h / 2], [0.03, d.h, -d.w / 2, 0], [0.03, d.h, d.w / 2, 0]]) {
-      const l = box(w, h, 0.07, M.seam, d.x + dx, o.y + dy, z, g); l.rotation.x = tilt;
-    }
-    if (d.main) {
-      const win = box(0.22, 0.28, 0.06, M.glass, d.x + 0.12, o.y + d.h * 0.22, z + d.side * 0.01, g); win.rotation.x = tilt;
-      const h = box(0.2, 0.05, 0.08, M.metal, d.x - 0.18, o.y - 0.1, z + d.side * 0.03, g); h.rotation.x = tilt;
-    }
+  /* Doors. A closed door is painted with the plane, so only its outline shows: a thin dark seam on the curve of the skin. The open boarding door (opts.doorOpen)
+     is a real opening: the skin is cut away (holes, above), a reveal 14 cm deep lines its four sides, the cabin shows inside (a dim wall, a lit ceiling
+     strip, the floor at the sill), and the door itself, a thick curved slab, has swung out and forward to lie along the body beside it, on two hinge arms. */
+  const outline = (x, w, y0, h, side, lift = 0.006, t = 0.022) => {
+    const a0 = ang(x, y0 + h, side), a1 = ang(x, y0, side), lo = Math.min(a0, a1), hi = Math.max(a0, a1), da = t / radiusAt(S, x);
+    patch(x - w / 2 - t, x + w / 2 + t, lo - da, lo, M.seam, lift, 3, 1);
+    patch(x - w / 2 - t, x + w / 2 + t, hi, hi + da, M.seam, lift, 3, 1);
+    patch(x - w / 2 - t, x - w / 2, lo, hi, M.seam, lift, 1, 8);
+    patch(x + w / 2, x + w / 2 + t, lo, hi, M.seam, lift, 1, 8);
   };
-  S.doors.forEach(doorFor);
-  S.overwing.forEach((d) => {
-    const o = onSide(S, d.x, 0.62, d.side), z = o.z + d.side * 0.018, t = d.side > 0 ? -o.tilt : o.tilt;
-    const h = box(0.52, 0.72, 0.04, M.grey, d.x, o.y, z, g); h.rotation.x = t;
-    for (const [w, hh, dx, dy] of [[0.55, 0.025, 0, 0.36], [0.55, 0.025, 0, -0.36], [0.025, 0.72, -0.26, 0], [0.025, 0.72, 0.26, 0]]) { const l = box(w, hh, 0.06, M.seam, d.x + dx, o.y + dy, z, g); l.rotation.x = t; }
-  });
-  S.cargo.forEach((d) => {
-    const o = onSide(S, d.x, -0.95, d.side), z = o.z + d.side * 0.018, t = d.side > 0 ? -o.tilt : o.tilt;
-    const h = box(1.2, 0.9, 0.04, M.grey, d.x, o.y, z, g); h.rotation.x = t;
-    for (const [w, hh, dx, dy] of [[1.25, 0.025, 0, 0.45], [1.25, 0.025, 0, -0.45], [0.025, 0.9, -0.6, 0], [0.025, 0.9, 0.6, 0]]) { const l = box(w, hh, 0.06, M.seam, d.x + dx, o.y + dy, z, g); l.rotation.x = t; }
-  });
+  S.doors.forEach((d) => { if (!(d.main && opts.doorOpen)) outline(d.x, d.w, d.sill, d.h, d.side); });
+  S.overwing.forEach((d) => { const o = onSide(S, d.x, 0.62, d.side); outline(d.x, 0.5, o.y - 0.36, 0.72, d.side); });
+  S.cargo.forEach((d) => { const o = onSide(S, d.x, -0.95, d.side); outline(d.x, 1.2, o.y - 0.45, 0.9, d.side); });
+  if (opts.doorOpen && g.userData.hole) {
+    const H = g.userData.hole, side = H.side, T = 0.14;
+    const ring = (x, a, dr) => { const r = radiusAt(S, x) + dr, cy = centreY(S, x); return new THREE.Vector3(x, cy + Math.cos(a) * r, Math.sin(a) * r); };
+    const quads = [], add = (a, b, c, d) => quads.push(a, b, c, a, c, d);
+    const NA = 10;
+    for (let k = 0; k < NA; k++) { /* the reveal's two sides, fore and aft, following the curve */
+      const u0 = lerp(H.a0, H.a1, k / NA), u1 = lerp(H.a0, H.a1, (k + 1) / NA);
+      for (const x of [H.x0, H.x1]) add(ring(x, u0, 0), ring(x, u1, 0), ring(x, u1, -T), ring(x, u0, -T));
+    }
+    for (const a of [H.a0, H.a1]) add(ring(H.x0, a, 0), ring(H.x1, a, 0), ring(H.x1, a, -T), ring(H.x0, a, -T)); /* head and sill */
+    const rg = new THREE.BufferGeometry().setFromPoints(quads); rg.computeVertexNormals();
+    const reveal = new THREE.Mesh(rg, M.reveal); g.add(reveal);
+    /* the cabin inside: a dim back wall a metre in, a lit strip high on it, and the floor level with the sill */
+    const cx = (H.x0 + H.x1) / 2, inner = radiusAt(S, cx) - 1.0, cy = centreY(S, cx);
+    const ya = cy + Math.cos(H.a0) * radiusAt(S, cx), yb = cy + Math.cos(H.a1) * radiusAt(S, cx), yLo = Math.min(ya, yb), yHi = Math.max(ya, yb);
+    const zIn = side * Math.sqrt(Math.max(0.01, inner * inner - 0.0));
+    box(H.x1 - H.x0 + 0.8, yHi - yLo + 0.3, 0.04, M.cabin, cx, (yLo + yHi) / 2, side * (radiusAt(S, cx) - 1.0), g);
+    const lit = box(H.x1 - H.x0 + 0.8, 0.08, 0.05, M.cabinLight, cx, yHi - 0.12, side * (radiusAt(S, cx) - 1.0) + side * 0.03, g); lit.userData.glow = true;
+    { const r0 = radiusAt(S, cx), zs = Math.sqrt(Math.max(0.01, r0 * r0 - (yLo - cy) ** 2)) - 0.16; box(H.x1 - H.x0 + 0.6, 0.04, zs - (r0 - 1.0), M.floor, cx, yLo + 0.02, side * ((zs + r0 - 1.0) / 2), g); } /* the floor stops inside the skin */
+    void zIn;
+    /* the door: a curved slab 9 cm thick, its outer face painted like the skin round it, swung forward to lie 25 cm off the body */
+    const fx0 = H.x1 + 0.12, fx1 = fx0 + (H.x1 - H.x0), lift = 0.25;
+    patch(fx0, fx1, H.a0, H.a1, M.doorSkin, lift + 0.09, 4, 10);
+    patch(fx0, fx1, H.a0, H.a1, M.doorInner, lift, 4, 10);
+    const slab = [], sadd = (a, b, c, d) => slab.push(a, b, c, a, c, d);
+    for (let k = 0; k < NA; k++) {
+      const u0 = lerp(H.a0, H.a1, k / NA), u1 = lerp(H.a0, H.a1, (k + 1) / NA);
+      for (const x of [fx0, fx1]) sadd(ring(x, u0, lift), ring(x, u1, lift), ring(x, u1, lift + 0.09), ring(x, u0, lift + 0.09));
+    }
+    for (const a of [H.a0, H.a1]) sadd(ring(fx0, a, lift), ring(fx1, a, lift), ring(fx1, a, lift + 0.09), ring(fx0, a, lift + 0.09));
+    const sg = new THREE.BufferGeometry().setFromPoints(slab); sg.computeVertexNormals();
+    g.add(new THREE.Mesh(sg, M.doorEdge));
+    /* the window in the door, and its handle */
+    const am = (H.a0 + H.a1) / 2, aw = 0.16 / radiusAt(S, fx0);
+    const up = -side; /* round the body, the angle grows toward the roof on this side by -side */
+    const wa = am + up * aw * 0.8, wb = am + up * aw * 2.6;
+    patch((fx0 + fx1) / 2 - 0.11, (fx0 + fx1) / 2 + 0.11, Math.min(wa, wb), Math.max(wa, wb), M.glass, lift + 0.095, 2, 3);
+    const hp = ring((fx0 + fx1) / 2 - 0.2, am - up * aw * 0.6, lift + 0.11);
+    box(0.22, 0.05, 0.05, M.metal, hp.x, hp.y, hp.z, g);
+    /* two hinge arms from the forward edge of the opening out to the door */
+    for (const f of [0.28, 0.72]) {
+      const a = lerp(H.a0, H.a1, f), p0 = ring(H.x1 - 0.02, a, 0.02), p1 = ring(fx0 + 0.05, a, lift + 0.04);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, p0.distanceTo(p1), 8), M.metal);
+      arm.position.copy(p0).add(p1).multiplyScalar(0.5);
+      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p1.clone().sub(p0).normalize());
+      g.add(arm);
+    }
+  }
   const md = S.doors.find((d) => d.main), mo = onSide(S, md.x, md.sill + md.h / 2 - centreY(S, md.x), md.side);
   g.userData.door = { x: md.x, y: md.sill, z: mo.z + md.side * 0.04, sill: md.sill, w: md.w, h: md.h, side: md.side };
   /* the title near the nose and the flag by the registration, on both sides */
@@ -449,6 +529,6 @@ export function makeJet(S) {
   g.traverse((o) => { o.userData.noBatch = true; });
   return g;
 }
-export const dc8 = () => makeJet(DC8);
-export const dc9 = () => makeJet(DC9);
+export const dc8 = (opts) => makeJet(DC8, opts);
+export const dc9 = (opts) => makeJet(DC9, opts);
 export const radius = radiusAt, centre = centreY;

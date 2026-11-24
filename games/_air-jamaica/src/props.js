@@ -40,70 +40,83 @@ function lettering(text, w, h, fg = "#ffffff") {
   const p = plane(w, h, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
   return p;
 }
-/* Wheeled boarding steps in blue and white, marked "Air Jamaica" (the Gleaner of 1 May 2010 describes the steps of the first flights as
-   "gleaming blue and white plane steps marked 'Air Jamaica'": the 1966 photograph is the source for the colours, a general picture of the shape).
-   Local axes: the steps climb toward -z (the platform is at -z, the foot at +z), the platform's top is at y = top, the width is along x.
-   Returns the group; g.userData.walls lists the footprint of the whole thing. */
+/* Wheeled boarding steps in blue and white, marked "Air Jamaica" (the Gleaner of 1 May 2010 describes the steps of the first flights as "gleaming blue
+   and white plane steps marked 'Air Jamaica'"; the shape is a general picture of the towed passenger steps of the time). One truck: a chassis on four
+   wheels, a frame tower under the platform, the flight of steps between solid blue side panels, white ribbed treads, a handrail each side that runs
+   parallel to the stairs on posts standing on the side panels and carries on round the platform, and a rubber bumper where the platform meets the plane.
+   Local axes: the steps climb toward -z (the platform is at -z, the foot at +z), the platform's top is at y = top, the width is along x. */
 export function airstairs({ top = 2.9, run = 4.6, w = 1.25, treads = 12 } = {}) {
   const g = grp();
-  const rise = top / treads, step = run / treads;
-  /* the two stringers (side frames): a sloping band, tall at the platform (z = 0) and meeting the ground at z = run */
-  for (const s of [-1, 1]) {
+  const rise = top / treads, step = run / treads, PZ = 1.3; /* the platform is PZ deep, from z -PZ to z 0 */
+  /* the chassis: a beam each side under the whole length, cross members, the frame tower that carries the platform */
+  const cy = 0.42, wheelR = 0.21, FOOT = 0.5, beamEnd = run - 2.4 * step; /* FOOT: the side panels' top edge at the foot of the steps */
+  for (const sx of [-1, 1]) box(0.12, 0.16, beamEnd + PZ + 0.1, METAL, sx * (w / 2 - 0.08), cy, (beamEnd - PZ - 0.1) / 2, g);
+  for (const z of [-PZ + 0.1, -0.2, beamEnd * 0.5, beamEnd - 0.06]) box(w - 0.1, 0.1, 0.1, METAL, 0, cy, z, g);
+  for (const sx of [-1, 1]) for (const z of [-PZ + 0.12, -0.12]) box(0.1, top - cy - 0.2, 0.1, BLUE, sx * (w / 2 - 0.08), cy + (top - cy - 0.2) / 2, z, g);
+  for (const z of [-PZ + 0.12, -0.12]) { const x = box(w - 0.2, 0.06, 0.06, METAL, 0, (top + cy) / 2, z, g); x.rotation.z = 0.0; }
+  for (const sx of [-1, 1]) { const d = box(0.05, Math.hypot(PZ - 0.24, top - cy - 0.3), 0.05, METAL, sx * (w / 2 - 0.08), (top + cy) / 2, -PZ / 2, g); d.rotation.x = Math.atan2(PZ - 0.24, top - cy - 0.3); }
+  /* four wheels under the chassis, on axles, inside its width */
+  for (const z of [-PZ + 0.35, beamEnd - 0.3]) {
+    const ax = cyl(0.04, 0.04, w - 0.05, METAL, 0, wheelR, z, g, 8); ax.rotation.z = Math.PI / 2;
+    box(w - 0.2, cy - wheelR, 0.08, METAL, 0, (cy + wheelR) / 2, z, g); /* the axle's hanger up to the chassis */
+    for (const sx of [-1, 1]) {
+      const t = cyl(wheelR, wheelR, 0.16, RUBBER, sx * (w / 2 - 0.12), wheelR, z, g, 18); t.rotation.z = Math.PI / 2;
+      const hub = cyl(wheelR * 0.5, wheelR * 0.5, 0.17, METAL, sx * (w / 2 - 0.12), wheelR, z, g, 12); hub.rotation.z = Math.PI / 2;
+    }
+  }
+  /* the two side panels: a sloping blue band from the platform down to the chassis at the foot */
+  for (const sx of [-1, 1]) {
     const sh = new THREE.Shape();
-    sh.moveTo(0, top - 0.32);
-    sh.lineTo(0, top);
-    sh.lineTo(run, 0.26);
-    sh.lineTo(run, 0);
-    sh.closePath();
-    const stringer = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.07, bevelEnabled: false }), BLUE);
-    stringer.rotation.y = -Math.PI / 2; /* the shape's x runs along +z, its depth along -x */
-    stringer.position.set(s * (w / 2) + (s < 0 ? 0.07 : 0), 0, 0);
-    g.add(stringer);
+    sh.moveTo(0, top - 0.34); sh.lineTo(0, top + 0.02); sh.lineTo(run + 0.05, FOOT); sh.lineTo(run + 0.05, 0.12); sh.lineTo(beamEnd, cy - 0.08); sh.closePath();
+    const panel = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.06, bevelEnabled: false }), BLUE);
+    panel.rotation.y = -Math.PI / 2;
+    panel.position.set(sx * (w / 2) + (sx < 0 ? 0.06 : 0), 0, 0);
+    g.add(panel);
   }
-  /* treads: a pale ribbed plate on each rise, and the riser below it */
-  for (let i = 0; i < treads; i++) {
-    const y = top - (i + 1) * rise, z = (i + 0.5) * step;
-    box(w - 0.1, 0.05, step * 0.96, WHITE, 0, y + rise - 0.025, z, g);
-    for (let r = 0; r < 4; r++) box(w - 0.12, 0.012, 0.025, STEEL, 0, y + rise + 0.003, z - step * 0.3 + r * step * 0.2, g);
-    box(w - 0.1, rise * 0.96, 0.03, BLUE, 0, y + rise * 0.5, z - step * 0.5 + 0.02, g);
+  /* the treads: a ribbed white plate on each step and a blue riser under its front edge */
+  for (let i = 0; i < treads - 1; i++) {
+    const yT = top - (i + 1) * rise, z = (i + 0.5) * step + step * 0.5;
+    if (yT < 0.18) break;
+    box(w - 0.14, 0.05, step * 0.98, WHITE, 0, yT - 0.025, z, g);
+    for (let r = 0; r < 4; r++) box(w - 0.16, 0.012, 0.022, STEEL, 0, yT + 0.003, z - step * 0.32 + r * step * 0.21, g);
+    box(w - 0.14, rise, 0.03, BLUE, 0, yT + rise / 2 - 0.025, z - step * 0.49, g);
   }
-  /* the platform at the top: a deck with a rail on three sides and a low rubber bumper against the fuselage */
-  box(w + 0.12, 0.09, 1.3, WHITE, 0, top - 0.05, -0.65, g);
-  box(w + 0.12, 0.3, 1.3, BLUE, 0, top - 0.24, -0.65, g);
-  box(w + 0.1, 0.12, 0.1, RUBBER, 0, top + 0.02, -1.3, g);
-  const slope = Math.atan2(top, run), len = Math.hypot(run, top);
-  for (const s of [-1, 1]) {
-    const x = s * (w / 2 + 0.03);
+  /* the platform: a white ribbed deck on a blue skirt, the bumper at its front */
+  box(w + 0.02, 0.08, PZ, WHITE, 0, top - 0.04, -PZ / 2, g);
+  for (let r = 0; r < 6; r++) box(w - 0.04, 0.012, 0.022, STEEL, 0, top + 0.004, -PZ + 0.12 + r * 0.21, g);
+  box(w + 0.02, 0.26, PZ, BLUE, 0, top - 0.21, -PZ / 2, g);
+  box(w + 0.04, 0.12, 0.1, RUBBER, 0, top - 0.04, -PZ - 0.03, g);
+  /* the handrails: posts standing on each side panel's top edge, a top rail 0.95 m over the nosings and a middle rail, both parallel to the stairs, and
+     the same two rails carried level round the sides of the platform */
+  const nose = (z) => top - (z / run) * top; /* the line of the nosings */
+  for (const sx of [-1, 1]) {
+    const x = sx * (w / 2 + 0.035);
     for (const h of [0.95, 0.5]) {
-      box(0.05, 0.05, 1.3, STEEL, x, top + h, -0.65, g); /* the rail round the platform */
-      const r = box(0.05, 0.05, len, STEEL, x, top / 2 + h, run / 2, g); /* the rail down the slope */
-      r.rotation.x = slope;
+      const r = box(0.045, 0.045, Math.hypot(run, top - FOOT), STEEL, x, (top + FOOT) / 2 + h, run / 2, g);
+      r.rotation.x = Math.atan2(top - FOOT, run);
+      box(0.045, 0.045, PZ, STEEL, x, top + h, -PZ / 2, g);
     }
-    for (let i = 0; i <= 4; i++) {
-      const z = (i / 4) * run * 0.92, y = top - z * (top / run);
-      box(0.04, 0.95, 0.04, STEEL, x, y + 0.475, z, g);
+    for (const z of [-PZ + 0.05, -0.6, 0]) box(0.045, 0.95, 0.045, STEEL, x, top + 0.475, z, g);
+    for (let i = 1; i <= 4; i++) {
+      const z = (i / 4.4) * run, y0 = nose(z) * (1 - 0.0) + (cy + 0.2) * (z / run) * 0 + 0.02;
+      const base = top - (z / run) * (top - FOOT) + 0.02, h = 0.95;
+      box(0.045, h, 0.045, STEEL, x, base + h / 2, z, g);
+      void y0;
     }
-    box(0.04, 0.95, 0.04, STEEL, x, top + 0.475, -1.2, g);
   }
-  /* wheels and a hitch at the foot, a small enginey box under the platform */
-  for (const s of [-1, 1]) {
-    const wh = cyl(0.26, 0.26, 0.14, RUBBER, s * (w / 2 + 0.05), 0.26, run - 0.4, g, 14);
-    wh.rotation.z = Math.PI / 2;
-    const wh2 = cyl(0.26, 0.26, 0.14, RUBBER, s * (w / 2 + 0.05), 0.26, run * 0.45, g, 14);
-    wh2.rotation.z = Math.PI / 2;
-  }
-  box(0.1, 0.1, 1.2, STEEL, 0, 0.3, run + 0.5, g);
-  /* the name, on each stringer, climbing with the slope */
-  for (const s of [-1, 1]) {
-    const holder = grp(g, s * (w / 2 + 0.045), top * 0.5 + 0.1, run * 0.5);
-    holder.rotation.y = s * (Math.PI / 2);
-    const t = lettering("AIR JAMAICA", 2.4, 0.24, "#ffffff");
-    t.rotation.z = s > 0 ? slope : -slope;
+  /* the name, on each side panel, climbing with the slope */
+  const panelSlope = Math.atan2(top - FOOT, run);
+  for (const sx of [-1, 1]) {
+    const holder = grp(g, sx * (w / 2 + 0.065), (top + FOOT) / 2 - 0.16, run * 0.5);
+    holder.rotation.y = sx * (Math.PI / 2);
+    const t = lettering("AIR JAMAICA", 2.4, 0.22, "#ffffff");
+    t.rotation.z = sx > 0 ? panelSlope : -panelSlope;
     holder.add(t);
   }
   g.userData.run = run;
   g.userData.top = top;
   g.userData.w = w;
+  g.userData.platform = PZ;
   return g;
 }
 /* a wheel chock pair, a small cone, a ground power cart */

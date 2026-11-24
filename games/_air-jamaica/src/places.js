@@ -62,7 +62,7 @@ const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 /* where everything stands (world metres; +z is toward the terminal): the plane's origin and the door it opens */
 export const APRON = {
   plane: { x: 8, z: -8 },
-  stairs: { x: -6.2, z: -4.8 }, // the foot of the platform; the steps run toward +z
+  stairs: { x: -6.2, z: -4.86 }, // the foot of the platform; the steps run toward +z
   line: { z: -3.2 }, // the crew's line along the fuselage
 };
 
@@ -76,7 +76,7 @@ function scene(Q, { deck = false } = {}) {
   ap.name = "terrain";
   airport(Q, { deck });
   /* the DC-8, nose west, the port side (the door side) toward the terminal */
-  const jet = dc8();
+  const jet = dc8({ doorOpen: true }); /* boarding: the forward door stands open at the steps */
   add(Q, jet, APRON.plane.x, APRON.plane.z, 0, Math.PI);
   P.dynamic(jet);
   Q.props.plane = jet;
@@ -97,11 +97,11 @@ function scene(Q, { deck = false } = {}) {
   P.dynamic(small);
   Q.props.plane2 = small;
   /* the boarding steps at the forward door: blue and white, the platform against the fuselage */
-  const steps = P.airstairs({ top: DC8.doors[0].sill, run: 4.6, w: 1.25, treads: 12 });
+  const steps = P.airstairs({ top: DC8.doors[0].sill, run: 3.9, w: 1.25, treads: 10 });
   add(Q, steps, APRON.stairs.x, APRON.stairs.z, 0, 0);
   P.dynamic(steps);
   Q.props.stairs = steps;
-  wall(Q, APRON.stairs.x - 0.75, APRON.plane.z + 1.9, APRON.stairs.x + 0.75, APRON.stairs.z + 4.7);
+  wall(Q, APRON.stairs.x - 0.75, APRON.plane.z + 1.9, APRON.stairs.x + 0.75, APRON.stairs.z + 4.0);
   /* ground gear: a power cart at the nose, chocks at the main wheels, cones */
   const cart = P.powerCart();
   add(Q, cart, -17.5, -2.5, 0, 0.2);

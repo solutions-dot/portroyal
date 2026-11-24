@@ -11,7 +11,7 @@
 import * as THREE from "three";
 import { terminalDoors } from "./terminal-doors.js";
 import { createSea } from "../../../engine/sea.js";
-import { grp, box, cyl, mesh, plane, solid, std, T, flat } from "./gfx.js";
+import { grp, box, cyl, mesh, plane, solid, std, T, flat, cv } from "./gfx.js";
 import { palm } from "./period-props.js";
 import * as P from "./props.js";
 const CREAM = P.CREAM,
@@ -160,15 +160,52 @@ export function airport(Q, { deck = false } = {}) {
     Q.walls.push([x - 1.15, z - 0.65, x + 1.15, z + 0.65]);
   }
   /* the runway: black asphalt (Wikipedia gives the surface as asphalt), 1,800 m long here, with white centre dashes, piano keys at each end, edge lights */
-  box(1800, 0.035, 42, solid(0x2b2d2e, 0.95), 0, -0.005, -83, g);
-  for (let x = -860; x < 860; x += 22) box(8, 0.008, 0.25, solid(0xeceae0), x, 0.018, -83, g);
-  for (const x of [-840, 840]) for (let z = -100; z < -66; z += 2.2) box(15, 0.008, 0.8, solid(0xeceae0), x, 0.02, z, g);
+  /* every runway surface is a flat sheet on the ground (no sides): a long thin box's edges broke into dashes along the horizon in the picture's post pass */
+  const flat2 = (w, d, mat, x, y, z) => { const m = plane(w, d, mat, x, y, z, g); m.rotation.x = -Math.PI / 2; return m; };
+  flat2(1800, 42, solid(0x2b2d2e, 0.95), 0, 0.006, -83);
+  const paintW = solid(0xeceae0, 0.85);
+  for (let x = -860; x < 860; x += 22) flat2(8, 0.25, paintW, x, 0.012, -83);
+  for (const x of [-840, 840]) for (let z = -100; z < -66; z += 2.2) flat2(15, 0.8, paintW, x, 0.012, z);
   for (const z of [-104, -62])
     for (let x = -880; x <= 880; x += 22) {
       cyl(0.07, 0.09, 0.2, solid(0x888673), x, 0.1, z, g, 6);
       mesh(new THREE.SphereGeometry(0.07, 6, 4), solid(0xf0d69a), x, 0.23, z, g);
     }
   for (let x = -70; x < 40; x += 8) box(5, 0.008, 0.14, solid(0xd5b44e), x, 0.025, -22, g);
+  /* the runway's other markings: white edge stripes, the runway numbers at each end (12 and 30: runway 12/30, Wikipedia), touchdown bars and the two
+     aiming-point blocks; the numbers face the pilot landing over them */
+  const white = solid(0xeceae0, 0.8);
+  for (const z of [-103.2, -62.8]) flat2(1720, 0.9, white, 0, 0.012, z);
+  const number = (txt) => {
+    const tex = cv(256, 512, (x, W, H) => { x.clearRect(0, 0, W, H); x.fillStyle = "#eceae0"; x.font = "bold 300px Arial, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, W / 2, H / 2); });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(9, 18), new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 }));
+    m.rotation.x = -Math.PI / 2;
+    return m;
+  };
+  const n12 = number("12"); n12.position.set(-812, 0.014, -83); n12.rotation.z = -Math.PI / 2; g.add(n12);
+  const n30 = number("30"); n30.position.set(812, 0.014, -83); n30.rotation.z = Math.PI / 2; g.add(n30);
+  for (const sx of [-1, 1]) {
+    for (let k = 0; k < 3; k++) for (const z of [-90, -76]) flat2(22, 1.8, white, sx * (740 - k * 150), 0.012, z); /* touchdown bars */
+    for (const z of [-92.5, -73.5]) flat2(45, 6, white, sx * 560, 0.012, z); /* aiming points */
+  }
+  /* the taxiway from the apron out to the runway: concrete, a yellow centre line, blue edge lights, the way the DC-8 goes in the first flight */
+  const twy = solid(0x8f908a, 0.95), yellow = solid(0xd8b43a, 0.8), blueLamp = new THREE.MeshBasicMaterial({ color: 0x3a6aff });
+  blueLamp.userData.glow = true;
+  box(23, 0.03, 36, twy, -46, 0.006, -44, g);
+  for (let z = -60; z <= -26; z += 3) box(0.18, 0.012, 1.8, yellow, -46, 0.024, z, g);
+  for (const x of [-57.2, -34.8]) for (let z = -60; z <= -27; z += 8) {
+    cyl(0.05, 0.06, 0.25, solid(0x5a5a56), x, 0.125, z, g, 6);
+    mesh(new THREE.SphereGeometry(0.075, 8, 6), blueLamp, x, 0.29, z, g);
+  }
+  /* a wind sock on its mast between the apron and the runway */
+  const sockMast = grp(g, -10, 0, -40);
+  cyl(0.07, 0.1, 6.5, solid(0xe8e4d8, 0.6), 0, 3.25, 0, sockMast, 8);
+  box(0.42, 0.05, 0.05, solid(0x7a7a72, 0.5, 0.5), -0.21, 6.2, 0, sockMast); /* the swivel arm from the mast to the sock's ring */
+  for (let i = 0; i < 4; i++) {
+    const seg = mesh(new THREE.CylinderGeometry(0.32 - i * 0.05 - 0.05, 0.32 - i * 0.05, 0.62, 12, 1, true), new THREE.MeshStandardMaterial({ color: i % 2 ? 0xf2efe6 : 0xe8742a, side: THREE.DoubleSide, roughness: 0.8 }), -0.71 - i * 0.62, 6.2, 0, sockMast);
+    seg.rotation.z = Math.PI / 2;
+    seg.userData.fixed = true; /* held on its mast by the arm */
+  }
   for (const [x, z] of [[48, 28], [52, 22], [-52, 28]]) {
     const tub = grp(g, x, 0, z);
     cyl(0.9, 0.65, 0.65, concrete, 0, 0.325, 0, tub, 12);
