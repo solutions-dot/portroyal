@@ -2,8 +2,10 @@
    userData.tile = metres per repeat), so a wall never stretches whatever its size. Used by street.js and backowall.js. */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { settleFights } from '../../../engine/depthfight.js';
 
 export function bake(g, noShadow = []) {
+  settleFights(g);   /* surfaces in one plane settled first, so nothing flickers (engine/depthfight.js, as engine/batch.js does for the other games) */
   const buckets = new Map(); g.updateMatrixWorld(true);
   g.traverse((o) => {
     if (!o.isMesh) return; let ge = o.geometry.clone(); ge.applyMatrix4(o.matrixWorld);

@@ -18,7 +18,7 @@ const skip = (o) => {
   const m = Array.isArray(o.material) ? o.material[0] : o.material;
   return !m || m.isSpriteMaterial || m.blending === THREE.AdditiveBlending || m.colorWrite === false;
 };
-const offset = (o) => { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !!(m && m.polygonOffset); };
+const offset = (o) => { const m = Array.isArray(o.material) ? o.material[0] : o.material; return m && m.polygonOffset ? m.polygonOffsetUnits : 0; };   /* the step a face is drawn at: two faces at different steps are settled */
 /* the flat, axis-square faces of one mesh, as rectangles in their plane: [{ k (axis), s (+1/-1), c (plane), u0, u1, v0, v1, area }] */
 function facesOf(o) {
   const g = o.geometry, pos = g && g.attributes.position;
@@ -54,7 +54,7 @@ export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}) {
     list.sort((p, q) => p.c - q.c);
     for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length && list[j].c - list[i].c <= gap; j++) {
       const A = list[i], B = list[j];
-      if (A.o === B.o || (offset(A.o) !== offset(B.o))) continue;   /* one already drawn over the other */
+      if (A.o === B.o || offset(A.o) !== offset(B.o)) continue;   /* drawn at different steps: one is already drawn over the other */
       const du = Math.min(A.u1, B.u1) - Math.max(A.u0, B.u0), dv = Math.min(A.v1, B.v1) - Math.max(A.v0, B.v0);
       if (du <= 0.01 || dv <= 0.01 || du * dv < minArea) continue;
       const key = A.o.uuid < B.o.uuid ? A.o.uuid + B.o.uuid : B.o.uuid + A.o.uuid;
@@ -66,15 +66,32 @@ export function findFights(root, { gap = 0.012, minArea = 0.003 } = {}) {
   return out;
 }
 export function settleFights(root, opts) {
+  /* faces that fight are gathered into stacks (a road over a yard over the ground, all within a few millimetres); in each stack the faces are
+     ordered from the inside out (along the way they face; in one plane the larger first) and each one out gets its own step of offset, so the
+     layers never fight each other either. Up to eight rounds catch a face that sits in two stacks. */
   let n = 0;
-  for (const f of findFights(root, opts)) {
-    /* the one to lift: the face lying further out along its side (a rug over the floor), or, in one plane, the smaller face (a frame against a wall) */
-    const out = f.gap > 0.0005 ? (f.a.s > 0 ? f.b : f.a) : f.a.area <= f.b.area ? f.a : f.b, o = out.o;
-    if (offset(o)) continue;
-    const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone();
-    m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -4; m.userData = { ...m.userData, settled: true };
-    if (Array.isArray(o.material)) o.material = o.material.map((x, i) => (i === 0 ? m : x)); else o.material = m;
-    n++;
+  for (let round = 0; round < 8; round++) {
+    const fights = findFights(root, opts);
+    if (!fights.length) break;
+    const faces = new Map();
+    const id = (f) => { if (!faces.has(f.o)) faces.set(f.o, f); return f.o; };
+    const par = new Map(), find = (x) => { while (par.get(x) !== x) { par.set(x, par.get(par.get(x))); x = par.get(x); } return x; };
+    for (const f of fights) { const a = id(f.a), b = id(f.b); for (const x of [a, b]) if (!par.has(x)) par.set(x, x); par.set(find(a), find(b)); }
+    const stacks = new Map();
+    for (const o of par.keys()) { const r = find(o); (stacks.get(r) || stacks.set(r, []).get(r)).push(faces.get(o)); }
+    for (const list of stacks.values()) {
+      list.sort((p, q) => p.c * p.s - q.c * q.s || q.area - p.area);
+      const base = Math.min(0, ...list.map((f) => offset(f.o)));
+      list.forEach((f, k) => {
+        if (k === 0) return;
+        const want = base - 4 * k, o = f.o;
+        if (offset(o) <= want) return;
+        const m = (Array.isArray(o.material) ? o.material[0] : o.material).clone();
+        m.polygonOffset = true; m.polygonOffsetFactor = want / 4; m.polygonOffsetUnits = want; m.userData = { ...m.userData, settled: true };
+        if (Array.isArray(o.material)) o.material = o.material.map((x, i) => (i === 0 ? m : x)); else o.material = m;
+        n++;
+      });
+    }
   }
   return n;
 }

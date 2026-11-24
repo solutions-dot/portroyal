@@ -35,6 +35,7 @@ placeActionButton();   /* the button for a thing to do sits mid-screen (engine/a
 import { createGuide } from '../../../engine/guide.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
 import { batchStill } from '../../../engine/batch.js';
+import { sunShadow } from '../../../engine/sunshadow.js';
 import { setQuiet, ahead, work, warm, release } from '../../../engine/preload.js';   /* the next chapter's place built while you read, the last one let go (engine/preload.js) */
 import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
@@ -56,6 +57,7 @@ const camera = new THREE.PerspectiveCamera(68, 1, 0.1, 100);
 const hemi = new THREE.HemisphereLight(0xfff4e0, 0x7a6048, 1.25); scene.add(hemi);
 const SKIN_K = 1.9;   /* the one skin factor for this game (owner rule 9, docs/PIPELINE.md "Skin"): Skin only, a little above Kendal's 1.55 because these rooms are lit softly, so faces still read indoors, by lamplight and in shade. Measured with ?test=skin and the faces check in ?test=all */
 const sun = new THREE.DirectionalLight(0xfff0d0, 1.7); sun.position.set(6, 7, 5); scene.add(sun);
+const SH = sunShadow(renderer, sun, { phone: touchFirst() });   /* real sun shadows outdoors on desktop (engine/sunshadow.js, automatic: SH.tick before drawing); rooms have none */
 const lampLight = new THREE.PointLight(0xffcf8a, 7, 9, 2); lampLight.position.set(0.2, 2.9, -0.3); scene.add(lampLight);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
@@ -1579,7 +1581,7 @@ function enterPlace(name, keepPos) {
   if (name === 'liberty') showBanner();   /* a saved game that was past the Declaration shows the finished banner */
   curWalls = P.walls; curBounds = P.bounds; PEOPLE = P.people; ACTIONS = P.actions; near = null; refreshLife(); loadExtras(name);
   scene.background = new THREE.Color(P.sky || 0x2a2118); scene.fog = P.sky ? new THREE.Fog(0xcbd9de, 28, 90) : null;   /* outdoor places have sky and haze; rooms do not */
-  hemi.intensity = P.sky ? 2.3 : 1.6;   /* rooms a little brighter in the shade, so the dark side of a face still reads (faces check) */ sun.intensity = P.sky ? 2.2 : 1.7; sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5);   /* daylight outside is brighter, so dark skin still shows */
+  hemi.intensity = P.sky ? 2.3 : 1.6;   /* rooms a little brighter in the shade, so the dark side of a face still reads (faces check) */ sun.intensity = (P.sky ? 2.2 : 1.7) * (P.sky && SH.on ? 1.15 : 1); sun.position.set(P.sky ? -5 : 6, P.sky ? 9 : 7, P.sky ? 4 : 5); SH.enable(!!P.sky); if (P.sky && SH.on) hemi.intensity *= 0.85;   /* real shadows outdoors only; with them the sun leads a little more */   /* daylight outside is brighter, so dark skin still shows */
   if (!keepPos) { state.x = P.start.x; state.z = P.start.z; state.yaw = P.start.yaw; state.pitch = 0; }
 }
 function showPlace() { if (!QUICK && state.started) INTRO.t = 0; const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
@@ -1645,6 +1647,7 @@ function frame(t) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); } if (LS) LS.tick(dt);   /* a close-up holds the camera */   /* eyeY: dev face views only */
+  SH.tick(scene, camera);
   renderer.render(scene, camera);
 }
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.

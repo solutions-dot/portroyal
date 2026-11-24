@@ -33,6 +33,7 @@ import { candleFlame, flickerAll, hearthFire } from '../../../engine/flame.js'; 
 import { createLookShot, frameOf } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
 import { lookSound } from '../../../engine/look-sounds.js';   /* the gold arrow on the ground that shows the way (every game) */
 import { tunePixels } from '../../../engine/perf.js';
+import { sunShadow } from '../../../engine/sunshadow.js';
 import { batchStill } from '../../../engine/batch.js';   /* still scenery drawn in a few pieces (see still() below) */
 import { setQuiet } from '../../../engine/preload.js';
 import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */   /* tells the engine when the player is reading, not moving */
@@ -264,6 +265,7 @@ camera.rotation.order = 'YXZ';
 
 const hemi = new THREE.HemisphereLight(0xe6f1ff, 0xb39a78, 2.3); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1d8, 2.6); sun.position.set(-0.35, 1, 0.75); scene.add(sun);
+const SH = sunShadow(renderer, sun, { phone: matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600 });   /* real sun shadows in the town on desktop (engine/sunshadow.js, automatic: SH.tick before drawing); none indoors */
 
 let sky = null;
 // sky dome with a soft gradient
@@ -503,7 +505,7 @@ function setPlace(p) { exitsReset();
   state.place = p; const inside = p !== 'out', home = p === 'in' ? indoor : p === 'ware' ? wareG : scene;
   for (const c of scene.children) { if (c.isLight) continue; if (c === indoor) c.visible = p === 'in'; else if (c === wareG) c.visible = p === 'ware'; else if (c === afterG || c === yardG) c.visible = false; else c.visible = !inside || (p === 'ware' && c.userData.far === true); }
   home.add(abba); abba.visible = p !== 'ware'; if (galdy) home.add(galdy);
-  hemi.intensity = inside ? 0.5 : 2.3; sun.intensity = inside ? 1.5 : 2.6; if (p === 'in') sun.position.set(0.3, 0.75, 1); else if (p === 'ware') sun.position.set(1, 0.7, 0.2); else sun.position.set(-0.35, 1, 0.75);
+  hemi.intensity = inside ? 0.5 : 2.3 * (SH.on ? 0.85 : 1); sun.intensity = inside ? 1.5 : 2.6 * (SH.on ? 1.15 : 1); SH.enable(!inside); if (p === 'in') sun.position.set(0.3, 0.75, 1); else if (p === 'ware') sun.position.set(1, 0.7, 0.2); else sun.position.set(-0.35, 1, 0.75);
   fireLight.intensity = p === 'in' ? 16 : 0; lamp.intensity = p === 'in' ? 9 : 0; if (wLamp) wLamp.intensity = p === 'ware' ? 14 : 0;
   if (p === 'in') { ABBA.x = 9999; ABBA.z = 0; abba.visible = false; }   /* Abba stays at the door outside; Hannah serves inside */ else if (p === 'ware') { ABBA.x = 9999; ABBA.z = 0; } else { ABBA.x = -4.15; ABBA.z = -S + 1.45; abba.position.set(ABBA.x, 0.12, ABBA.z); }
   abba.rotation.y = 0;
@@ -1277,7 +1279,7 @@ function frame(now, step) {
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { fireLight.intensity = 16 * fire.userData.tick(now / 1000);  }
   }
-  renderer.render(scene, camera); requestAnimationFrame(frame);
+  SH.tick(scene, camera); renderer.render(scene, camera); requestAnimationFrame(frame);
 }
 const flagsM = [];
 async function loadAll() {
