@@ -16,6 +16,20 @@ Audience as everywhere: children 6 and up, plus adults. All-ages, no Mature card
 
 Real people appear only as the sources allow (see "Real people").
 
+## For children: how much of the sale to tell (owner, 24 November 2026)
+
+The game is for ages 6 and up. The detailed sale terms above stay in this doc and in the journal's "Dig deeper" for older readers. In the story and its dialogue, the sale is one idea in plain words: *the airline owed a lot of money, Jamaica could not keep paying, and the airline from Trinidad and Tobago, Caribbean Airlines, took over the planes and flights. The name and the welcome stayed in people's hearts.* No percentages, dollar amounts or bidder names in dialogue.
+
+**Voice.** Copy the other games (`docs/CONTENT.md`; see `games/shark-papers/src/content.js` and `games/windrush/src/content.js`): lines of about 12 words or fewer, one idea each, `who`/`text` lines, a first-talk list per stage, short `FLAVOUR` lines for later visits, a `JOURNAL` with `simple` and `deeper`, a `SOURCES` table. The player's lines are marked "You".
+
+**A child in the story.** The other kids' games follow a child (Jem, twelve; Iris, nine to seventy-nine). For Air Jamaica the player should be a child too, so a younger player sees themselves in it. Proposal for the owner to confirm: the player is **a child who flies**, with an aunt or mother who is cabin crew, and the story follows the same family across the years (a girl of nine on a first flight in 1969, a young mother in 1994, a grandmother on the last flight in 2010, as Windrush does). Marcia stays as the crew member the child follows. Whichever is chosen, say "fictional" on the journal page.
+
+Example lines in this voice (imagined, for the doc only):
+- Captain: "Welcome up front. Do not touch the red switch."
+- You: "Why is the sky so big?"
+- Chef: "Ackee and saltfish, high above the clouds. Try it."
+- Marcia: "That bird on the tail is our Love Bird."
+
 ## Chapters (about six, about 4 to 6 minutes each)
 
 1. **1969: A flag in the sky.** The first flights, April 1969. Marcia's first day: the uniform, the plane, the welcome. Place: Palisadoes airport apron and a cabin.
@@ -75,6 +89,10 @@ Pages read in full (text pulled with `curl`). Where a number differs between sou
 - **SkyWritings is older than Stewart.** The Wilson Center blog cites an issue of the in-flight magazine *Sky Writings*, September 1972. An earlier note in this doc, from a summary, said Stewart started it. That is wrong. Do not say so.
 - **The sale terms, World Bank/IFC brief (February 2011).** Signed **30 April 2010**; effective **1 May 2010**. Trinidad and Tobago would put in **US$50 million** of equity; Jamaica got a **16 percent** minority interest in Caribbean Airlines "in compensation for the transfer of Air Jamaica's market share and goodwill" and kept Air Jamaica's real estate and industrial assets. Caribbean Airlines "assumed full financial responsibility" for Air Jamaica and did not take past liabilities. Air Jamaica employees were made redundant, with about **1,000** to be re-hired during the transition. Air Jamaica had lost money in **40 of its 42 years**, with an accumulated deficit of about **US$1.54 billion** (March 2010). The first bidder chosen was Indigo Partners; after four months of talks that ended by mutual consent, and the government went back to Caribbean Airlines. About 900,000 passengers a year were expected. Not in the brief: how much of the old debt the Jamaican government carried (JIS says it was spending about US$200 million on the airline's obligations in the transition). Treat the debt as: Caribbean Airlines did not take it, the state did. Settle the figure before it is shown.
 - **Louis Bailey** (Gleaner, 28 January 2010): later an executive chef at a Montego Bay seafood restaurant, "who earned the reputation 'Air Jamaica's Flying Chef'". The start year of the flying chef service is still not found.
+
+- **Planes and colours.** AirlineReporter (Dec 2012) and departedflights2.com: the fleet over the years included the DC-8, DC-9, Boeing 727, a leased 747-100, Airbus A300, A320, A321 and A340, and later Boeing 737-800s (under Caribbean Airlines). The livery used from 1969 to 1995 is shown on an A300, 6Y-JMK, at Miami on 10 March 1993; an updated livery shows on the same plane in February 1996. A World Airline News photo caption says the A320 6Y-JMF wore "the 2006 livery, the last color scheme worn by the JM fleet". Colours of the 1969 jets are only described as a bold mix. Photos of each livery still have to be looked at by a person.
+- **The last Air Jamaica flight.** World Airline News (3 May 2010, citing the Observer): the last "Lovebird" flight was **JM 036, Fort Lauderdale to Kingston, an Airbus A320, on 30 April 2010**, and Caribbean Airlines took over on 1 May. A YouTube clip is titled as the last departure "JM017" that night. The two are different flights, so the game can say "the last Air Jamaica flight home" and does not need to name a number.
+- **What people remember** (Jamaicans.com, 2017 and 2026; opinion pieces, not records): the bold, bright uniforms; a warm greeting and smile; asking nicely for "a likkle brawta" and getting extra food; crew who answered questions about customs and where to get jerk chicken; "ackee and saltfish breakfasts", "rum punch on boarding", reggae, aerobics on long flights, and passengers applauding a safe landing. Kaye Chong, a former executive, says the airline "was an extension of Jamaica itself" and that it supported jobs such as pilots, engineers, caterers and upholsterers. Use these as colour in the cabin, not as dated facts.
 
 ## YouTube reference list (titles and lengths only: I cannot watch video, so a person must look)
 
