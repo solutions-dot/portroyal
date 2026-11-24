@@ -1416,19 +1416,56 @@ if G.get('bands'):
     for k in range(seg):
         a=2*math.pi*k/seg; f=0.5+0.5*math.cos(a); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,_o[0]); col=[]
         for dz in (0.085,0.045):
-            zz=b0.z-dz*s*(0.25+0.75*f)*sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a)))); rr=rad_out(zz,a)+0.004;      # the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
+            zz=b0.z-dz*s*(0.25+0.75*f)*(max(sstep(1.6,1.15,abs(math.atan2(math.sin(a),math.cos(a)))),0.3*sstep(2.2,2.7,abs(math.atan2(math.sin(a),math.cos(a))))) if LATE else sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a))))); rr=rad_out(zz,a)+(0.004-0.0025*sstep(0.85,1.2,abs(math.atan2(math.sin(a),math.cos(a)))) if LATE else 0.004);      # (later: a shallow yoke round the back too, 2 to 3 cm, where the coat's neck stands off the nape and skin showed in a strip under the stock) (round the sides, 1.5 mm off the skin: there the sloped coat lies close and the yoke came through it) (later coats: further round the sides, under the ends of the coat's neck facing, where skin showed in small gaps) the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         _w=(1-sstep(1.9,1.2,abs(math.atan2(math.sin(a),math.cos(a)))))*(0.0025 if LATE else 0)      # (later: round the sides and back the top stands 2.5 mm further out, clear of the nape; at the front it keeps its close fit under the chin)
-        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,_o[1]+_w*0.4+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,_o[2]+_w),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,_o[3]+_w)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
+        _ff=0.0      # (a wider gap under the chin was tried: it only showed the fold inside the top as a lip with corners)
+        _fz=0.005*s if LATE else 0.0      # (later: the front 5 mm lower, so a lowered chin clears it instead of pressing a ragged edge into it; the sides and back keep their height)
+        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5-_fz*0.5,_o[1]+_w*0.4+_ff*0.5+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs-_fz,_o[2]+_w+_ff),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005-_fz,_o[3]+_w+_ff)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
         if LATE:      # each point of the band stands at least 4 mm off the neck's real skin there: round an ellipse fitted to the neck, the skin of the nape stood outside its top in places and showed as teeth along the edge (owner, 24 November 2026: "the collars are jagged")
-            for i in (3,4) if abs(math.atan2(math.sin(a),math.cos(a)))>1.1 else ():      # (not its foot, which the yoke under the coat shares)      # round the sides and back only: at the front the ray met the underside of the jaw and pushed the top out like a tray
+            _pw=sstep(0.75,1.35,abs(math.atan2(math.sin(a),math.cos(a))))      # (blended in round the sides: switched on at one angle, the top stood out in a corner there)
+            for i in (3,4) if _pw>0 else ():      # (not its foot, which the yoke under the coat shares)      # round the sides and back only: at the front the ray met the underside of the jaw and pushed the top out like a tray
                 q=col[i]; ang=math.atan2(q.x,-(q.y-NJ.y)); need=rad_out(q.z,ang)+0.004; r=math.hypot(q.x,q.y-NJ.y)
-                if r<need and r>1e-6: col[i]=Vector((math.sin(ang)*need,NJ.y-math.cos(ang)*need,q.z))
+                if r<need and r>1e-6: rn=r+(need-r)*_pw; col[i]=Vector((math.sin(ang)*rn,NJ.y-math.cos(ang)*rn,q.z))
+        cols.append(col)
+    if LATE:      # the top's lines evened along the ring: pushed off the nape point by point, neighbours stood at different heights and the fold showed as dark teeth above the edge at the back
+        for j in (3,4): ring_fix(cols,j,under=tree,mn=0.004,iters=3)
+        for col in cols:
             q=col[5]; t=col[4]; ang=math.atan2(t.x,-(t.y-NJ.y)); r=math.hypot(t.x,t.y-NJ.y)-0.002; col[5]=Vector((math.sin(ang)*r,NJ.y-math.cos(ang)*r,q.z))      # the fold turned in at the top stays 2 mm inside the top edge, wherever that edge went
-        cols.append([bm.verts.new(q) for q in col])
-    rings=[list(r) for r in zip(*cols)]; quadstrip(bm,rings[2:],close=True); by=bmesh.new(); quadstrip(by,[[by.verts.new(v.co) for v in r] for r in rings[:3]],close=True)
+    cols=[[bm.verts.new(q) for q in col] for col in cols]
+    rings=[list(r) for r in zip(*cols)]
+    quadstrip(bm,rings[2:],close=True)
+    by=bmesh.new(); _yr=[[by.verts.new(v.co) for v in r] for r in rings[:3]]
+    if LATE and G.get('coat'):      # the yoke's lower rows stay at least 3 mm inside the coat (at the shoulder a point or two stood level with it, and came 1 to 2 mm through when he moved)
+        for v in _yr[0]+_yr[1]:
+            loc,nrm,_i,_d=CT.find_nearest(v.co,0.05)
+            if loc is not None and (v.co-loc).dot(nrm)>-0.003: v.co=v.co-nrm*((v.co-loc).dot(nrm)+0.003)
+    quadstrip(by,_yr,close=True)
     for v in rings[0]+rings[1]: bm.verts.remove(v)
-    _cb=soft('Collar',bm,'Bands',only=('Spine2','Neck','LeftShoulder','RightShoulder')); ring_weights(_cb,seg,len(rings)-2); soft('CollarYoke',by,'Bands',only=TORSO+('LeftArm','RightArm'))      # (the band's weights evened round the neck, as later collars: point by point it tore into teeth when he walked)      # the yoke lies on the skin under the coat, so it moves as the skin does (shoulders and upper arms too) and stays under the coat when the shoulders lift
+    _cb=soft('Collar',bm,'Bands',only=('Spine2','Neck','LeftShoulder','RightShoulder')); ring_weights(_cb,seg,len(rings)-2)
+    if LATE:      # a stock of the 1770s and 1790s is stiff linen that rests on the chest: it follows the chest, the top a little with the neck, not the shoulders (following the neck and shoulders it tilted out like a tray when he nodded or shrugged, and skin showed under it; owner, 24 November 2026: "underneath their necks look bad")
+        _vg={n:(_cb.vertex_groups.get('mixamorig:'+n) or (_cb.vertex_groups.new(name='mixamorig:'+n) if n in ('Spine2','Neck') else None)) for n in ('Spine2','Neck','LeftShoulder','RightShoulder','Spine1','Spine','Head')}
+        _zs=[v.co.z for v in _cb.data.vertices]; _z0,_z1=min(_zs),max(_zs)
+        for v in _cb.data.vertices:
+            t=(v.co.z-_z0)/max(1e-6,_z1-_z0); idx=[v.index]
+            for n,g in _vg.items():
+                if g: g.remove(idx)
+            fr=sstep(1.3,0.5,abs(math.atan2(v.co.x,-(v.co.y-NJ.y)))); nk=t*t*(0.25+0.65*fr)      # (under the chin the top follows the neck a little more, so the chin does not dip into it when he talks or looks down)
+            _vg['Spine2'].add(idx,1-nk,'REPLACE'); _vg['Neck'].add(idx,nk,'REPLACE')
+    _cy=soft('CollarYoke',by,'Bands',only=TORSO+('LeftArm','RightArm'),src=PART['coat'] if LATE and G.get('coat') and PART.get('coat') else None)      # (later coats: the yoke under the coat takes the coat's own weights, so the two move as one: with the skin's, it came up to 2 cm out through the coat at the shoulder)
+    if LATE:      # the yoke's top edge, which it shares with the stock's foot, follows the chest as the stock does, blending into its own weights lower down (the two parted along that edge in a shrug, and skin showed in a slit)
+        _zs=[v.co.z for v in _cy.data.vertices]; _zt=max(_zs); _sp=_cy.vertex_groups.get('mixamorig:Spine2') or _cy.vertex_groups.new(name='mixamorig:Spine2')
+        for v in _cy.data.vertices:
+            k=sstep(_zt-0.025*s,_zt-0.002,v.co.z)
+            if k<=0: continue
+            for g in _cy.vertex_groups:
+                if not g.name.startswith('mixamorig:') or g is _sp: continue
+                try: w=g.weight(v.index)
+                except RuntimeError: continue
+                g.add([v.index],w*(1-k),'REPLACE')
+            try: w0=_sp.weight(v.index)
+            except RuntimeError: w0=0.0
+            _sp.add([v.index],w0*(1-k)+k,'REPLACE')      # (the band's weights evened round the neck, as later collars: point by point it tore into teeth when he walked)      # the yoke lies on the skin under the coat, so it moves as the skin does (shoulders and upper arms too) and stays under the coat when the shoulders lift
     bm=bmesh.new(); yb=collar_pt(0,NECK-0.004,NECK-0.004-0.008*s,0.016); zk=yb.z-0.006*s; yk=min(yb.y,cfront(zk))-0.007        # the knot, then the two hanging ends: they lie on the coat, a little splayed, widening to the hem
     knot=bmesh.ops.create_uvsphere(bm,u_segments=10,v_segments=6,radius=(0.011 if LATE else 0.015)*s,matrix=Matrix.Translation((0,yk,zk)))
     for v in knot['verts']: v.co.x=v.co.x*1.6; v.co.y=yk+(v.co.y-yk)*0.7; v.co.z=zk+(v.co.z-zk)*0.9
@@ -1441,13 +1478,17 @@ if G.get('bands'):
             rows.append([bm.verts.new((cx-w*0.5,y,z)),bm.verts.new((cx,y-0.003,z)),bm.verts.new((cx+w*0.5,y,z))])
         quadstrip(bm,rows,flip=(sx<0))
     soft('ScarfEnds',bm,'Bands',only=('Spine2','Spine1','Spine'))
-if G.get('coat') and OLD and G.get('coatsleeves',True):      # the coat's neck edge: a narrow facing in the coat's own cloth that lies over the top of the coat round the sides and back of the neck.
+if G.get('coat') and OLD and G.get('coatsleeves',True) and not (LATE and G.get('bands')):      # (not on a later coat worn with a stock: the stock and its yoke cover the neck, and the facing's ends stood up beside the stock as dark tufts; owner, 24 November 2026, "underneath their necks look bad")  the coat's neck edge: a narrow facing in the coat's own cloth that lies over the top of the coat round the sides and back of the neck.
     # The coat is cut from a helper mesh that stops short of the neck, so when the shoulders lift a gap opened there and skin showed; the facing bridges it and moves as the skin does
-    bm=bmesh.new(); seg=24; cols=[]; a0=0.62
+    bm=bmesh.new(); seg=24; cols=[]; a0=0.62; _CT=tree_of(PART['coat']) if LATE else None      # (later coats: the facing starts further back, where the coat is there under it; from 35 degrees its end stood out past the coat's front edge as a dark block)
     for k in range(seg+1):
         a=a0+(2*math.pi-2*a0)*k/seg; e=min(1.0,min(k,seg-k)/2.0); b0=collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.016); col=[collar_pt(a,NECK-0.004+0.011*s*e,NECK-0.004-0.008*s+0.011*s*e,0.0205),collar_pt(a,NECK-0.004,NECK-0.004-0.008*s,0.0235)]
         for dz in ((0.022,0.042) if LATE else (0.028,0.062)):      # (the later coat is thinner at the shoulder: a deeper facing stood out there as fins)
-            zz=b0.z-dz*s*(0.4+0.6*e); rr=rad_out(zz,a)+0.0265; col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
+            zz=b0.z-dz*s*(0.4+0.6*e); rr=rad_out(zz,a)+0.0265
+            if LATE and dz==0.042:      # (its lowest row only)      # it lies flat on the coat, 1.5 mm off it (26.5 mm off the skin it stood 4 to 5 mm proud of the coat, and its lower edge showed as a dark step on the shoulder; owner, 24 November 2026: "underneath their necks look bad")
+                _o2=Vector((0,NJ.y,zz)); _d2=Vector((math.sin(a),-math.cos(a),0)); _h2=_CT.ray_cast(_o2,_d2)[0]
+                if _h2 is not None: rr=(_h2-_o2).length+0.0015
+            col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
         cols.append([bm.verts.new(q) for q in col])
     quadstrip(bm,[list(r) for r in zip(*cols)]); _cn=soft('CoatNeck',bm,'Coat',only=TORSO+('LeftArm','RightArm')); ring_weights(_cn,seg+1,len(cols[0]))      # evened round the neck too (dark flaps stood up from it when walking)
 if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the coat's front, from the neck to the waist
@@ -1455,7 +1496,7 @@ if G.get('coat') and G.get('coatbuttons',OLD):      # a row of buttons down the 
     for i in range(nb+1):
         z=z1+(z0-z1)*i/nb; hit=CT.ray_cast(Vector((0.010*s,-1,z)),Vector((0,1,0)))[0]
         if hit: bmesh.ops.create_circle(bm,cap_ends=True,segments=6,radius=0.0075*s,matrix=Matrix.Translation((0.010*s,hit.y-0.004,z))@Matrix.Rotation(math.pi/2,4,'X'))
-    COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons')
+    COL.setdefault('CoatButtons',COL['Coat']*0.5); soft('CoatButtons',bm,'CoatButtons',src=PART['coat'] if LATE else None)      # (later coats: each button takes the coat's own weights where it sits; from the nearest skin, a corner of the top button followed another bone and stretched into a dark bar across the chest when he talked)
 if G.get('coat') and OLD and G.get('facings'):
     # Facings (only a recipe that sets "facings": true builds them, so no older body changes): the lapels and cuffs of a coat of the 1790s in a second cloth, material Facings
     # (a Royal Navy lieutenant's blue coat with white facings). The 1690 coat has no lapel of its own, so each lapel is a band of the facing cloth laid 3 mm over the coat
@@ -1891,7 +1932,10 @@ def tuck_under_piece(name,z0=None,z1=None,ztop=None):
     co=bpy.data.objects.get(name)
     if co is None or not len(co.data.polygons): return
     from mathutils.kdtree import KDTree
-    b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>ztop]; b.free()
+    b=bmesh.new(); b.from_mesh(co.data); b.normal_update(); bt=BVHTree.FromBMesh(b); top=[v.co.copy() for v in b.verts if v.is_boundary and v.co.z>ztop]; top_z=max([v.co.z for v in b.verts] or [z1]); _NB=48; top_at=[None]*_NB
+    for v in b.verts:      # the piece's own top at each angle round the neck (a stock is lower in front than at the back)
+        k=int((math.atan2(v.co.x,-(v.co.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB; top_at[k]=v.co.z if top_at[k] is None else max(top_at[k],v.co.z)
+    top_at=[t if t is not None else top_z for t in top_at]; b.free()
     kt=KDTree(max(1,len(top)))
     for i,c in enumerate(top): kt.insert(c,i)
     kt.balance(); kv=KDTree(len(co.data.vertices))
@@ -1901,6 +1945,7 @@ def tuck_under_piece(name,z0=None,z1=None,ztop=None):
     for v in tg.data.vertices:
         c=v.co
         if not z0<c.z<z1: continue
+        if name=='Collar' and (v.normal.z<-0.45 or c.z>top_at[int((math.atan2(c.x,-(c.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB]+0.001): continue      # (against the top right there: against its highest point, at the back, the throat skin above the lower front was taken in too and left a dent over the knot)      # only the skin really under the stock: the underside of the jaw faces down onto the stock's top, and taken over by its weights it stayed with the chest when the head moved and crumpled (owner, 24 November 2026: "look at his chin.. and the distortion")
         hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
         if hit is None: hit=bt.ray_cast(c-v.normal*0.0005,-v.normal,0.01)[0]
         if hit is None: continue
