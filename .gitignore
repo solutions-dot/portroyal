@@ -70,3 +70,15 @@ games/shark-papers/site/models/tex_1700.js
 # Morant Bay: built files are made by tools/build.mjs, so they are not tracked
 games/morant-bay/site/app.js
 games/morant-bay/site/models/anims.js
+
+# Air Jamaica: built by tools/build.mjs (the folder is games/_air-jamaica while it is not live, games/air-jamaica after)
+games/_air-jamaica/site/app.js
+games/_air-jamaica/site/models/anims.js
+games/_air-jamaica/site/title.css
+games/_air-jamaica/site/chapters.css
+games/_air-jamaica/site/models/tex_1700.js
+games/air-jamaica/site/app.js
+games/air-jamaica/site/models/anims.js
+games/air-jamaica/site/title.css
+games/air-jamaica/site/chapters.css
+games/air-jamaica/site/models/tex_1700.js
