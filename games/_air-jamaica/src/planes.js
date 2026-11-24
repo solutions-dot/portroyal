@@ -38,9 +38,10 @@ export const DC8 = {
   engines: { kind: "wing", z: [7.4, 13.2], y: 1.1, len: 4.0, r: 0.62 },
   tail: { fin: [[-10.5, 1.0], [-13.2, 9.8], [-17.2, 9.8], [-19.8, 1.0]], finTop: 9.8, stab: { y: 0.9, pts: [[-15.5, 0], [-19.2, 7.0], [-22.0, 7.0], [-21.4, 0]] }, tee: false },
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
+  stripeEnd: 15.6, roofEnd: 19.3, /* where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
   flag: { x: -5.0 },
-  cockpit: { x: 19.7, dx: 0.5, n: 3, dy: 0.68 },
+  cockpit: { x: 19.2, dx: 0.62, n: 3, dy: 1.0, front: 21.1 }, /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
 };
 export const DC9 = {
   name: "DC-9-30",
@@ -54,9 +55,10 @@ export const DC9 = {
   engines: { kind: "rear", z: 2.55, y: 0.55, x: -11.6, len: 4.0, r: 0.6 },
   tail: { fin: [[-9.0, 1.0], [-12.0, 6.0], [-16.2, 6.0], [-17.0, 1.0]], finTop: 6.0, stab: { y: 6.0, pts: [[-11.6, 0], [-15.6, 4.4], [-17.8, 4.4], [-16.4, 0]] }, tee: true },
   gear: { noseX: 13.4, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
+  stripeEnd: 12.6, roofEnd: 15.0,
   title: { x: 4.9, w: 5.6 },
   flag: { x: -3.0 },
-  cockpit: { x: 15.2, dx: 0.45, n: 3, dy: 0.62 },
+  cockpit: { x: 14.6, dx: 0.5, n: 3, dy: 0.92, front: 16.4 },
 };
 
 /* ---- the kit ---- */
@@ -81,7 +83,13 @@ function fuselage(S) {
   const C = (h) => new THREE.Color(h);
   /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows;
      every face takes one flat colour, so the edges of the stripes are crisp */
-  const paint = (dy) => (dy > 1.0 ? C(YELLOW) : dy > 0.84 ? C(ORANGE) : dy > 0.5 ? C(RED) : dy > 0.4 ? C(WHITE) : dy > 0.3 ? C(PINK) : C(WHITE));
+  /* the stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and the yellow roof band at the windscreen */
+  const paint = (dy, x) => {
+    if (x > S.roofEnd) return C(WHITE);
+    if (dy > 1.0) return C(YELLOW);
+    if (x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE);
+    return dy > 0.84 ? C(ORANGE) : dy > 0.5 ? C(RED) : dy > 0.4 ? C(WHITE) : dy > 0.3 ? C(PINK) : C(WHITE);
+  };
   const x0 = S.profile[0][0], x1 = S.profile[S.profile.length - 1][0];
   for (let i = 0; i <= N; i++) {
     const x = lerp(x0, x1, i / N), r = radiusAt(S, x), cy = centreY(S, x);
@@ -105,7 +113,7 @@ function fuselage(S) {
     /* both triangles of a quad take the colour of the quad's middle, so a stripe edge runs along the body and does not follow the diagonals */
     let sx = 0, sy = 0;
     for (let k = 0; k < 6; k++) { sx += P.getX(t + k); sy += P.getY(t + k); }
-    const c = paint(sy / 6 - centreY(S, sx / 6));
+    const c = paint(sy / 6 - centreY(S, sx / 6), sx / 6);
     for (let k = 0; k < 6; k++) { col[(t + k) * 3] = c.r; col[(t + k) * 3 + 1] = c.g; col[(t + k) * 3 + 2] = c.b; }
   }
   geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
@@ -269,17 +277,47 @@ export function makeJet(S) {
   );
   gi.name = "windows"; fi.name = "windowFrames";
   g.add(fi, gi);
-  /* the windscreen: three panes each side of the nose, each in a pale frame */
+  /* the flight deck's windows, high on the nose above the cabin window line: on each side a short row of panes with pale frames, and across the top of
+     the nose the windscreen itself, a dark glazed block that slopes down to the front (as in the photograph of 6Y-JIJ) */
   const C = S.cockpit;
   for (const s of [-1, 1])
     for (let i = 0; i < C.n; i++) {
-      const x = C.x + i * C.dx, o = onSide(S, x, C.dy, s);
-      const pn = box(0.34, 0.4, 0.04, M.glass, x, o.y, o.z, g);
-      pn.rotation.y = s * 0.05 * (i + 1);
-      pn.rotation.x = s > 0 ? -o.tilt : o.tilt;
-      const fr = box(0.4, 0.46, 0.03, M.frame, x, o.y, o.z - s * 0.012, g);
-      fr.rotation.copy(pn.rotation);
+      const x = C.x + i * C.dx, r = radiusAt(S, x), o = onSide(S, x, Math.min(C.dy, r * 0.8), s);
+      const w = i === C.n - 1 ? 0.3 : 0.4;
+      const fr = box(w + 0.07, 0.4, 0.03, M.frame, x, o.y, o.z + s * 0.004, g);
+      const pn = box(w, 0.34, 0.04, M.glass, x, o.y, o.z + s * 0.012, g);
+      pn.rotation.x = fr.rotation.x = s > 0 ? -o.tilt : o.tilt;
+      pn.rotation.y = fr.rotation.y = s * Math.max(0, i - 1) * 0.35; /* the last pane turns in toward the front */
     }
+  /* the windscreen: dark glass laid over the curve of the nose, in two panes either side of a centre post, with a pale frame round it */
+  const patch = (x0, x1, a0, a1, mat, lift, nx = 6, na = 6) => {
+    const pos = [], idx = [];
+    for (let i = 0; i <= nx; i++) {
+      const x = lerp(x0, x1, i / nx), r = radiusAt(S, x) + lift, cy = centreY(S, x);
+      for (let j = 0; j <= na; j++) {
+        const a = lerp(a0, a1, j / na);
+        pos.push(x, cy + Math.cos(a) * r, Math.sin(a) * r);
+      }
+    }
+    for (let i = 0; i < nx; i++)
+      for (let j = 0; j < na; j++) {
+        const p = i * (na + 1) + j, q = p + 1, u = p + na + 1, v = u + 1;
+        idx.push(p, u, q, q, u, v);
+      }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, mat);
+    g.add(m);
+    return m;
+  };
+  {
+    const xa = C.front - 1.0, xb = C.front + 0.55;
+    patch(xa - 0.06, xb + 0.06, -0.97, 0.97, M.frame, 0.006); /* the pale frame, a little larger than the glass */
+    patch(xa, xb, -0.9, -0.05, M.glass, 0.014);
+    patch(xa, xb, 0.05, 0.9, M.glass, 0.014);
+  }
   /* doors: a proud panel with a dark seam on its four edges; the main passenger door has a small window and a handle */
   const doorFor = (d) => {
     const mid = d.sill + d.h / 2, o = onSide(S, d.x, mid - centreY(S, d.x), d.side), z = o.z + d.side * 0.02;

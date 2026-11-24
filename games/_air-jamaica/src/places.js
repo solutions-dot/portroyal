@@ -194,7 +194,7 @@ function gallery() {
    their seats; Dee stands behind them. Chapter 2 (docs/games/air-jamaica.md, "Cockpit"). */
 function cockpit() {
   const Q = base("cockpit", [-0.55, 0.55, 0.7, 1.1], [0.1, 0.9, 0]);
-  Q.light = { top: 0x6fa8dc, hor: 0xe3eef2, fog: [0xdce8ee, 900, 9000], sun: [0xfff2d0, 2.6, -30, 60, 40], hemi: [0xffffff, 0x9aa8a8, 2.8], fill: 1.7 };
+  Q.light = { top: 0x6fa8dc, hor: 0xe3eef2, fog: [0xdce8ee, 900, 9000], sun: [0xfff2d0, 2.6, -30, 60, 40], hemi: [0xffffff, 0x9aa8a8, 2.5], fill: 1.35 };
   Q.beds = { wind: 0.02 };
   const room = buildCockpit();
   P.dynamic(room);

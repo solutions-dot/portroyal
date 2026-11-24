@@ -118,7 +118,8 @@ export function buildCockpit() {
   for (const x of [-1.45, -0.5, 0.5, 1.45]) box(0.1, 1.0, 0.08, M.frame, x, 1.45, -2.4, g);
   /* the glareshield, black, over the panel, and the panel itself in front of each pilot, tilted back */
   box(2.8, 0.08, 0.5, M.black, 0, 0.98, -2.15, g);
-  const pan = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 0.95), new THREE.MeshStandardMaterial({ map: dialsTexture(), roughness: 0.6 }));
+  const dialTex = dialsTexture();
+  const pan = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 0.95), new THREE.MeshStandardMaterial({ map: dialTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: dialTex, emissiveIntensity: 0.16 }));
   pan.position.set(0, 0.55, -1.86);
   pan.rotation.x = -0.3;
   g.add(pan);
@@ -160,7 +161,8 @@ export function buildCockpit() {
   box(0.1, 0.7, 0.46, M.seat, 1.22, 0.9, 0.55, g);
   cyl(0.06, 0.08, 0.44, M.metal, 1.0, 0.22, 0.55, g, 8);
   box(0.12, 1.15, 1.35, M.panel, 1.37, 1.0, 0.1, g);
-  const ep = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1), new THREE.MeshStandardMaterial({ map: engineerTexture(), roughness: 0.6 }));
+  const engTex = engineerTexture();
+  const ep = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 1.1), new THREE.MeshStandardMaterial({ map: engTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: engTex, emissiveIntensity: 0.14 }));
   ep.position.set(1.305, 1.0, 0.1);
   ep.rotation.y = -Math.PI / 2;
   g.add(ep);
@@ -170,6 +172,62 @@ export function buildCockpit() {
   oh.position.set(0, 1.895, -1.35);
   oh.rotation.x = Math.PI / 2;
   g.add(oh);
+  /* ---- lighting and small things that make it a working room ---- */
+  const lamp = (x, y, z, hex, r = 0.016) => {
+    const m = mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshBasicMaterial({ color: hex }), x, y, z, g);
+    m.userData.glow = true; /* a warning light: the engine's glow (engine/lightkind.js) lifts it */
+    return m;
+  };
+  /* the master caution lights and the three green wheel lights on the panel */
+  lamp(-0.12, 0.96, -1.82, 0xffb020); lamp(0.12, 0.96, -1.82, 0xffb020); lamp(0.0, 0.96, -1.82, 0xff3020);
+  for (let i = 0; i < 3; i++) lamp(-0.1 + i * 0.1, 0.66, -1.97, 0x30e060);
+  /* the dome light in the ceiling, warm, with a soft light under it for the people's faces */
+  const dome = cyl(0.11, 0.11, 0.04, new THREE.MeshBasicMaterial({ color: 0xfff1cc }), 0, 2.0, 0.2, g, 14);
+  dome.userData.glow = true;
+  const dl = new THREE.PointLight(0xffe8c0, 0.9, 4.2, 1.6);
+  dl.position.set(0, 1.85, 0.1);
+  g.add(dl);
+  /* two clocks high on the panel, a radio stack on the pedestal, a row of red fire handles over the windscreen */
+  for (const s of [-1, 1]) {
+    const clock = cyl(0.07, 0.07, 0.02, solid(0xf3f1e6, 0.5), s * 0.45, 1.03, -1.95, g, 16);
+    clock.rotation.x = Math.PI / 2 - 0.3;
+  }
+  box(0.44, 0.1, 0.28, M.panelLight, 0, 0.58, -0.42, g);
+  for (let i = 0; i < 4; i++) cyl(0.018, 0.018, 0.02, M.knob, -0.15 + i * 0.1, 0.64, -0.42, g, 8);
+  for (let i = 0; i < 4; i++) {
+    const h = box(0.04, 0.04, 0.14, M.red, -0.36 + i * 0.24, 1.9, -1.8, g);
+    box(0.12, 0.02, 0.02, M.red, -0.36 + i * 0.24, 1.9, -1.88, g);
+    void h;
+  }
+  /* a pair of sun visors above the windscreen, two wipers on its sill, a checklist on the pedestal */
+  for (const x of [-0.95, 0.95]) {
+    const v = box(0.8, 0.04, 0.36, solid(0x2a2d2e, 0.9), x, 1.93, -2.15, g);
+    v.rotation.x = 0.35;
+    const w = box(0.03, 0.03, 0.5, M.black, x * 0.7, 0.99, -2.34, g);
+    w.rotation.y = x < 0 ? 0.5 : -0.5;
+  }
+  const list = box(0.2, 0.01, 0.28, solid(0xece8d8, 0.8), 0.0, 0.535, -0.7, g);
+  list.rotation.x = -0.15;
+  /* a headset hung on a hook behind each pilot, lap and shoulder straps on each seat */
+  for (const s of [-1, 1]) {
+    const x = s * 0.7;
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 16, Math.PI), M.black);
+    band.position.set(x, 1.55, 0.2);
+    g.add(band);
+    for (const dx of [-0.1, 0.1]) cyl(0.04, 0.04, 0.03, M.black, x + dx, 1.52, 0.2, g, 10).rotation.z = Math.PI / 2;
+    box(0.04, 0.5, 0.01, solid(0x1b1d1c, 0.9), x - 0.18, 0.95, 0.04, g);
+    box(0.04, 0.5, 0.01, solid(0x1b1d1c, 0.9), x + 0.18, 0.95, 0.04, g);
+  }
+  /* the circuit-breaker panel on the back wall, rows of tiny round breakers */
+  const cb = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.7), new THREE.MeshStandardMaterial({ map: cv(256, 224, (x, W, H) => { x.fillStyle = "#1d2021"; x.fillRect(0, 0, W, H); for (let r = 0; r < 9; r++) for (let c = 0; c < 12; c++) { x.fillStyle = (r * 12 + c) % 11 === 0 ? "#d6a52a" : "#c9c9c0"; x.beginPath(); x.arc(14 + c * 20, 14 + r * 24, 6, 0, 7); x.fill(); } }), roughness: 0.7 }));
+  cb.position.set(0.95, 1.3, 1.36);
+  cb.rotation.y = Math.PI;
+  g.add(cb);
+  /* the captain's cap on the folded jump seat: a small cap, a dark crown and a gold band */
+  const cap = grp(g, -0.9, 0.62, 1.2);
+  mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.08, 14), solid(0x1c2230, 0.9), 0, 0.04, 0, cap);
+  mesh(new THREE.CylinderGeometry(0.121, 0.121, 0.016, 14), solid(0xc2a032, 0.4, 0.5), 0, 0.02, 0, cap);
+  box(0.18, 0.012, 0.1, solid(0x141824, 0.9), 0, 0.0, 0.1, cap);
   /* a map light and a little jump seat folded against the back wall for the visitor */
   box(0.4, 0.06, 0.34, M.seat, -0.9, 0.55, 1.2, g);
   g.userData.parts = { pedestal: [0, 0.5, -1.0] };
