@@ -564,6 +564,7 @@ const LOOK_SFX = {
   engine: () => { noiseHit(380, 0.6, 2.4, 0.1, 0, 0); noiseHit(1500, 1.2, 1.4, 0.04, 0.2, 0.4); },   /* a jet turbine far off, winding up */
   click: () => [0, 0.3].forEach((d) => noiseHit(2600, 2, 0.06, 0.12, 0, d)),   /* a lever or a switch clicks */
   cheer: () => [0, 0.35, 0.8].forEach((d) => noiseHit(900 + d * 400, 1.5, 0.5, 0.05, 0, d)),   /* the crew's soft hurrah, and their gloves */
+  page: () => [0, 0.45, 1.5, 1.75].forEach((d) => noiseHit(4200, 0.7, 0.2, 0.06, 0, d)),   /* paper: the magazine slides out of the pocket, and its cover turns over */
   lid: () => { [0, 0.25, 0.5, 0.75, 1.0].forEach((d) => noiseHit(3200, 4, 0.08, 0.1, 0, d)); noiseHit(5200, 0.8, 1.6, 0.03, 0.3, 0.4); },   /* five silver lids clink off, and the food sizzles */
 };
 const _lq = new THREE.Quaternion(),

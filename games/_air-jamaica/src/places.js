@@ -9,7 +9,7 @@ import * as P from "./props.js";
 import { dc8, dc9, DC8 } from "./planes.js";
 import { airport, GALLERY } from "./airport.js";
 import { buildCockpit, SEATS } from "./cockpit.js";
-import { buildCabin, CABIN, DISHES, lidPlace } from "./cabin.js";
+import { buildCabin, CABIN, DISHES, lidPlace, buildMagazine, magazineAt } from "./cabin.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
 /* a soft dark patch on the ground under something, so it sits on the ground and does not seem to hover; follow(o) keeps it under a moving thing */
 function groundShadow(Q, w, d, x, z, ry = 0, alpha = 0.55) {
@@ -270,7 +270,13 @@ function cabin() {
   Q.group.add(plates.ackee);
   P.dynamic(plates.ackee);
   Q.items.plate = plates.ackee;
+  /* SkyWritings in the pocket of the seat in front of Tia's seat (row 5, aisle, left) */
+  const mag = buildMagazine();
+  Q.group.add(mag);
+  P.dynamic(mag);
+  magazineAt(mag, 0);
   Q.reveal = {
+    magazine: (k) => magazineAt(mag, Number(k)),
     trolley: (k) => {
       k = Number(k);
       DISHES.forEach((d, i) => lids[d].position.set(...lidPlace(i, k)));
@@ -290,6 +296,7 @@ function cabin() {
   Q.keepOff = [];
   Q.lookViews = {
     trolley: { p: [0.3, 1.42, -3.4], look: [0.0, 1.0, -4.1], fov: 42 },
+    magazine: { p: [-0.62, 1.45, 1.42], look: [-0.69, 0.84, 0.86], fov: 44 },
   };
   Q.enter = () => {};
   return Q;

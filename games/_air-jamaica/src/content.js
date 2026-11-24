@@ -24,7 +24,7 @@ export const CHAPTERS = [
     intro: "Years later, you fly home. Aunt Marcia takes you up to the flight deck.",
   },
   {
-    id: "chef", name: "The flying chef", year: "The 2000s", first: 50, last: 56, place: "cabin",
+    id: "chef", name: "The flying chef", year: "The 2000s", first: 50, last: 57, place: "cabin",
     caption: "On board an Air Jamaica jet · flying to Toronto",
     intro: "Many years later, Dee is a mum. You are her daughter Tia, flying to Toronto.",
   },
@@ -87,10 +87,11 @@ TALK[50] = {
     L("Mum", "Air Jamaica has a chef on board."),
     L("Mum", "He cooks Jamaican food, up in the sky."),
     L("You", "A real chef, on a plane?"),
-    L("Mum", "Yes. Go and meet him at the front."),
+    L("Mum", "Yes! Read about it in the magazine."),
+    L("Mum", "It is in the pocket in front of your seat."),
   ],
 };
-TALK[51] = {
+TALK[52] = {
   chef: [
     L("Chef Bailey", "Welcome, young lady. I am the flying chef."),
     L("You", "Do you really cook up here?"),
@@ -99,7 +100,7 @@ TALK[51] = {
     L("Chef Bailey", "Come and see what is on my trolley."),
   ],
 };
-TALK[54] = {
+TALK[55] = {
   clarke: [
     L("Mr Clarke", "Ackee and saltfish? Thank you, little miss."),
     L("You", "Chef Bailey is on the plane with us."),
@@ -125,6 +126,7 @@ export const SOURCES = {
   dc8: { name: "Douglas DC-8 (Wikipedia): cockpit crew of three; length 45.9 m, wingspan 43.4 m", url: "https://en.wikipedia.org/wiki/Douglas_DC-8" },
   nlj: { name: "National Library of Jamaica, photographs of Palisadoes Airport and its waving gallery (D0002830, D0002829)", url: "https://nljdigital.nlj.gov.jm/items/show/1296" },
   jis2004: { name: "Jamaica Information Service, 21 March 2004: Air Jamaica Unveils Tasty Dishes to Canadians", url: "https://jis.gov.jm/air-jamaica-unveils-tasty-dishes-to-canadians/" },
+  sflcn2009: { name: "South Florida Caribbean News, 29 June 2009: Skywritings Sees Double, Wins Two Awards", url: "https://sflcn.com/?p=6571" },
   observer2022: { name: "Jamaica Observer, 23 December 2022: 'Butch' Stewart's 10-year love affair with Air Jamaica", url: "https://jamaicaobserver.com/news/butch-stewarts-10-year-love-affair-with-air-jamaica" },
   jamaicans: { name: "Jamaicans.com, On this day: Air Jamaica A.K.A. The Love Bird is Born", url: "https://jamaicans.com/on-this-day-in-jamaican-history-air-jamaica/" },
 };
@@ -187,6 +189,12 @@ export const JOURNAL = [
     simple: ["You are Tia, eight years old.", "Your Mum is Dee, all grown up.", "You are flying to Toronto in Canada to see family."],
     deeper: ["Tia, her Mum and Mr Clarke in this game are fictional.", "Many Jamaicans live in Toronto. In April 2004 Air Jamaica began flying there again, after 14 years away."],
     source: "jis2004",
+  },
+  {
+    id: "skywritings", title: "SkyWritings",
+    simple: ["SkyWritings was Air Jamaica's own magazine.", "Passengers read it on the plane.", "It told stories about the places the airline flew to."],
+    deeper: ["It came out every two months. In 2009 it was named Magazine of the Year in Jamaica, and its publisher said about 500,000 people read each issue.", "A copy from September 1972 shows it was already in print in the airline's early years.", "The cover and the story pages in this game were made for the game. No real issue has been copied."],
+    source: "sflcn2009",
   },
   {
     id: "chef", title: "The flying chef",
@@ -283,6 +291,7 @@ export const QUIZZES = {
     items: [
       { q: "What did the flying chef do?", opts: [{ t: "Flew the plane" }, { t: "Cooked and served Jamaican food on board", ok: true }, { t: "Fixed the engines" }], why: "Chef Louis Bailey flew on the planes and asked passengers how they liked the food." },
       { q: "Which dish is Jamaica's national dish?", opts: [{ t: "Ackee and saltfish", ok: true }, { t: "Pizza" }, { t: "Fish and chips" }], why: "Ackee and saltfish was on the menu for the Toronto flights." },
+      { q: "What was SkyWritings?", opts: [{ t: "Air Jamaica's magazine", ok: true }, { t: "A kind of plane" }, { t: "A song" }], why: "Passengers read it on the plane. It told stories about the places the airline flew to." },
       { q: "What is festival?", opts: [{ t: "A sweet fried dumpling", ok: true }, { t: "A kind of fish" }, { t: "A drink" }], why: "Festival is long, golden and a little sweet." },
     ],
   },

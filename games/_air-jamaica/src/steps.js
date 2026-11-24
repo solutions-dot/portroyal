@@ -27,12 +27,13 @@ export const STEPS = {
   34: w("cockpit", "What did you learn?", "quiz", 50, { quiz: "cockpit" }),
   /* 3. The flying chef: the cabin of a jet in the 2000s, flying to Toronto */
   50: t("cabin", "Talk to Mum at the back of the plane.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
-  51: t("cabin", "Meet the chef at the front of the cabin.", ["chef"], 52, { show: CABIN_ALL, journal: "chef" }),
-  52: l("cabin", "Look at the chef's trolley.", ["trolley"], 53, { show: CABIN_ALL, journal: "menu" }),
-  53: d("cabin", "Carry the ackee and saltfish to Mr Clarke.", ["plate"], 54, { show: CABIN_ALL }),
-  54: t("cabin", "Talk to Mr Clarke.", ["clarke"], 55, { show: CABIN_ALL, journal: "taste" }),
-  55: w("cabin", "What did you learn?", "quiz", 56, { quiz: "chef", show: CABIN_ALL }),
-  56: w("cabin", "The flying chef.", "end", null, { end: true, show: CABIN_ALL }),
+  51: l("cabin", "Look at the magazine in your seat pocket.", ["magazine"], 52, { show: CABIN_ALL, journal: "skywritings" }),
+  52: t("cabin", "Meet the chef at the front of the cabin.", ["chef"], 53, { show: CABIN_ALL, journal: "chef" }),
+  53: l("cabin", "Look at the chef's trolley.", ["trolley"], 54, { show: CABIN_ALL, journal: "menu" }),
+  54: d("cabin", "Carry the ackee and saltfish to Mr Clarke.", ["plate"], 55, { show: CABIN_ALL }),
+  55: t("cabin", "Talk to Mr Clarke.", ["clarke"], 56, { show: CABIN_ALL, journal: "taste" }),
+  56: w("cabin", "What did you learn?", "quiz", 57, { quiz: "chef", show: CABIN_ALL }),
+  57: w("cabin", "The flying chef.", "end", null, { end: true, show: CABIN_ALL }),
 };
 export const TASKS = {
   plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [0.69, 0.85, -1.98], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
@@ -72,4 +73,10 @@ LOOKS.trolley = {
   sound: "lid",
   say: ["The silver lids come off, one by one.", "It smells like home."],
   lines: ["Ackee and saltfish, Jamaica's national dish.", "Calaloo and saltfish, and run dung: fish in coconut sauce.", "Festival, a sweet fried dumpling, and jerk chicken.", "The chef asks you to take the ackee and saltfish to Mr Clarke."],
+};
+LOOKS.magazine = {
+  place: "cabin", at: [-0.22, 1.25], label: "Look at the magazine", title: "SkyWritings",
+  sound: "page",
+  say: ["You pull the magazine from the seat pocket.", "It opens on a story about the airline."],
+  lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on the planes now.", "Go and meet him at the front."],
 };

@@ -57,6 +57,7 @@ function seat(g, x, z, trayDown = false) {
   const hc = box(0.4, 0.2, 0.012, M.head, 0, 1.08, 0.18, s);
   hc.rotation.x = -0.12;
   box(0.36, 0.42, 0.11, M.seatDark, 0, 0.21, 0.02, s);
+  box(0.36, 0.24, 0.012, M.seatDark, 0, 0.5, 0.345, s); /* the seat pocket on the back, where the magazine is kept */
   if (trayDown) box(0.38, 0.02, 0.26, M.tray, 0, 0.84, 0.42, s); /* 84 cm up: over the thighs and the hands resting on them, with room (at 70 cm it lay in the passenger's lap) */ /* the tray, down, for the passenger behind */
   else { const t = box(0.34, 0.26, 0.02, M.tray, 0, 0.9, 0.31, s); t.rotation.x = -0.12; }
   return s;
@@ -123,9 +124,9 @@ export function buildCabin() {
     for (const z of CABIN.rows) { box(0.04, 0.02, 0.02, solid(0xfff3c8, 0.5), s * 1.0, 1.575, z, g); }
   }
   box(H * 2, 0.06, len, M.ceiling, 0, 2.18, mid, g);
-  /* the seats: six rows, three each side; the tray is down in front of Mr Clarke (row 2, aisle seat on the right), for his plate */
+  /* the seats: five rows, three each side; the tray is down in front of Mr Clarke (row 2, aisle seat on the right), for his plate, and in front of Tia's seat (row 5, aisle seat on the left), for the magazine */
   for (const [r, z] of CABIN.rows.entries())
-    for (const s of [-1, 1]) for (const x of CABIN.seatX) seat(g, s * x, z, r === 0 && s === 1 && x === CABIN.seatX[0]);
+    for (const s of [-1, 1]) for (const x of CABIN.seatX) seat(g, s * x, z, x === CABIN.seatX[0] && ((r === 0 && s === 1) || (r === 3 && s === -1))); /* trays down: Mr Clarke's, and Tia's (the magazine is read on it) */
   /* the front: a bulkhead wall with the galley, a counter and lockers, ovens; the trolley stands in front of it */
   box(H * 2, 2.2, 0.06, M.wall, 0, 1.1, L, g);
   const C = CABIN.counter;
@@ -173,4 +174,90 @@ export function lidPlace(i, k) {
   const t = Math.max(0, Math.min(1, k * 1.25 - i * 0.06));
   const e = t * t * (3 - 2 * t);
   return [x0 + (x1 - x0) * e, y0 + (y1 - y0) * e + Math.sin(e * Math.PI) * 0.22, z0 + (z1 - z0) * e];
+}
+
+/* SkyWritings, Air Jamaica's in-flight magazine (docs/games/air-jamaica.md, "SkyWritings"). The name is real; the cover and the two pages are made for
+   this game (no real issue has been looked at yet), and the journal page says so. The facts on the page are the sourced ones of the earlier chapters. */
+export const MAG = { page: [0.19, 0.25], tray: [-0.69, 0.852, 0.87], pocket: [-0.785, 0.56, 0.783] };
+function magTexture(kind) {
+  return cv(608, 800, (x, W, H) => {
+    const text = (t, px, py, size, color = "#1d2a44", weight = "bold", align = "left", font = "Georgia, serif") => { x.fillStyle = color; x.font = weight + " " + size + "px " + font; x.textAlign = align; x.fillText(t, px, py); };
+    const bird = (cx, cy, r) => { /* the Love Bird in its ring: a ring, and a small bird with a long curling tail inside it */
+      x.strokeStyle = "#e0662b"; x.lineWidth = r * 0.16; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke();
+      x.fillStyle = "#e0662b"; x.beginPath(); x.ellipse(cx - r * 0.1, cy - r * 0.15, r * 0.32, r * 0.2, -0.4, 0, 7); x.fill();
+      x.lineWidth = r * 0.08; x.beginPath(); x.moveTo(cx + r * 0.1, cy - r * 0.05); x.quadraticCurveTo(cx + r * 0.6, cy + r * 0.2, cx + r * 0.1, cy + r * 0.6); x.stroke();
+    };
+    if (kind === "cover") {
+      const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#3d8fd6"); g.addColorStop(0.62, "#9fd0f0"); g.addColorStop(0.62, "#1f7fa8"); g.addColorStop(1, "#155f80");
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.fillStyle = "#2f7a3a"; x.beginPath(); x.moveTo(0, H * 0.64); x.quadraticCurveTo(W * 0.3, H * 0.48, W * 0.55, H * 0.6); x.quadraticCurveTo(W * 0.8, H * 0.5, W, H * 0.62); x.lineTo(W, H * 0.66); x.lineTo(0, H * 0.66); x.fill();
+      x.fillStyle = "#ffe08a"; x.beginPath(); x.arc(W * 0.78, H * 0.3, 46, 0, 7); x.fill();
+      { /* a jet climbing over the hills: body, swept wings, tail fin */
+        x.save(); x.translate(W * 0.36, H * 0.4); x.rotate(-0.12); x.fillStyle = "#ffffff";
+        x.beginPath(); x.ellipse(0, 0, 130, 13, 0, 0, 7); x.fill();
+        x.beginPath(); x.moveTo(10, 0); x.lineTo(-40, 62); x.lineTo(-62, 62); x.lineTo(-20, 0); x.fill();
+        x.beginPath(); x.moveTo(10, -2); x.lineTo(-30, -48); x.lineTo(-48, -48); x.lineTo(-22, -2); x.fill();
+        x.beginPath(); x.moveTo(-100, -4); x.lineTo(-128, -52); x.lineTo(-112, -52); x.lineTo(-80, -6); x.fill();
+        x.fillStyle = "#e0662b"; x.fillRect(-90, -3, 190, 5); x.restore();
+      }
+      x.fillStyle = "rgba(255,255,255,0.92)"; x.fillRect(0, 0, W, 150);
+      text("SkyWritings", W / 2, 100, 92, "#1d2a44", "bold italic", "center");
+      text("AIR JAMAICA'S OWN MAGAZINE", W / 2, 140, 26, "#e0662b", "bold", "center", "Arial, sans-serif");
+      bird(W - 70, H - 80, 40);
+      text("Our Own Wings: the story of the airline", 36, H - 70, 28, "#ffffff", "bold", "left", "Arial, sans-serif");
+    } else if (kind === "left") {
+      x.fillStyle = "#fbf8ef"; x.fillRect(0, 0, W, H);
+      text("SKYWRITINGS", 40, 50, 20, "#e0662b", "bold", "left", "Arial, sans-serif");
+      text("Our Own", 40, 170, 96);
+      text("Wings", 40, 270, 96);
+      text("The story of Air Jamaica", 44, 320, 30, "#5a6478", "italic");
+      bird(W / 2, 520, 130);
+      text("The Love Bird", W / 2, 720, 30, "#5a6478", "italic", "center");
+    } else {
+      x.fillStyle = "#fbf8ef"; x.fillRect(0, 0, W, H);
+      text("SKYWRITINGS", W - 40, 50, 20, "#e0662b", "bold", "right", "Arial, sans-serif");
+      const rows = [
+        ["1969", "Air Jamaica first flies,", "on 1 April."],
+        ["Jets", "One DC-8 and", "three DC-9s."],
+        ["Bird", "The Doctor Bird on the", "tail is our Love Bird."],
+        ["1994", "New owners, and new", "colours on the planes."],
+        ["Now", "Jamaican food, cooked", "by our flying chef."],
+      ];
+      rows.forEach(([h, a, b], i) => {
+        const y = 140 + i * 128;
+        x.fillStyle = "#e0662b"; x.fillRect(40, y - 40, 8, 96);
+        text(h, 66, y, 40, "#e0662b");
+        text(a, 66, y + 40, 32, "#1d2a44", "normal");
+        text(b, 66, y + 78, 32, "#1d2a44", "normal");
+      });
+    }
+  });
+}
+/* the magazine: the right-hand page as its base, and the cover as a leaf on a hinge at the spine (x = 0). Closed, the cover shows; opened (the leaf
+   turned over to the left), the two pages of the story show. Its origin is the spine, at the middle of the page's height. */
+export function buildMagazine() {
+  const [w, h] = MAG.page, mag = grp(), paper = solid(0xfbf8ef, 0.8);
+  const right = new THREE.MeshStandardMaterial({ map: magTexture("right"), roughness: 0.8 });
+  box(w, 0.004, h, [paper, paper, right, paper, paper, paper], w / 2, 0.002, 0, mag);
+  const pivot = grp(mag, 0, 0.004, 0);
+  const lt = magTexture("left"); lt.center.set(0.5, 0.5); lt.rotation = Math.PI; /* the leaf's underside is read after the leaf is turned over */
+  const cover = new THREE.MeshStandardMaterial({ map: magTexture("cover"), roughness: 0.6 }), left = new THREE.MeshStandardMaterial({ map: lt, roughness: 0.8 });
+  box(w, 0.004, h, [paper, paper, cover, left, paper, paper], w / 2, 0.002, 0, pivot);
+  mag.userData.pivot = pivot;
+  mag.userData.fixed = true; /* in the seat pocket it is held from the side, between the seat back and the pocket */
+  return mag;
+}
+/* k from 0 (in the pocket, closed, upright) to 1 (open on the tray). It slides back out of the pocket under the tray (to 0.25), rises past the tray's
+   edge and turns flat (to 0.45), settles onto the tray (to 0.6), then the cover turns over (to 1). It never passes through the tray. */
+export function magazineAt(mag, k) {
+  const P = MAG.pocket, T = MAG.tray, sm = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const out = [P[0], 0.62, 1.07], up = [P[0] + 0.05, 1.0, 1.07];
+  const lerp = (A, B, t) => A.map((v, i) => v + (B[i] - v) * t);
+  let pos, flat = 0;
+  if (k < 0.25) pos = lerp(P, out, sm(k / 0.25));
+  else if (k < 0.45) { const t = sm((k - 0.25) / 0.2); pos = lerp(out, up, t); flat = t; }
+  else { pos = lerp(up, T, sm((k - 0.45) / 0.15)); flat = 1; }
+  mag.position.set(...pos);
+  mag.rotation.set((Math.PI / 2) * (1 - flat), 0, 0);
+  mag.userData.pivot.rotation.z = Math.PI * sm((k - 0.6) / 0.4);
 }
