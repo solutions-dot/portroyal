@@ -1,4 +1,5 @@
 import { playChapterFade } from '../../../engine/cine.js';
+import { draw } from '../../../engine/look.js';   /* light from the sky and soft shading in corners */
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
@@ -1648,7 +1649,7 @@ function frame(t) {
   const dt = Math.min(0.05, (t - last) / 1000); last = t; update(dt, t);
   if (!state.started && modelsReady && !QUICK) titleCam(dt); else { camera.position.set(state.x, state.eyeY || EYE, state.z); camera.rotation.set(state.pitch, state.yaw, 0, 'YXZ'); if (!fading && INTRO.t < INTRO.dur) introCam(dt); } if (LS) LS.tick(dt);   /* a close-up holds the camera */   /* eyeY: dev face views only */
   SH.tick(scene, camera);
-  renderer.render(scene, camera);
+  draw(renderer, scene, camera);
 }
 /* a chapter opens with a short establishing move: the view starts higher and further back, looking down over the place, and settles into your eyes.
    Walking or turning ends it at once. */

@@ -250,6 +250,7 @@ function addShadows(Q) {
   mesh.rotation.x = -Math.PI / 2;
   mesh.count = people.length;
   Q.group.add(mesh);
+  mesh.userData.contactShadow = true;   /* engine/contact.js leaves a place with its own patches alone */
   Q.shadows = { people, mesh };
 }
 function shadows(Q) {

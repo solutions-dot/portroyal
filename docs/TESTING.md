@@ -321,3 +321,11 @@ Use this as the work list for clothes. `people-check` measures surfaces, so it a
 ## The full look at a character (owner rule 15)
 
 `node tools/review/full-check.mjs <game> <id,id,...> [anims=Idle:0.4,Walk:0.2,Walk:0.6,PickUp:0.4,SitIdle:0.4]` writes one sheet per person, `build/review/full-<game>-<id>.png`: every pose in `anims` from the front, three-quarter, side and back; the clothes close up standing and mid-stride; the neck from all four sides; and the phone, light and crowd copies the game has. Points the cloth check reports are marked red and printed. Set `anims` to the clips that person really plays (Abba: `Idle:0.4,Run:0.3,Scared:0.4,Terrified:0.4,SitIdle:0.4,Talk1:0.4`). Look at every cell before calling the person done, and name in the report what is still wrong.
+
+## Graphics: before and after (24 November 2026)
+
+`engine/look.js` and `engine/contact.js` draw every game's picture. To compare in any dev build, add to the address: `?nosky` (sky light), `?noao` (corner shading), `?noglow`, `?nograde`, `?nohaze`, `?nocontact` (soft shadows under people), `?noweave` (cloth), `?nograin` (surfaces), `?nosun` (sun in the sky), `?nopost` (no extra pass at all); `?aoview` shows the corner shading alone. `window.__LOOK` says what is on and why anything switched off.
+
+`node tools/review/look-shot.mjs <game> <out.png> "<query>" [wait ms] [WxH]` takes a picture with every button hidden (with `shot=...` it uses the dev build's test view; under 600 wide it opens a touch phone). Judge a change by eye from before and after pictures in a bright place, a night place and an interior, and at phone size. `people-sheet` sheets load `engine/look.js`, so clothes show the weave (`noweave=1` to compare).
+
+`node tools/people/bake-shade.mjs --all | --game <g> | <files>` bakes corner shading into packed bodies (the packer does it for new ones). Look at faces after it in several games (rule 9).

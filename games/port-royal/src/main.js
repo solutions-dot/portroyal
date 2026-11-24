@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { draw } from '../../../engine/look.js';   /* light from the sky and soft shading in corners */
 import { addRecap } from '../../../engine/recap.js';
 import { produceBasket } from '../../../engine/produce.js';   /* market baskets heaped with produce (moved to the engine, 23 November 2026) */   /* three things you learned, on the last card */
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
@@ -1279,7 +1280,7 @@ function frame(now, step) {
       if (!state.unlocked.includes('harbour') && state.x < SHORE - 2) { unlock('harbour'); setGoal(); } }
     if (state.place === 'in' && fire && !reduceMotion) { fireLight.intensity = 16 * fire.userData.tick(now / 1000);  }
   }
-  SH.tick(scene, camera); renderer.render(scene, camera); requestAnimationFrame(frame);
+  SH.tick(scene, camera); draw(renderer, scene, camera); requestAnimationFrame(frame);
 }
 const flagsM = [];
 async function loadAll() {
