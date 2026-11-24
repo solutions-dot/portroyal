@@ -310,6 +310,13 @@ def smooth_shoulders(bm):      # the later coat: where the thin sleeve meets the
         if gap>want: v.co.z-=(gap-want)*k*0.85; _sl.append(round((gap-want)*k*850,1))
     for _ in range(2): bmesh.ops.smooth_vert(bm,verts=top,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
     print('COAT SHOULDER SLOPED',len(top),'points,',len(_sl),'lowered, most',max(_sl) if _sl else 0,'mm')
+    # and the top of the sleeve does not follow the deltoid muscle up into a lump above the shoulder line (owner, 24 November 2026: "some of the shoulders"):
+    # the cap of the sleeve, from the shoulder point a hand's width down the arm, is evened out with the shoulder, then kept at least 5 mm off the skin
+    cap=[v for v in bm.verts if SX*0.85<abs(v.co.x)<SX*1.45 and v.co.z>SH.z-0.09*s]
+    for _ in range(8): bmesh.ops.smooth_vert(bm,verts=cap,factor=0.5,use_axis_x=True,use_axis_y=True,use_axis_z=True)
+    for v in cap:
+        q=tree.find_nearest(v.co)
+        if q[0] is not None and q[3]<0.005: v.co=q[0]+(v.co-q[0]).normalized()*0.005 if (v.co-q[0]).length>1e-6 else v.co
     bm.normal_update()
 if G.get('coat'):
     cs=G.get('coatsleeve',0.82); collar=NECK-0.012*s
@@ -1411,7 +1418,13 @@ if G.get('bands'):
         for dz in (0.085,0.045):
             zz=b0.z-dz*s*(0.25+0.75*f)*sstep(0.80,0.55,abs(math.atan2(math.sin(a),math.cos(a)))); rr=rad_out(zz,a)+0.004;      # the yoke fills the coat's low front only: round the sides and back the coat's own neck facing covers the join
             col.append(Vector((math.sin(a)*rr,NJ.y-math.cos(a)*rr,zz)))
-        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,_o[1]+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,_o[2]),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,_o[3])]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
+        _w=(1-sstep(1.9,1.2,abs(math.atan2(math.sin(a),math.cos(a)))))*(0.0025 if LATE else 0)      # (later: round the sides and back the top stands 2.5 mm further out, clear of the nape; at the front it keeps its close fit under the chin)
+        col+=[b0,collar_pt(a,NECK-0.004+hs*0.5,NECK-0.012*s+hs*0.5,_o[1]+_w*0.4+0.0012*math.sin(a*3+0.5)),collar_pt(a,NECK-0.004+hs,NECK-0.012*s+hs,_o[2]+_w),collar_pt(a,NECK-0.004+hs-0.005,NECK-0.012*s+hs-0.005,_o[3]+_w)]      # (3 to 4 mm closer to the neck: further out it touched the coat's neck when walking)
+        if LATE:      # each point of the band stands at least 4 mm off the neck's real skin there: round an ellipse fitted to the neck, the skin of the nape stood outside its top in places and showed as teeth along the edge (owner, 24 November 2026: "the collars are jagged")
+            for i in (3,4) if abs(math.atan2(math.sin(a),math.cos(a)))>1.1 else ():      # (not its foot, which the yoke under the coat shares)      # round the sides and back only: at the front the ray met the underside of the jaw and pushed the top out like a tray
+                q=col[i]; ang=math.atan2(q.x,-(q.y-NJ.y)); need=rad_out(q.z,ang)+0.004; r=math.hypot(q.x,q.y-NJ.y)
+                if r<need and r>1e-6: col[i]=Vector((math.sin(ang)*need,NJ.y-math.cos(ang)*need,q.z))
+            q=col[5]; t=col[4]; ang=math.atan2(t.x,-(t.y-NJ.y)); r=math.hypot(t.x,t.y-NJ.y)-0.002; col[5]=Vector((math.sin(ang)*r,NJ.y-math.cos(ang)*r,q.z))      # the fold turned in at the top stays 2 mm inside the top edge, wherever that edge went
         cols.append([bm.verts.new(q) for q in col])
     rings=[list(r) for r in zip(*cols)]; quadstrip(bm,rings[2:],close=True); by=bmesh.new(); quadstrip(by,[[by.verts.new(v.co) for v in r] for r in rings[:3]],close=True)
     for v in rings[0]+rings[1]: bm.verts.remove(v)
