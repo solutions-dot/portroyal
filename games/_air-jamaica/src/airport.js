@@ -103,7 +103,7 @@ export function airport(Q, { deck = false } = {}) {
   box(gw, hb, 0.3, concrete, cx, hb / 2, G.z1 - 0.15, g);
   box(0.3, hb, gd - 0.6, concrete, G.x0 + 0.15, hb / 2, cz, g);
   box(0.3, hb, gd - 0.6, concrete, G.x1 - 0.15, hb / 2, cz, g);
-  box(gw + 0.3, 0.2, gd + 0.3, slab, (G.x0 + G.x1) / 2, G.top - 0.1, (G.z0 + G.z1) / 2, g);
+  box(gw + 0.3, 0.2, gd + 0.3, solid(0xaaa597, 0.9), (G.x0 + G.x1) / 2, G.top - 0.1, (G.z0 + G.z1) / 2, g); /* the deck's floor: a plain mid-grey concrete */
   const post = (x, z, h = 1.05) => cyl(0.03, 0.03, h, rail, x, G.top + h / 2, z, g, 6);
   const run = (x0, z0, x1, z1) => {
     const len = Math.hypot(x1 - x0, z1 - z0);
@@ -122,7 +122,8 @@ export function airport(Q, { deck = false } = {}) {
   mesh(new THREE.SphereGeometry(0.22, 10, 8), solid(0xf4f0e0, 0.4), G.x1 - 1.0, G.top + 2.7, G.z1 - 0.8, g);
   /* the staircase: concrete treads rising along the front of the building, a handrail on each side */
   const run_ = G.stairX1 - G.stairX0, n = 14, rise = G.top / n, step = run_ / n;
-  for (let i = 0; i < n; i++) box(step * 1.02, rise, G.stairW, concrete, G.stairX0 + (i + 0.5) * step, rise * (i + 1) * 0.5, G.stairZ, g);
+  /* each tread is a solid block from the ground to its own top, so the staircase is one solid flight with no gaps */
+  for (let i = 0; i < n; i++) box(step * 1.02, rise * (i + 1), G.stairW, concrete, G.stairX0 + (i + 0.5) * step, (rise * (i + 1)) / 2, G.stairZ, g);
   const ang = Math.atan2(G.top, run_), len = Math.hypot(run_, G.top);
   for (const dz of [-G.stairW / 2 - 0.04, G.stairW / 2 + 0.04]) {
     const r = box(len, 0.04, 0.04, rail, (G.stairX0 + G.stairX1) / 2, G.top / 2 + 1.0, G.stairZ + dz, g);

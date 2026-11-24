@@ -9,6 +9,16 @@ import * as P from "./props.js";
 import { dc8, dc9, DC8 } from "./planes.js";
 import { airport, GALLERY } from "./airport.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
+/* a soft dark patch on the ground under something, so it sits on the ground and does not seem to hover; follow(o) keeps it under a moving thing */
+function groundShadow(Q, w, d, x, z, ry = 0, alpha = 0.55) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: P.shadowTexture(), transparent: true, depthWrite: false, opacity: alpha, polygonOffset: true, polygonOffsetFactor: -1 }));
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, 0.02, z);
+  m.rotation.z = ry;
+  m.userData.noBatch = true;
+  Q.group.add(m);
+  return m;
+}
 
 const base = (id, bounds, start) => ({
   id,
@@ -69,6 +79,10 @@ function scene(Q, { deck = false } = {}) {
   add(Q, jet, APRON.plane.x, APRON.plane.z, 0, Math.PI);
   P.dynamic(jet);
   Q.props.plane = jet;
+  /* its shadow: a long soft patch under the fuselage, and a smaller one under each pair of wheels */
+  const shadows = [groundShadow(Q, 52, 15, APRON.plane.x, APRON.plane.z, 0, 0.5)];
+  const wheelShadows = [[APRON.plane.x - 17, APRON.plane.z], [APRON.plane.x + 3, APRON.plane.z + 3.6], [APRON.plane.x + 3, APRON.plane.z - 3.6]].map(([x, z]) => groundShadow(Q, 3, 3, x, z, 0, 0.7));
+  Q.props.shadows = { shadows, wheelShadows };
   /* its walls: the fuselage, the two port engines, the port main gear (the nose gear is inside the fuselage footprint) */
   wall(Q, APRON.plane.x - 22.9, APRON.plane.z - 1.9, APRON.plane.x + 23.0, APRON.plane.z + 1.9);
   for (const [lz, lx] of [[7.4, -0.69], [13.2, -4.0]]) {
@@ -120,6 +134,8 @@ function scene(Q, { deck = false } = {}) {
     const [x, z, yaw, y, pitch] = t < 0 ? [APRON.plane.x, APRON.plane.z, Math.PI, 0, 0] : jetAt(t);
     jet.position.set(x, y, z);
     jet.rotation.set(0, yaw, pitch, "YXZ");
+    for (const sh of [...shadows, ...wheelShadows]) sh.visible = t < 0 || y < 0.3 || false;
+    if (t >= 0) { shadows[0].position.set(x, 0.02, z); shadows[0].rotation.z = yaw; shadows[0].scale.setScalar(Math.max(0.05, 1 - y / 14)); wheelShadows.forEach((w) => (w.visible = false)); }
     steps.visible = t < 0 || t < 5;
     steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
     if (t < 0) steps.position.z = APRON.stairs.z;
