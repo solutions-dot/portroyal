@@ -31,13 +31,32 @@ Every chapter ends the way the other games do: a short journal "Dig deeper" with
 
 Taken from web search summaries only. Read each at source before writing it into the game.
 
-- The airline began flying on **1 April 1969** (incorporated 1968). An earlier Air Jamaica dates to 1963. I could **not** confirm a first-owner partner: one account says Air Canada, none said Air India. Do not write who the partner was until a source is read.
+- The airline began flying on **1 April 1969** (incorporated late 1968) from Kingston and Montego Bay to New York and Miami. An earlier Air Jamaica dates to 1963. The partner was **Air Canada**, not Air India (the search summaries say about 40 percent, with Air Canada supplying equipment, training, pilots and some managers; it sold out in 1980, leaving the airline fully state owned). Early fleet: a leased DC-8 and DC-9s, with the 727 later in the 1970s (counts differ).
 - **1994:** privatised to the Air Jamaica Acquisition Group led by Gordon "Butch" Stewart. Accounts say the group held about **75 percent** and the government kept **25 percent**; one source said Stewart himself took 30 percent. Settle the figures at source.
 - **December 2004:** the government took full ownership again after losses. Flightglobal and the Jamaica Observer both mention Stewart's group putting about **US$20 million** in to cover the change.
 - **2010:** the Cabinet approved the sale to Caribbean Airlines. One account dates completion **1 May 2010**, another **2011**. The likely answer: routes and fleet moved in 2010, the shareholding agreement was signed **27 May 2011** (Jamaican Finance Minister Audley Shaw, Trinidad and Tobago Finance Minister Winston Dookeran). Settle the dates at source.
 - **Deal:** Jamaica's government took a **16 percent** stake in Caribbean Airlines and kept Air Jamaica's real estate and industrial assets. Sources disagree about the debt: a 2010 Gleaner report says the government took on the debt (US$940 million in liabilities as of February 2010, US$532.6 million of it assumed by the government), while a World Bank summary says Caribbean Airlines took the business without the past liabilities. Do not give a debt number until this is settled.
 - **Jobs:** Air Jamaica staff were made redundant from about **12 April 2010**, with redundancy pay reported at US$300 million (check), and Caribbean Airlines rehired some. Counts of staff kept vary between about 900 and 1,000.
 - **End:** Air Jamaica ceased all operations in **2015**.
+
+## Cinematic scenes and the little Air Jamaica novelties (owner, 24 November 2026)
+
+The owner wants real cinematic scenes and engaging play, with the small touches people remember about the airline. Each scene uses the shared look-shot (`engine/lookshot.js`, rule 13): black bars, a gliding camera, short story lines one at a time, the autoplayer skips it.
+
+**Scene A: The cockpit (ch 2).** Marcia is called forward. The pilot invites her to the cockpit for the descent into Kingston (or the climb out of Montego Bay). The player sees the instrument panel, the throttles, the windscreen, and the Blue Mountains or the sea coming up, with a close-up of the captain's hands. The captain has few words, all everyday ("Gear down"). A hands-on moment: the player reads out the checklist line by line, or taps the landing lights. Facts to check before building: which aircraft (DC-9, 727 or A300/A310), the real cockpit layout for that type, a real captain only through a source. The Observer has a piece on Jamaica's first female commercial jet pilot, 1979 (name and details not read yet): a good fact for the journal and perhaps the person in the right seat.
+
+**Scene B: The flying chef (ch 3, just after the 1994 takeover).** Marcia serves a passenger who is flying for the first time, a boy or an old woman going to see family. The new service has a chef in the cabin who makes the meal in front of them: a trolley, a white jacket, plating each course, champagne breakfast, wine or beer with every meal. The player helps the chef: lay the cloth, choose the next course, carry it down the aisle. The camera eases in on the plate, with sound (a cork, a sizzle), then the words show. What is known so far (summaries, not read at source): after the 1994 privatisation the airline's own history says onboard service was redesigned with "Executive flying chef", fresh Jamaican dishes, champagne breakfasts in first and main cabin, and wine or beer with every meal; a 2004 JIS article calls Louis Bailey "the only flying chef in the industry". The menu itself must come from a real menu card or a first-hand account. Never invent a dish and call it the real one.
+
+**Other little novelties to put in (each to be checked first):**
+- **The Love Bird:** the airline's "love bird hospitality" and its Doctor Bird tail. How the bird looked in each livery, from photographs.
+- **New colours, 22 November 1994:** the first aircraft in the new colours due out of the hangar that day (Gleaner, not yet read). A close-up of the paint going on.
+- **SkyWritings:** the in-flight magazine started under Stewart. A page the player can open and read.
+- **The frequent flyer programme,** also started in that period.
+- **Rum punch and the welcome:** the greeting on board. Needs a source for how it was served and when.
+- **Airbus aircraft** in the fleet and the **Air Jamaica Express** feeder service, as the fleet changes.
+- **A boarding pass and ticket** of each era, copied from real ones.
+- **The captain's welcome and the in-flight map,** if a source shows them.
+Anything that cannot be checked stays out, or goes in as "believed, check".
 
 ## The $1 claim
 
