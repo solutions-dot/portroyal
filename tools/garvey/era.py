@@ -448,6 +448,12 @@ def _hair_cuts():
     if G.get('temples'): out+=[(f0+Vector((sx*0.052*s,0.010*s,(G.get('recede',0)+0.002)*s)),Vector((sx*0.50,-0.50,-0.70)).normalized(),(lambda c,sx=sx:c.x*sx>0.02*s and c.y<J('Head').y-0.03)) for sx in (-1,1)]
     return out
 if G.get('hair')!='none': parts.append(('hair',piece('Hair','scalp',lambda c:True,0.0006,'Hair',cuts=_hair_cuts(),sub=True,post=hair_post)))
+# Gloves (recipe colour "Gloves", 24 November 2026, Air Jamaica's 1969 crew): a thin second skin cut from the hand, from just above the wrist to the fingertips,
+# as its own piece of cloth so its colour is solid and its cuff a clean edge (painted on the skin, the colour smeared up the forearm's long faces).
+def _gloved(c):
+    sx=1 if c.x>=0 else -1; a=Vector((EL.x*sx,EL.y,EL.z)); b=Vector((HA.x*sx,HA.y,HA.z)); d=b-a; t=(c-a).dot(d)/d.length_squared
+    return t>0.86 and (a+d*t-c).length<0.14*s and abs(c.x)>SX*0.8
+if 'Gloves' in P['colors']: parts.append(('gloves',piece('Gloves','body',_gloved,0.0016,'Gloves')))
 # a knitted cap and a neckerchief made from the body's own surface, so they fit and move with it
 _H=G.get('hat'); _CAP=[m for k,m in ([(_H,'Hat')] if isinstance(_H,str) else [tuple(x) for x in (_H or [])]) if k=='cap']   # the cap, given alone ("cap") or in the list of hats ([["cap", "Hat"]]), with its material name
 if _CAP:
@@ -565,6 +571,7 @@ if not OLD and dict(parts).get('shirt'):      # the sleeves are evened out as cl
     _b.to_mesh(_o.data); _b.free()
 clothes=[o for k,o in parts]
 for o in clothes:
+    if o.name=='Gloves': continue      # cut from the skin itself, the gloves already carry its own weights point for point (copied from the nearest skin, a fingertip took a wrong weight and stretched into a spike)
     md=o.modifiers.new('wt','DATA_TRANSFER'); md.object=h; md.use_vert_data=True; md.data_types_verts={'VGROUP_WEIGHTS'}
     md.vert_mapping='POLYINTERP_NEAREST'; md.layers_vgroup_select_src='ALL'; md.layers_vgroup_select_dst='NAME'
     with ov(o): bpy.ops.object.modifier_move_to_index(modifier='wt',index=0); bpy.ops.object.modifier_apply(modifier='wt')
@@ -836,6 +843,8 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         t=max(0.0,min(1.0,(HIP+0.06-v.co.z)/0.5)); leg=(0.3 if k=='jacketskirt' else (0.6 if (OLD or k=='coatskirt') else 0.9))*sstep(0.1,0.9,t); left=sstep(-1.0,1.0,v.co.x/0.15)      # a later skirt rides almost wholly on the legs, so a leg that swings forward carries the cloth with it instead of pushing through
         if k=='coatskirt': front=sstep(0.13,-0.02,v.co.y); leg=front*0.95*sstep(-0.15,0.45,t)+(1-front)*0.6*sstep(-0.05,0.7,t)      # the sides follow the thighs too (left with the hips, a striding thigh swung out through the side of the skirt); the back still hangs from the hips
         if k=='coatskirt' and G.get('coatopen',True): left=sstep(-0.004,0.004,v.co.x)      # an open coat's panels (two in front, two either side of the back vent) are separate cloths: each follows its own leg only      # an open coat's two front panels are separate cloths: each follows its own leg only (blended across the middle, the striding thigh came through the other panel's edge)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
+        if k=='skirt' and not OLD and SKB>KNEE-0.02:      # a short skirt (its hem above the knee, 24 November 2026, Air Jamaica's 1969 minis): wholly on the thighs, each half on its own, so a striding thigh carries its half of the hem with it instead of pushing out through the middle of the front
+            leg=sstep(0.0,0.75,t); left=sstep(-1.0,1.0,v.co.x/0.11)
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
             shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*(1-0.35*sstep(J('Hips').y-0.02,J('Hips').y+0.08,v.co.y))      # a little less at the back (owner, 23 November 2026: running, the back leg kicks up and the hem tied to the shin was flung up and torn); seated and kneeling she wears the seated skirt

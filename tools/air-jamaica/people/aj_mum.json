@@ -25,7 +25,8 @@
     "skirt": true,
     "hem": 0.85,
     "flare": 1.85,
-    "pleats": 9
+    "pleats": 9,
+    "waistband": false
   },
   "colors": {
     "Skin": [
