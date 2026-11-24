@@ -292,7 +292,7 @@ function drawGlow(renderer, scene, camera, st) {
   scene.traverseVisible((o) => {
     if (keep.has(o) || !(o.isMesh || o.isSprite || o.isPoints || o.isLine)) return;
     const m = o.material, m0 = Array.isArray(m) ? m[0] : m;
-    if (!o.isMesh || !m0 || m0.transparent || m0.colorWrite === false || o.name === 'skyGlow') { hidden.push(o); return; }
+    if (!o.isMesh || !m0 || (m0.transparent && !(m0.alphaTest > 0)) || m0.colorWrite === false || o.name === 'skyGlow') { hidden.push(o); return; }   /* a cut-out (alphaTest: gate bars, balustrades, leaves) stays in the black pass with its holes (darkFor), so it still hides a light behind it; only truly see-through things are hidden */
     swapped.push([o, m]); o.material = Array.isArray(m) ? m.map(darkFor) : darkFor(m);
   });
   for (const o of hidden) o.visible = false;
