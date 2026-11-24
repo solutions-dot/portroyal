@@ -9,6 +9,7 @@ import * as P from "./props.js";
 import { dc8, dc9, DC8 } from "./planes.js";
 import { airport, GALLERY } from "./airport.js";
 import { buildCockpit, SEATS } from "./cockpit.js";
+import { buildCabin, CABIN, DISHES, lidPlace } from "./cabin.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
 /* a soft dark patch on the ground under something, so it sits on the ground and does not seem to hover; follow(o) keeps it under a moving thing */
 function groundShadow(Q, w, d, x, z, ry = 0, alpha = 0.55) {
@@ -254,11 +255,50 @@ function cockpit() {
   Q.enter = () => {};
   return Q;
 }
-const builders = { apron, gallery, cockpit };
+/* 4. The cabin of a jet in the 2000s, on a flight from Jamaica to Toronto (chapter 3, "The flying chef"; cabin.js says what is a general picture).
+   Mum waits at the back; the flying chef stands by his trolley in the galley at the front; Mr Clarke sits in row 2 on the aisle, his tray down. */
+function cabin() {
+  const Q = base("cabin", [-1.75, -4.24, 1.75, 2.85], [0.35, 2.3, 0]);
+  Q.light = { top: 0x8fbce6, hor: 0xeef2f4, fog: [0xe6edf2, 40, 400], sun: [0xfff4e0, 1.4, -20, 40, 30], hemi: [0xffffff, 0xb8b4a8, 2.6], fill: 1.4 };
+  Q.indoor = true;
+  Q.beds = { wind: 0.0 };
+  const room = buildCabin();
+  P.dynamic(room);
+  Q.group.add(room);
+  const { plates, lids } = room.userData.parts;
+  /* the plate the player carries is a thing of the place, not of the trolley */
+  Q.group.add(plates.ackee);
+  P.dynamic(plates.ackee);
+  Q.items.plate = plates.ackee;
+  Q.reveal = {
+    trolley: (k) => {
+      k = Number(k);
+      DISHES.forEach((d, i) => lids[d].position.set(...lidPlace(i, k)));
+    },
+  };
+  const R = CABIN.rows, X = CABIN.seatX, top = CABIN.seatTop;
+  person(Q, "dee2", "dee2", -1.25, 2.55, face(-1.25, 2.55, 0.3, 2.2), { kind: "idle" });
+  person(Q, "chef", "chef", 0.92, -3.86, face(0.92, -3.86, 0.1, -3.0), { kind: "idle" });
+  const seatAt = (x, z) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips: ["SitIdle"] });
+  person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]), { raw: true });
+  crowd(Q, "wr_man18", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
+  /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, 1.95);
+  wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
+  wall(Q, -0.42, CABIN.trolley.z - 0.17, 0.42, CABIN.trolley.z + 0.17);
+  Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
+  Q.keepOff = [];
+  Q.lookViews = {
+    trolley: { p: [0.3, 1.42, -3.4], look: [0.0, 1.0, -4.1], fov: 42 },
+  };
+  Q.enter = () => {};
+  return Q;
+}
+const builders = { apron, gallery, cockpit, cabin };
 export const PLACE_IDS = Object.keys(builders);
 export function buildPlace(id, opts = {}) {
   const Q = builders[id](opts);
-  Q.itemStarts = {};
+  Q.itemStarts = Object.fromEntries(Object.entries(Q.items).map(([k, o]) => [k, { at: o.position.toArray(), scale: o.scale.toArray(), ry: o.rotation.y }]));
   return Q;
 }
 export function mergePlace(Q) {

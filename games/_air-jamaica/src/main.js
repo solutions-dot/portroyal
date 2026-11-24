@@ -30,7 +30,7 @@ import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
-import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
+import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, QUIZZES } from "./content.js";
 import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
@@ -523,7 +523,8 @@ async function waits(st) {
     const data = CARDS[row.note];
     card(data.title, data.lines, [[data.button || "Go on", () => advance(row.next)]]);
   } else if (kind === "quiz") {
-    runQuiz({ title: QUIZ.title, items: QUIZ.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
+    const qz = (row.quiz && QUIZZES[row.quiz]) || QUIZ;   /* each chapter may have its own quiz (steps.js: quiz) */
+    runQuiz({ title: qz.title, items: qz.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
   } else if (kind === "end") {
     card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters], ["Exit", () => askExit()]]);
     cue("end");
@@ -563,6 +564,7 @@ const LOOK_SFX = {
   engine: () => { noiseHit(380, 0.6, 2.4, 0.1, 0, 0); noiseHit(1500, 1.2, 1.4, 0.04, 0.2, 0.4); },   /* a jet turbine far off, winding up */
   click: () => [0, 0.3].forEach((d) => noiseHit(2600, 2, 0.06, 0.12, 0, d)),   /* a lever or a switch clicks */
   cheer: () => [0, 0.35, 0.8].forEach((d) => noiseHit(900 + d * 400, 1.5, 0.5, 0.05, 0, d)),   /* the crew's soft hurrah, and their gloves */
+  lid: () => { [0, 0.25, 0.5, 0.75, 1.0].forEach((d) => noiseHit(3200, 4, 0.08, 0.1, 0, d)); noiseHit(5200, 0.8, 1.6, 0.03, 0.3, 0.4); },   /* five silver lids clink off, and the food sizzles */
 };
 const _lq = new THREE.Quaternion(),
   _le = new THREE.Euler();

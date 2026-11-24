@@ -1007,6 +1007,14 @@ elif CK:      # the 1690 neckband
     _cb=bmesh.new(); _cb.from_mesh(_co.data); _cb.normal_update(); _fl=[f for f in _cb.faces if f.normal.dot(Vector((cz(f).x,cz(f).y-NJ.y,0)))<0]      # every face of the band and its folded leaf looks outward from the neck: the automatic normals of a strip that folds back on itself flipped some faces, which drew as grey blocks on the collar (owner, 17 November 2026)
     if _fl: bmesh.ops.reverse_faces(_cb,faces=_fl)
     _cb.to_mesh(_co.data); _cb.free(); _co.data.update()
+if G.get('chefbuttons') and not G.get('coat'):      # a chef's double-breasted jacket (Air Jamaica's flying chef, owner's photograph; docs/games/air-jamaica.md): two columns of small buttons down the front of a white untucked shirt with a stand collar, in place of the shirt's own band and buttons (give the recipe "buttons": false)
+    bm=bmesh.new(); nb=int(G['chefbuttons']); z1=collar_base(0)-0.05*s; z0=HIP-0.03*s
+    for i in range(nb):
+        z=z1-(z1-z0)*i/(nb-1)
+        for x in (-0.058*s,0.058*s):
+            y=shirt_front(z,x)-0.004
+            bmesh.ops.create_circle(bm,cap_ends=True,segments=8,radius=0.0058*s,matrix=Matrix.Translation((x,y,z))@Matrix.Rotation(math.pi/2,4,'X'))
+    soft('Buttons',bm,'Buttons',src=ON('shirt'))
 if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      # the shirt's front band and its buttons
     bm=bmesh.new(); z1=NW_PLACKET_TOP if NW_PLACKET_TOP is not None else ((VZ-0.004*s) if CK=='camp' else collar_base(0)-0.012*s); z0=WAIST+0.01
     if G.get('waistcoat') and G.get('vwaist') and not OLD and 'WVZ' in globals(): z0=max(z0,WVZ+0.012)      # under a V waistcoat the band stops just above the point of the V: carried on down, it came through the waistcoat's edge beside the point as a notch (owner, 21 November 2026: "torn in the center")
@@ -1293,7 +1301,7 @@ def build_hat(HK,HM):
         bm.faces.new(pk); bm.faces.new(pu[::-1])
         for k in range(4): bm.faces.new((pk[k],pu[k],pu[(k+1)%4],pk[(k+1)%4]))
         rigid(HM,bm,HM,'Head')
-    if HK in ('trilby','straw','bowler','top','church','peaked','pillbox'):
+    if HK in ('trilby','straw','bowler','top','church','peaked','pillbox','toque'):
         fit=head_fit(); bm=bmesh.new(); bb=bmesh.new(); BR=G.get('brim',1.0)
         if HK=='trilby':      # a felt hat with a pinched crown and a brim snapped down in front
             Hc=CRH+0.032*s
@@ -1319,6 +1327,10 @@ def build_hat(HK,HM):
             for sx in (-1,1): bmesh.ops.create_uvsphere(bb,u_segments=8,v_segments=5,radius=0.022*s,matrix=Matrix.Translation((fit[0]+fit[2]*0.8,fit[1]+sx*0.022*s+0.03,fit[4]+0.024*s))@Matrix.Diagonal((0.5,1.0,0.7,1)))
         if HK=='pillbox':
             f2=(fit[0],fit[1]+0.012*s,fit[2]*0.86,fit[3]*0.86,fit[4]+0.03*s); lathe(bm,[(0.0,0.0),(0.002,CRH+0.012*s-0.03*s),(-0.03*s,CRH+0.018*s-0.03*s)],f2)
+        if HK=='toque':       # a chef's tall white hat (Air Jamaica's flying chef, owner's photograph): a close band, then pleated cloth that flares a little and puffs over at the top; round the band, three thin stripes of red, orange and yellow
+            lathe(bm,[(0.002,0.0),(0.002,0.036*s),(0.012*s,0.08*s),(0.026*s,0.18*s),(0.034*s,0.25*s),(0.026*s,0.275*s),(-0.02*s,0.286*s),(-0.06*s,0.29*s)],fit,seg=48,mod=lambda a,i,d,z:(d+(0.0035*s*math.cos(a*18) if 2<=i<=5 else 0),z))
+            for k,(nm,col) in enumerate((('StripeR',(198,40,36)),('StripeO',(226,120,30)),('StripeY',(236,196,48)))):
+                sb=bmesh.new(); z0=(0.010+k*0.0075)*s; lathe(sb,[(0.0045,z0),(0.0045,z0+0.0065*s)],fit,seg=48,cap=False); COL.setdefault(HM+nm,srgb(col)); rigid(HM+nm,sb,HM+nm,'Head')
         if HK=='peaked':      # a uniform cap: a stiff band, a wide flat top that tilts up at the front, a shiny peak
             _hd=G.get('hatdrop',0)*s; lathe(bm,[(0.001,0.0),(0.001,0.032*s),(0.026*s,CRH-0.006*s+_hd*0.3),(0.018*s,CRH+0.008*s+_hd*0.3),(-0.05*s,CRH+0.012*s+_hd*0.3)],fit,mod=lambda a,i,d,z:(d,z+(0.012*s*math.cos(a) if i>=2 else 0)))
             lathe(bb,[(0.003,0.004*s),(0.003,0.030*s)],fit,cap=False)

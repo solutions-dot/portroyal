@@ -11,6 +11,11 @@ export const CAST = {
   hines: { base: "aj_hines", sex: "m", who: "Mr Hines", idle: "IdleM" },
   ross: { base: "aj_ross", sex: "m", who: "Captain Ross", idle: "IdleM" },
   mum: { base: "aj_mum", sex: "f", who: "Mum" },
+  /* chapter 3: Dee grown up (a Windrush 2018 body, the right kind of clothes for a passenger of the 2000s), the flying chef Louis Bailey (real; built from
+     the owner's photograph, docs/games/air-jamaica.md), and Mr Clarke, a passenger (a Windrush 2018 body) */
+  dee2: { base: "wr_asha18", sex: "f", who: "Mum" },
+  chef: { base: "aj_chef", sex: "m", who: "Chef Bailey", idle: "IdleM" },
+  clarke: { base: "wr_wman18", sex: "m", who: "Mr Clarke", idle: "IdleM" },
 };
 export const CROWD = {
   aj_crew1: { sex: "f" },
@@ -27,5 +32,6 @@ export const CROWD = {
   wr_bman62: { sex: "m", idle: "IdleM" },
   wr_sam62: { sex: "m", idle: "IdleM" },
   wr_bboy62: { sex: "m", scale: 0.8 },
+  wr_man18: { sex: "m", idle: "IdleM" },
 };
 export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];

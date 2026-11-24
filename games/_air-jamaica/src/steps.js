@@ -7,6 +7,7 @@ const d = (place, goal, ids, next, extra) => row(place, goal, { do: ids.map((id)
 const l = (place, goal, ids, next, extra) => row(place, goal, { do: ids }, next, extra);
 const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, card, next, ...extra });
 const ALL = ["marcia", "hines", "ross"];
+const CABIN_ALL = ["dee2", "chef", "clarke"];
 export const STEPS = {
   /* 1. A flag in the sky */
   10: t("apron", "Talk to Aunt Marcia in the line of crew.", ["marcia"], 11, { show: ALL, journal: "you" }),
@@ -23,9 +24,19 @@ export const STEPS = {
   31: l("cockpit", "Look at the four levers between the seats.", ["levers"], 32, { journal: "levers" }),
   32: w("cockpit", "The plane comes in to land.", "film", 33, { film: "landing" }),
   33: w("cockpit", "The plane comes in to land.", "playing", 34, { film: "landing" }),
-  34: w("cockpit", "The view from the front.", "end", null, { end: true }),
+  34: w("cockpit", "What did you learn?", "quiz", 50, { quiz: "cockpit" }),
+  /* 3. The flying chef: the cabin of a jet in the 2000s, flying to Toronto */
+  50: t("cabin", "Talk to Mum at the back of the plane.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
+  51: t("cabin", "Meet the chef at the front of the cabin.", ["chef"], 52, { show: CABIN_ALL, journal: "chef" }),
+  52: l("cabin", "Look at the chef's trolley.", ["trolley"], 53, { show: CABIN_ALL, journal: "menu" }),
+  53: d("cabin", "Carry the ackee and saltfish to Mr Clarke.", ["plate"], 54, { show: CABIN_ALL }),
+  54: t("cabin", "Talk to Mr Clarke.", ["clarke"], 55, { show: CABIN_ALL, journal: "taste" }),
+  55: w("cabin", "What did you learn?", "quiz", 56, { quiz: "chef", show: CABIN_ALL }),
+  56: w("cabin", "The flying chef.", "end", null, { end: true, show: CABIN_ALL }),
 };
-export const TASKS = {};
+export const TASKS = {
+  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.75], at: [0.69, 0.71, -1.95], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
+};
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while it happens. lines: the card after. */
 export const LOOKS = {
@@ -54,5 +65,11 @@ LOOKS.levers = {
   say: ["Between the two seats there are four levers."],
   lines: ["Each lever with a black knob is for one engine.", "Push them forward and the engines push harder.", "The red knob is for the speed brake."],
 };
-export const ITEMS = [];
-export const TASK_IDS = [];
+export const ITEMS = ["plate"];
+export const TASK_IDS = ["plate"];
+LOOKS.trolley = {
+  place: "cabin", at: [0.05, -3.3], label: "Look at the trolley", title: "The flying chef's menu",
+  sound: "lid",
+  say: ["The silver lids come off, one by one.", "It smells like home."],
+  lines: ["Ackee and saltfish, Jamaica's national dish.", "Calaloo and saltfish, and run dung: fish in coconut sauce.", "Festival, a sweet fried dumpling, and jerk chicken.", "The chef asks you to take the ackee and saltfish to Mr Clarke."],
+};

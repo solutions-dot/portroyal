@@ -1,0 +1,102 @@
+{
+  "name": "aj_chef",
+  "era": 2004,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.55,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.55,
+    "weight": 0.62,
+    "height": 0.52
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.18,
+    "hat": [
+      [
+        "toque",
+        "Hat"
+      ]
+    ],
+    "sleeve": 0.97,
+    "untucked": true,
+    "collar": "stand",
+    "buttons": false,
+    "chefbuttons": 6,
+    "tie": false,
+    "jacket": false,
+    "legwidth": 0.95,
+    "moustache": 0.011,
+    "belt": false
+  },
+  "colors": {
+    "Shoes": [
+      24,
+      22,
+      22
+    ],
+    "Sole": [
+      20,
+      18,
+      18
+    ],
+    "Buttons": [
+      34,
+      46,
+      112
+    ],
+    "Belt": [
+      30,
+      30,
+      32
+    ],
+    "Buckle": [
+      120,
+      110,
+      80
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      146,
+      99,
+      72
+    ],
+    "Shirt": [
+      240,
+      240,
+      236
+    ],
+    "Collar": [
+      240,
+      240,
+      236
+    ],
+    "Breeches": [
+      30,
+      32,
+      38
+    ],
+    "Hat": [
+      244,
+      244,
+      240
+    ],
+    "HatBand": [
+      244,
+      244,
+      240
+    ]
+  },
+  "targets": {
+    "head-round": 0.3,
+    "chin-width-decr": 0.1
+  }
+}
