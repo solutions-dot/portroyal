@@ -89,10 +89,21 @@ function engineerTexture() {
   });
 }
 function overheadTexture() {
-  return cv(512, 160, (x, W, H) => {
+  /* many small toggles in labelled blocks, as in the photograph: grey switch plates, white toggles, a few amber lights */
+  return cv(1024, 820, (x, W, H) => {
     x.fillStyle = "#26292a"; x.fillRect(0, 0, W, H);
-    for (let r = 0; r < 4; r++)
-      for (let c = 0; c < 14; c++) { x.fillStyle = (r * 14 + c) % 5 === 0 ? "#d6a52a" : "#7b8181"; x.fillRect(14 + c * 35, 12 + r * 36, 22, 22); }
+    const blocks = [[20, 20, 300, 380], [352, 20, 320, 380], [704, 20, 300, 380], [20, 420, 480, 380], [524, 420, 480, 380]];
+    blocks.forEach(([bx, by, bw, bh], n) => {
+      x.fillStyle = "#3a3f40"; x.fillRect(bx, by, bw, bh);
+      x.strokeStyle = "#e8e6dc"; x.lineWidth = 2; x.strokeRect(bx + 4, by + 4, bw - 8, bh - 8);
+      const cols = Math.floor((bw - 20) / 34), rows = Math.floor((bh - 20) / 46);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const cx = bx + 20 + c * 34, cy = by + 22 + r * 46, k = (r * 7 + c * 3 + n) % 9;
+        if (k === 0) { x.fillStyle = "#d6a52a"; x.fillRect(cx - 2, cy, 18, 12); continue; }
+        x.fillStyle = "#15181a"; x.beginPath(); x.arc(cx + 7, cy + 10, 8, 0, 7); x.fill();
+        x.fillStyle = "#d9d9d0"; x.fillRect(cx + 5, k % 2 ? cy - 2 : cy + 10, 5, 13);
+      }
+    });
   });
 }
 export function buildCockpit() {
@@ -144,10 +155,10 @@ export function buildCockpit() {
   /* the main panel: flat across the front, tilted back, the pilots' dials either side and the engine dials in a block of four columns in the middle */
   const dialTex = dialsTexture();
   const pan = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.82), new THREE.MeshStandardMaterial({ map: dialTex, roughness: 0.6, emissive: 0xffffff, emissiveMap: dialTex, emissiveIntensity: 0.16 }));
-  pan.position.set(0, 0.56, -1.83);
+  pan.position.set(0, 0.56, -1.8);
   pan.rotation.x = -0.22;
   g.add(pan);
-  box(2.34, 0.92, 0.3, M.panel, 0, 0.5, -1.99, g);
+  box(2.34, 0.92, 0.3, M.panel, 0, 0.5, -2.12, g); /* behind the tilted dial face, so its top row is not buried */
   /* the centre pedestal, wide and long, running back between the seats: the four throttle levers with black knobs at its front, the flap lever, the red
      speed-brake lever, then the radio panels with rows of knobs further back (as in the photograph) */
   box(0.62, 0.62, 1.5, M.panelLight, 0, 0.31, -0.98, g);
@@ -195,13 +206,23 @@ export function buildCockpit() {
   ep.position.set(1.305, 1.0, 0.1);
   ep.rotation.y = -Math.PI / 2;
   g.add(ep);
-  /* the overhead panel */
-  /* the overhead panel, large and crowded with switches, sloping down to the top of the windscreen (as in the photograph) */
-  const ohSlab = box(1.6, 0.12, 1.25, M.panel, 0, 1.9, -1.45, g); ohSlab.rotation.x = -0.18;
-  const oh = new THREE.Mesh(new THREE.PlaneGeometry(1.56, 1.2), new THREE.MeshStandardMaterial({ map: overheadTexture(), roughness: 0.6 }));
-  oh.position.set(0, 1.835, -1.45);
-  oh.rotation.x = Math.PI / 2 - 0.18;
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 11; c++) { const k = box(0.03, 0.05, 0.03, (r + c) % 5 ? M.metal : M.knob, -0.6 + c * 0.12, 1.79 + r * 0.04, -1.95 + r * 0.22, g); k.rotation.x = -0.18; }
+  /* the roof over the nose: a brow from the windscreen's head rail up to the roof, and the roof itself, so no sky shows above the panes */
+  for (let i = 0; i < FOOT.length - 1; i++) seg(FOOT[i], FOOT[i + 1], HEAD + 0.05, 2.05, M.ceiling, 0.05, 0, -LEAN);
+  {
+    const sh = new THREE.Shape();
+    FOOT.forEach(([x, z], i) => (i ? sh.lineTo(x, -z) : sh.moveTo(x, -z)));
+    sh.lineTo(1.45, 0.95); sh.lineTo(-1.45, 0.95);
+    const roof = new THREE.Mesh(new THREE.ShapeGeometry(sh), M.ceiling);
+    roof.rotation.x = -Math.PI / 2; roof.position.y = 2.03; roof.material.side = THREE.DoubleSide;
+    g.add(roof);
+  }
+  /* the overhead panel, crowded with small switches, sloping from the top of the windscreen back over the pilots' heads (as in the photograph) */
+  const OH = { z0: -2.18, y0: 1.8, z1: -0.95, y1: 2.0 }, ohLen = Math.hypot(OH.z1 - OH.z0, OH.y1 - OH.y0), ohTilt = Math.atan2(OH.y1 - OH.y0, OH.z1 - OH.z0);
+  const ohSlab = box(1.2, 0.08, ohLen, M.panel, 0, (OH.y0 + OH.y1) / 2 + 0.04, (OH.z0 + OH.z1) / 2, g); ohSlab.rotation.x = ohTilt;
+  const oh = new THREE.Mesh(new THREE.PlaneGeometry(1.16, ohLen - 0.04), new THREE.MeshStandardMaterial({ map: overheadTexture(), roughness: 0.6, emissive: 0xffffff, emissiveIntensity: 0.08 }));
+  oh.material.emissiveMap = oh.material.map;
+  oh.position.set(0, (OH.y0 + OH.y1) / 2 - 0.002, (OH.z0 + OH.z1) / 2);
+  oh.rotation.x = Math.PI / 2 + ohTilt;
   g.add(oh);
   /* ---- lighting and small things that make it a working room ---- */
   const lamp = (x, y, z, hex, r = 0.016) => {
@@ -211,14 +232,14 @@ export function buildCockpit() {
   };
   /* the master caution lights and the three green wheel lights on the panel */
   lamp(-0.12, 0.96, -1.82, 0xffb020); lamp(0.12, 0.96, -1.82, 0xffb020); lamp(0.0, 0.96, -1.82, 0xff3020);
-  for (let i = 0; i < 3; i++) lamp(-0.1 + i * 0.1, 0.66, -1.97, 0x30e060);
+  for (let i = 0; i < 3; i++) lamp(-0.1 + i * 0.1, 0.62, -1.78, 0x30e060);
   /* the dome light in the ceiling, warm, with a soft light under it for the people's faces */
   const dome = cyl(0.11, 0.11, 0.04, new THREE.MeshBasicMaterial({ color: 0xfff1cc }), 0, 2.0, 0.2, g, 14);
   dome.userData.glow = true;
   const dl = new THREE.PointLight(0xffe8c0, 0.9, 4.2, 1.6);
   dl.position.set(0, 1.85, 0.1);
   g.add(dl);
-  /* two clocks high on the panel, a radio stack on the pedestal, a row of red fire handles over the windscreen */
+  /* two clocks high on the panel, a radio stack on the pedestal, a row of red fire handles under the front of the overhead panel */
   for (const s of [-1, 1]) {
     const clock = cyl(0.07, 0.07, 0.02, solid(0xf3f1e6, 0.5), s * 0.45, 1.03, -1.95, g, 16);
     clock.rotation.x = Math.PI / 2 - 0.3;
@@ -226,13 +247,13 @@ export function buildCockpit() {
   box(0.44, 0.1, 0.28, M.panelLight, 0, 0.58, -0.42, g);
   for (let i = 0; i < 4; i++) cyl(0.018, 0.018, 0.02, M.knob, -0.15 + i * 0.1, 0.64, -0.42, g, 8);
   for (let i = 0; i < 4; i++) {
-    const h = box(0.04, 0.04, 0.14, M.red, -0.36 + i * 0.24, 1.9, -1.8, g);
-    box(0.12, 0.02, 0.02, M.red, -0.36 + i * 0.24, 1.9, -1.88, g);
+    const h = box(0.04, 0.04, 0.1, M.red, -0.36 + i * 0.24, 1.77, -2.06, g);
+    box(0.12, 0.02, 0.02, M.red, -0.36 + i * 0.24, 1.75, -2.11, g);
     void h;
   }
   /* a pair of sun visors above the windscreen, two wipers on its sill, a checklist on the pedestal */
   for (const x of [-0.95, 0.95]) {
-    const v = box(0.8, 0.04, 0.36, solid(0x2a2d2e, 0.9), x, 1.93, -2.15, g);
+    const v = box(0.6, 0.03, 0.3, solid(0x2a2d2e, 0.9), x, 1.86, -1.75, g);
     v.rotation.x = 0.35;
     const w = box(0.03, 0.03, 0.5, M.black, x * 0.7, 0.99, -2.34, g);
     w.rotation.y = x < 0 ? 0.5 : -0.5;

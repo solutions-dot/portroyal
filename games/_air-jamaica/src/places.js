@@ -221,9 +221,10 @@ function cockpit() {
   wall(Q, -0.27, -1.6, 0.27, -0.4);
   wall(Q, 0.75, 0.3, 1.3, 0.85);
   wall(Q, -1.2, 1.0, -0.6, 1.4);
+  Q.view = { pos: [0.05, 1.5, 0.75], look: [0.0, 1.05, -2.2] };
   Q.lookViews = {
-    panel: { p: [-0.45, 1.12, -0.55], look: [-0.7, 0.75, -1.8], fov: 34 },
-    levers: { p: [0.05, 1.05, -0.35], look: [0.0, 0.55, -1.1], fov: 36 },
+    panel: { p: [-0.6, 1.26, -0.85], look: [-0.62, 0.72, -1.82], fov: 40 },
+    levers: { p: [0.3, 1.18, -0.62], look: [0.0, 0.78, -1.36], fov: 42 },
   };
   /* the landing (content.js FILMS.landing): the aircraft's place on the approach in the airport's own coordinates, [time, x along the runway, height of
      the wheels, pitch]. The airport is moved the opposite way past the windscreen. Touchdown is at x -440. */
