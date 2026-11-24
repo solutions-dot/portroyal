@@ -1,0 +1,101 @@
+{
+  "name": "aj_marcia",
+  "era": 1969,
+  "body": {
+    "gender": 0,
+    "age": 0.42,
+    "muscle": 0.4,
+    "weight": 0.48,
+    "height": 0.49,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.3,
+    "shoes": true,
+    "collar": false,
+    "hairvol": 0.2,
+    "hat": [],
+    "woman": true,
+    "skirt": true,
+    "hem": 1.28,
+    "flare": 0.6,
+    "pleats": 0,
+    "hang": 1.0,
+    "buttons": false,
+    "hair": "straight",
+    "hairlen": 0.55
+  },
+  "colors": {
+    "Skin": [
+      143,
+      97,
+      71
+    ],
+    "Hair": [
+      62,
+      58,
+      52
+    ],
+    "Shirt": [
+      226,
+      182,
+      52
+    ],
+    "Collar": [
+      226,
+      182,
+      52
+    ],
+    "Shoes": [
+      30,
+      26,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      226,
+      182,
+      52
+    ],
+    "Belt": [
+      226,
+      182,
+      52
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      226,
+      182,
+      52
+    ],
+    "Lipstick": [
+      166,
+      46,
+      58
+    ],
+    "Eyeshadow": [
+      118,
+      90,
+      74
+    ]
+  },
+  "targets": {
+    "head-square": 0.25,
+    "chin-width-incr": 0.15,
+    "nose-scale-horiz-incr": 0.2,
+    "mouth-scale-horiz-incr": 0.15
+  }
+}

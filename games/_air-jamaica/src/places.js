@@ -151,9 +151,9 @@ function apron() {
   scene(Q);
   const lineZ = APRON.line.z;
   person(Q, "marcia", "marcia", -8.0, lineZ, 0, { kind: "idle" });
-  person(Q, "hines", "hines", -4.4, 0.5, face(-4.4, 0.5, -6.2, 0.0), { kind: "idle" }, { held: "clipboard", raw: true });
-  person(Q, "ross", "ross", -12.4, 0.0, face(-12.4, 0.0, -2, 6), { kind: "idle" }, { held: "bag", raw: true });
-  const looks = ["wr_lwoman62", "wr_bwoman62", "wr_may62"];
+  person(Q, "hines", "hines", -4.4, 0.5, face(-4.4, 0.5, -6.2, 0.0), { kind: "idle" }, { held: "clipboard" });
+  person(Q, "ross", "ross", -12.4, 0.0, face(-12.4, 0.0, -2, 6), { kind: "idle" }, { held: "bag" });
+  const looks = ["aj_crew1", "aj_crew2", "aj_crew3", "aj_crew4", "aj_crew5"];
   const left = [-13.6, -12.5, -11.4, -10.3, -9.2], right = [-4.4, -3.3, -2.2, -1.1, 0.0, 1.1, 2.2, 3.3];
   [...left, ...right].forEach((x, i) =>
     crowd(Q, looks[i % looks.length], x, lineZ + (i % 2) * 0.12, 0, { kind: "watch", at: [0, 14], react: ["Wave"], every: [5, 9] }, { line: true }),
@@ -212,9 +212,9 @@ function cockpit() {
   Q.props.ext = ext;
   /* the crew of three, seated: the captain on the left, the first officer on the right, the flight engineer behind him, turned to his panel */
   const sit = (look, S, ry) => crowd(Q, look, S.x, S.z, ry, { kind: "sit", seat: { top: S.top, x: S.x, z: S.z, ry }, clips: ["SitIdle"] });
-  sit("wr_conductor62", SEATS.captain, Math.PI);
-  sit("wr_sam62", SEATS.first, Math.PI);
-  sit("wr_bman62", SEATS.engineer, Math.PI / 2);
+  sit("aj_ross", SEATS.captain, Math.PI);
+  sit("aj_first", SEATS.first, Math.PI);
+  sit("aj_engineer", SEATS.engineer, Math.PI / 2);
   /* the walls: the seats, the pedestal, the columns, the front wall, the engineer's panel, the jump seat */
   wall(Q, -1.0, -0.45, -0.4, 0.15);
   wall(Q, 0.4, -0.45, 1.0, 0.15);

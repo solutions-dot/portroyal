@@ -1,0 +1,97 @@
+{
+  "name": "aj_engineer",
+  "era": 1969,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.5,
+    "weight": 0.6,
+    "height": 0.47
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [],
+    "sleeve": 0.95,
+    "jacket": true,
+    "jacketsleeve": 0.92,
+    "collar": "turn",
+    "tie": true
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      196,
+      160,
+      70
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      144,
+      98,
+      71
+    ],
+    "Shirt": [
+      236,
+      236,
+      232
+    ],
+    "Collar": [
+      236,
+      236,
+      232
+    ],
+    "Jacket": [
+      30,
+      36,
+      60
+    ],
+    "Breeches": [
+      30,
+      36,
+      60
+    ],
+    "Tie": [
+      20,
+      22,
+      28
+    ]
+  },
+  "targets": {
+    "head-round": 0.3,
+    "chin-width-decr": 0.2,
+    "nose-flaring-decr": 0.2
+  },
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
+  },
+  "crowd": true
+}

@@ -1,0 +1,101 @@
+{
+  "name": "aj_crew1",
+  "era": 1969,
+  "body": {
+    "gender": 0,
+    "age": 0.38,
+    "muscle": 0.4,
+    "weight": 0.45,
+    "height": 0.55,
+    "proportions": 0.56,
+    "african": 1.0,
+    "caucasian": 0.0,
+    "asian": 0.0,
+    "cupsize": 0.4,
+    "firmness": 0.55
+  },
+  "garments": {
+    "sleeve": 0.3,
+    "shoes": true,
+    "collar": false,
+    "hairvol": 0.2,
+    "hat": [],
+    "woman": true,
+    "skirt": true,
+    "hem": 1.28,
+    "flare": 0.6,
+    "pleats": 0,
+    "hang": 1.6,
+    "buttons": false,
+    "hair": "straight",
+    "hairlen": 0.3
+  },
+  "colors": {
+    "Skin": [
+      151,
+      104,
+      76
+    ],
+    "Hair": [
+      55,
+      50,
+      44
+    ],
+    "Shirt": [
+      204,
+      58,
+      122
+    ],
+    "Collar": [
+      204,
+      58,
+      122
+    ],
+    "Shoes": [
+      30,
+      26,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      204,
+      58,
+      122
+    ],
+    "Belt": [
+      204,
+      58,
+      122
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Skirt": [
+      204,
+      58,
+      122
+    ],
+    "Lipstick": [
+      168,
+      48,
+      74
+    ],
+    "Eyeshadow": [
+      110,
+      78,
+      110
+    ]
+  },
+  "targets": {
+    "head-oval": 0.3,
+    "chin-width-decr": 0.2,
+    "nose-width2-incr": 0.15
+  },
+  "crowd": true
+}

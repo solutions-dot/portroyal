@@ -2103,6 +2103,12 @@ def paint(o):
                 if G.get('socks') and OLD and p.z<ANK+G['socks']*(KNEE-ANK): col=COL['Sock'].copy()      # later eras: socks are their own material (see above)
                 lip=max(0,1-((p.x/0.026)**2+((p.z-LIPZ)/0.010)**2)) if p.y<J('Head').y-0.09 else 0
                 col=col.lerp(col*0.62+Vector((0.05,0.0,0.0)),min(1,lip*1.2))
+                if 'Lipstick' in COL and lip>0: col=col.lerp(COL['Lipstick'],min(1,lip*1.6)*0.8)      # makeup, only when a recipe asks for it: lipstick on the lips
+                if 'Eyeshadow' in COL:      # and a soft eyeshadow on each upper lid, between the eye and the brow
+                    for sx in (-1,1):
+                        e=EYE[sx]; ex=(p.x-e.x)/(ER*1.05); ez=(p.z-(e.z+ER*0.4))/(ER*0.24)
+                        sh=max(0,1-(ex*ex+ez*ez)) if p.y<e.y+ER*0.9 else 0
+                        col=col.lerp(COL['Eyeshadow'],min(1,sh*1.4)*0.5)
                 for sx in (-1,1):      # eyebrows, placed from the eyes themselves (a set height above the neck missed the brow on children, elders and shaped faces, and at 4.5 mm they hardly showed)
                     e=EYE[sx]; bx=(p.x-e.x*1.16)/(1.12*ER*G.get('browwide',1.0)); out=bx*sx      # out: -1 at the nose end, +1 at the temple
                     bz=(p.z-(e.z+ER*0.62+ER*0.13*(1-(out-0.1)**2)-ER*0.05*out))/(ER*0.235*G.get('brows',0.5 if P.get('upscale') else 0.7 if G.get('woman') else 1.0)*(1.0-0.42*max(0.0,out)))      # a low arch, its inner end a little the higher (level or lower, it read as a frown), fuller toward the nose and thinning to the temple; finer on women and children unless the recipe sets brows
@@ -2127,6 +2133,43 @@ def brow_mesh():      # the brow is painted on the skin's own points; where it l
     bmesh.ops.triangulate(bm,faces=[f for f in bm.faces if len(f.verts)>4]); bm.to_mesh(h.data); bm.free()
 brow_mesh()
 for o in clothes+[h]: paint(o)
+# Straight hair that hangs (recipe "hair": "straight", 24 November 2026, for Air Jamaica's 1969 crew): a smooth curtain that falls straight down from the widest part of the
+# head, open in front of the face, its length set by "hairlen" (0 to the chin, 1 to the shoulders). It is a shell made two-sided, tied to the head bone so it turns with the
+# head, painted the Hair colour. The close cap over the scalp is kept under it. Only a recipe that asks for it gets it, so no other person changes.
+if G.get('hair')=='straight':
+    _hd=J('Head'); _cz=EYE[1].z-0.105*s; _bot=_cz+(NECK-0.03*s-_cz)*G.get('hairlen',0.35); _top=EYE[1].z+0.03*s
+    _open=G.get('hairopen',1.2); _NA,_NZ=64,16; _th=0.012*s
+    _ang=lambda x,y: math.atan2(x,-(y-_hd.y))
+    _bins={}
+    for v in h.data.vertices:      # the body's outline round the head and neck, by angle and height
+        c=v.co
+        if c.z<_bot-0.02*s: continue
+        r=math.hypot(c.x,c.y-_hd.y); k=(int((_ang(c.x,c.y)+math.pi)/(2*math.pi)*_NA)%_NA,int((c.z-_bot)/0.012))
+        _bins[k]=max(_bins.get(k,0),r)
+    _bm=bmesh.new(); _grid=[]
+    for i in range(_NZ+1):
+        z=_top-(_top-_bot)*i/_NZ; row=[]
+        for j in range(_NA+1):
+            a=_open+(2*math.pi-2*_open)*j/_NA; ai=int(((a+math.pi)%(2*math.pi))/(2*math.pi)*_NA)%_NA
+            r=max([_bins.get((ai,zz),0) for zz in range(int((z-_bot)/0.012),int((_top+0.04*s-_bot)/0.012)+1)]+[0.07*s])      # the widest point at or above: the hair falls straight from it
+            r+=_th+0.006*s*(i/_NZ)**2      # a little fuller toward the ends
+            row.append([a,r])
+        for _ in range(3): row=[[row[j][0],(row[max(0,j-1)][1]+2*row[j][1]+row[min(len(row)-1,j+1)][1])/4] for j in range(len(row))]      # smoothed round the head, so the fall has no steps
+        row=[_bm.verts.new((math.sin(a)*r,_hd.y-math.cos(a)*r,z)) for a,r in row]
+        _grid.append(row)
+    for i in range(_NZ):
+        for j in range(_NA): _bm.faces.new((_grid[i][j],_grid[i][j+1],_grid[i+1][j+1],_grid[i+1][j]))
+    bmesh.ops.recalc_face_normals(_bm,faces=_bm.faces[:]); bmesh.ops.solidify(_bm,geom=_bm.faces[:],thickness=0.008*s)
+    _me=bpy.data.meshes.new('HairLong'); _bm.to_mesh(_me); _bm.free()
+    _ho=bpy.data.objects.new('HairLong',_me); bpy.context.scene.collection.objects.link(_ho); _me.materials.append(colmat('Hair'))
+    _ca=_me.color_attributes.new('Col','FLOAT_COLOR','CORNER')
+    for _l in _me.loops:
+        _c=_me.vertices[_l.vertex_index].co; _k=0.9+noise.noise(_c*60)*0.12
+        _ca.data[_l.index].color=(COL['Hair'].x*_k,COL['Hair'].y*_k,COL['Hair'].z*_k,1)
+    _me.color_attributes.active_color=_ca
+    for _p in _me.polygons: _p.use_smooth=True
+    _ho.parent=rig; _ho.vertex_groups.new(name='mixamorig:Head').add(list(range(len(_me.vertices))),1.0,'REPLACE'); _ho.modifiers.new('Armature','ARMATURE').object=rig
+    print('STRAIGHT HAIR',len(_me.vertices),'points, from',round(_top,3),'to',round(_bot,3))
 for m in eyes.data.materials:
     for n in m.node_tree.nodes:
         if n.type=='TEX_IMAGE' and n.image: n.image.filepath=os.path.abspath('shared/rig/eye.png'); n.image.reload()

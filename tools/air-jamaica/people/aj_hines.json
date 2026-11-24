@@ -1,0 +1,100 @@
+{
+  "name": "aj_hines",
+  "era": 1969,
+  "body": {
+    "muscle": 0.4,
+    "proportions": 0.56,
+    "african": 1,
+    "caucasian": 0,
+    "asian": 0,
+    "gender": 1,
+    "age": 0.4,
+    "weight": 0.5,
+    "height": 0.55
+  },
+  "garments": {
+    "shoes": true,
+    "trousers": true,
+    "hairvol": 0.25,
+    "hat": [],
+    "sleeve": 0.3,
+    "jacket": false,
+    "collar": "turn",
+    "tie": false,
+    "legwidth": 0.95
+  },
+  "colors": {
+    "Shoes": [
+      42,
+      31,
+      24
+    ],
+    "Sole": [
+      28,
+      23,
+      20
+    ],
+    "Buttons": [
+      210,
+      203,
+      181
+    ],
+    "Belt": [
+      65,
+      47,
+      31
+    ],
+    "Buckle": [
+      133,
+      112,
+      63
+    ],
+    "Hair": [
+      25,
+      21,
+      18
+    ],
+    "Skin": [
+      148,
+      100,
+      74
+    ],
+    "Shirt": [
+      226,
+      222,
+      206
+    ],
+    "Collar": [
+      226,
+      222,
+      206
+    ],
+    "Breeches": [
+      86,
+      92,
+      78
+    ],
+    "Tie": [
+      30,
+      30,
+      34
+    ],
+    "HatBand": [
+      26,
+      26,
+      26
+    ],
+    "Jacket": [
+      86,
+      92,
+      78
+    ]
+  },
+  "targets": {
+    "head-oval": 0.4,
+    "nose-width2-incr": 0.3
+  },
+  "outfit": {
+    "garment": "toigo_male_suit_tie_and_jacket"
+  }
+}
