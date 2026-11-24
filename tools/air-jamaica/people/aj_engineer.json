@@ -21,7 +21,8 @@
     "jacket": true,
     "jacketsleeve": 0.92,
     "collar": "turn",
-    "tie": true
+    "tie": true,
+    "captop": true
   },
   "colors": {
     "Shoes": [
@@ -35,9 +36,9 @@
       20
     ],
     "Buttons": [
-      196,
-      160,
-      70
+      204,
+      166,
+      72
     ],
     "Belt": [
       65,
@@ -88,6 +89,26 @@
       30,
       36,
       60
+    ],
+    "Cap": [
+      236,
+      236,
+      232
+    ],
+    "CapBand": [
+      196,
+      160,
+      70
+    ],
+    "CapPeak": [
+      16,
+      16,
+      18
+    ],
+    "CapBadge": [
+      214,
+      74,
+      34
     ]
   },
   "targets": {
@@ -96,7 +117,12 @@
     "nose-flaring-decr": 0.2
   },
   "outfit": {
-    "garment": "toigo_male_suit_tie_and_jacket"
+    "garment": "toigo_male_suit_tie_and_jacket",
+    "uniform": {
+      "double": true,
+      "rings": 2,
+      "wings": true
+    }
   },
   "crowd": true
 }

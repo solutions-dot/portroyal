@@ -337,6 +337,68 @@ elif OUTFIT_PHASE == 'finish':
                 loc, nrm = hit[0], hit[1]; sd = (v.co - loc).dot(nrm)
                 if sd > -0.006: v.co = v.co - nrm * (sd + 0.006); n += 1
             o.data.update(); print('OUTFIT kept', o.name, 'pulled in', n)
+    # 2b. an airline pilot's uniform on the suit (Air Jamaica, early 1970s photograph; docs/games/air-jamaica.md, "Early pilot uniforms"):
+    #   "uniform": {"double": true, "rings": 4, "wings": true}
+    # double: the jacket's own buttons give way to two columns of three gold buttons, as on a double-breasted jacket. rings: gold rings round each
+    # sleeve above the cuff (four for a captain, three for a first officer, two for a second officer). wings: a gold wings badge on the left breast.
+    # Each piece lies 1.5 to 2.5 mm out from the jacket and takes the jacket's own bone weights where it sits, so it moves with the cloth.
+    _UF = _OF.get('uniform') or {}
+    if _UF and 'Jacket' in _new:
+        COL.setdefault('Rings', srgb((214, 172, 74)))      # gold braid and badges
+        from mathutils.bvhtree import BVHTree as _BVU
+        _ub = bmesh.new(); _ub.from_mesh(_new['Jacket'].data)
+        if 'Lapels' in _new: _ub.from_mesh(_new['Lapels'].data)
+        _ub.normal_update(); _ut = _BVU.FromBMesh(_ub); _ub.free()
+        def _front(x, z):      # the front of the jacket at (x, z): the first cloth met by a ray from in front
+            hit = _ut.ray_cast(Vector((x, -1.0, z)), Vector((0, 1, 0)))
+            return hit[0], hit[1]
+        def _on_jacket(name, bm, mat):
+            o = bpy.data.objects.new(name, bpy.data.meshes.new(name)); bm.to_mesh(o.data); bm.free(); bpy.context.scene.collection.objects.link(o)
+            o.data.materials.append(colmat(mat))
+            for g_ in _new['Jacket'].vertex_groups: o.vertex_groups.new(name=g_.name)
+            md = o.modifiers.new('wt', 'DATA_TRANSFER'); md.object = _new['Jacket']; md.use_vert_data = True; md.data_types_verts = {'VGROUP_WEIGHTS'}; md.vert_mapping = 'POLYINTERP_NEAREST'; md.layers_vgroup_select_src = 'ALL'; md.layers_vgroup_select_dst = 'NAME'
+            with ov(o): bpy.ops.object.modifier_apply(modifier='wt')
+            o.parent = rig; o.modifiers.new('Armature', 'ARMATURE').object = rig; clothes.append(o); _new[name] = o; return o
+        if _UF.get('double') and 'JButtons' in _new:
+            zs = [v.co.z for v in _new['JButtons'].data.vertices]; ztop = max(zs) + 0.035 * s; zlow = min(zs) - 0.01 * s
+            clothes.remove(_new['JButtons']); bpy.data.objects.remove(_new['JButtons']); del _new['JButtons']
+            bb = bmesh.new(); n = 0
+            for i in range(3):
+                z = ztop + (zlow - ztop) * i / 2
+                for x in (-0.058 * s, 0.058 * s):
+                    loc, nrm = _front(x, z)
+                    if loc is None: continue
+                    bmesh.ops.create_cone(bb, cap_ends=True, segments=10, radius1=0.0075 * s, radius2=0.0062 * s, depth=0.003, matrix=Matrix.Translation(loc + nrm * 0.0022) @ nrm.to_track_quat('Z', 'Y').to_matrix().to_4x4()); n += 1
+            _on_jacket('JButtons', bb, 'Buttons'); print('OUTFIT double-breasted buttons', n)
+        if _UF.get('rings'):
+            bb = bmesh.new(); nr = int(_UF['rings']); NA = 24
+            for side in ('Left', 'Right'):
+                E, W = J(side + 'ForeArm'), J(side + 'Hand'); ax = (W - E).normalized(); L = (W - E).length
+                _jk = _new['Jacket']; _gi = {_jk.vertex_groups[n_].index for n_ in ('mixamorig:' + side + 'ForeArm', 'mixamorig:' + side + 'Hand') if n_ in _jk.vertex_groups}
+                tc = max([(v.co - E).dot(ax) for v in _jk.data.vertices if sum(g_.weight for g_ in v.groups if g_.group in _gi) > 0.5 and ((v.co - E) - ax * (v.co - E).dot(ax)).length < 0.08 * s] or [L])      # the cuff: the furthest the sleeve reaches down the forearm (only the sleeve's own points, those that follow the forearm: the jacket's skirt hangs close by the wrist)
+                u = ax.orthogonal().normalized(); w = ax.cross(u)
+                for k in range(nr):
+                    t0 = tc - 0.065 * s - k * 0.019 * s; rows = []      # each ring is a band 1.1 cm wide: two lines of points round the sleeve
+                    for t in (t0, t0 - 0.011 * s):
+                        c = E + ax * t; row = []
+                        for j in range(NA):
+                            a = 2 * math.pi * j / NA; d = u * math.cos(a) + w * math.sin(a)
+                            hit = _ut.ray_cast(c, d, 0.12 * s)
+                            r = ((hit[0] - c).length if hit[0] is not None else 0.05 * s) + 0.0018
+                            row.append(bb.verts.new(c + d * r))
+                        rows.append(row)
+                    for j in range(NA):
+                        a_, b_ = rows[0][j], rows[0][(j + 1) % NA]; c_, d_ = rows[1][(j + 1) % NA], rows[1][j]
+                        bb.faces.new((a_, b_, c_, d_))
+            _on_jacket('Rings', bb, 'Rings'); print('OUTFIT sleeve rings', nr)
+        if _UF.get('wings'):
+            loc, nrm = _front(0.095 * s, J('Spine2').z + 0.07 * s)
+            if loc is not None:
+                bb = bmesh.new(); R = nrm.to_track_quat('Z', 'Y').to_matrix().to_4x4(); base = Matrix.Translation(loc + nrm * 0.0018) @ R
+                bmesh.ops.create_circle(bb, cap_ends=True, segments=12, radius=0.0075 * s, matrix=base)
+                for sx in (-1, 1):      # each wing: a long thin leaf swept out and a little up from the middle
+                    bmesh.ops.create_circle(bb, cap_ends=True, segments=12, radius=0.02 * s, matrix=base @ Matrix.Translation((sx * 0.024 * s, 0.003 * s, -0.0003)) @ Matrix.Rotation(sx * 0.12, 4, 'Z') @ Matrix.Diagonal((1.0, 0.22, 1.0, 1.0)))
+                _on_jacket('Wings', bb, 'Rings'); print('OUTFIT wings')
     # 3. skin the garment hides goes (its own delete list), except the neck above the collar and anything that is not skin
     bg = h.vertex_groups.get('body')
     for vg_name, inv in OUTFIT_DELETE:

@@ -1325,7 +1325,16 @@ def build_hat(HK,HM):
             cx,cy,rx,ry,BZ=fit; rows=[]
             for k in range(9):
                 a=-0.95+1.9*k/8; w=math.cos(a/0.95*math.pi/2)**0.6; rows.append([bb.verts.new((cx+math.sin(a)*(rx+0.001),cy-math.cos(a)*(ry+0.001),BZ+0.006*s)),bb.verts.new((cx+math.sin(a)*(rx+0.058*s*w),cy-math.cos(a)*(ry+0.058*s*w),BZ-0.012*s*w))])
-            quadstrip(bb,rows); bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=5,radius=0.014*s,matrix=Matrix.Translation((cx,cy-ry-0.008*s,BZ+0.048*s))@Matrix.Diagonal((1,0.3,1.2,1)))
+            if G.get('captop'):      # an airline captain's cap (Air Jamaica, early 1970s photograph; docs/games/air-jamaica.md, "Early pilot uniforms"): a white top (the recipe's Cap colour), a gold band (CapBand), a black shiny peak (CapPeak) and a round badge on the front (CapBadge, over a gold ring)
+                bp=bmesh.new(); quadstrip(bp,[[bp.verts.new(a.co),bp.verts.new(b.co)] for a,b in rows]); bmesh.ops.delete(bb,geom=[v for r in rows for v in r],context='VERTS')
+                for v in bp.verts: v.co.z-=0.0005      # under the band's foot, never fighting it for the same pixels
+                bd=bmesh.new(); bg=bmesh.new(); yb=cy-ry-0.0055*s; zb=BZ+0.018*s
+                bmesh.ops.create_circle(bg,cap_ends=True,segments=16,radius=0.017*s,matrix=Matrix.Translation((cx,yb-0.001,zb))@Matrix.Rotation(math.pi/2,4,'X'))
+                bmesh.ops.create_circle(bd,cap_ends=True,segments=16,radius=0.012*s,matrix=Matrix.Translation((cx,yb-0.0022,zb))@Matrix.Rotation(math.pi/2,4,'X'))
+                bmesh.ops.create_circle(bd,cap_ends=True,segments=6,radius=0.004*s,matrix=Matrix.Translation((cx,yb-0.0030,zb))@Matrix.Rotation(math.pi/2,4,'X'))      # (the bird, at this size, is a light mark in the middle)
+                COL.setdefault(HM+'Peak',srgb((16,16,18))); COL.setdefault(HM+'Badge',srgb((214,74,34)))
+                rigid(HM+'Peak',bp,HM+'Peak','Head'); rigid(HM+'BadgeRing',bg,HM+'Band','Head'); rigid(HM+'Badge',bd,HM+'Badge','Head')
+            else: quadstrip(bb,rows); bmesh.ops.create_uvsphere(bm,u_segments=8,v_segments=5,radius=0.014*s,matrix=Matrix.Translation((cx,cy-ry-0.008*s,BZ+0.048*s))@Matrix.Diagonal((1,0.3,1.2,1)))
         rigid(HM,bm,HM,'Head')
         if len(bb.verts): rigid(HM+'Band',bb,HM+'Band','Head')
         else: bb.free()
