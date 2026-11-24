@@ -339,7 +339,7 @@ function composerFor(renderer, scene, camera, st) {
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
     st.w = st.h = st.pr = 0;
   }
-  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); if (st.gcomp) { st.gcomp.setPixelRatio(pr * 0.25); st.gcomp.setSize(size.x, size.y); }   /* a quarter size: the glow is blurred anyway */ st.w = size.x; st.h = size.y; st.pr = pr; }
+  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); if (st.gcomp) { st.gcomp.setPixelRatio(pr * 0.5); st.gcomp.setSize(size.x, size.y); }   /* half size: a quarter lost the glazing bars and left blocky edges */ st.w = size.x; st.h = size.y; st.pr = pr; }
   st.rp.scene = scene; st.rp.camera = camera;
   if (st.ao) { st.ao.scene = scene; st.ao.camera = camera; st.ao.enabled = LOOK.ao; }
   if (st.gcomp) {
