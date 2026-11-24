@@ -137,9 +137,9 @@ export async function dev(A) {
     A.begin();
     const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key")),
       lookStep = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === q.get("key")));
-    if (id === "look") A.chapterState(lookStep);
+    if (id === "look" || id === "drop") A.chapterState(lookStep);
     else if (STEPS[id]) A.chapterState(+id);   /* what was carried and looked at before that step is shown done */
-    await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
+    await go(id === "film" ? filmStep : id === "look" || id === "drop" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
     if (q.has("look")) A.action(q.get("look"));
@@ -169,6 +169,20 @@ export async function dev(A) {
       const draw = A.renderer.render;
       A.renderer.render = () => {};
       for (let t = 0, n = Number(q.get("at") || 2) * 30; t < n; t++) A.tick(1 / 30, performance.now() + t * 33);
+      A.renderer.render = draw;
+      A.LS.paused = true;
+    }
+    if (id === "drop") {
+      /* ?shot=drop&key=<task>&at=<seconds>: a thing put down with a close-up (TASKS[key].shot: the stone down the sinkhole) held at that moment */
+      const t = TASKS[q.get("key")];
+      S.view = null;
+      Object.assign(S, { x: t.to[0], z: t.to[1], yaw: Math.atan2(t.to[0] - t.at[0], t.to[1] - t.at[2]), pitch: -0.3 });
+      S.lookShot = true;
+      await A.action(q.get("key"));   /* picked up */
+      A.action(q.get("key"));         /* and dropped: the close-up starts */
+      const draw = A.renderer.render;
+      A.renderer.render = () => {};
+      for (let i = 0, n = Number(q.get("at") || 2) * 30; i < n; i++) A.tick(1 / 30, performance.now() + i * 33);
       A.renderer.render = draw;
       A.LS.paused = true;
     }

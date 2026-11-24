@@ -9,6 +9,7 @@
    batchStatic(root, { bake: false }) or ?nobake (dev). */
 import { settleFights } from './depthfight.js';
 import { dressSurfaces } from './surfaces.js';
+import { givesLight } from './lightkind.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -38,6 +39,7 @@ export function batchStatic(root, { bake = BAKE } = {}) {
   root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), rel = new THREE.Matrix4(), buckets = new Map(), dead = [], keep = ['position', 'normal', 'uv', 'color'];
   (function walk(o, skip) {
     if (o.userData.noBatch || skip) skip = true;
+    if (!skip && o.isMesh && givesLight(o, Array.isArray(o.material) ? o.material[0] : o.material)) { for (const c of o.children) walk(c, skip); return; }   /* a light stays whole, so the glow can find it (engine/lightkind.js) */
     if (!skip && o.isMesh && !o.isSkinnedMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.visible && o.geometry.attributes.position && o.geometry.attributes.normal) {
       rel.multiplyMatrices(inv, o.matrixWorld); if (rel.determinant() > 0) {
         const g = o.geometry.clone(); for (const k of Object.keys(g.attributes)) if (!keep.includes(k)) g.deleteAttribute(k); else plain(g, k); if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
