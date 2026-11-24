@@ -17,11 +17,12 @@ async function model(n) { await script(dir + n + '.js'); const b = atob(window._
 /* torn cloth: an edge of a garment (not skin, hair or eyes) that is more than 2.6 times, and 3 cm, longer than at rest. A joint stretches cloth a little; a point that follows
    the wrong bone pulls a long spike out of it. Returns how many such edges and the worst ratio. */
 const WHERE = new URLSearchParams(location.search).has('where');
-function torn(body) { let n = 0, worst = 0; const a = new THREE.Vector3(), b = new THREE.Vector3(), ra = new THREE.Vector3(), rb = new THREE.Vector3(); let worstAt = '';
+const TORN_BY = {};   /* with &where: torn edges counted by piece and pose, printed at the end of each body */
+function torn(body, pose = '') { let n = 0, worst = 0; const a = new THREE.Vector3(), b = new THREE.Vector3(), ra = new THREE.Vector3(), rb = new THREE.Vector3(); let worstAt = '';
   body.traverse((o) => { if (!o.isSkinnedMesh || !o.visible) return; const nm = o.material.name || o.name; if (/^(Skin|Body|Hair|Human|Beard|Moustache|Locks|Crowd)/.test(nm)) return; const pos = o.geometry.attributes.position, idx = o.geometry.index; if (!idx) return; const seen = new Set();
     for (let t = 0; t < idx.count; t += 3) for (let k = 0; k < 3; k++) { const i = idx.getX(t + k), j = idx.getX(t + (k + 1) % 3), key = i < j ? i * 1e6 + j : j * 1e6 + i; if (seen.has(key)) continue; seen.add(key);
       ra.fromBufferAttribute(pos, i); rb.fromBufferAttribute(pos, j); const r = ra.distanceTo(rb); if (r < 0.004) continue; a.copy(ra); b.copy(rb); o.applyBoneTransform(i, a); o.applyBoneTransform(j, b); const d = a.distanceTo(b);
-      if (d > r * 2.6 && d - r > 0.03) { n++; if (d / r > worst) { worst = d / r; worstAt = nm + (WHERE ? ' at rest ' + ra.toArray().map((v) => v.toFixed(3)).join(',') : ''); } } } });   /* with &where, the worst edge's place at rest too */
+      if (d > r * 2.6 && d - r > 0.03) { n++; if (WHERE) { const kk = nm + ' ' + pose; TORN_BY[kk] = (TORN_BY[kk] || 0) + 1; } if (d / r > worst) { worst = d / r; worstAt = nm + (WHERE ? ' at rest ' + ra.toArray().map((v) => v.toFixed(3)).join(',') : ''); } } } });   /* with &where, the worst edge's place at rest too */
   return { n, worst, worstAt }; }
 /* hats: each hat a body carries, measured on the standing body against its own skull. A crown more than 6.5 cm above the top of the skull is too tall (a top hat is the one
    kind that may be: it is listed in the baseline); a hat whose lowest point is less than 4.5 cm below the top of the skull rides high; one wider than 2.3 heads is too wide. */
@@ -40,9 +41,9 @@ function hats(body) { const out = [], box = (o) => { const p = o.geometry.attrib
     const m = g.scene; let skinned = false; m.traverse((o) => { if (o.isSkinnedMesh) { skinned = true; o.frustumCulled = false; if (hide.includes(o.material.name) || o.userData.measureOnly || /Measure$/.test(o.name)) o.visible = false; } }); if (!skinned) continue;
     const ctl = animate(m, 'Idle'); if (!ctl) { out.bodies[id] = { error: 'no clip' }; continue; } m.updateMatrixWorld(true);
     const r = auditCloth(id, m, { poses, where: q.has('where') }), byClip = {}; if (q.has('where')) out.lines = (out.lines || []).concat(r.lines.slice(0, 40)); for (const l of r.lines) { const k = l.replace(/^\S+ /, '').replace(/@[\d.]+:/, ':').replace(/: \d+ points.*$/, ''); byClip[k] = (byClip[k] || 0) + 1; }
-    let tn = 0, tw = 0, tAt = ''; for (const [cn, at] of poses) { const act = ctl.get(cn); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); m.updateMatrixWorld(true); const t = torn(m); if (t.n) { tn += t.n; if (t.worst > tw) { tw = t.worst; tAt = cn + ' ' + t.worstAt; } } }
+    let tn = 0, tw = 0, tAt = ''; for (const [cn, at] of poses) { const act = ctl.get(cn); if (!act) continue; ctl.mx.stopAllAction(); act.reset().play(); act.time = at * act.getClip().duration; ctl.mx.update(0); m.updateMatrixWorld(true); const t = torn(m, cn); if (t.n) { tn += t.n; if (t.worst > tw) { tw = t.worst; tAt = cn + ' ' + t.worstAt; } } }
     ctl.mx.stopAllAction(); const idle = ctl.get('Idle'); if (idle) { idle.reset().play(); ctl.mx.update(0); } m.updateMatrixWorld(true); const hl = hats(m);
-    out.bodies[id] = { cloth: r.lines.length, points: r.points, torn: tn, tornWorst: +tw.toFixed(1), tornAt: tAt, kinds: byClip, hats: hl };
+    out.bodies[id] = { cloth: r.lines.length, points: r.points, torn: tn, tornWorst: +tw.toFixed(1), tornAt: tAt, tornBy: WHERE ? Object.entries(TORN_BY).sort((x, y) => y[1] - x[1]).slice(0, 15) : undefined, kinds: byClip, hats: hl }; for (const k in TORN_BY) delete TORN_BY[k];
     await new Promise((res) => setTimeout(res, 0)); }
   window.__RESULT = out; document.title = 'PEOPLE done';
 })().catch((e) => { window.__RESULT = { error: String(e && e.stack || e) }; document.title = 'PEOPLE error'; });
