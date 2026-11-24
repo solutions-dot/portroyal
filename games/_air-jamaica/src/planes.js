@@ -134,20 +134,48 @@ function roundRect(w, h, r) {
   s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
   return new THREE.ShapeGeometry(s, 4);
 }
-/* the Love Bird roundel: an orange disc with a white bird in a ring (the bird on the tail in the reference photographs) */
+/* The Love Bird: the airline's Doctor Bird, a hummingbird seen from the side, drawn as in the photographs of the real tails (the Boeing 727 and
+   DC-9 in ref-727-and-a321.jpg and ref-dc9-6Y-JGB.jpg, the A321 in the blue tail): a fine upright body with a long thin beak and a leaf-shaped
+   wing swept back, and two tail ribbons that loop round below it, one inside the other. It faces right in its picture, so on a tail it faces the nose.
+   Coordinates are those of the enlarged photograph (the bird fits x 140 to 580, y 130 to 600), scaled into the square the caller gives. */
+export function drawBird(x, size, colour, eyeColour = "#1b1b1b") {
+  x.save();
+  const k = size / 470;
+  x.translate(size * 0.5, size * 0.5);
+  x.scale(k, k);
+  x.translate(-360, -365);
+  x.lineCap = "round";
+  x.lineJoin = "round";
+  x.strokeStyle = colour;
+  x.fillStyle = colour;
+  x.lineWidth = 11;
+  /* the two tail ribbons, looping round and under the body */
+  x.beginPath(); x.moveTo(350, 185); x.bezierCurveTo(300, 150, 165, 175, 158, 290); x.bezierCurveTo(150, 400, 260, 470, 330, 468); x.bezierCurveTo(400, 466, 440, 420, 458, 385); x.stroke();
+  x.beginPath(); x.moveTo(352, 350); x.bezierCurveTo(300, 325, 210, 340, 195, 395); x.bezierCurveTo(170, 480, 230, 580, 320, 582); x.bezierCurveTo(420, 580, 470, 480, 470, 395); x.stroke();
+  /* the body: a slim curved shape from the head down to where the tail begins */
+  x.beginPath();
+  x.moveTo(462, 196); x.bezierCurveTo(440, 160, 480, 140, 506, 160); x.bezierCurveTo(520, 175, 522, 195, 516, 215);
+  x.bezierCurveTo(526, 270, 516, 330, 478, 392); x.lineTo(454, 396); x.bezierCurveTo(446, 340, 452, 280, 462, 196);
+  x.closePath(); x.fill();
+  /* the beak: long and thin, pointing forward */
+  x.beginPath(); x.moveTo(508, 164); x.lineTo(562, 156); x.lineTo(512, 178); x.closePath(); x.fill();
+  /* the wing: a leaf that sweeps back from the shoulder */
+  x.beginPath(); x.moveTo(458, 240); x.bezierCurveTo(420, 228, 350, 232, 306, 250); x.bezierCurveTo(340, 268, 410, 276, 460, 272); x.closePath(); x.fill();
+  x.fillStyle = eyeColour;
+  x.beginPath(); x.arc(492, 172, 4.5, 0, 7); x.fill();
+  x.restore();
+}
+/* the roundel on the first look's tail: a white ring, a red-orange disc, the bird in amber (the colours of the 727 and DC-9 photographs) */
 export function roundelTexture() {
   return cv(256, 256, (x, W) => {
     x.clearRect(0, 0, W, W);
     const c = W / 2;
-    x.fillStyle = "#e8581c"; x.beginPath(); x.arc(c, c, 124, 0, 7); x.fill();
-    x.strokeStyle = "#f6efe2"; x.lineWidth = 11; x.lineCap = "round";
-    x.beginPath(); x.arc(c, c + 6, 78, 0.5, Math.PI * 2 - 0.25); x.stroke();
-    x.fillStyle = "#f6efe2";
-    x.beginPath(); x.ellipse(c - 6, c + 2, 34, 22, -0.5, 0, 7); x.fill();
-    x.lineWidth = 12;
-    x.beginPath(); x.moveTo(c - 30, c - 10); x.quadraticCurveTo(c - 54, c - 56, c - 22, c - 70); x.stroke();
-    x.lineWidth = 7; x.beginPath(); x.moveTo(c - 26, c - 70); x.lineTo(c - 6, c - 76); x.stroke();
-    x.lineWidth = 9; x.beginPath(); x.moveTo(c + 18, c + 14); x.bezierCurveTo(c + 70, c + 30, c + 82, c + 84, c + 30, c + 92); x.stroke();
+    x.fillStyle = "#f6f1e6"; x.beginPath(); x.arc(c, c, 126, 0, 7); x.fill();
+    x.fillStyle = "#d8361c"; x.beginPath(); x.arc(c, c, 108, 0, 7); x.fill();
+    x.save(); x.beginPath(); x.arc(c, c, 108, 0, 7); x.clip();
+    x.translate(c - 82 - 6, c - 82 + 4);
+    drawBird(x, 164, "#f2992e", "#8a2410");
+    x.restore();
   });
 }
 function titleTexture() {
@@ -181,7 +209,7 @@ function finPaint(S) {
     poly("#f3b61f", [[1.02, 0.0], [1.02, 0.18], [0.78, 0.55], [0.42, 0.8], [0.3, 0.52], [0.52, 0.34], [0.72, 0.0]]);
     poly("#e86a1c", [[0.72, 0.0], [0.52, 0.34], [0.3, 0.52], [0.22, 0.34], [0.38, 0.18], [0.46, 0.0]]);
     x.restore();
-    const R = W * 0.2, cx = W * 0.42, cy = H * 0.18 + R;
+    const R = W * 0.19, cx = W * 0.56, cy = H * 0.12 + R;
     x.drawImage(roundelTexture().image, cx - R, cy - R, R * 2, R * 2);
   });
   return { tex, w, h, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
@@ -331,10 +359,10 @@ export function makeJet(S) {
   for (const s of [-1, 1]) {
     const f = decal(fp.w, fp.h, fp.tex);
     f.position.set(fp.cx, S.Y0 + fp.cy, s * 0.125);
-    if (s < 0) f.rotation.y = Math.PI;
+    if (s < 0) { f.rotation.y = Math.PI; f.scale.x = -1; }
     g.add(f);
   }
-  const rudderX = (y) => lerp(T.fin[2][0], T.fin[3][0], 1 - (y - 1.0) / (T.finTop - 1.0)) + 1.5;
+  const rudderX = (y) => lerp(T.fin[2][0], T.fin[3][0], 1 - (y - 1.0) / (T.finTop - 1.0)) + 0.7;
   const l0 = [rudderX(T.finTop), T.finTop], l1 = [rudderX(1.0), 1.0];
   for (const s of [-1, 1]) {
     const r = box(0.03, Math.hypot(l0[1] - l1[1], l0[0] - l1[0]), 0.03, M.seam, (l0[0] + l1[0]) / 2, S.Y0 + (l0[1] + l1[1]) / 2, s * 0.125, g);
