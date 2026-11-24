@@ -14,9 +14,14 @@ export const GAME = {
 };
 export const CHAPTERS = [
   {
-    id: "apron", name: "A flag in the sky", year: "1 April 1969", first: 10, last: 19, place: "apron",
+    id: "apron", name: "A flag in the sky", year: "1 April 1969", first: 10, last: 18, place: "apron",
     caption: "Palisadoes Airport, Kingston · 1 April 1969",
     intro: "Your Aunt Marcia starts work today. Jamaica's own airline begins to fly.",
+  },
+  {
+    id: "cockpit", name: "The view from the front", year: "The 1970s", first: 30, last: 34, place: "cockpit",
+    caption: "The flight deck of a DC-8 · coming in to Kingston",
+    intro: "Years later, you fly home. Aunt Marcia takes you up to the flight deck.",
   },
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
@@ -81,6 +86,7 @@ export const SOURCES = {
   wilson: { name: "Phil Tiemeyer, Stewardess as Aerial Ambassador (Wilson Center, with the Daily Gleaner of 9 February and 1 April 1969)", url: "https://www.wilsoncenter.org/blog-post/stewardess-aerial-ambassador-what-gender-can-reveal-about-us-jamaican-foreign-relations" },
   gleaner: { name: "Jamaica Gleaner, 1 May 2010: Air Jamaica celebrates for the last time", url: "https://jamaica-gleaner.com/gleaner/20100501/lead/lead1.html" },
   gleaner2: { name: "Jamaica Gleaner, Pieces of the Past: History of Aviation in Jamaica, Part II", url: "https://old.jamaica-gleaner.com/pages/history/story0071.html" },
+  dc8: { name: "Douglas DC-8 (Wikipedia): cockpit crew of three; length 45.9 m, wingspan 43.4 m", url: "https://en.wikipedia.org/wiki/Douglas_DC-8" },
   nlj: { name: "National Library of Jamaica, photographs of Palisadoes Airport and its waving gallery (D0002830, D0002829)", url: "https://nljdigital.nlj.gov.jm/items/show/1296" },
   jamaicans: { name: "Jamaicans.com, On this day: Air Jamaica A.K.A. The Love Bird is Born", url: "https://jamaicans.com/on-this-day-in-jamaican-history-air-jamaica/" },
 };
@@ -121,6 +127,18 @@ export const JOURNAL = [
     source: "nlj",
   },
   {
+    id: "cockpit", title: "The flight deck",
+    simple: ["The cockpit is also called the flight deck.", "A DC-8 had three people up front: the captain, the first officer and the flight engineer.", "The captain sat on the left. The first officer sat on the right."],
+    deeper: ["The flight engineer sat behind the first officer, facing a panel of dials and switches for the engines, the fuel and the air.", "The flight deck in this game is a general picture of a jet of that time, not a copy of one Air Jamaica plane. The crew in this game are fictional."],
+    source: "dc8",
+  },
+  {
+    id: "levers", title: "The throttles",
+    simple: ["Four levers sat between the pilots, one for each engine.", "Pushing a lever forward makes that engine push harder."],
+    deeper: ["Other levers worked the flaps, which are panels on the wings that let a plane fly slowly, and the speed brake."],
+    source: "dc8",
+  },
+  {
     id: "today", title: "A Jamaican airline",
     simple: ["A book of 1969 said Air Jamaica was \"a Jamaican airline for the Jamaican people\".", "People were proud of it.", "It flew for many years."],
     deeper: ["The airline began in 1966 on planes leased from BOAC and BWIA, and became Air Jamaica Ltd, with Air Canada, in 1969.", "In 2010 it was sold to Caribbean Airlines. That is part of the story to come."],
@@ -129,7 +147,8 @@ export const JOURNAL = [
 ];
 export const CARDS = {
   takeoff: { title: "The first flight leaves", lines: ["The ground crew pull the steps away.", "The plane rolls out to the runway and takes off."], scary: false },
-  end: { title: "A flag in the sky", lines: ["Jamaica had its own jets in the sky.", "A bird on the tail, a bright line of crew, a new morning."] },
+  landing: { title: "Coming in to land", lines: ["The DC-8 comes down over the sea to the runway at Kingston.", "You watch from the flight deck."], scary: false },
+  end: { title: "The view from the front", lines: ["Jamaica had its own jets in the sky.", "A bird on the tail, a bright line of crew, and a view from the front."] },
 };
 export const FILMS = {
   takeoff: {
@@ -160,6 +179,33 @@ export const FILMS = {
     sounds: [[0.3, "begin"], [8, "drum"], [26, "jet"], [33, "jet"]],
     duration: 46,
   },
+};
+FILMS.landing = {
+  place: "cockpit", next: 34, journal: "cockpit", title: "Coming in to land",
+  read: ["The DC-8 came down toward Palisadoes over the sea. The captain and the first officer flew it, and the flight engineer watched the engines.", "The wheels touched the runway, and the pilots slowed the plane."],
+  captions: [
+    [0, "On the flight deck, high over the sea."],
+    [4, "Captain Ross: “There it is. Palisadoes. Home.”"],
+    [9, "The first officer: “Wheels down.”"],
+    [14, "The thin strip of land grows bigger."],
+    [20, "The first officer: “Nice and steady.”"],
+    [25, "The runway comes up to meet the plane."],
+    [28.5, "Bump! The wheels touch the runway."],
+    [34, "The pilots slow the plane."],
+    [41, "Captain Ross: “Welcome home to Jamaica.”"],
+  ],
+  shots: [
+    { t: 0, p: [0.0, 1.4, 0.55], look: [0.0, 1.25, -4] },
+    { t: 7, p: [0.15, 1.35, 0.3], look: [0.0, 1.25, -5] },
+    { t: 22, p: [0.0, 1.35, 0.3], look: [0.0, 1.2, -6] },
+    { t: 30, p: [0.0, 1.38, 0.3], look: [0.0, 1.15, -6] },
+    { t: 38, p: [-0.15, 1.4, 0.35], look: [-0.5, 1.2, -4] },
+    { t: 46, p: [-0.15, 1.4, 0.35], look: [-0.3, 1.2, -4] },
+  ],
+  fov: [[0, 62], [22, 64], [46, 62]],
+  acts: [],
+  sounds: [[0.3, "begin"], [9, "drum"], [28.3, "drum"], [29, "jet"], [34, "jet"]],
+  duration: 46,
 };
 export const QUIZ = {
   title: "What did you learn?",

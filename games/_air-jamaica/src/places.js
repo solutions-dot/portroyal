@@ -8,6 +8,7 @@ import { T, std, solid, plane, grp, batchStatic } from "./gfx.js";
 import * as P from "./props.js";
 import { dc8, dc9, DC8 } from "./planes.js";
 import { airport, GALLERY } from "./airport.js";
+import { buildCockpit, SEATS } from "./cockpit.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
 /* a soft dark patch on the ground under something, so it sits on the ground and does not seem to hover; follow(o) keeps it under a moving thing */
 function groundShadow(Q, w, d, x, z, ry = 0, alpha = 0.55) {
@@ -188,7 +189,71 @@ function gallery() {
   Q.enter = () => {};
   return Q;
 }
-const builders = { apron, gallery };
+/* 3. The flight deck of the DC-8, coming in to land at Kingston. The cockpit is built in its own small room; the airport is built outside its
+   windows (the same airport as the apron, rotated so the runway lies ahead) and moved past the windscreen for the landing. The crew of three sit in
+   their seats; Dee stands behind them. Chapter 2 (docs/games/air-jamaica.md, "Cockpit"). */
+function cockpit() {
+  const Q = base("cockpit", [-0.55, 0.55, 0.7, 1.1], [0.1, 0.9, 0]);
+  Q.light = { top: 0x6fa8dc, hor: 0xe3eef2, fog: [0xdce8ee, 900, 9000], sun: [0xfff2d0, 2.6, -30, 60, 40], hemi: [0xffffff, 0x9aa8a8, 2.8], fill: 1.7 };
+  Q.beds = { wind: 0.02 };
+  const room = buildCockpit();
+  P.dynamic(room);
+  Q.group.add(room);
+  /* the world outside: the airport, rotated so that its runway (along +x) runs ahead of the nose (-z), held on a pivot at the pilots' eyes */
+  const X = base("outside", [-1, -1, 1, 1], [0, 0, 0]);
+  scene(X);
+  X.films = {};
+  const pivot = grp(Q.group, 0, 1.35, 0);
+  const ext = grp(pivot);
+  ext.rotation.y = Math.PI / 2;
+  ext.add(X.group);
+  Q.tickers.push(...X.tickers);
+  Q.props.pivot = pivot;
+  Q.props.ext = ext;
+  /* the crew of three, seated: the captain on the left, the first officer on the right, the flight engineer behind him, turned to his panel */
+  const sit = (look, S, ry) => crowd(Q, look, S.x, S.z, ry, { kind: "sit", seat: { top: S.top, x: S.x, z: S.z, ry }, clips: ["SitIdle"] });
+  sit("wr_conductor62", SEATS.captain, Math.PI);
+  sit("wr_sam62", SEATS.first, Math.PI);
+  sit("wr_bman62", SEATS.engineer, Math.PI / 2);
+  /* the walls: the seats, the pedestal, the columns, the front wall, the engineer's panel, the jump seat */
+  wall(Q, -1.0, -0.45, -0.4, 0.15);
+  wall(Q, 0.4, -0.45, 1.0, 0.15);
+  wall(Q, -0.27, -1.6, 0.27, -0.4);
+  wall(Q, 0.75, 0.3, 1.3, 0.85);
+  wall(Q, -1.2, 1.0, -0.6, 1.4);
+  Q.lookViews = {
+    panel: { p: [-0.45, 1.12, -0.55], look: [-0.7, 0.75, -1.8], fov: 34 },
+    levers: { p: [0.05, 1.05, -0.35], look: [0.0, 0.55, -1.1], fov: 36 },
+  };
+  /* the landing (content.js FILMS.landing): the aircraft's place on the approach in the airport's own coordinates, [time, x along the runway, height of
+     the wheels, pitch]. The airport is moved the opposite way past the windscreen. Touchdown is at x -440. */
+  const KEYS = [
+    [0, -1750, 66, -0.03],
+    [12, -1150, 36, -0.035],
+    [22, -600, 11, -0.035],
+    [26, -490, 2.6, 0.0],
+    [28, -440, 0.0, 0.05],
+    [30, -400, 0.0, 0.02],
+    [38, -180, 0.0, 0.0],
+    [46, 40, 0.0, 0.0],
+  ];
+  const at = (t) => {
+    let i = 0;
+    while (i < KEYS.length - 2 && t > KEYS[i + 1][0]) i++;
+    const a = KEYS[i], b = KEYS[i + 1], k = Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0])));
+    return a.slice(1).map((v, j) => v + (b[j + 1] - v) * k);
+  };
+  Q.films.landing = (t) => {
+    const [ax, ay, pitch] = t < 0 ? [-250, 0, 0] : at(t);
+    const az = -83; /* the runway's centre line */
+    ext.position.set(-az, -(ay + 3.8), ax);
+    pivot.rotation.x = -pitch;
+  };
+  Q.films.landing(-1);
+  Q.enter = () => {};
+  return Q;
+}
+const builders = { apron, gallery, cockpit };
 export const PLACE_IDS = Object.keys(builders);
 export function buildPlace(id, opts = {}) {
   const Q = builders[id](opts);

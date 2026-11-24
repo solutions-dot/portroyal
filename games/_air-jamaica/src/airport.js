@@ -24,12 +24,12 @@ const CREAM = P.CREAM,
   rail = solid(0x6b7370, 0.45, 0.6),
   blue = solid(0x2f6b8f, 0.6);
 /* the waving gallery: its deck, in world metres. The staircase climbs along the front, from x 25 up to x 34. */
-export const GALLERY = { x0: 34.5, x1: 44, z0: 29.4, z1: 35, top: 4.6, stairX0: 24.5, stairX1: 34.4, stairZ: 28.7, stairW: 1.5 };
+export const GALLERY = { x0: 34.5, x1: 44, z0: 28.9, z1: 35, top: 4.6, stairX0: 24.5, stairX1: 34.5, stairZ: 29.7, stairW: 1.5 };
 export function airport(Q, { deck = false } = {}) {
   const g = Q.group;
   const sea = createSea(g, { kind: "caribbean", y: -0.14, at: [0, 0], size: 300, far: 3000, farDrop: 0.15, swell: 0.5 }).near;
   Q.tickers.push((t) => sea?.tick?.(t));
-  const land = plane(600, 110, std(T.grass([70, 12], [129, 141, 105])), 0, -0.04, -83, g);
+  const land = plane(2600, 110, std(T.grass([260, 12], [129, 141, 105])), 0, -0.04, -83, g);
   land.rotation.x = -Math.PI / 2;
   /* ---- the terminal block: a recessed ground floor, three upper floors on white slabs with ribbon windows, a roof parapet, the cab ---- */
   box(32, 3.4, 9, dark, 0, 1.7, 42.5, g); /* the recessed ground floor, glazed and dark */
@@ -113,24 +113,28 @@ export function airport(Q, { deck = false } = {}) {
     }
     for (let k = 0; k <= len; k += 1.2) post(x0 + ((x1 - x0) * k) / len, z0 + ((z1 - z0) * k) / len);
   };
-  run(G.x0 + 0.1, G.z0 + 0.1, G.x1 - 0.1, G.z0 + 0.1); /* the front, toward the apron */
+  run(G.x0 + 0.1, G.z0 + 0.01, G.x1 - 0.1, G.z0 + 0.01); /* the front, toward the apron: in line with the staircase's outer rail */
   run(G.x0 + 0.1, G.z0 + 1.7, G.x0 + 0.1, G.z1 - 0.1); /* the left side, open at the front corner where the staircase arrives */
   run(G.x1 - 0.1, G.z0 + 0.1, G.x1 - 0.1, G.z1 - 0.1);
   run(G.x0 + 0.1, G.z1 - 0.1, G.x1 - 0.1, G.z1 - 0.1);
   /* a lamp standard on the deck, as the photograph shows, with a white globe */
   cyl(0.05, 0.06, 2.6, METAL, G.x1 - 1.0, G.top + 1.3, G.z1 - 0.8, g, 6);
   mesh(new THREE.SphereGeometry(0.22, 10, 8), solid(0xf4f0e0, 0.4), G.x1 - 1.0, G.top + 2.7, G.z1 - 0.8, g);
-  /* the staircase: concrete treads rising along the front of the building, a handrail on each side */
+  /* the staircase: it climbs straight onto the deck's open left side, beside the front rail. Each tread is a solid block from the ground to its own
+     top. The handrail runs parallel to the line of the nosings, 1.05 m over the deck at the top so that it meets the deck's own rail, and each post
+     stands on a tread. */
   const run_ = G.stairX1 - G.stairX0, n = 14, rise = G.top / n, step = run_ / n;
-  /* each tread is a solid block from the ground to its own top, so the staircase is one solid flight with no gaps */
   for (let i = 0; i < n; i++) box(step * 1.02, rise * (i + 1), G.stairW, concrete, G.stairX0 + (i + 0.5) * step, (rise * (i + 1)) / 2, G.stairZ, g);
-  const ang = Math.atan2(G.top, run_), len = Math.hypot(run_, G.top);
+  const ang = Math.atan2(G.top, run_), len = Math.hypot(run_, G.top), off = 1.05 - rise; /* the rail's height over the nosing line */
+  const pitch = (x) => (G.top * (x - G.stairX0)) / run_ + rise; /* the nosing line, extended */
   for (const dz of [-G.stairW / 2 - 0.04, G.stairW / 2 + 0.04]) {
-    const r = box(len, 0.04, 0.04, rail, (G.stairX0 + G.stairX1) / 2, G.top / 2 + 1.0, G.stairZ + dz, g);
+    const xm = (G.stairX0 + G.stairX1) / 2;
+    const r = box(len, 0.04, 0.04, rail, xm, pitch(xm) + off, G.stairZ + dz, g);
     r.rotation.z = ang;
-    for (let i = 0; i <= 5; i++) {
-      const x = G.stairX0 + (run_ * i) / 5, y = (G.top * i) / 5;
-      cyl(0.03, 0.03, 1.0, rail, x, y + 0.5 + 0.12, G.stairZ + dz, g, 6);
+    r.scale.x = 1;
+    for (const i of [0, 3, 6, 9, 12, 13]) {
+      const x = G.stairX0 + (i + 0.5) * step, base = rise * (i + 1), top = pitch(x) + off + 0.02;
+      cyl(0.03, 0.03, top - base, rail, x, base + (top - base) / 2, G.stairZ + dz, g, 6);
     }
   }
   Q.walls.push([G.stairX0, G.stairZ - G.stairW / 2 - 0.1, G.stairX1, G.stairZ + G.stairW / 2 + 0.1]);
@@ -155,11 +159,12 @@ export function airport(Q, { deck = false } = {}) {
     }
     Q.walls.push([x - 1.15, z - 0.65, x + 1.15, z + 0.65]);
   }
-  box(500, 0.035, 42, solid(0x737a74), 0, -0.005, -83, g);
-  for (let x = -230; x < 230; x += 22) box(8, 0.008, 0.25, CREAM, x, 0.018, -83, g);
-  for (const x of [-175, 175]) for (let z = -100; z < -66; z += 2.2) box(15, 0.008, 0.8, CREAM, x, 0.02, z, g);
+  /* the runway: black asphalt (Wikipedia gives the surface as asphalt), 1,800 m long here, with white centre dashes, piano keys at each end, edge lights */
+  box(1800, 0.035, 42, solid(0x2b2d2e, 0.95), 0, -0.005, -83, g);
+  for (let x = -860; x < 860; x += 22) box(8, 0.008, 0.25, solid(0xeceae0), x, 0.018, -83, g);
+  for (const x of [-840, 840]) for (let z = -100; z < -66; z += 2.2) box(15, 0.008, 0.8, solid(0xeceae0), x, 0.02, z, g);
   for (const z of [-104, -62])
-    for (let x = -220; x <= 220; x += 22) {
+    for (let x = -880; x <= 880; x += 22) {
       cyl(0.07, 0.09, 0.2, solid(0x888673), x, 0.1, z, g, 6);
       mesh(new THREE.SphereGeometry(0.07, 6, 4), solid(0xf0d69a), x, 0.23, z, g);
     }

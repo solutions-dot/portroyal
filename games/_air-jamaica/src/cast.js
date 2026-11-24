@@ -17,5 +17,6 @@ export const CROWD = {
   wr_bman62: { sex: "m", idle: "IdleM" },
   wr_sam62: { sex: "m", idle: "IdleM" },
   wr_bboy62: { sex: "m", scale: 0.8 },
+  wr_conductor62: { sex: "m", idle: "IdleM" },
 };
 export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];

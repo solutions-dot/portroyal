@@ -17,8 +17,13 @@ export const STEPS = {
   15: t("gallery", "Join Mum in the waving gallery.", ["mum"], 16, { show: ["mum"], journal: "gallery" }),
   16: w("gallery", "The first flight leaves.", "film", 17, { film: "takeoff", show: ["mum"] }),
   17: w("gallery", "The first flight leaves.", "playing", 18, { film: "takeoff", show: ["mum"] }),
-  18: w("gallery", "What did you learn?", "quiz", 19, { journal: "today" }),
-  19: w("gallery", "The first morning is over.", "end", null, { end: true }),
+  18: w("gallery", "What did you learn?", "quiz", 30, { journal: "today" }),
+  /* 2. The view from the front: the flight deck of the DC-8, coming in to land */
+  30: l("cockpit", "Look at the dials in front of the captain.", ["panel"], 31, { journal: "cockpit" }),
+  31: l("cockpit", "Look at the four levers between the seats.", ["levers"], 32, { journal: "levers" }),
+  32: w("cockpit", "The plane comes in to land.", "film", 33, { film: "landing" }),
+  33: w("cockpit", "The plane comes in to land.", "playing", 34, { film: "landing" }),
+  34: w("cockpit", "The view from the front.", "end", null, { end: true }),
 };
 export const TASKS = {};
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
@@ -36,6 +41,18 @@ export const LOOKS = {
     say: ["The crew stand in a long bright line.", "Yellow, pink and green, side by side."],
     lines: ["Yellow, hot pink and lime green dresses, one after another.", "They wear white gloves.", "Marguerite Kirkpatrick, a former Miss Jamaica, designed the uniforms."],
   },
+};
+LOOKS.panel = {
+  place: "cockpit", at: [-0.3, 0.8], label: "Look at the dials", title: "The instrument panel",
+  sound: "click",
+  say: ["You lean in between the seats.", "Dials, dials, and more dials."],
+  lines: ["The round dials tell the pilots how high they are, how fast they fly and which way they point.", "The one with blue above and brown below is the horizon.", "The row in the middle is for the four engines."],
+};
+LOOKS.levers = {
+  place: "cockpit", at: [0.1, 0.8], label: "Look at the levers", title: "The throttles",
+  sound: "click",
+  say: ["Between the two seats there are four levers."],
+  lines: ["Each lever with a black knob is for one engine.", "Push them forward and the engines push harder.", "The red knob is for the speed brake."],
 };
 export const ITEMS = [];
 export const TASK_IDS = [];
