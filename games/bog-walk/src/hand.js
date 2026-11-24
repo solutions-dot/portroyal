@@ -11,6 +11,7 @@
    Owner rules: a held thing is held properly, never floats, never passes through the body and never covers the middle of the view. Skin follows owner
    rule 9: a colour inside Marcus Garvey's range, lightened as Kendal does (SKIN_LIGHT), so the hand reads in the dark of the pipe. */
 import * as THREE from 'three';
+import { drawOnTop } from '../../../engine/ontop.js';
 import { flameTex, woodTex, ragTex } from './gfx.js';
 import { HANDMESH } from './handmesh.js';
 
@@ -99,8 +100,7 @@ export function makeHand(camera) {
   /* The torch is held 0.55 m in front of your eye, but a wall of the pipe can be nearer than that (0.26 m at the side of the lane, and the roof when you look up).
      So the hand, the torch and its flame are drawn in the nearest slice of the depth range: they are always in front of the pipe and are never cut off by it
      (owner, 21 November 2026: "I can turn and cut through the pipe"). The parts of the hand still hide each other as before. */
-  const NEAR_SLICE = 0.02, gl = (r) => r.getContext();
-  inner.traverse((o) => { if (!o.isMesh && !o.isSprite) return; o.onBeforeRender = (r) => gl(r).depthRange(0, NEAR_SLICE); o.onAfterRender = (r) => gl(r).depthRange(0, 1); });
+  drawOnTop(inner);   /* engine/ontop.js (moved there from here, 23 November 2026, so every game's carried things use it) */
 
   const FIST = new THREE.Vector3(0, FISTY, 0.004);   /* the middle of the fist: the hand is turned and scaled about this point */
   const LIGHT_HOME = light.position.clone(), lw = new THREE.Vector3();

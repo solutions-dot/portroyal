@@ -4,6 +4,7 @@ import { addRecap } from "../../../engine/recap.js";   /* three things you learn
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A self-contained game on the established shared engine APIs. */
 import { renderFramed } from "../../../engine/cine.js";
+import { sunShadow } from "../../../engine/sunshadow.js";
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { placeActionButton } from "../../../engine/action-button.js";
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
@@ -90,7 +91,7 @@ import {
 import { createDirector } from "./director.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
-import { addExit } from '../../../engine/exit.js';
+import { addExit, askExit } from '../../../engine/exit.js';
 const KEY = "selassie-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test"));
@@ -127,6 +128,7 @@ scene.environmentIntensity = 0.28;
 const hemi = new THREE.HemisphereLight(0xfff3d3, 0x827356, 2.3),
   sun = new THREE.DirectionalLight(0xffe1ac, 2.2);
 sun.position.set(-22, 45, 18);
+const SH = sunShadow(renderer, sun, { phone });   /* real sun shadows on desktop (engine/sunshadow.js, automatic: SH.tick before drawing) */
 scene.add(hemi, sun);
 /* the gold talk marks over the step's story people, and the talk button with a name over the nearest person (ui.js) */
 const MARKS = createMarks({
@@ -820,7 +822,8 @@ async function go(stage, { restore = null, keep = false } = {}) {
     }
   const evening = !!Q.evening;
   sky.setSky(evening ? 0x667f8b : 0x6ca9bb, evening ? 0xe0aa78 : 0xe1d4ac);
-  sun.intensity = evening ? 1.45 : 2.2;
+  sun.intensity = (evening ? 1.45 : 2.2) * (SH.on ? 1.15 : 1);   /* with real shadows (desktop) the sun leads a little more and the sky less, so the shadows read */
+  hemi.intensity = 2.3 * (SH.on ? 0.85 : 1);
   $("place").textContent = PLACE_NAMES[Q.id] || CHAPTERS[chapterOf(stage)].caption;
   busy = false;
   save();
@@ -948,6 +951,7 @@ async function waits(st, generation) {
     cardData(CARDS.end, [
       ["Read the journal", showJournal],
       ["Chapters", showChapters],
+      ["Exit", () => askExit()],
     ]);
     cue("end");
   }
@@ -1535,6 +1539,7 @@ function frame(now) {
         blocked: (x, z, r) => blocked(Q, x, z, r),
         others: Q.people,
         talking,
+        view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw },   /* a follower keeps out of the middle of your view (engine/follow.js) */
       });
     }
     if (n.historical && n.m.visible) {
@@ -1569,6 +1574,7 @@ function frame(now) {
   hint(now);
   audioTick(now / 1000);
   steadyHeads(Q, dt);
+  SH.tick(scene, camera);
   renderFramed(renderer, scene, camera, DIR.on || LS.on);
   if (S.started && (saveT += dt) > 3) {
     saveT = 0;

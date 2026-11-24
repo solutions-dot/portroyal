@@ -21,7 +21,7 @@ for (const g of games) for (const t of tests.split(',')) {
     await p.goto(`${process.env.REVIEW_BASE || 'http://localhost:8765'}/games/${g}/site/?test=${t}${extra.length ? '&' + extra.join('&') : ''}`);
     await p.waitForFunction(() => /^[A-Z]+ -?\d+|^ERROR/.test(document.title) || Array.isArray(window.__RESULT), null, { timeout: SECS * 1000 }); title = await p.title();
     const res = await p.evaluate(() => Array.isArray(window.__RESULT) ? window.__RESULT.join('\n') : null); if (res !== null && !/^[A-Z]+ -?\d+/.test(title)) title = (res.split('\n').find((l) => /^[A-Z]+ -?\d+/.test(l)) || res.split('\n')[0] || 'no lines');   /* The Emperor's Arrival and Windrush publish window.__RESULT (lines) and leave the title alone */
-    log = await p.evaluate(() => { const e = document.getElementById('autolog'); return e ? e.textContent : ''; });
+    log = await p.evaluate(() => { const e = document.getElementById('autolog'), t = e ? e.textContent : ''; return t || (Array.isArray(window.__RESULT) ? window.__RESULT.join('\n') : ''); });   /* a test that only fills window.__RESULT still gets its lines in the log */
   } catch (e) { title = 'no result after ' + SECS + ' s (' + (await p.title().catch(() => '?')) + ')'; }
   await p.close(); const n = (title.match(/^[A-Z]+ (-?\d+)/) || [])[1];
   if (n !== '0') bad++;

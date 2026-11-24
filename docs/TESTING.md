@@ -131,6 +131,7 @@ Owner rule, for every game: these checks are wired into the dev build, and **eve
 | Foot rotation | `?test=feet` in Tivoli, Windrush, Kendal, Nanny Town and Port Royal | Samples visible feet after animation and placement. Reports sharp changes and sustained spins in the body's frame and accounts for slower updates on distant people. Select scenes with `&ch=2,3` in Tivoli, `&p=yard,jamaica%201962` in Windrush, `&st=20,40,63` in Kendal, `&sc=thebacktrail` in Nanny Town or `&p=tavern,flashback,camp` in Port Royal. Windrush also includes feet in `?test=anim`. |
 | Skin | `?test=skin` (Kendal, Garvey, Port Royal, Nanny Town; Tivoli with a local copy) | The colour each face is drawn in, in the game's own light, from four headings (`engine/skinprobe.js`). Compare with the target in `docs/PIPELINE.md`, "Skin". |
 | Resume | `?test=resume` (where the game saves) | Every saved stage reloads into the right place without breaking. |
+| Camera lens | `?test=lens` (Morant Bay, 23 November 2026) | Every camera scene sampled each second for a lens looking into a leaf, a roof or a wall within 1.4 m (`lensBlocked`, `engine/lens-check.js`), and every look moment for something between the player's spot and the thing (`targetHidden`). `LENS n` counts those faults. `SEE` lines name shots whose subject has something in front of it (often its own front wall): look at each with `?shot=film&key=<film>&at=<t>`. About 30 seconds. |
 
 ### Wiring room to pass and props close up into the older games (to do after their current work)
 

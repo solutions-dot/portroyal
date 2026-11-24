@@ -1,9 +1,10 @@
 /* the camera scenes run a little quicker than they were written (owner, 23 November 2026: "some of the cinematic scenes feel a little too long ... some is just camera zooming") */
 const PACE = 1.15;
 import { showCinematicSkip } from "../../../engine/cine.js";
+import { shotPath } from "../../../engine/shotpath.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
-   curve, and can change its lens. The place stages its own part: Q.films[key](t, Q) is called every frame with the film's time (a rider on
+   curve, and can change its lens. A shot marked `cut: true` is a cut, not a glide (engine/shotpath.js). The place stages its own part: Q.films[key](t, Q) is called every frame with the film's time (a rider on
    the road, a shutter that opens, a lamp that goes out) and once with t = -1 when the film stops, to put the place back as play expects it.
    People can be given a clip at a time. Pause, sound and read instead stay available throughout. */
 import * as THREE from "three";
@@ -27,27 +28,11 @@ function sampleKeys(keys, t) {
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false, fov: playFov = () => 66 }) {
   const D = { on: false, paused: false, time: 0, key: null, fast };
   let rumble = null,
-    curve = null,
-    lookCurve = null,
+    path = null,
     fired = new Set();
+  /* the camera path through the film's shots, with real cuts where a shot says `cut: true` (engine/shotpath.js) */
   const build = (F) => {
-    const P = F.shots.map((s) => new THREE.Vector3(...s.p)),
-      L = F.shots.map((s) => new THREE.Vector3(...s.look));
-    curve = new THREE.CatmullRomCurve3(P, false, "centripetal");
-    lookCurve = new THREE.CatmullRomCurve3(L, false, "centripetal");
-  };
-  /* where along the curves at time t: the shot times map to equal steps along the spline, eased at both ends */
-  const along = (F, t) => {
-    const S = F.shots,
-      n = S.length - 1;
-    if (t <= S[0].t) return 0;
-    if (t >= S[n].t) return 1;
-    let i = 0;
-    while (i < n - 1 && t >= S[i + 1].t) i++;
-    let k = (t - S[i].t) / (S[i + 1].t - S[i].t);
-    if (i === 0) k = k * k * (2 - k) * 0.5 + k * 0.5; // ease in
-    if (i === n - 1) k = 1 - (1 - k) * (1 - k) * 0.5 - (1 - k) * 0.5; // ease out
-    return (i + k) / n;
+    path = shotPath(F.shots);
   };
   D.start = (key) => {
     D.key = key;
@@ -88,13 +73,15 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     D.stop();
     read(key);
   };
+  /* the point the camera looks at, at time t (for ?test=lens: is the subject of the shot hidden behind something?) */
+  D.lookAt = (t) => path.at(t, reduced).look;
   /* pose the scene at time t: camera, lens, ship, people's moments, captions */
   D.apply = (t) => {
     const F = FILMS[D.key],
       Q = world && world();
-    const k = reduced ? 0 : along(F, t);
-    camera.position.copy(curve.getPoint(k));
-    camera.lookAt(lookCurve.getPoint(k));
+    const at = path.at(t, reduced);
+    camera.position.copy(at.p);
+    camera.lookAt(at.look);
     const tall = innerWidth / innerHeight < 0.8,
       fov = (F.fov ? sampleKeys(F.fov, t)[0] : 50) * (tall ? 1.35 : 1);
     if (Math.abs(camera.fov - fov) > 0.01) {

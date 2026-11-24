@@ -14,11 +14,38 @@ const solid = (o) => {
   const m = Array.isArray(o.material) ? o.material[0] : o.material;
   return !(!m || m.isMeshBasicMaterial || m.isSpriteMaterial || m.blending === THREE.AdditiveBlending || (m.transparent && m.opacity < 0.6) || o.userData.water);
 };
-const nameOf = (o) => { for (let p = o; p; p = p.parent) if (p.name && !/^(Scene|Group|Object3D)$/.test(p.name)) return p.name; return o.geometry?.type || 'a mesh'; };
+/* the nearest name, and where the thing is, so a hit inside a whole place's group still says which mesh it is */
+const nameOf = (o) => {
+  let n = null; for (let p = o; p && !n; p = p.parent) if (p.name && !/^(Scene|Group|Object3D)$/.test(p.name)) n = p.name;
+  if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+  const c = _s2.copy(o.geometry.boundingSphere).applyMatrix4(o.matrixWorld).center;
+  const m = Array.isArray(o.material) ? o.material[0] : o.material, col = m?.color ? '#' + m.color.getHexString() : '';
+  return (o.name || n || o.geometry?.type || 'a mesh') + (o.name && n && o.name !== n ? ' in ' + n : '') + ' (' + o.geometry.type + ' ' + col + ', centre ' + c.toArray().map((v) => v.toFixed(1)).join(',') + ')';
+};
+/* the solid meshes of a scene, gathered once and kept until the scene's mesh count changes (a full-scene raycast walks every skinned body
+   on the CPU, which made ?test=lens time out); only meshes whose bounding sphere reaches the ray are tested */
+const _cache = new WeakMap(), _s = new THREE.Sphere(), _s2 = new THREE.Sphere();
+function solids(scene) {
+  let n = 0; scene.traverse((o) => { if (o.isMesh) n++; });
+  const c = _cache.get(scene);
+  if (c && c.n === n) return c.list;
+  const list = []; scene.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) list.push(o); });
+  _cache.set(scene, { n, list }); return list;
+}
 function firstHit(from, dir, far, scene) {
   ray.set(from, dir); ray.far = far; ray.near = 0.02;
-  for (const h of ray.intersectObject(scene, true)) if (solid(h.object)) return h;
-  return null;
+  const near = [];
+  for (const o of solids(scene)) {
+    if (!solid(o)) continue;
+    if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    _s.copy(o.geometry.boundingSphere).applyMatrix4(o.matrixWorld);
+    if (_s.distanceToPoint(from) > far) continue;
+    if (ray.ray.distanceSqToPoint(_s.center) > _s.radius * _s.radius) continue;
+    near.push(o);
+  }
+  let best = null;
+  for (const h of ray.intersectObjects(near, false)) if (!best || h.distance < best.distance) best = h;
+  return best;
 }
 export function lensBlocked(camera, scene, { near = 1.2, spread = 0.16 } = {}) {
   camera.updateMatrixWorld(true); camera.getWorldQuaternion(_q);
@@ -31,8 +58,12 @@ export function lensBlocked(camera, scene, { near = 1.2, spread = 0.16 } = {}) {
   }
   return { share: hits / 9, what: best ? nameOf(best.object) : null, at: best ? best.distance : null };
 }
+/* a mesh whose box (grown by 1.5 m) holds the target is the thing looked at (a building filmed from outside), not something in front of it */
+const _b = new THREE.Box3();
 export function targetHidden(from, to, scene) {
   const f = new THREE.Vector3(...from), t = new THREE.Vector3(...to), d = t.clone().sub(f), L = d.length();
-  const h = firstHit(f, d.normalize(), L * 0.9, scene);
+  ray.set(f, d.normalize()); ray.near = 0.02; ray.far = Math.min(L * 0.9, L - 0.3);   /* the last 30 cm is the thing itself (a box looked at from a metre away) */
+  const cand = solids(scene).filter((o) => solid(o) && !_b.setFromObject(o).expandByScalar(1.5).containsPoint(t));
+  const h = ray.intersectObjects(cand, false)[0];
   return h ? nameOf(h.object) + ' at ' + h.distance.toFixed(1) + ' m' : null;
 }

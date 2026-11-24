@@ -56,7 +56,7 @@ export const STEPS = {
   45: g("bay", "Hide behind Miss Ada's stall.", "stall", 46, { show: MARKET }),
   46: w("bay", "The Parade, between three and four.", "film", 48, { film: "riot", show: [] }),
   47: w("bay", "Watch from under the stall.", "playing", 48, { film: "riot", show: [] }),
-  48: t("bay", "Talk to Miss Ada in the dark.", ["ada"], 49, { show: ["ada"], journal: "eleventh" }),
+  48: t("bay", "Talk to Miss Ada in the dark.", ["ada"], 49, { show: ["ada"], journal: "eleventh", start: { x: -11.9, z: 7.2, yaw: 0 } }),   /* still behind her stall after the scene, where you hid: not set down across the Parade for her to walk over to you */
   49: t("bay", "Talk to Mama.", ["mother"], 50, { show: MARKET, journal: "courthouse" }),
   /* 5. Martial law (Stony Gut, 18 and 19 October) */
   50: w("gut", "The eighteenth of October.", "film", 52, { film: "soldiers", show: HIDE }),
@@ -67,7 +67,7 @@ export const STEPS = {
   55: t("gut", "Keep Sammy quiet.", ["brother"], 56, { show: HIDE, journal: "hiding" }),
   56: w("gut", "From the cave mouth.", "film", 58, { film: "burning", show: HIDE }),
   57: w("gut", "Watch from the cave.", "playing", 58, { film: "burning", show: HIDE }),
-  58: t("gut", "Talk to Gran.", ["gran"], 59, { show: HIDE, journal: "firestick" }),
+  58: t("gut", "Talk to Gran.", ["gran"], 59, { show: HIDE, journal: "firestick", start: { x: -17.6, z: -11.4, yaw: 0 } }),   /* back in the cave after the scene, not at the village gate: from there Gran and Sammy walked over to you across the whole village (owner, 23 November 2026) */
   59: t("gut", "Talk to Sammy in the dark.", ["brother"], 60, { show: HIDE, journal: "taken" }),
   /* 6. After (Morant Bay, late October 1865, and 2026) */
   60: w("bay", "Morant Bay, under martial law.", "film", 62, { film: "courts", show: AFTER }),
@@ -87,7 +87,7 @@ export const STEPS = {
    put it down; at: where it is left [x, y, z]. */
 export const TASKS = {
   jar: { place: "gut", item: "jar", start: [-15.6, 0.02, 11.6], from: [-15.4, 11.0], to: [-4.6, 7.6], at: [-3.4, 0, 7.4], label: "Fill the water jar", put: "Set the jar by Gran" },
-  basket: { place: "bay", item: "basket", start: [-14.4, 0, 7.4], from: [-14.4, 8.1], to: [-11.6, 5.4], at: [-11.75, 0.94, 3.0], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
+  basket: { place: "bay", item: "basket", start: [-14.4, 0, 7.4], from: [-14.4, 8.1], to: [-11.6, 5.4], at: [-11.3, 0.94, 3.0], label: "Lift Mama's basket", put: "Set it on Miss Ada's stall" },
 };
 /* Things the player looks at (owner rule 13: a close-up action). at: where you stand. view: the close framing the camera eases to
    (engine/lookshot.js); the place moves the thing while you watch (Q.reveal[id](k), k from 0 to 1, over act seconds) and plays sound; say: a
@@ -100,7 +100,7 @@ export const LOOKS = {
   door: { place: "town", at: [-24.4, 1.2], label: "Watch the great door", title: "The door", view: V([-24.4, 1.75, 1.4], [-32.9, 2.2, 0], 44), act: 3.4, sound: "door", say: ["The great door swings slowly shut."], lines: ["The Governor will not see them.", "Papa takes off his hat, and puts it on again."], page: "eyre" },
   drill: { place: "gut", at: [7.5, -1.8], label: "Look through the fence", title: "The yard", view: V([8.2, 1.25, -1.8], [12, 1.2, -4.4], 46), act: 3.4, sound: "drum", say: ["A drum. Then a shell, blown like a horn."], lines: ["Men in lines, sticks on their shoulders, marching.", "The record says they drilled \"with drum and shells\"."], page: "drill" },
   names: { place: "gut", at: [CH(0.2), CH(-2.8, true)], label: "Write", title: "The names", view: V([CH(0.5), 1.45, CH(-3.2, true)], [CH(-0.2), 0.96, CH(-4.0, true)], 38), act: 4, sound: "pen", say: ["The deacon reads out names. You write them down."], lines: ["Your hand shakes. The lantern smokes.", "You stop before the oath. You do not hear it."], page: "names" },
-  shells: { place: "bay", at: [19, 4.6], label: "Listen", title: "The east road", view: V([19.6, 1.6, 6.4], [60, 2, 6.4], 30), act: 4, sound: "shell", say: ["Far off, up the road: a shell, a drum, many feet."], lines: ["Dust over the road from the east.", "Miss Ada pulls you back by the arm."], page: "vestry" },
+  shells: { place: "bay", at: [19, 4.6], label: "Listen", title: "The east road", view: V([20.8, 1.6, 9.2], [60, 1.8, 8.4], 30), act: 4, sound: "shell", say: ["Far off, up the road: a shell, a drum, many feet."], lines: ["Dust over the road from the east.", "Miss Ada pulls you back by the arm."], page: "vestry" },
   notice: { place: "bay", at: [16.6, 0.4], label: "Read the notice", title: "Martial law", view: V([16.95, 1.66, 0.35], [16.95, 1.62, -0.9], 40), act: 2.6, sound: "paper", say: ["A printed paper, nailed to the flagpole."], lines: ["Martial law. The army rules here now, not the courts.", "It began on the thirteenth of October. It lasted a month."], page: "martial" },
 };
 function CH(v, z = false) {

@@ -1,0 +1,71 @@
+{
+ "name": "sp_judge",
+ "era": 1799,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.72,
+  "muscle": 0.35,
+  "weight": 0.6,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "coat": true,
+  "coatsleeve": 0.84,
+  "breeches": true,
+  "shoes": true,
+  "stockings": true,
+  "buckles": true,
+  "bands": true,
+  "hairvol": 0.7,
+  "hat": [],
+  "necktuck": true
+ },
+ "colors": {
+  "Skin": [
+   214,
+   170,
+   146
+  ],
+  "Shirt": [
+   232,
+   226,
+   212
+  ],
+  "Coat": [
+   22,
+   20,
+   22
+  ],
+  "Breeches": [
+   26,
+   24,
+   26
+  ],
+  "Stockings": [
+   40,
+   38,
+   40
+  ],
+  "Shoes": [
+   24,
+   20,
+   18
+  ],
+  "Hair": [
+   226,
+   224,
+   216
+  ],
+  "Bands": [
+   242,
+   240,
+   232
+  ]
+ },
+ "face": "elder"
+}

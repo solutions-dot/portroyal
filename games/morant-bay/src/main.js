@@ -40,7 +40,7 @@ import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
 import { setQuiet, stepPlaces } from '../../../engine/preload.js';
-import { addExit } from '../../../engine/exit.js';
+import { addExit, askExit } from '../../../engine/exit.js';
 
 const KEY = GAME.id + "-save-v1",
   q = new URLSearchParams(location.search),
@@ -538,7 +538,7 @@ async function waits(st) {
   if (kind === "film") {
     /* one card before a scene (engine/scene-warning.js): what happens, the standard lines if it may be frightening, Watch scene or Read instead */
     const data = CARDS[row.film];
-    sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
+    sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, hurt: !!data.hurt, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
   } else if (kind === "playing") DIR.start(row.film);
   else if (kind === "note") {
     const data = CARDS[row.note];
@@ -546,7 +546,7 @@ async function waits(st) {
   } else if (kind === "quiz") {
     runQuiz({ title: QUIZ.title, items: QUIZ.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
   } else if (kind === "end") {
-    card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters]]);
+    card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters], ["Exit", () => askExit()]]);
     cue("end");
   }
 }
@@ -977,7 +977,7 @@ function tick(dt, now = performance.now()) {
   Q.life.tick(frozen ? 0 : dt, W);
   Q.storyLife.tick(frozen ? 0 : dt, { ...W, story: [] });
   for (const n of Q.people)
-    if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking });
+    if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking, view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw } });   /* view: a follower keeps out of the middle of your view (engine/follow.js) */
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
   else if (LS.tick(dt)) {
@@ -1049,6 +1049,7 @@ onLoadFail(() => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    loadClips(await model("anims_mb"));   /* this game's own clip: the fall at the volley (tools/morant-bay/pack_clips.mjs) */
     $("bar").style.width = "25%";
     const Q = await ensure(GAME.title.place);
     current = GAME.title.place;

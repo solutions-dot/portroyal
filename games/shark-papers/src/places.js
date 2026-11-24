@@ -1009,74 +1009,97 @@ function quay() {
 
 /* ---------- 3. The Court of Vice-Admiralty, Kingston, autumn 1799 ---------- */
 let _arms, _sash, _panel, _baize;
-/* a carved and painted board in the shape of the royal arms: a crowned shield between a lion and a unicorn. A plain picture of the kind of board
-   every court of the time hung over the bench; its quarters are not drawn in detail. */
+/* a carved and painted board of the royal arms as they stood from 1714 to 1801 (George III, before the union with Ireland): the shield in four
+   quarters (1: England impaling Scotland; 2: France; 3: Ireland; 4: Hanover, with Brunswick, Lüneburg and Westphalia and the crown of
+   Charlemagne on red), the Garter round it with HONI SOIT QUI MAL Y PENSE, the crown above, the crowned lion and the chained unicorn to
+   either side, DIEU ET MON DROIT on the ribbon below. Simplified for a board seen across a room, true in its layout and colours (owner,
+   23 November 2026: "what is that coat of arms?": it had been four plain squares). */
 function royalArms() {
   _arms =
     _arms ||
-    cv(256, 256, (x, W, H) => {
+    cv(512, 512, (x, W, H) => {
       x.clearRect(0, 0, W, H);
-      x.fillStyle = "#2a2018";
-      x.beginPath();
-      x.ellipse(128, 132, 122, 116, 0, 0, 7);
-      x.fill();
-      x.strokeStyle = "#c9a43c";
-      x.lineWidth = 6;
-      x.stroke();
-      /* the shield, in four quarters */
-      const q = ["#a8281f", "#c9a43c", "#27408a", "#a8281f"];
-      for (let i = 0; i < 4; i++) {
-        x.fillStyle = q[i];
-        x.fillRect(96 + (i % 2) * 32, 92 + ((i / 2) | 0) * 38, 32, 38);
-      }
-      x.fillStyle = "#2a2018";
-      x.beginPath();
-      x.moveTo(96, 150);
-      x.lineTo(96, 170);
-      x.lineTo(110, 170);
-      x.quadraticCurveTo(100, 168, 96, 150);
-      x.moveTo(160, 150);
-      x.lineTo(160, 170);
-      x.lineTo(146, 170);
-      x.quadraticCurveTo(156, 168, 160, 150);
-      x.fill();
-      x.strokeStyle = "#e6c860";
-      x.lineWidth = 3;
-      x.strokeRect(96, 92, 64, 76);
-      /* the crown */
-      x.fillStyle = "#c9a43c";
-      x.fillRect(104, 66, 48, 16);
-      for (let i = 0; i < 5; i++) {
-        x.beginPath();
-        x.arc(108 + i * 10, 62, 5, 0, 7);
-        x.fill();
-      }
-      x.fillStyle = "#a8281f";
-      x.fillRect(108, 70, 40, 7);
-      /* the lion (gold) and the unicorn (white), standing to the shield */
-      const beast = (cx, col, dir) => {
+      const GOLD = "#c9a43c", RED = "#b0261c", BLUE = "#23408e", WHITE = "#ece6d4", DARK = "#2a2018";
+      const lionP = (cx, cy, s, col) => {   /* a lion passant, as heraldry draws it at this size: a body, a head turned out, a raised paw, a tail */
         x.fillStyle = col;
-        x.beginPath();
-        x.ellipse(cx, 138, 15, 34, dir * 0.25, 0, 7);
-        x.fill();
-        x.beginPath();
-        x.arc(cx + dir * 6, 96, 13, 0, 7);
-        x.fill();
-        x.fillRect(cx - 12, 164, 9, 26);
-        x.fillRect(cx + 4, 164, 9, 26);
-        x.fillRect(cx + dir * 8, 118, dir * 22, 7);
+        x.beginPath(); x.ellipse(cx, cy, 9 * s, 4 * s, 0, 0, 7); x.fill();
+        x.beginPath(); x.arc(cx + 9 * s, cy - 3 * s, 3.4 * s, 0, 7); x.fill();
+        x.fillRect(cx - 7 * s, cy + 2 * s, 2 * s, 5 * s); x.fillRect(cx + 5 * s, cy + 2 * s, 2 * s, 5 * s); x.fillRect(cx + 7 * s, cy - 6 * s, 2 * s, 5 * s);
+        x.lineWidth = 1.6 * s; x.strokeStyle = col; x.beginPath(); x.moveTo(cx - 9 * s, cy); x.quadraticCurveTo(cx - 14 * s, cy - 8 * s, cx - 10 * s, cy - 10 * s); x.stroke();
       };
-      beast(62, "#c9a43c", 1);
-      beast(194, "#e8e2d0", -1);
-      x.strokeStyle = "#e8e2d0";
-      x.lineWidth = 3;
-      x.beginPath();
-      x.moveTo(190, 86);
-      x.lineTo(180, 62);
-      x.stroke();
-      /* the ribbon under them */
-      x.fillStyle = "#d8cfae";
-      x.fillRect(52, 196, 152, 16);
+      const lionR = (cx, cy, s, col) => {   /* a lion rampant: reared up on one hind leg */
+        x.fillStyle = col;
+        x.save(); x.translate(cx, cy); x.rotate(-0.9);
+        x.beginPath(); x.ellipse(0, 0, 9 * s, 4 * s, 0, 0, 7); x.fill();
+        x.beginPath(); x.arc(9 * s, -2 * s, 3.4 * s, 0, 7); x.fill();
+        x.fillRect(4 * s, -7 * s, 2 * s, 5 * s); x.fillRect(7 * s, 2 * s, 2 * s, 5 * s); x.fillRect(-8 * s, 2 * s, 2 * s, 7 * s);
+        x.restore();
+      };
+      const fleur = (cx, cy, s) => {   /* a fleur-de-lis: three petals and a band */
+        x.fillStyle = GOLD;
+        x.beginPath(); x.ellipse(cx, cy - 4 * s, 2.2 * s, 6 * s, 0, 0, 7); x.fill();
+        x.beginPath(); x.ellipse(cx - 4.5 * s, cy - 1 * s, 2 * s, 4.5 * s, -0.7, 0, 7); x.fill();
+        x.beginPath(); x.ellipse(cx + 4.5 * s, cy - 1 * s, 2 * s, 4.5 * s, 0.7, 0, 7); x.fill();
+        x.fillRect(cx - 5 * s, cy + 1.5 * s, 10 * s, 2 * s); x.fillRect(cx - 1 * s, cy + 3 * s, 2 * s, 4 * s);
+      };
+      const harp = (cx, cy, s) => {   /* the gold harp of Ireland, its strings in white */
+        x.strokeStyle = GOLD; x.lineWidth = 3 * s; x.beginPath(); x.moveTo(cx - 8 * s, cy + 12 * s); x.lineTo(cx - 8 * s, cy - 10 * s); x.quadraticCurveTo(cx + 6 * s, cy - 16 * s, cx + 10 * s, cy - 4 * s); x.lineTo(cx - 8 * s, cy + 12 * s); x.stroke();
+        x.strokeStyle = WHITE; x.lineWidth = 0.8 * s; for (let i = 1; i < 5; i++) { x.beginPath(); x.moveTo(cx - 8 * s + i * 3.4 * s, cy - 10 * s + i * 0.6 * s); x.lineTo(cx - 8 * s + i * 3.4 * s, cy + 12 * s - i * 3.6 * s); x.stroke(); }
+      };
+      /* the shield: a square top and a rounded point, x0..x1, y0..y1 */
+      const x0 = 186, x1 = 326, y0 = 150, y1 = 330, mx = (x0 + x1) / 2, my = 238;
+      const shield = () => { x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y0); x.lineTo(x1, y1 - 50); x.quadraticCurveTo(x1, y1, mx, y1 + 10); x.quadraticCurveTo(x0, y1, x0, y1 - 50); x.closePath(); };
+      /* the Garter round the shield */
+      x.fillStyle = "#1c2a5c"; x.beginPath(); x.ellipse(mx, 244, 96, 112, 0, 0, 7); x.fill();
+      x.strokeStyle = GOLD; x.lineWidth = 3; x.stroke();
+      x.save(); x.fillStyle = GOLD; x.font = "bold 15px serif"; x.textAlign = "center"; x.textBaseline = "middle";
+      const motto = "HONI SOIT QUI MAL Y PENSE";
+      for (let i = 0; i < motto.length; i++) { const t = -2.55 + (i / (motto.length - 1)) * 5.1, px = mx + Math.sin(t) * 88, py = 244 - Math.cos(t) * 103; x.save(); x.translate(px, py); x.rotate(t); x.fillText(motto[i], 0, 0); x.restore(); }
+      x.restore();
+      x.save(); shield(); x.clip();
+      /* 1: England (red, three gold lions) impaling Scotland (gold, a red lion rampant in a red double border) */
+      x.fillStyle = RED; x.fillRect(x0, y0, (mx - x0) / 2, my - y0);
+      for (let i = 0; i < 3; i++) lionP(x0 + 17, y0 + 18 + i * 26, 0.9, GOLD);
+      x.fillStyle = GOLD; x.fillRect(x0 + (mx - x0) / 2, y0, (mx - x0) / 2, my - y0);
+      lionR(x0 + 52, y0 + 46, 1.1, RED); x.strokeStyle = RED; x.lineWidth = 1.5; x.strokeRect(x0 + 38, y0 + 5, 29, my - y0 - 10);
+      /* 2: France (blue, three gold fleurs-de-lis) */
+      x.fillStyle = BLUE; x.fillRect(mx, y0, x1 - mx, my - y0);
+      fleur(mx + 20, y0 + 28, 1.6); fleur(mx + 50, y0 + 28, 1.6); fleur(mx + 35, y0 + 62, 1.6);
+      /* 3: Ireland (blue, a gold harp) */
+      x.fillStyle = BLUE; x.fillRect(x0, my, mx - x0, y1 + 20 - my);
+      harp(x0 + 35, my + 38, 1.6);
+      /* 4: Hanover: Brunswick (red, two gold lions), Lüneburg (gold, a blue lion), Westphalia (red, a white horse), the crown of Charlemagne on red */
+      x.fillStyle = RED; x.fillRect(mx, my, (x1 - mx) / 2, 50); lionP(mx + 17, my + 16, 0.7, GOLD); lionP(mx + 17, my + 34, 0.7, GOLD);
+      x.fillStyle = GOLD; x.fillRect(mx + (x1 - mx) / 2, my, (x1 - mx) / 2, 50); lionR(mx + 52, my + 25, 0.8, BLUE);
+      x.fillStyle = RED; x.fillRect(mx, my + 50, x1 - mx, 60);
+      x.fillStyle = WHITE; x.beginPath(); x.ellipse(mx + 35, my + 72, 12, 5, 0, 0, 7); x.fill(); x.beginPath(); x.arc(mx + 48, my + 66, 4, 0, 7); x.fill(); x.fillRect(mx + 26, my + 75, 2, 9); x.fillRect(mx + 42, my + 75, 2, 9);
+      x.fillStyle = RED; x.fillRect(mx + 25, my + 30, 20, 18); x.strokeStyle = GOLD; x.lineWidth = 1.2; x.strokeRect(mx + 25, my + 30, 20, 18); x.fillStyle = GOLD; x.fillRect(mx + 29, my + 36, 12, 6);
+      x.restore();
+      x.strokeStyle = GOLD; x.lineWidth = 3; shield(); x.stroke();
+      x.strokeStyle = DARK; x.lineWidth = 1.2; x.beginPath(); x.moveTo(mx, y0); x.lineTo(mx, y1 + 8); x.moveTo(x0, my); x.lineTo(x1, my); x.stroke();
+      /* the crown above */
+      x.fillStyle = GOLD; x.beginPath(); x.moveTo(206, 128); x.quadraticCurveTo(256, 36, 306, 128); x.closePath(); x.fill();
+      x.fillStyle = "#7a1a20"; x.beginPath(); x.moveTo(214, 122); x.quadraticCurveTo(256, 56, 298, 122); x.closePath(); x.fill();
+      x.fillStyle = GOLD; x.fillRect(204, 120, 104, 14); x.fillRect(252, 52, 8, 72); x.beginPath(); x.arc(256, 46, 9, 0, 7); x.fill(); x.fillRect(244, 34, 24, 5); x.fillRect(253, 26, 6, 18);
+      x.fillStyle = WHITE; for (let i = 0; i < 9; i++) { x.beginPath(); x.arc(210 + i * 11.5, 127, 2.2, 0, 7); x.fill(); }
+      /* the supporters: the lion (gold, crowned) and the unicorn (white, gold-chained), standing up to the shield */
+      const supporter = (cx, col, dir, unicorn) => {
+        x.fillStyle = col;
+        x.beginPath(); x.ellipse(cx, 260, 26, 62, dir * -0.25, 0, 7); x.fill();
+        x.beginPath(); x.arc(cx + dir * 18, 182, 22, 0, 7); x.fill();
+        x.fillRect(cx - 18, 310, 13, 56); x.fillRect(cx + 4, 310, 13, 56);
+        x.save(); x.lineWidth = 11; x.strokeStyle = col; x.lineCap = "round"; x.beginPath(); x.moveTo(cx + dir * 14, 230); x.lineTo(cx + dir * 48, 205); x.stroke(); x.restore();
+        if (unicorn) { x.strokeStyle = GOLD; x.lineWidth = 4; x.beginPath(); x.moveTo(cx + dir * 30, 172); x.lineTo(cx + dir * 46, 136); x.stroke(); x.beginPath(); x.ellipse(cx, 208, 20, 6, 0, 0, 7); x.stroke(); x.beginPath(); x.moveTo(cx - 6, 212); x.quadraticCurveTo(cx - 30, 300, cx - 8, 368); x.stroke(); }
+        else { x.fillStyle = "#a8822a"; x.beginPath(); x.arc(cx + dir * 14, 178, 26, 2.2, 4.6); x.fill(); x.fillStyle = GOLD; x.fillRect(cx + dir * 18 - 12, 154, 24, 8); for (let i = 0; i < 3; i++) x.fillRect(cx + dir * 18 - 11 + i * 9, 146, 4, 9); }
+        x.fillStyle = DARK; x.beginPath(); x.arc(cx + dir * 26, 178, 2.6, 0, 7); x.fill();
+      };
+      supporter(118, GOLD, 1, false);
+      supporter(394, WHITE, -1, true);
+      /* the ground they stand on, and the motto ribbon */
+      x.fillStyle = "#4a6a30"; x.beginPath(); x.ellipse(256, 378, 200, 14, 0, 0, 7); x.fill();
+      x.fillStyle = WHITE; x.beginPath(); x.moveTo(96, 392); x.lineTo(416, 392); x.lineTo(404, 410); x.lineTo(416, 428); x.lineTo(96, 428); x.lineTo(108, 410); x.closePath(); x.fill();
+      x.strokeStyle = GOLD; x.lineWidth = 2; x.stroke();
+      x.fillStyle = DARK; x.font = "bold 24px serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("DIEU ET MON DROIT", 256, 411);
     });
   const g = grp(),
     m = new THREE.MeshStandardMaterial({ map: _arms, transparent: true, alphaTest: 0.5, roughness: 0.7 });
@@ -1170,7 +1193,9 @@ function court() {
   for (const [a, b, c, d] of [[-X, -Z, X, -Z], [X, Z, -X, Z], [-X, Z, -X, -Z], [X, -Z, X, Z]]) W.wallRun(Q.group, [a, b, c, d], H, wallM, [], 0.4);
   Q.walls.push([-X - 0.2, -Z - 0.2, X + 0.2, -Z + 0.2], [-X - 0.2, Z - 0.2, X + 0.2, Z + 0.2], [-X - 0.2, -Z - 0.2, -X + 0.2, Z + 0.2], [X - 0.2, -Z - 0.2, X + 0.2, Z + 0.2]);
   /* a panelled dado round the room, a moulded rail above it, a cornice under the ceiling, and beams across */
-  for (const [x, z, w, ry] of [[0, -Z + 0.22, 2 * X - 0.4, 0], [0, Z - 0.22, 2 * X - 0.4, Math.PI], [-X + 0.22, 0, 2 * Z - 0.4, Math.PI / 2], [X - 0.22, 0, 2 * Z - 0.4, -Math.PI / 2]]) {
+  /* the back wall's dado stops either side of the double door and its frame (owner, 23 November 2026: the rail ran straight across the door) */
+  const DOORGAP = 1.9, sideW = X - 0.2 - DOORGAP / 2;
+  for (const [x, z, w, ry] of [[0, -Z + 0.22, 2 * X - 0.4, 0], [-(DOORGAP / 2 + sideW / 2), Z - 0.22, sideW, Math.PI], [DOORGAP / 2 + sideW / 2, Z - 0.22, sideW, Math.PI], [-X + 0.22, 0, 2 * Z - 0.4, Math.PI / 2], [X - 0.22, 0, 2 * Z - 0.4, -Math.PI / 2]]) {
     const d = box(w, 1.15, 0.05, panel(w, 1.15), 0, 0.575, 0, grp());
     const g = d.parent;
     box(w, 0.07, 0.09, S.SM.woodDark, 0, 1.18, 0.01, g);
@@ -1178,6 +1203,7 @@ function court() {
     box(w, 0.16, 0.12, solid(0xf0ead8, 1), 0, H - 0.08, 0.03, g);
     add(Q, g, x, z, 0, ry);
   }
+  box(DOORGAP, 0.16, 0.12, solid(0xf0ead8, 1), 0, H - 0.08, Z - 0.25, Q.group);   /* the cornice runs on over the door */
   for (const x of [-4.4, -2.2, 0, 2.2, 4.4]) box(0.18, 0.2, 2 * Z - 0.4, solid(0xd8d0b8, 1), x, H - 0.1, 0, Q.group);
   /* tall sash windows down both sides and either side of the bench; the double door at the back */
   for (const z of [-2.2, 0.6, 3.0]) {
@@ -1187,35 +1213,35 @@ function court() {
   for (const x of [-4.6, 4.6]) add(Q, sash(1.2, 2.2), x, -Z + 0.205, 2.6, 0);
   add(Q, W.makeDoor({ w: 1.5, h: 2.5, kind: "six", leaves: 2, color: 0x2f3b33, frame: 0xe2d9c2, handle: "knob" }), 0, Z - 0.21, 0, Math.PI);
   /* ---- the bench: a raised floor across the end of the room, a panelled front, the judge's chair under a canopy, the royal arms above.
-     The judge is not named in any source found, so the chair is empty. ---- */
+     The judge sits in it. No source found names him, and he has no words (owner, 23 November 2026: a trial needs a presiding judge). ---- */
   const dais = grp();
   box(7.4, 0.42, 1.9, S.SM.woodDark, 0, 0.21, 0, dais);
   box(7.5, 0.05, 2.0, S.SM.wood, 0, 0.43, 0, dais);
   box(1.6, 0.21, 0.5, S.SM.woodDark, -3.0, 0.105, 1.2, dais);   /* the step up */
-  box(4.6, 1.2, 0.09, panel(4.6, 1.2, 3), 0, 1.05, 0.62, dais);
-  box(4.8, 0.07, 0.6, S.SM.woodDark, 0, 1.68, 0.4, dais);   /* the desk top */
-  for (const s of [-1, 1]) box(0.09, 1.2, 0.6, panel(0.6, 1.2, 1), s * 2.3, 1.05, 0.36, dais);
+  box(4.6, 0.8, 0.09, panel(4.6, 0.8, 3), 0, 0.85, 0.62, dais);
+  box(4.8, 0.07, 0.6, S.SM.woodDark, 0, 1.28, 0.4, dais);   /* the desk top, at the seated judge's chest, so he is seen over it (it stood 1.2 m over the bench floor and hid him) */
+  for (const s of [-1, 1]) box(0.09, 0.8, 0.6, panel(0.6, 0.8, 1), s * 2.3, 0.85, 0.36, dais);
   /* the chair: a tall back with a carved top, red leather seat */
-  box(0.7, 0.5, 0.62, S.SM.woodDark, 0, 0.7, -0.35, dais);
-  box(0.62, 0.08, 0.56, solid(0x7a2a24, 0.7), 0, 0.98, -0.34, dais);
+  box(0.7, 0.42, 0.62, S.SM.woodDark, 0, 0.66, -0.35, dais);   /* the seat 48 cm over the bench floor, an ordinary chair's height, so the judge's feet rest on the floor */
+  box(0.62, 0.08, 0.56, solid(0x7a2a24, 0.7), 0, 0.9, -0.34, dais);
   box(0.7, 1.4, 0.1, S.SM.woodDark, 0, 1.68, -0.64, dais);
   box(0.5, 0.9, 0.03, solid(0x7a2a24, 0.7), 0, 1.6, -0.585, dais);
-  mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 12, 1, false, 0, Math.PI), S.SM.woodDark, 0, 2.38, -0.64, dais).rotation.set(Math.PI / 2, 0, Math.PI / 2);
-  for (const s of [-1, 1]) box(0.08, 0.3, 0.5, S.SM.woodDark, s * 0.36, 1.12, -0.36, dais);
+  mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 12, 1, false, 0, Math.PI), S.SM.woodDark, 0, 2.38, -0.64, dais).rotation.set(Math.PI / 2, 0, Math.PI / 2, "ZYX");   /* the carved half-round top, facing the room (in the default order it stood edge-on, a post up into the royal arms) */
+  for (const s of [-1, 1]) box(0.08, 0.3, 0.5, S.SM.woodDark, s * 0.36, 1.04, -0.36, dais);
   /* the canopy and its back board */
   box(2.2, 2.3, 0.06, panel(2.2, 2.3, 2), 0, 2.4, -0.86, dais);
   box(2.5, 0.14, 1.0, S.SM.woodDark, 0, 3.6, -0.44, dais);
   box(2.6, 0.1, 1.1, solid(0xc9a43c, 0.5, 0.4), 0, 3.7, -0.44, dais);
   for (const s of [-1, 1]) cyl(0.06, 0.07, 3.1, S.SM.woodDark, s * 1.15, 2.0, 0.0, dais, 8);
   const arms = royalArms();
-  arms.position.set(0, 3.0, -0.82);
-  arms.scale.setScalar(0.72);
+  arms.position.set(0, 3.07, -0.82);   /* the motto ribbon clears the chair's carved top, the board's top clears the canopy beam */
+  arms.scale.setScalar(0.62);
   dais.add(arms);
   /* on the desk: an inkstand, a quill, a sand box, a bell, two books */
-  cyl(0.05, 0.06, 0.07, S.SM.lead, -0.6, 1.75, 0.4, dais, 8);
-  S.spar([-0.6, 1.78, 0.4], [-0.5, 2.02, 0.3], 0.006, 0.02, S.SM.white, dais);
-  cyl(0.04, 0.04, 0.06, S.SM.brass, -0.4, 1.745, 0.45, dais, 8);
-  for (const [x, c] of [[0.7, 0x4a2f24], [0.74, 0x2f3b4a]]) box(0.26, 0.05, 0.34, solid(c, 0.8), x, 1.74 + (c === 0x2f3b4a ? 0.05 : 0), 0.4, dais).rotation.y = 0.2;
+  cyl(0.05, 0.06, 0.07, S.SM.lead, -0.6, 1.35, 0.4, dais, 8);
+  S.spar([-0.6, 1.38, 0.4], [-0.5, 1.62, 0.3], 0.006, 0.02, S.SM.white, dais);
+  cyl(0.04, 0.04, 0.06, S.SM.brass, -0.4, 1.345, 0.45, dais, 8);
+  for (const [x, c] of [[0.7, 0x4a2f24], [0.74, 0x2f3b4a]]) box(0.26, 0.05, 0.34, solid(c, 0.8), x, 1.34 + (c === 0x2f3b4a ? 0.05 : 0), 0.4, dais).rotation.y = 0.2;
   solid1(Q, dais, 0, -Z + 1.2, 7.6, 2.1);
   wall(Q, -3.0, -Z + 2.4, 1.6, 0.5);
   /* ---- the clerk's table under the bench: ledgers, an inkstand, a candle; and the registrar's stool ---- */
@@ -1344,11 +1370,14 @@ function court() {
   box(0.5, 0.05, 0.4, S.SM.woodDark, 0, 0.5, 0, stool);
   for (const x of [-0.2, 0.2]) for (const z of [-0.15, 0.15]) box(0.04, 0.5, 0.04, S.SM.woodDark, x, 0.25, z, stool);
   solid1(Q, stool, 4.3, 0.9, 0.55, 0.45);
-  /* the court decides, as a camera scene: the clerk reads out the decision; the judge's chair stays empty */
+  /* the court decides, as a camera scene: the clerk reads out the decision; the judge sits on the bench */
   Q.films.verdict = filmHold(Q, ["clerk", "fitton"]);
   /* people */
   person(Q, "clerk", "clerk", -3.6, -0.5, face(-3.6, -0.5, 2, 2), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn", "Nod"], every: [5, 9] }, { held: "ledger" });
   person(Q, "fitton", "fitton", 3.5, -0.6, face(3.5, -0.6, 0, 1), { kind: "watch", at: [0, 0.1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
+  /* the judge (unnamed in every source found; no words), seated on the bench in a black gown with white bands and a powdered wig. The gown
+     and the wig are stand-ins: a knee-length black coat and white powdered hair, until the builder makes a gown and a wig (docs/games/shark-papers.md) */
+  crowd(Q, "sp_judge", 0, -Z + 1.2 - 0.34, 0, { kind: "sit", seat: { top: 0.94, x: 0, z: -Z + 1.2 - 0.34, ry: 0 }, clips: ["SitIdle"] });   /* SitIdle2 pressed his fingers into his thighs (rule 15 check) */
   const sit = (look, bi, dx) => crowd(Q, look, BEN[bi][0] + dx, BEN[bi][1], Math.PI, { kind: "sit", seat: { top: 0.475, x: BEN[bi][0] + dx, z: BEN[bi][1], ry: Math.PI }, clips: ["SitIdle", "SitIdle2"], group: "pub" + bi });
   sit("sp_merchant", 0, 0.9);
   sit("sp_merchant2", 0, -0.2);

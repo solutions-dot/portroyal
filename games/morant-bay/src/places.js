@@ -196,7 +196,10 @@ function gut() {
     const h = add(Q, hen(sd), x, z, 0, sd * 1.7);
     Q.tickers.push((t) => h.userData.tick(t));
   }
-  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [-13.4, -10.6, 15], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  for (const [x, z, sd] of [[-10.6, 8.2, 11], [-2.6, 10.8, 12], [5.8, 12.8, 13], [19.8, 6.0, 14], [19.6, -8.6, 16]]) solid1(Q, banana(sd, sd % 2 === 0), x, z, 0.6, 0.6);
+  /* the clump below the cave is cover on the way up (chapter 5); the cave-mouth camera looks out past it, so the film leaves it out of the frame */
+  const caveBanana = dyn(banana(15, false));
+  solid1(Q, caveBanana, -13.4, -10.6, 0.6, 0.6);
   for (const [x, z, sd] of [[-11.6, 12.4, 21], [11.4, 12.0, 22], [2.6, -13.6, 23], [19.4, 1.8, 24], [-19.6, 4.0, 25], [9.8, -14.6, 26]]) solid1(Q, palm(8 + (sd % 3), sd), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => bush(i + 40, 0.9 + (i % 3) * 0.3), 26, [-24, -18, 24, 18], [[-21.5, -16.5, 21.5, 15.5]], 31);
   scatter(Q.group, (i) => tree(6 + (i % 3), i + 70, i % 2), 14, [-40, -40, 40, 40], [[-24, -18, 24, 18]], 37);
@@ -310,22 +313,37 @@ function gut() {
   const sheet = plane(0.3, 0.4, solid(0xe8e0c8, 1, 0, { side: THREE.DoubleSide }), CHAPEL.x - 0.2, 0.96, CHAPEL.z - 4.0, Q.group);
   sheet.rotation.x = -Math.PI / 2;
   sheet.userData.noBatch = true;
-  const names = [];
+  const names = [], X0 = CHAPEL.x - 0.32;   /* X0: the margin each name starts from */
   for (let i = 0; i < 10; i++) {   /* a name in ink, line under line, each starting at the same margin */
     const len = 0.1 + ((i * 37) % 7) * 0.012,
-      n = box(len, 0.0015, 0.0045, solid(0x1e1a16, 1), CHAPEL.x - 0.32 + len / 2, 0.962, CHAPEL.z - 4.16 + i * 0.03, Q.group);
+      n = box(len, 0.0015, 0.0045, solid(0x1e1a16, 1), X0 + len / 2, 0.962, CHAPEL.z - 4.16 + i * 0.03, Q.group);
     n.userData.noBatch = true;
+    n.userData.len = len;
     n.visible = false;
     names.push(n);
   }
-  const pen = cyl(0.004, 0.003, 0.16, solid(0x2a2420, 1), CHAPEL.x - 0.05, 0.97, CHAPEL.z - 3.92, Q.group, 5);
-  pen.rotation.set(Math.PI / 2, 0, 0.6);
-  pen.userData.noBatch = true;
+  /* a dip pen held as you write (owner, 23 November 2026: it lay flat on the paper): a wooden holder with a steel nib, the nib on the paper and the
+     holder leaning back toward Hannah and a little to her right, about 50 degrees up from the table. The group's origin is the nib's point. */
+  const pen = new THREE.Group(), penTilt = new THREE.Group();
+  pen.add(penTilt);
+  penTilt.rotation.set(0.62, 0, -0.42);   /* the holder's top back toward the writer (+z) and to her right (+x) */
+  cyl(0.0045, 0.0035, 0.15, solid(0x5a3a22, 0.8), 0, 0.087, 0, penTilt, 6);   /* the holder */
+  cyl(0.0035, 0.0012, 0.014, solid(0x8a8a90, 0.4, 0.8), 0, 0.007, 0, penTilt, 6);   /* the steel nib */
+  pen.position.set(X0, 0.963, CHAPEL.z - 4.16);
+  Q.group.add(pen);
+  pen.traverse((o) => (o.userData.noBatch = true));
   Q.reveal.names = (seen) => {
     const k = K(seen);
-    names.forEach((n, i) => (n.visible = k > 0.1 + i * 0.08));
-    pen.position.z = CHAPEL.z - 4.16 + Math.min(9, Math.floor(k * 11)) * 0.033;
-    pen.position.x = CHAPEL.x - 0.12 + 0.06 * Math.sin(k * 60);
+    let at = null;
+    names.forEach((n, i) => {
+      const f = Math.max(0, Math.min(1, (k - 0.1 - i * 0.08) / 0.08)), L = n.userData.len;   /* each name is written out from the margin, the nib at its end */
+      n.visible = f > 0;
+      n.scale.x = Math.max(0.001, f);
+      n.position.x = X0 + (L * f) / 2;
+      if (f > 0) at = [X0 + L * f, n.position.z, f];
+    });
+    if (at) pen.position.set(at[0], 0.963 + (at[2] >= 1 ? 0.012 : 0.004 * Math.abs(Math.sin(k * 90))), at[1]);   /* the nib moves along the stroke, lifted off between names */
+    else pen.position.set(X0, 0.975, CHAPEL.z - 4.16);
   };
   point(Q, "table", CHAPEL.x + 0.2, CHAPEL.z - 2.8, "the table");
   /* the drill in Bogle's yard (chapter 3): men in lines, sticks on their shoulders. Watched from the gap in the fence. */
@@ -371,10 +389,11 @@ function gut() {
   /* each building burns hard for a while, then its roof gives way: the building slumps and leans over two seconds (with a burst of sparks), then
      only the burnt shell stands, still smoking, as the ward does in Eventide Home (owner, 23 November 2026: "look at the fire from eventide home
      and the collapse of the building.. that is what we need to see in Morant Bay") */
-  const falls = [[ch, chB, fires[0], 5], [home, homeBurnt, fires[1], 13], [bh, bhB, fires[2], 9]];
+  const falls = [[ch, chB, fires[0], 1], [home, homeBurnt, fires[1], 11], [bh, bhB, fires[2], 7]];   /* the chapel is alight as the scene opens */
   for (const [w] of falls) w.userData.baseY = w.position.y;
   Q.films.burning = (t) => {
     const on = t >= 0;
+    caveBanana.visible = !on;   /* out of the cave-mouth frame (?test=lens: its leaves filled the view) */
     for (const [w, b, f, a] of falls) {
       if (!on) { w.scale.y = 1; w.rotation.z = 0; continue; }
       const lit = Math.max(0, Math.min(1, (t - a) / 3)), u = Math.max(0, Math.min(1, (t - a - 7) / 2)), fell = t >= a + 9;
@@ -384,7 +403,7 @@ function gut() {
       w.rotation.z = 0.08 * u * u;
     }
     /* night comes; lanterns on the track; soldiers lead men away south, toward the Bay */
-    const want = on && t >= 19 ? NIGHT : SMOKE;
+    const want = on && t >= 22.5 ? NIGHT : SMOKE;   /* night falls at the cut to the path */
     if (Q.light !== want) {
       Q.light = want;
       Q.relight?.();
@@ -395,13 +414,13 @@ function gut() {
         n.amb.held = false;
         continue;
       }
-      const k = Math.max(0, Math.min(1, (t - 20) / 11)),
+      const k = Math.max(0, Math.min(1, (t - 23) / 9)),
         x = n.lead % 2 ? -11.4 : -10.0,   /* down the path past the provision ground, below the cave */
         z = -11 + Math.floor(n.lead / 2) * 1.5 + k * 18;
       walkTo(n, x, z, 0, k > 0 && k < 1);
-      n.m.visible = t >= 19.5;
+      n.m.visible = t >= 22.5;
     }
-    nightLamp.intensity = on && t >= 19.5 ? 5 : 0;
+    nightLamp.intensity = on && t >= 22.5 ? 5 : 0;
     const l0 = lead.find((n) => n.lead === 0);
     if (l0) nightLamp.position.set(l0.x + 0.3, 1.2, l0.z);
   };
@@ -462,7 +481,7 @@ function gut() {
   };
   /* the hour and what stands or has burned, by step */
   Q.enter = (stage) => {
-    const night = (stage >= 30 && stage <= 34) || stage === 59,
+    const night = (stage >= 30 && stage <= 34) || stage === 58 || stage === 59,   /* 58 too: the cave film ends at night, and day came back for one step before night again */
       morn = stage >= 35 && stage < 40,
       martial = stage >= 50,
       burnt = stage >= 58;
@@ -504,6 +523,9 @@ function gut() {
       at("mother", H.x + 4.4, H.z + 0.6, 4, 2);   /* out from the wall, clear of the cook fire at (-3.8, 6.6), and a step from Sammy */
       at("brother", H.x + 5.6, H.z + 2.2, 4, 2);
       at("gran", H.x + 3.4, H.z - 1.5, 4, 2);   /* clear of the door leaf as it swings out (owner: she stood in the door) */
+    }
+    if (meeting || (stage >= 35 && stage < 40)) {
+      /* placed above */
     } else if (stage >= 50 && stage < 55) {
       at("gran", H.x - 3.4, H.z + 0.6, -12, 8);
       at("brother", H.x - 3.2, H.z - 0.6, -12, 8);
@@ -512,22 +534,26 @@ function gut() {
       at("brother", CAVE.x + 1.1, CAVE.z + 0.1, 0, 0);
     } else {
       at("deacon", 1.4, -4.7, 2.4, -2.6);
-      at("father", -11.4, -1.4, -14, -4);
-      at("mother", -3.2, 8.4, -3.8, 6.6);
+      at("father", -10.2, -0.4, -14, -4);   /* behind and beside the dig close-up's camera, not in it (his legs filled it) */
+      at("mother", -2.4, 7.4, -3.8, 6.6);   /* out of the tin-box close-up (bent at her work, she filled half of it) */
       at("gran", -4.2, 2.6, -3.8, 6.6);
       at("brother", -2.4, 5.0, -3.6, 7);
     }
+    /* while the family hides (chapter 5) Sammy keeps by Gran: left wandering, he walked off to the front yard through the house and
+       out of the cave (owner, 23 November 2026: "Sammy walks through walls and people in chapter 5"). Otherwise he plays about the yard. */
+    const sammy = Q.people?.find((p) => p.id === "brother");
+    if (sammy?.amb) Q.storyLife?.respec(sammy, stage >= 50 ? { kind: "watch", idles: ["Idle", "HeadTurn"], react: ["HeadTurn"], every: [5, 9] } : { kind: "wander" });
   };
   /* people. Story people (person) by the house, the chapel and the yard; the village (crowd) by the step that brings them. */
   person(Q, "gran", "gran", -4.2, 2.6, face(-4.2, 2.6, -3.8, 6.6), { kind: "watch", at: [-3.8, 6.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
-  person(Q, "mother", "mother", -3.2, 8.4, face(-3.2, 8.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
-  person(Q, "father", "father", -11.4, -1.4, face(-11.4, -1.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
+  person(Q, "mother", "mother", -2.4, 7.4, face(-2.4, 7.4, -3.8, 6.6), { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-3.8, 6.6] });
+  person(Q, "father", "father", -10.2, -0.4, face(-10.2, -0.4, -14, -4), { kind: "watch", at: [-14, -4], idles: ["IdleM"], react: ["HeadTurn", "WipeSweat"], every: [5, 9] });
   person(Q, "brother", "brother", -2.4, 5.0, 0, { kind: "wander", area: [-5.6, 3.2, -1.6, 8.4], pause: [2, 5] });
   person(Q, "deacon", "deacon", 1.4, -4.7, face(1.4, -4.7, 2.4, -2.6), { kind: "watch", at: [2.4, -2.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9] });
   person(Q, "bogle", "bogle", 13.2, -2.4, face(13.2, -2.4, 9, -2), { kind: "watch", at: [9, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
   person(Q, "constable", "constable", 4.4, 3.0, face(4.4, 3.0, 12, -2), { kind: "watch", at: [12, -2], idles: ["IdleM"], react: ["HeadTurn"], every: [5, 9] });
   /* the village: neighbours at their work, children */
-  crowd(Q, "mb_woman", -9.4, -2.9, 0, { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-11, -1], when: [8, 49] });
+  crowd(Q, "mb_woman", -19.7, -4.0, 0, { kind: "work", clips: ["Idle", "PickUp", "WipeSweat"], work: [5, 9], face: [-15, -3.4], when: [8, 49] });   /* at the far side of the yam hills, working toward you (owner, 23 November 2026: move her further back, behind the yam hills) */
   crowd(Q, "mb_man", 5.6, 4.6, 0, { kind: "work", between: [[5.6, 4.6], [2.4, 3.2]], walk: "Walk", idle: "IdleM", when: [8, 29] });
   crowd(Q, "mb_oldman", 11.4, 7.0, face(11.4, 7, 9, 8.6), { kind: "watch", at: [9, 8.6], idles: ["OldIdle"], react: ["HeadTurn", "Nod"], every: [5, 9], when: [8, 49] });
   crowd(Q, "mb_woman", -2.0, -7.0, 0, { kind: "chat", group: "c", at: [-1.6, -7.4], when: [8, 29] });
@@ -661,6 +687,9 @@ function bay() {
   const volley = add(Q, S.smoke(8, { rise: 1.2, spread: 3.2, size: 1.6, tint: 0xd8d4cc }), 0.3, -5.2, 1.4);   /* the white smoke of the volley along the steps */
   volley.visible = false;
   volley.traverse((o) => (o.userData.noAudit = true));
+  /* who falls at the volley: two at the front of the crowd, nearest the steps, about 12 m from Hannah with nobody between, never close
+     (docs/games/morant-bay.md: people fall at a distance, behind the opt-in card, and the camera cuts away before anyone lies still) */
+  const falls = (i, row, col) => col === 4 && (row === 0 || row === 1);
   Q.films.riot = (t, Q) => {
     const crowdN = (Q.extras || []).filter((n) => n.riot),
       vol = (Q.extras || []).filter((n) => n.vol);
@@ -685,7 +714,7 @@ function bay() {
     crowdN.forEach((n, i) => {
       const row = i % 4,
         col = Math.floor(i / 4),
-        home = [-2 + col * 2.2 + (row % 2) * 0.9, -1.4 + row * 1.5],
+        home = falls(i, row, col) ? [1.2 + row * 1.4, -3.0 - row * 0.3] : [-2 + col * 2.2 + (row % 2) * 0.9, -1.4 + row * 1.5],   /* the two who fall stand out in front, nearest the steps */
         start = [30 + col * 1.6, -0.4 + row * 1.1];
       let p, clip;
       if (t < 18) {
@@ -696,6 +725,7 @@ function bay() {
       } else if (t < 31) {
         p = home;
         clip = t > 27.2 && t < 30 ? "Duck2" : i % 2 ? "Yell" : "Angry";
+        if (falls(i, row, col) && t > 27.6) clip = "FallBack";   /* the owner's fall (anims_mb): far off, in the smoke; the camera cuts away at 29.9 s, before they reach the ground */
         n.m.rotation.y = Math.PI;
       } else {
         const k = Math.min(1, (t - 31) / 5),
@@ -707,10 +737,11 @@ function bay() {
       n.x = p[0];
       n.z = p[1];
       n.m.position.set(p[0], 0, p[1]);
-      n.m.visible = t > 2;
+      n.m.visible = t > 2 && !(falls(i, row, col) && t >= 29.9);   /* after the cut nobody is left lying on the Parade (the line for this game: never a body) */
       if (n.clipNow !== clip) {
         n.clipNow = clip;
-        n.ctl.play(clip);
+        if (clip === "FallBack") n.ctl.cue(clip, true);   /* asked for by the film on purpose (engine/anim.js NOT_IDLE) */
+        else n.ctl.play(clip);
       }
     });
     vol.forEach((n, i) => {
@@ -730,8 +761,8 @@ function bay() {
     volley.visible = t > 27.4 && t < 34;
     if (volley.visible) volley.userData.tick(t * 0.6);
     volley.position.y = 1.4 + Math.max(0, t - 27.4) * 0.15;
-    fireS.userData.setLevel(t > 38 ? Math.min(0.9, (t - 38) / 3) : 0);
-    fireC.userData.setLevel(t > 45 ? Math.min(1, (t - 45) / 4) : 0);
+    fireS.userData.setLevel(t > 37 ? Math.min(0.9, (t - 37) / 3) : 0);
+    fireC.userData.setLevel(t > 43.5 ? Math.min(1, (t - 43.5) / 4) : 0);   /* already catching as its caption comes */
     const want = t > 40 ? DUSK : LATE;
     if (Q.light !== want) {
       Q.light = want;
@@ -761,10 +792,17 @@ function bay() {
   /* listening for the shells (chapter 4): the camera looks east up the road, a far line of people appears in the dust */
   const far = add(Q, S.farCrowd(30, 10, 4), 60, 6.4, 0, Math.PI / 2);
   far.visible = false;
+  /* the dust they raise on the road (the look's own words: "Dust over the road from the east") */
+  const dust = add(Q, S.smoke(14, { rise: 1.2, spread: 7, size: 5.5, tint: 0xa88a62, opacity: 0.7 }), 62, 6.4, 1.2);
+  dust.visible = false;
+  dust.traverse((o) => (o.userData.noAudit = true));
   Q.reveal.shells = (seen) => {
     const k = K(seen);
     far.visible = k > 0.2 && k < 1;
     far.position.x = mix(80, 58, span(k, 0.2, 1));
+    dust.visible = far.visible;
+    dust.position.x = far.position.x + 2.5;
+    if (dust.visible) dust.userData.tick(k * 9);
   };
   point(Q, "road", 19, 4.6, "the east road");
   /* the notice nailed to the shed post (chapter 6) */

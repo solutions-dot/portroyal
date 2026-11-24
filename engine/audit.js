@@ -1,3 +1,4 @@
+import { fightLines, settleFights } from './depthfight.js';
 import { routeIssues, furnitureRouteIssues, anchorSeat } from './placement.js';
 /* engine/audit.js: automatic checks of a built place, for every game. Rule (CLAUDE.md): run it, and fix everything it reports, before calling a place done.
    It finds three kinds of mistake that are easy to miss by eye and tedious to find one at a time:
@@ -37,7 +38,7 @@ export function snapMeshes(group, { shown = false } = {}) {   /* shown: leave ou
         const e = { b, mat: mat.name || mat.type, geo: o.geometry.type, unlit: !!mat.isMeshBasicMaterial, flame: false, col: mat.color ? '#' + mat.color.getHexString() : '', top: o.uuid + '#' + k, inst: true, card: isCard(o.material), name: o.name || '', soft: !!o.userData.soft }; SHAPE.set(e, { geo: o.geometry, mw });
         if (o.geometry.type === 'BoxGeometry') { e.lb = o.geometry.boundingBox.clone(); e.inv = mw.clone().invert(); e.sc = Math.cbrt(Math.abs(mw.determinant())) || 1; }   /* the exact box, for seats: a hall's rows of chairs are instanced copies */
         inst.push(e); } } });
-  out.inst = inst; return out;
+  out.inst = inst; settleFights(group); out.fights = fightLines(group); return out;   /* surfaces in one plane (engine/depthfight.js): settled as engine/batch.js does, then whatever still fights is reported by the place audit */
 }
 
 // A rotated bench's world AABB includes empty corners beside its backrest.
@@ -104,7 +105,7 @@ export function auditPlace(place) {
   const plant = []; const builds = [...tops.entries()].filter(([, t]) => { const z = t.b.getSize(new THREE.Vector3()); return t.wall && Math.max(z.x, z.z) >= 3 && Math.min(z.x, z.z) >= 2.5 && z.y >= 2 && z.y < 14; });
   for (const [k, t] of tops) if (!t.wall) for (const tb of t.trunks) {   /* a building's own posts are not trees */ const c = tb.getCenter(new THREE.Vector3()); if (tb.min.y > 0.5) continue;
     for (const [k2, h] of builds) if (k2 !== k && h.bodies.some((bb) => tb.max.y > bb.max.y + 0.3 && c.x > bb.min.x - 0.6 && c.x < bb.max.x + 0.6 && c.z > bb.min.z - 0.6 && c.z < bb.max.z + 0.6)) {   /* inside it or under its eaves, and taller than its walls: it grows up through the roof (a pipe or a post inside a room stays inside) */   /* inside a solid body, not just inside the outline of a group of buildings or round a courtyard */ plant.push(`a tree or plant at (${c.x.toFixed(1)},${c.z.toFixed(1)}) grows up through a building${h.name ? ' (' + h.name + ')' : ''} at (${((h.b.min.x + h.b.max.x) / 2).toFixed(1)},${((h.b.min.z + h.b.max.z) / 2).toFixed(1)})`); break; } }
-  return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut, plant), stuck };
+  return { id: place.id, floating, inside: inside.concat(overlap, cut, wcut, plant), stuck: stuck.concat(place.fights === false ? [] : L.fights || []) };
 }
 
 /* overlap: two separate solid things that cut into each other (a stool through a basket, a fence through a hut, a log through a rock, a pot sunk into a table).

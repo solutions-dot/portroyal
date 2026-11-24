@@ -154,6 +154,9 @@ export function createAmbient(opts = {}) {
   };
   life.remove = (n) => { const i = people.indexOf(n); if (i >= 0) people.splice(i, 1); if (n.amb && n.amb.g) { const g = n.amb.g; g.members.splice(g.members.indexOf(n), 1); } };
   life.clear = () => { people.length = 0; groups.clear(); };
+  /* change what someone does, where they stand now (the story moves a child from the yard to a hiding place: a wanderer left wandering walks
+     back to the yard through walls and people, as Sammy did in Morant Bay, 23 November 2026). spec is merged over the old one. */
+  life.respec = (n, spec = {}) => { const a = n.amb; if (!a) return; stand(n); a.kind = spec.kind || a.kind; a.spec = { ...a.spec, ...spec }; a.st = /^(wander|errand|play)$/.test(a.kind) ? 'pause' : 'start'; a.t = 0; a.face = undefined; a.turnTo = undefined; a.home = [n.x, n.z]; a.sx = n.x; a.sz = n.z; if (n.m) a.ry0 = n.m.rotation.y; };
   life.hold = (n, on = true) => { if (n.amb) n.amb.held = on; if (on) stand(n); };   /* the game takes this person for a while (a talk, a cut scene): they stop, and their clips are the game's */
   life.mood = (m) => { if (m === undefined) return mood; if (!MOODS[m] || m === mood) return mood; mood = m; for (const n of people) n.amb.t = Math.min(n.amb.t, 0.5 + n.amb.rnd() * 1.5); for (const g of groups.values()) g.t = Math.min(g.t, 0.5); return mood; };   /* everyone changes within a second or two, not all in the same frame */
 

@@ -5,6 +5,7 @@
      lead(n, path, opts)      a guide who walks ahead of you along a path. If you fall behind they stop, turn and wait for you (with a small wave if the body has one),
                               and walk on when you catch up.
      goTo(n, x, z, opts)      someone sent to a spot: they walk there round walls and solid things (engine/placement.js walkRoute, or opts.route), then stop and call opts.done(n).
+                              On a route of its own (no opts.route) each step keeps out of world.blocked and other people, stepping round them; held up 2.5 s, they stop and count as arrived.
      stop(n)                  the story says they stop: they stand where they are.
      tick(n, dt, world)       call once a frame for each person whose n.fol is set. world says where you are and what is solid (see below).
    The rules every game gets:
@@ -16,7 +17,8 @@
    n is the game's person: { x, z, m (the body), ctl (its engine/anim.js controller) }. The tick sets n.x, n.z, n.walking, n.clip and the body's turn; the
    body's height belongs to the game: give world.place(n) (land with hills), or the tick sets m.position.x and z and leaves y to groundFeet.
    world: { px, pz (you), blocked(x, z, r) (true where a person may not stand), walls ([[x0, z0, x1, z1]] for routes round furniture), bounds,
-            others ([people] to keep clear of), talking (the person you are talking to: they wait), view ({ x, z, yaw } of the camera), place(n) } */
+            others ([people] to keep clear of), talking (the person you are talking to: they wait), view ({ x, z, yaw } of the camera: give it, and a
+            follower never stands close in the middle of your view), place(n) } */
 import { walkRoute, segmentHitsWall } from './placement.js';
 import { strideOf, MAX_WALK_RATE } from './anim.js';
 
@@ -37,7 +39,7 @@ export function pathSpots(path, s0 = 0, s1 = Infinity, side = 0, step = 0.3) { c
 const DEF = { gap: 1.5, side: 0.55, space: 0.9, walk: 1.15, run: true, far: 16, wait: 7, resume: 4.5, ahead: 4, wave: true, r: 0.25 };
 export function follow(n, opts = {}) { n.fol = { mode: 'follow', ...DEF, ...opts, crumbs: [], hdg: null, still: 0, stuckT: 0, lastX: n.x, lastZ: n.z, moving: false }; if (opts.path) { n.fol.len = pathLen(opts.path); n.fol.s = pathS(opts.path, n.x, n.z); } return n.fol; }
 export function lead(n, path, opts = {}) { n.fol = { mode: 'lead', ...DEF, ...opts, path, len: pathLen(path), s: pathS(path, n.x, n.z), waiting: false, waved: -99, t: 0, moving: false }; return n.fol; }
-export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: opts.route ? opts.route.map((p) => p.slice()) : null, moving: false }; return n.fol; }   /* opts.route: waypoints already checked by the place audit (the last is the spot); otherwise a route round world.walls */
+export function goTo(n, x, z, opts = {}) { n.fol = { mode: 'go', ...DEF, speed: 1.3, ...opts, to: [x, z], route: opts.route ? opts.route.map((p) => p.slice()) : null, audited: !!opts.route, moving: false }; return n.fol; }   /* opts.route: waypoints already checked by the place audit (the last is the spot); otherwise a route round world.walls */
 export function stop(n) { if (!n.fol) return; n.fol = null; gait(n, null); }
 export const isFollowing = (n) => !!(n && n.fol && n.fol.mode === 'follow');
 export const isLeading = (n) => !!(n && n.fol && n.fol.mode === 'lead');
@@ -92,10 +94,22 @@ function followFree(n, f, dt, W) {
   { const c = freeNear(W, sx, sz, f.r, n); if (c) { sx = c[0]; sz = c[1]; } }
   let tx = sx, tz = sz; const ox = Math.cos(hd) * f.side, oz = -Math.sin(hd) * f.side;
   for (const k of [1, -1]) { const x = sx + ox * k, z = sz + oz * k; if (freeAt(W, x, z, f.r, n) && clear(W, [sx, sz], [x, z], f.r, n)) { tx = x; tz = z; break; } }
+  /* never close in the middle of your view (Rose Hall, 23 November 2026: "this girl is obstructing my walking path wherever i go"): when the
+     spot to go to, or where they stand, is within 2.4 m and near the middle of the camera's view (world.view), they go to your side or behind you */
+  const inView = (x, z) => { if (!W.view) return false; const fx = -Math.sin(W.view.yaw), fz = -Math.cos(W.view.yaw), dx = x - W.px, dz = z - W.pz, L = Math.hypot(dx, dz); return L < 2.4 && (dx * fx + dz * fz) / (L || 1) > 0.55; };
+  let clearView = false;
+  if (inView(tx, tz) || inView(n.x, n.z)) {
+    const fx = -Math.sin(W.view.yaw), fz = -Math.cos(W.view.yaw);
+    const sideFirst = (fx * (n.z - W.pz) - fz * (n.x - W.px)) >= 0 ? 1 : -1;   /* to the side they are already on */
+    find: for (const r of [Math.max(f.gap, f.space + 0.35), f.space + 0.2]) for (const a of [1.9, -1.9, 1.35, -1.35, 2.5, -2.5, Math.PI].map((v) => v * sideFirst)) {   /* nearer in, and at more angles, in a corner (Rose Hall: a metre from a wall) */
+      const c = Math.cos(a), sn = Math.sin(a), x = W.px + (fx * c - fz * sn) * r, z = W.pz + (fx * sn + fz * c) * r;
+      if (freeAt(W, x, z, f.r, n) && clear(W, [W.px, W.pz], [x, z], f.r, n)) { tx = x; tz = z; clearView = true; break find; }
+    }
+  }
   const togo = Math.hypot(tx - n.x, tz - n.z), lag = d - f.gap;
   f.pt = (f.pt || 0) + dt; if (f.pt >= 1) { const prog = Math.hypot(n.x - (f.p0x ?? n.x), n.z - (f.p0z ?? n.z)); f.stuckT = prog < 0.3 && lag > 1.5 ? f.stuckT + f.pt : 0; f.p0x = n.x; f.p0z = n.z; f.pt = 0; }   /* stuck: under 30 cm of real progress a second while you are getting away */
   if (d > f.far || (f.stuckT >= 2.5 && lag > 1.5)) { if (rescue(n, f, W)) { f.stuckT = 0; gait(n, null); return; } }
-  const go = f.moving ? togo > 0.2 && d > f.space + 0.15 : togo > 0.75 || lag > 0.8;   /* once walking they keep on until they arrive: no stop-start shuffle */
+  const go = f.moving ? togo > 0.2 && d > f.space + 0.15 : togo > 0.75 || lag > 0.8 || (clearView && inView(n.x, n.z) && togo > 0.3);   /* once walking they keep on until they arrive: no stop-start shuffle */
   if (!go) { f.moving = false; f.stuckT = 0; gait(n, null); if (d < 9) facePlayer(n, W, dt); return; }
   /* the way there: straight if nothing is in the way, else along your footsteps (you walked there, so it is open) */
   let wx = tx, wz = tz; if (!clear(W, [n.x, n.z], [tx, tz], f.r, n)) { let bi = -1, bd = 1e9; for (let j = 0; j < C.length; j++) { const k = Math.hypot(C[j][0] - n.x, C[j][1] - n.z); if (k < bd) { bd = k; bi = j; } } for (let j = C.length - 1; j > bi; j--) if (Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < bd + 0.6) { bi = j; break; }   /* where you walked the same ground twice, take your latest footsteps, not the old ones that lead back */ if (bi >= 0) { let j = bi; while (j < C.length - 1 && Math.hypot(C[j][0] - n.x, C[j][1] - n.z) < 0.35) j++; const c = freeNear(W, C[j][0], C[j][1], f.r, n) || C[j]; wx = c[0]; wz = c[1]; } }
@@ -150,7 +164,14 @@ function goTick(n, f, dt, W) {
   if (!f.route) { f.route = (W.walls && W.walls.length ? walkRoute([n.x, n.z], f.to, W.walls, f.r - 0.03, W.bounds) : []); if (!f.route.length) f.route = [f.to.slice()]; }
   const to = f.route[0], dx = to[0] - n.x, dz = to[1] - n.z, d = Math.hypot(dx, dz), sp = f.speed * dt;
   if (d <= sp) { n.x = to[0]; n.z = to[1]; f.route.shift(); if (!f.route.length) { gait(n, null); if (f.face !== undefined && n.m) n.m.rotation.y = f.face; const done = f.done; n.fol = null; if (done) done(n); return; } }
-  else { n.x += dx / d * sp; n.z += dz / d * sp; gait(n, f.gait || 'Walk', f.speed); turn(n, Math.atan2(dx, dz), dt, 7); }
+  else {
+    /* a step that never goes into a solid thing or another person: round them to one side (Morant Bay, 23 November 2026: Sammy walked through
+       Gran on his way over); held up for 2.5 s, they stop where they are and it counts as arrived, so a talk still starts */
+    const careful = !f.audited && d > 0.6 && (W.blocked || W.others);   /* an audited route (opts.route) and the last 0.6 m to the chosen spot go straight */
+    const moved = careful ? stepTo(n, to[0], to[1], f.speed, dt, W, 0) : (n.x += dx / d * sp, n.z += dz / d * sp, sp);
+    if (moved > 0) { f.held = 0; gait(n, f.gait || 'Walk', f.speed); turn(n, Math.atan2(to[0] - n.x, to[1] - n.z), dt, 7); }
+    else { gait(n, null); f.held = (f.held || 0) + dt; if (f.held > 2.5) { f.route = [[n.x, n.z]]; } }
+  }
 }
 
 /* ---------- the check (?test=follow): drive the player along a real route and watch each follower and guide ----------

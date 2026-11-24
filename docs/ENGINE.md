@@ -287,7 +287,7 @@ life.tick(dt, { px: state.x, pz: state.z, story: storyPeople, talking: talkWith,
 | `createAmbient(opts)` | `walls`, `bounds`, `blocked(x, z, r)`, `keepOff`, `story()`, `seed`, `mood`, `phone`, `place(n)`, and any setting above (`full`, `mid`, `far`, `cull`, `maxFull`, `midEvery`, `farEvery`, `r`, `kidR`, `space`, `storySpace`, `walk`, `run`, `look`, `lookYaw`, `still`, `mixers`, `ground`). `stride(n, clip)` replaces `strideOf` (tests). |
 | `life.add(n, spec)` | Gives a person a behaviour (`spec.kind`, or a string such as `'wander'`). A body smaller than 0.88 counts as a child (`spec.kid` to say so). |
 | `life.tick(dt, world)` | Once a frame. `world = { px, pz, story, talking, view }`. |
-| `life.mood(name)`, `life.hold(n, on)`, `life.remove(n)`, `life.clear()` | Scene mood; hand a person to the game; take a person out; empty it when a place is left. |
+| `life.mood(name)`, `life.hold(n, on)`, `life.respec(n, spec)`, `life.remove(n)`, `life.clear()` | Scene mood; hand a person to the game; change what someone does where they now stand (a child the story moves to a hiding place stops wandering: `{ kind: 'watch', at }`); take a person out; empty it when a place is left. |
 | `life.issues()` | Setup faults before anyone moves: a spot inside a solid or on a story path, no way between the two ends of an errand, a clip the game does not ship, a clip that shows a held thing (Carry, CarryIdle, CarryBagWalk, CarryHead..., Drink, Write, PlayGuitar, PlayPiano, Rifle...) with nothing in the hand (grip one, `show`, or `prop`), a seated behaviour with no seat or a standing one with a seat, a chat group of one or of more than four. |
 | `ambientCheck(life, opts)`, `ambientTest(life, opts)` | The engine side of `?test=ambient`, below. |
 | `onKeepOff(list, x, z, r)` | Whether a spot is on a story path or spot. |
@@ -535,6 +535,18 @@ The owner's rule 10 (CLAUDE.md): a fault that can happen in more than one game i
 ### Warnings before intense scenes
 
 `sceneWarning(card, { title, what, scary, watch, read, pairs })` is the one card before a cinematic, in every game (owner, 21 Nov 2026). It shows what happens (`what`), then, for a scene that may be scary, the two standard lines "It may be scary." and "Nobody is hurt on the screen.", and the buttons Watch scene and Read what happened instead. A scene that is loud or big but not scary (the Selassie arrival, the Windrush ship scenes) passes `scary: false`. `pairs: true` is for games whose `card()` takes `[label, fn]` buttons. Tivoli writes its card in the page and fills it with `warningLines` and `addSceneWarningOptions`. The words run as one centred paragraph and both buttons are one width, never wrapped, on a phone and a desktop. After Read what happened instead, `readWhatHappened(card, { what, go, pairs })` shows the one read card: the title What happened, each line of `what` a short centred paragraph, and one button, Go on. There is no calm mode: the player watches or reads, and the scene plays the same either way. `sceneIsCalm()` is always false and `endSceneWarning()` does nothing; both stay so older calls still work.
+
+## engine/shotpath.js: a film's camera path, with real cuts (23 November 2026)
+
+`shotPath(shots).at(t, reduced)` gives the camera position and the point it looks at, at film time t. Within a run of shots the camera glides on a smooth curve (Catmull-Rom, eased at both ends of the run); a shot with `cut: true` starts a new run, so the camera holds the last framing until that time and then jumps. Before this the path was one curve through every shot, and two shots 0.8 s apart made the camera swoop through a roof (Morant Bay's cave film). Morant Bay's director uses it; the other games' directors (Selassie, The Mad Master, Rose Hall, The Shark Papers, Windrush) still carry their own curve and should move to it when next touched. Give the lens a key just before a cut too (`[16.49, 22], [16.5, 34]`), or the lens eases across the cut while the old framing holds.
+
+## engine/ontop.js: held things are drawn over the world (23 November 2026)
+
+`drawOnTop(obj)` draws a thing held in front of the eye in the nearest slice of the depth range, so it never sinks into a wall, a post or a counter (the body stops about a quarter of a metre from a wall while a held thing floats over half a metre in front of the eye). `createCarry` in `engine/story.js` uses it for every first-person carry (option `onTop`, on by default). It started as Bog Walk's torch hand, which now uses the engine copy.
+
+## engine/lens-check.js: is the camera looking through something?
+
+`lensBlocked(camera, scene)` and `targetHidden(from, to, scene)` test only solid, unskinned meshes whose bounding sphere reaches the ray, gathered once per scene (a full-scene raycast walked every skinned body on the CPU and made `?test=lens` time out). A mesh whose box holds the point looked at is the subject (a building filmed from outside), not something in front of it. Morant Bay's `?test=lens` counts lens-blocking faults (`LENS n`) and lists, as `SEE` lines, shots whose subject has something in front of it, to be judged by eye.
 
 ## engine/collapse.js: a building that falls down (18 November 2026)
 

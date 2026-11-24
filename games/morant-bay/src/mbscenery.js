@@ -233,10 +233,11 @@ export function guinep(h = 8, seed = 2) {
     bark = solid(0x5a4a3c, 1),
     leaf = solid(0x3f6a2e, 0.95);
   cyl(0.28, 0.4, h * 0.45, bark, 0, h * 0.225, 0, g, 8);
+  /* the limbs grow out of the top of the trunk and lean out into the crown (owner, 23 November 2026: placed by their middles, their lower ends
+     stuck out below the leaves as cut stumps) */
   for (let i = 0; i < 4; i++) {
-    const b = cyl(0.1, 0.16, h * 0.35, bark, 0, h * 0.45, 0, g, 6);
-    b.rotation.set(0.55, i * 1.6 + r(), 0, "YXZ");
-    b.position.set(Math.sin(i * 1.6) * 0.6, h * 0.55, Math.cos(i * 1.6) * 0.6);
+    const L = h * 0.34, pv = grp(g, 0, h * 0.43, 0), b = cyl(0.09, 0.17, L, bark, 0, L / 2, 0, pv, 6);
+    pv.rotation.set(0.5 + r() * 0.15, i * 1.57 + r() * 0.4, 0, "YXZ");
   }
   for (let i = 0; i < 9; i++) {
     const a = r() * 6.28,
@@ -390,6 +391,12 @@ export function farGallows() {
   for (const [x, z] of [[-1.6, -1], [1.6, -1], [-1.6, 1], [1.6, 1]]) box(0.16, 1.6, 0.16, m, x, 0.8, z, g);
   for (const x of [-1.4, 1.4]) box(0.2, 3.6, 0.2, m, x, 3.4, 0, g);
   box(3.2, 0.2, 0.2, m, 0, 5.2, 0, g);
+  /* the rope, with its noose, hanging empty from the beam (owner, 23 November 2026). Nobody is on it: the game never shows a hanging. */
+  const rope = solid(0x8a7656, 1);
+  cyl(0.018, 0.018, 1.3, rope, 0.3, 4.45, 0, g, 5);
+  const loop = mesh(new THREE.TorusGeometry(0.14, 0.02, 5, 14), rope, 0.3, 3.68, 0, g);
+  loop.scale.y = 1.35;
+  cyl(0.03, 0.03, 0.12, rope, 0.3, 3.9, 0, g, 6);   /* the knot */
   g.traverse((o) => (o.userData.noBatch = true));
   return g;
 }
