@@ -28,7 +28,8 @@
     "hang": 1.6,
     "buttons": false,
     "hair": "straight",
-    "hairlen": 0.3
+    "hairlen": 0.3,
+    "waistband": false
   },
   "colors": {
     "Skin": [

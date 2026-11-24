@@ -74,27 +74,14 @@
       92,
       78
     ],
-    "Tie": [
-      30,
-      30,
-      34
-    ],
     "HatBand": [
       26,
       26,
       26
-    ],
-    "Jacket": [
-      86,
-      92,
-      78
     ]
   },
   "targets": {
     "head-oval": 0.4,
     "nose-width2-incr": 0.3
-  },
-  "outfit": {
-    "garment": "toigo_male_suit_tie_and_jacket"
   }
 }

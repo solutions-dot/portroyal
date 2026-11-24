@@ -28,7 +28,8 @@
     "hang": 1.0,
     "buttons": false,
     "hair": "straight",
-    "hairlen": 0.75
+    "hairlen": 0.75,
+    "waistband": false
   },
   "colors": {
     "Shoes": [

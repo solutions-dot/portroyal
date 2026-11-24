@@ -27,7 +27,8 @@
     "pleats": 0,
     "hang": 1.0,
     "buttons": false,
-    "hair": "afro"
+    "hair": "afro",
+    "waistband": false
   },
   "colors": {
     "Skin": [

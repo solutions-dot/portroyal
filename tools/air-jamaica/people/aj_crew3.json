@@ -27,7 +27,8 @@
     "pleats": 0,
     "hang": 1.0,
     "buttons": false,
-    "bun": true
+    "bun": true,
+    "waistband": false
   },
   "colors": {
     "Skin": [
