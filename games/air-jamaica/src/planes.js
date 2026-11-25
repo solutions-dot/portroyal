@@ -22,7 +22,7 @@ const M = {
   tyre: own(0x1b1d1c, 0.92),
   glass: own(0x0f1a20, 0.12, 0.5),
   frame: own(0x2a2f31, 0.5, 0.2),
-  rim: own(0x3a3f42, 0.45, 0.3),
+  rim: own(0xd2d4cf, 0.45, 0.3), /* pale rims round the cabin windows (photograph of 6Y-JGB) */
   reveal: (() => { const m = own(0xb8bcb9, 0.6, 0.2); m.side = THREE.DoubleSide; return m; })(),
   cabin: own(0x5a5650, 0.9),
   cabinLight: new THREE.MeshBasicMaterial({ color: 0xfff1d6 }),
@@ -39,9 +39,10 @@ const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 export const DC8 = {
   name: "DC-8-50",
   /* fuselage outline [x, radius] from the tail to the nose, and the lift of the tail cone */
-  profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [14.0, 1.85], [17.0, 1.78], [19.4, 1.55], [21.2, 1.15], [22.3, 0.62], [22.9, 0.1]],
+  profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [14.0, 1.85], [17.0, 1.78], [19.4, 1.55], [21.1, 1.18], [22.2, 0.74], [22.8, 0.3], [22.95, 0.06]],
+  droop: { from: 16.0, down: 0.45 },
   Y0: 3.2, lift: { from: -11, over: 12, up: 0.55 },
-  windows: { from: -17.0, to: 18.2, step: 0.78, dy: 0.7 },
+  windows: { from: -17.0, to: 13.4, step: 0.78, dy: 0.7 }, /* the first cabin window is behind the forward door (photograph): ahead of it they showed as black squares under the windscreen */
   doors: [{ x: 14.2, side: -1, w: 0.86, h: 1.8, sill: 2.4, main: true }, { x: 14.2, side: 1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 2.45 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
   overwing: [{ x: -3.2, side: -1 }, { x: -3.2, side: 1 }, { x: -5.4, side: -1 }, { x: -5.4, side: 1 }],
   cargo: [{ x: 9.0, side: 1 }, { x: -9.4, side: -1 }],
@@ -50,16 +51,17 @@ export const DC8 = {
   tail: { fin: [[-10.5, 1.0], [-13.2, 9.8], [-17.2, 9.8], [-19.8, 1.0]], finTop: 9.8, stab: { y: 0.9, pts: [[-15.5, 0], [-19.2, 7.0], [-22.0, 7.0], [-21.4, 0]] }, tee: false },
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
   band: { roundel: [-13.9, 7.5], r: 1.25, phi: 62, R: 4.0 }, /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
-  stripeEnd: 15.6, roofEnd: 19.3, /* where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
+  stripeEnd: 14.8, roofEnd: 15.5, /* both begin just behind the forward door, the cockpit area all white (photograph of 6Y-JGB, 25 November 2026; they ran on round the windscreen). Earlier: where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
   flag: { x: -5.0 },
-  cockpit: { x: 19.2, dx: 0.62, n: 3, dy: 1.0, front: 21.1 }, /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
+  cockpit: { x: 15.95, front: 17.85, glassEnd: 17.85, painted: true, noStrip: true, lo: [0.3, 0.22], hi: [0.78, 0.3], posts: [16.65, 17.25], frame: 0.065 }, /* as on the DC-9: just ahead of the door, high on the nose */ /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
 };
 export const DC9 = {
   name: "DC-9-30",
-  profile: [[-18.2, 0.07], [-17.5, 0.3], [-15.0, 0.8], [-12.0, 1.3], [-9.0, 1.62], [-6.0, 1.67], [10.5, 1.67], [13.0, 1.58], [15.0, 1.3], [16.7, 0.85], [17.7, 0.4], [18.2, 0.08]],
+  profile: [[-18.2, 0.07], [-17.5, 0.3], [-15.0, 0.8], [-12.0, 1.3], [-9.0, 1.62], [-6.0, 1.67], [10.5, 1.67], [13.0, 1.6], [15.0, 1.38], [16.6, 1.02], [17.6, 0.62], [18.1, 0.26], [18.25, 0.05]],
+  droop: { from: 12.5, down: 0.42 }, /* a blunter nose that droops a little (photograph of 6Y-JGB): it was a sharp bullet */
   Y0: 2.9, lift: { from: -8, over: 10, up: 0.6 },
-  windows: { from: -12.0, to: 12.6, step: 0.7, dy: 0.62 },
+  windows: { from: -12.0, to: 10.6, step: 0.7, dy: 0.62 },
   doors: [{ x: 11.2, side: -1, w: 0.82, h: 1.7, sill: 2.15, main: true }, { x: 11.2, side: 1, w: 0.75, h: 1.55, sill: 2.2 }, { x: -10.6, side: -1, w: 0.7, h: 1.5, sill: 2.25 }],
   overwing: [{ x: -2.4, side: -1 }, { x: -2.4, side: 1 }],
   cargo: [{ x: 6.2, side: 1 }, { x: -7.0, side: 1 }],
@@ -68,10 +70,10 @@ export const DC9 = {
   tail: { fin: [[-9.0, 1.0], [-12.0, 6.0], [-16.2, 6.0], [-17.0, 1.0]], finTop: 6.0, stab: { y: 6.0, pts: [[-11.6, 0], [-15.6, 4.4], [-17.8, 4.4], [-16.4, 0]] }, tee: true },
   gear: { noseX: 13.4, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
   band: { roundel: [-12.3, 4.1], r: 0.95, phi: 50, R: 3.0 }, /* the roundel half way up, close behind the leading edge (ref-dc9-6Y-JGB) */
-  stripeEnd: 12.6, roofEnd: 15.0,
+  stripeEnd: 11.8, roofEnd: 12.4, /* just behind the forward door (photograph of 6Y-JGB) */
   title: { x: 4.9, w: 5.6 },
   flag: { x: -3.0, onEngine: true }, /* the flag is on the engine pod (photograph 6Y-JIJ) */
-  cockpit: { x: 14.6, dx: 0.5, n: 3, dy: 0.92, front: 16.4 },
+  cockpit: { x: 12.85, front: 14.45, glassEnd: 14.45, painted: true, noStrip: true, lo: [0.3, 0.22], hi: [0.78, 0.3], posts: [13.45, 13.95], frame: 0.06 }, /* just ahead of the door and high on the nose, dark panes in white frames (photograph of 6Y-JGB; it sat 2 m too far forward) */
 };
 
 /* The Airbus A320, in the airline's later look (the blue tail: ref-a320-blue-tail.jpg, ref-a340-blue-tail.jpg, ref-727-and-a321.jpg). Published
@@ -93,7 +95,7 @@ export const A320 = {
   stripeEnd: 99, roofEnd: 14.6,
   title: { x: 6.0, w: 9.6, dy: 1.36 },
   flag: { x: 15.9, dy: -1.45 }, /* on the white under the blue (photograph) */
-  cockpit: { x: 14.95, dx: 0.5, n: 3, dy: 0.95, front: 17.15, glassEnd: 18.15, painted: true }, /* the flight deck's glass, from the last side window's back edge to the windscreen's front (photograph) */ /* windows painted into the skin (noseWindows) */
+  cockpit: { x: 14.95, dx: 0.5, n: 3, dy: 0.95, front: 17.15, glassEnd: 18.15, painted: true, lo: [0.17, 0.3], hi: [0.44, 0.5] }, /* panes a little shorter than first drawn (the owner's photograph) */ /* the flight deck's glass, from the last side window's back edge to the windscreen's front (photograph) */ /* windows painted into the skin (noseWindows) */
   tipFence: true, /* the A320's wingtip fences: a small arrowhead plate standing above and below each wing tip */
   tailBlue: -8.6, /* where the bands start to sweep up toward the fin; behind it the rear body is dark blue */
 };
@@ -174,17 +176,18 @@ function noseWindows(S, x, dy) {
      frame, low on the nose (a fifth to a half of the radius up at the side windows); the white cap comes down to their tops. The windscreen's front
      panes climb over the top of the nose to its centre post. The only black is a strip under the windscreen that runs forward and down to the nose
      tip, over the pink. Heights are shares of the radius round the drooping nose's own centre. */
-  const r = radiusAt(S, x), back = C.x, xf = C.front, tip = S.profile[S.profile.length - 1][0];
+  const r = radiusAt(S, x), back = C.x, xf = C.front, tip = S.profile[S.profile.length - 1][0], L = C.lo || [0.17, 0.32], U = C.hi || [0.5, 0.55];
   const f = Math.max(0, Math.min(1, (x - back) / (xf - back))), ff = f * f;
-  const g0 = r * (0.17 + 0.32 * ff), g1 = r * (0.5 + 0.55 * ff), fr = 0.045;
+  const g0 = r * (L[0] + L[1] * ff), g1 = r * (U[0] + U[1] * ff), fr = C.frame || 0.045;
   const glassBack = back + Math.max(0, dy - g0) * 0.3, xg = C.glassEnd;
   /* the windscreen's front panes run on over the top of the nose to xg, their foot at half the radius: from the front they read as glass across
      the top of the nose with the black strip under it, as in the photograph */
   if (x >= glassBack && x <= xg && dy >= g0 && dy <= g1) {
     if (dy > g1 - fr || dy < g0 + fr || x < glassBack + fr || x > xg - fr || Math.abs(x - xf) < fr / 2) return 0xeeeeea;
-    for (const px of [back + 0.55, back + 1.32]) if (Math.abs(x - px - (dy - g0) * 0.3) < fr / 2) return 0xeeeeea;
+    for (const px of C.posts || [back + 0.55, back + 1.32]) if (Math.abs(x - px - (dy - g0) * 0.3) < fr / 2) return 0xeeeeea;
     return 0x16222a;
   }
+  if (C.noStrip) return null;   /* the first look has no black under its windscreen: the nose is white (photograph of 6Y-JGB) */
   /* the black strip: from under the sliding window's front, deepening forward under the windscreen, then down round the nose to the tip */
   const bs = back + 1.32;
   if (x > bs) {
@@ -225,6 +228,8 @@ function fuselage(S, holes = []) {
     if (d > -1.08) return C(NAVY);
     return x < S.tailBlue - 1.6 - (dy + 2) * 0.3 ? C(NAVY) : C(WHITE);
   } : (dy, x) => {
+    const w = noseWindows(S, x, dy);
+    if (w) return C(w);
     if (x > S.roofEnd) return C(WHITE);
     if (dy <= 1.0 && x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE); /* the orange stripe ends behind the forward door in a slant; the yellow runs on */
     return C(ribbonColour(S, x, dy + centreY(S, x) - S.Y0));
@@ -260,8 +265,11 @@ function fuselage(S, holes = []) {
   geo.computeVertexNormals();
   /* smooth shading across the faces: normals from the round body itself, not from each flat face */
   const n = geo.attributes.normal, p = geo.attributes.position;
+  const capX = S.profile[S.profile.length - 3][0], tailX = S.profile[2][0];   /* the rounded nose and tail cone face forward and back: there the face normals are kept (radial ones lit the blunt nose tip as a blue disc) */
   for (let k = 0; k < p.count; k++) {
-    const x = p.getX(k), dy = p.getY(k) - centreY(S, x), dz = p.getZ(k), l = Math.hypot(dy, dz) || 1;
+    const x = p.getX(k);
+    if (x > capX || x < tailX) continue;
+    const dy = p.getY(k) - centreY(S, x), dz = p.getZ(k), l = Math.hypot(dy, dz) || 1;
     n.setXYZ(k, 0, dy / l, dz / l);
   }
   const tex = cv(2048, 1024, (x, W, H) => {
