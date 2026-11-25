@@ -119,7 +119,7 @@ if (typeof document !== 'undefined') (() => {
     const list = document.querySelector('.games'), top = $('library');
     if (!list || !top) return;
     const chipsEl = top.querySelector('.lib-chips'), profileBtn = $('profileopen'), forYou = top.querySelector('.lib-foryou'), tilesEl = top.querySelector('.lib-tiles'), statusEl = $('libstatus'), kidsNote = $('kidsnote');
-    const profilePanel = $('profilepanel'), sheet = $('gamesheet'), ageCard = $('agecard');
+    const profilePanel = $('profilepanel'), sheet = $('gamesheet');
 
     let profile = 'kids', ratings = {}, visits = {}, genre = 'all', shared = {};
     const sync = () => { profile = L.cleanProfile(read(PROFILE_KEY)); ratings = L.cleanRatings(readObject(RATINGS_KEY)); visits = L.cleanVisits(readObject(VISITS_KEY)); };
@@ -155,8 +155,8 @@ if (typeof document !== 'undefined') (() => {
 
     /* ----- going to a game ----- */
     const visit = (g) => { const v = visits[g.id] || { n: 0, t: 0 }; visits[g.id] = { n: v.n + 1, t: Date.now() }; write(VISITS_KEY, JSON.stringify(visits)); };
-    function leaveFor(g, e) {   /* a press on anything that goes to a game: a Mature 13+ game shows its warning card first */
-      if (g.age >= 13) { e.preventDefault(); if (L.canSee(g, profile)) openWarn(g, e.currentTarget); return; }
+    function leaveFor(g, e) {   /* apply profile visibility to every route from the menu */
+      if (!L.canSee(g, profile)) { e.preventDefault(); return; }
       visit(g);
     }
 
@@ -277,13 +277,6 @@ if (typeof document !== 'undefined') (() => {
       try { const u = new URL(location.href); u.searchParams.delete('rate'); history.replaceState(null, '', u.pathname + u.search); } catch (e) { /* the address stays as it was */ }   /* so loading the page again does not open the sheet again */
     });
 
-    /* ----- the Mature 13+ warning card ----- */
-    const W = { game: $('agegame'), note: $('agenote'), go: $('agego'), not: $('agenot') };
-    let warnGame = null;
-    function openWarn(g, opener) { warnGame = g; W.game.textContent = g.title; W.note.textContent = g.warn; W.note.hidden = !g.warn; W.go.href = g.card.href; if (EMBED) W.go.target = '_top'; ageCard.opener = opener || null; show(ageCard); W.not.focus(); }
-    for (const press of ['click', 'auxclick']) W.go.addEventListener(press, () => { if (warnGame) visit(warnGame); });
-    wire(ageCard, () => { warnGame = null; });
-
     /* ----- a link straight to a game's sheet: ?rate=<game id> (focus on the stars) or #<game id>. A game this profile cannot see stays out of reach. ----- */
     function openFromUrl() {
       let id = '', stars = false;
@@ -313,7 +306,7 @@ if (typeof document !== 'undefined') (() => {
     drawAll();
     /* coming back from a game with the Back button, or a change made in another tab: read what is saved again */
     addEventListener('pageshow', (e) => { if (e.persisted) { sync(); drawAll(); } });
-    addEventListener('storage', (e) => { if ([PROFILE_KEY, RATINGS_KEY, VISITS_KEY].includes(e.key) && !profilePanel.open && !sheet.open && !ageCard.open) { sync(); drawAll(); } });
+    addEventListener('storage', (e) => { if ([PROFILE_KEY, RATINGS_KEY, VISITS_KEY].includes(e.key) && !profilePanel.open && !sheet.open) { sync(); drawAll(); } });
     whenMenuShows(openFromUrl);
     if (EMBED) toGame(sheet.open ? 'sheet-open' : 'close-sheet');   /* the game shows the frame only once the pop-up is up, or takes it away */   /* nothing this profile may see: the game takes the overlay away */
   }

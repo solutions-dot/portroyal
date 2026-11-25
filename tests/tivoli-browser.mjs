@@ -15,7 +15,6 @@ try {
  for(const width of [320,390]){
   const page=await browser.newPage({viewport:{width,height:800},hasTouch:true,isMobile:true,deviceScaleFactor:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.addInitScript(()=>{try{sessionStorage.setItem('pastport-mature-ok','1')}catch{}});   /* Tivoli is Mature 13+ (22 November 2026): this traveller has already said they are 13 or older (engine/mature.js) */
   await page.goto(base+'/games/tivoli/site/index.html',{waitUntil:'domcontentloaded',timeout:90000});
   await page.waitForTimeout(2000);
   await page.locator('#chbtn').click();

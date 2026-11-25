@@ -8,7 +8,7 @@ The owner chose "Bodies, no wounds" for The Mad Master of Edinburgh Castle and T
 
 - **May be shown:** dread, threat, a gun at a window, a gunshot heard, a violent act up to the moment it happens and then a cut away, aftermath, and plain words about slavery. A dead or wounded person may be seen still, covered or at a distance (a shape under a sheet, a body carried off). Some blood may show: a stain, a cloth.
 - **Never shown:** open wounds, gore, a close look at a body, the moment of a killing itself, the hanged man. The player never harms anyone.
-- Every camera scene sits behind the standard scene card with "Read what happened instead". The menu hides the game in the Kids profile, and a device set to Kids is stopped (`engine/mature.js`).
+- Every camera scene sits behind the standard scene card with "Read what happened instead". The menu hides the game in the Kids profile and shows its rating badge in Teens and adults.
 
 ## Record and story
 

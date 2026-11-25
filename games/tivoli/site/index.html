@@ -120,8 +120,6 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
 <link rel="stylesheet" href="title.css">
 <link rel="stylesheet" href="chapters.css">
 <style>
-  #title .intro-with-audio{display:flex;align-items:center;justify-content:center;gap:.65rem;margin:.65rem auto;max-width:42rem}
-  #title .intro-with-audio .intro{margin:0;min-width:0}
   #intro-audio-toggle{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid var(--brass);border-radius:50%;background:#211e19;color:var(--brass);box-shadow:0 0 9px currentColor;cursor:pointer;animation:intro-glow 2.2s ease-in-out 3}
   #intro-audio-toggle[hidden],#intro-audio-toggle .intro-pause,#intro-audio-toggle.is-playing .intro-speaker{display:none}
   #intro-audio-toggle.is-playing{animation:none;box-shadow:none}
@@ -136,16 +134,16 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
 <section id="title">
   <div class="tcard">
     <p class="place">Jamaica &middot; West Kingston &middot; 1960s to today</p>
-    <h1>Tivoli Incursion</h1>
-    <div class="intro-with-audio">
-    <p class="intro">You start as a girl growing up in Back-o-Wall, watching Tivoli Gardens take shape around you. Years later, you return as her grandchild. It’s May 2010, and life is about to change for your family and neighbours.</p>
-    <button id="intro-audio-toggle" type="button" aria-label="Listen to intro" hidden>
+    <div class="title-with-audio">
+      <h1>Tivoli Incursion</h1>
+      <button id="intro-audio-toggle" type="button" aria-label="Listen to intro" hidden>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path class="intro-speaker" d="M11 5 6 9H3v6h3l5 4V5Zm4 4a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/>
         <path class="intro-pause" d="M9 5v14M15 5v14"/>
       </svg>
     </button>
-  </div>
+    </div>
+    <p class="intro">You start as a girl growing up in Back-o-Wall, watching Tivoli Gardens take shape around you. Years later, you return as her grandchild. It’s May 2010, and life is about to change for your family and neighbours.</p>
     <div class="loading title-actions">
       <button id="start" class="btn" disabled>Loading</button>
       <button id="chbtn" class="btn ghost" disabled>Chapters</button>
@@ -226,38 +224,8 @@ body:has(.card:not([hidden])) :is(#goal,#topr,#hint,#talk,#stick,.tbub),body:has
 <div id="scenetitle" hidden></div>
 <div id="fighttitle" hidden><b>Monday 24 May 2010</b><p>A street in West Kingston. It is made up. The day was real.</p></div>
 <div id="fade" hidden></div>
-<audio id="intro-audio" src="tivoli-intro.mp3" preload="auto" autoplay></audio>
-    <script>
-      (() => {
-        const audio = document.getElementById('intro-audio');
-        const toggle = document.getElementById('intro-audio-toggle');
-        const updateLabel = () => {
-          toggle.setAttribute('aria-label', audio.paused ? 'Listen to intro' : 'Pause intro');
-          toggle.classList.toggle('is-playing', !audio.paused);
-        };
-
-        toggle.hidden = false;
-        for (const event of ['play', 'pause', 'ended']) {
-          audio.addEventListener(event, updateLabel);
-        }
-        updateLabel();
-        toggle.addEventListener('click', () => {
-          if (audio.paused) audio.play().catch(updateLabel);
-          else audio.pause();
-        });
-        audio.addEventListener('error', () => { toggle.hidden = true; });
-
-        const stopIntro = () => {
-          audio.autoplay = false;
-          audio.pause();
-          audio.currentTime = 0;
-        };
-        for (const id of ['start', 'tchap', 'allgames']) {
-          document.getElementById(id).addEventListener('click', stopIntro, { capture: true });
-        }
-        window.addEventListener('pagehide', stopIntro);
-      })();
-    </script>
+<audio id="intro-audio" src="tivoli-intro.mp3" preload="metadata"></audio>
+    <script src="intro-audio.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

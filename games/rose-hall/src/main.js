@@ -10,7 +10,6 @@ import { placeActionButton } from "../../../engine/action-button.js";
 import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
 import { offerNextChapter, nextLines, goingStraight, startCard, titleFade } from "../../../engine/chapter-end.js";
-import { matureGate } from "../../../engine/mature.js";   /* the Mature 13+ card over the title screen */
 import { runQuiz } from "../../../engine/quiz.js";
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
@@ -1056,7 +1055,6 @@ onLoadFail(() => {
     $("loadnote").textContent = "The game could not load. Please reload.";
   }
 })();
-matureGate({ note: GAME.mature, skip: QUICK });   /* Mature 13+: the card over the title screen (engine/mature.js) */
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: GAME.recap, open: () => { closeAll(); showJournal(); }, title: CARDS.end.title, unlocked: null });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => save() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */

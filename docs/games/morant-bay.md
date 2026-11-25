@@ -70,7 +70,7 @@ The three name lists follow the recommendation in `notes/the-girl-and-her-family
 
 **The player** never holds a weapon, never hits anyone and never chooses violence. The player hides, carries, listens, keeps quiet, walks and reads.
 
-**Cards:** every violent scene sits behind the standard `sceneWarning` card with "Read what happened instead" (`engine/scene-warning.js`), and the title sits behind the one Mature 13+ gate (`engine/mature.js`). The menu card needs `data-age="13"` and a `data-warn` note: fear, a riot with weapons, fire, gunshots, people hurt without blood, hangings told but not shown, a flogging begun and cut away. Never write "PG-13".
+**Cards:** every violent scene sits behind the standard `sceneWarning` card with "Read what happened instead" (`engine/scene-warning.js`). The menu card needs `data-age="13"` and a `data-warn` note: fear, a riot with weapons, fire, gunshots, people hurt without blood, hangings told but not shown, a flogging begun and cut away. Never write "PG-13".
 
 ## How the game makes people feel the fear
 

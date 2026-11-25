@@ -603,9 +603,9 @@ Four pieces for the owner's story-first pass (`docs/STANDARD.md`, "Story first";
 
 An errand can take `via: [x, z]`, a point to walk round by on both legs, so the straight line between its ends does not cross something on the ground (Kendal's carriers walked through the pile of bananas). With `drop`, the load changes hands at the lowest point of the bend, read from the hips' height in the pick-up clip itself, not at a fixed share of the clip.
 
-## engine/mature.js: the Mature 13+ card (22 November 2026)
+## Opening narration
 
-`matureGate({ note, exit, skip })` no longer asks anyone their age (owner, 22 November 2026: one age prompt only, the menu's dark card). It only stops a device whose menu profile is Kids (`pastport-profile`) from opening a mature game by its address, with an Exit button. Everyone else goes straight to the title. Tivoli and The Mad Master of Edinburgh Castle call it. `matureState(profile, said)` is the pure rule.
+`shared/intro-audio.js` is copied into each game by the build. It tries to play when Start becomes enabled. If playback is blocked, the first tap on the title background or description can start it. The speaker control plays and pauses, and Start, Chapters, and Exit stop the clip. The Mature 13+ profile filter is handled in the menu.
 
 ## engine/lookshot.js: looking at something is a close-up action (22 November 2026)
 

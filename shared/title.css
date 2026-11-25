@@ -37,3 +37,13 @@ html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){flex:0
 html body :has(>#cbtns){width:fit-content;min-width:min(34rem,100%);max-width:min(60rem,100%)}
 html body #cbody{width:0;min-width:100%}   /* the words wrap to the card; only the buttons and the title set how wide it grows */
 @media(max-width:600px){html body #cbtns>:is(.btn,button,a),html body #chcardb>:is(.btn,button,a){white-space:normal}}
+
+/* Narrated story openings use the same hierarchy and keep wrapped title lines clear. */
+#title .title-with-audio{display:flex;align-items:center;justify-content:flex-start;gap:.65rem;max-width:100%}
+#title .title-with-audio h1{min-width:0;margin:0;font:400 clamp(32px,6.8vw,76px)/1.16 "Alfa Slab One",Rockwell,Georgia,serif;letter-spacing:normal;text-wrap:balance;overflow-wrap:anywhere}
+#title p.intro{margin:0;max-width:36rem;font:400 clamp(17px,1.45vw,19px)/1.55 "Atkinson Hyperlegible",system-ui,sans-serif;letter-spacing:normal}
+#title p.place{margin:0;font:700 14px/1.45 "Atkinson Hyperlegible",system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--brass)}
+@media(max-height:460px){
+  #title .title-with-audio h1{font-size:clamp(28px,5.5vw,44px)}
+  #title p.intro{font-size:17px}
+}
