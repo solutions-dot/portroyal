@@ -766,7 +766,8 @@ if not OLD:
         _ring=[v for v in _bm.verts if abs(v.co.z-_z1)<0.02 and abs(v.co.x)<SX*0.8]
         if _ring:
             _cy=sum(v.co.y for v in _ring)/len(_ring); _rw=[0.0]*_nb; _rm=[0.0]*_nb
-            _side=lambda c: abs(c.x)>SX*0.8 and c.z>HIP+0.12      # the sleeves: nothing of them hangs below the waist, so the hem's own sides (out past SX*0.8 at the hips) are reshaped too; left out, the straightened front met the crumpled sides in a tear (aj_dee10, rule 15 sheet, 25 November 2026)
+            _side=lambda c: (abs(c.x)>SX*0.8 and c.z>HIP+0.12) or side_arm(c) is not None      # a long sleeve's cuff hangs at the hem's height: it is the arm's (aj_chef's hem was pushed out to his hands)
+            # the sleeves: nothing of them hangs below the waist, so the hem's own sides (out past SX*0.8 at the hips) are reshaped too; left out, the straightened front met the crumpled sides in a tear (aj_dee10, rule 15 sheet, 25 November 2026)
             for v in _bm.verts:
                 if _side(v.co) or v.co.z>_z1+0.02: continue
                 k=int(_bin(v.co,_cy))%_nb; r=math.hypot(v.co.x,v.co.y-_cy); _rm[k]=max(_rm[k],r)
@@ -790,11 +791,11 @@ if not OLD:
                 if r>1e-4: q=tr/r; v.co.x*=q; v.co.y=_cy+(v.co.y-_cy)*q
             _bm.to_mesh(_o.data); _bm.free(); _o.data.update(); clear_layer(_o,_skin+[_tr(_P['breeches'])],0.006,reach=0.05); _bm=bmesh.new(); _bm.from_mesh(_o.data)
             for v in _bm.verts:
-                if v.is_boundary and v.co.z<_z0+0.12: v.co.z=_z0      # 12 cm: at the front some of the hem's edge sat higher than 6 cm and was left as notches between points (aj_pass10)
+                if v.is_boundary and v.co.z<_z0+0.12 and side_arm(v.co) is None: v.co.z=_z0      # 12 cm: at the front some of the hem's edge sat higher than 6 cm and was left as notches between points (aj_pass10)
             _bm.to_mesh(_o.data)
         _bm.free(); _o.data.update(); clear_layer(_o,_skin+[_tr(_P['breeches'])],0.006,reach=0.05); _sh=[_tr(_P['shirt'])]      # an untucked shirt lies over the trousers (cleared once more: levelling the hem had dropped its edge back into them)
         if _ring:      # that last clearing pushed single points of the hem out by different amounts, so its edge came out scalloped (aj_pass10, rule 15 sheet): the bottom 5 cm are evened out round the body, never moved inward
-            _bm=bmesh.new(); _bm.from_mesh(_o.data); _low=[v for v in _bm.verts if v.co.z<_z0+0.05 and not (abs(v.co.x)>SX*0.8 and v.co.z>HIP+0.12)]
+            _bm=bmesh.new(); _bm.from_mesh(_o.data); _low=[v for v in _bm.verts if v.co.z<_z0+0.05 and not _side(v.co)]
             _br=[0.0]*_nb
             for v in _low: k=int(_bin(v.co,_cy))%_nb; _br[k]=max(_br[k],math.hypot(v.co.x,v.co.y-_cy))
             for _ in range(_nb):
@@ -2210,8 +2211,8 @@ if G.get('untucked') and PART.get('shirt'):      # a loose hem hangs from the wa
     # alternate points apart and the hem came out jagged; and a few points hung below the hem line. Every point is kept at or above the hem, and the
     # weights of the lower shirt are averaged with its neighbours' (aj_pass10, rule 15 sheet, 25 November 2026)
     _bh=bmesh.new(); _bh.from_mesh(_so.data); _bh.verts.ensure_lookup_table()
-    _hz=min((v.co.z for v in _bh.verts if v.is_boundary and v.co.z<HIP+0.05), default=None)
-    _zone=[v.index for v in _bh.verts if v.co.z<HIP+0.14 and not (abs(v.co.x)>SX*0.8 and v.co.z>HIP+0.12)]
+    _hz=min((v.co.z for v in _bh.verts if v.is_boundary and v.co.z<HIP+0.05 and side_arm(v.co) is None), default=None)
+    _zone=[v.index for v in _bh.verts if v.co.z<HIP+0.14 and side_arm(v.co) is None]
     if _hz is not None:
         for i in _zone:
             if _so.data.vertices[i].co.z<_hz: _so.data.vertices[i].co.z=_hz
