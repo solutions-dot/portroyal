@@ -28,5 +28,9 @@
 "SitIdle2",
 "WalkM2",
 "Wave",
-"Clap"
+"Clap",
+"SitSwitches",
+"Wave2",
+"StandPoseM2",
+"FishIdle"
 ]

@@ -1,6 +1,7 @@
 /* The story table (engine/story.js). t: talk. d: carry something and put it down (TASKS). l: look at or do something that changes where
    you can see it (LOOKS). w: a card or the quiz. show: the story people who are there in that step.
    Chapter 1: A flag in the sky (the apron at Palisadoes, 1 April 1969). */
+import { CABIN } from "./cabin.js";   /* Mr Clarke's tray follows the seats */
 const row = (place, goal, needs, next, extra = {}) => ({ place, goal, needs, next, ...extra });
 const t = (place, goal, ids, next, extra) => row(place, goal, { talk: ids }, next, extra);
 const d = (place, goal, ids, next, extra) => row(place, goal, { do: ids.map((id) => ({ id, carry: id })) }, next, extra);
@@ -11,11 +12,13 @@ const CABIN_ALL = ["dee2", "chef", "clarke"];
 const NEW_ALL = ["marcia94", "hines94"], HOME_ALL = ["marcia10", "dee10"], LAST_ALL = ["dee10s", "grant"];
 export const STEPS = {
   /* 1. A flag in the sky */
+  /* one walk along the line (owner, 25 November 2026: "busy work back and forth"): Aunt Marcia, Mr Hines at the steps, the crew, Captain Ross by the
+     nose, and the bird on the tail last, on the way up to Mum (the tail look used to send you to the far end and straight back) */
   10: t("apron", "Talk to Aunt Marcia in the line of crew.", ["marcia"], 11, { show: ALL, journal: "you" }),
-  11: l("apron", "Look at the bird on the plane's tail.", ["tail"], 12, { show: ALL, journal: "lovebird" }),
-  12: t("apron", "Talk to Mr Hines at the foot of the steps.", ["hines"], 13, { show: ALL, journal: "plane" }),
-  13: l("apron", "Look along the line of crew.", ["crew"], 14, { show: ALL, journal: "uniforms" }),
-  14: t("apron", "Talk to Captain Ross by the nose.", ["ross"], 15, { show: ALL, journal: "captain" }),
+  11: t("apron", "Talk to Mr Hines at the foot of the steps.", ["hines"], 12, { show: ALL, journal: "plane" }),
+  12: l("apron", "Look along the line of crew.", ["crew"], 13, { show: ALL, journal: "uniforms" }),
+  13: t("apron", "Talk to Captain Ross by the nose.", ["ross"], 14, { show: ALL, journal: "captain" }),
+  14: l("apron", "Look at the bird on the plane's tail.", ["tail"], 15, { show: ALL, journal: "lovebird" }),
   15: t("gallery", "Join Mum in the waving gallery.", ["mum"], 16, { show: ["mum"], journal: "gallery" }),
   16: w("gallery", "The first flight leaves.", "film", 17, { film: "takeoff", show: ["mum"] }),
   17: w("gallery", "The first flight leaves.", "playing", 18, { film: "takeoff", show: ["mum"] }),
@@ -25,17 +28,22 @@ export const STEPS = {
   31: l("cockpit", "Look at the four levers between the seats.", ["levers"], 32, { journal: "levers" }),
   32: w("cockpit", "The plane comes in to land.", "film", 33, { film: "landing" }),
   33: w("cockpit", "The plane comes in to land.", "playing", 34, { film: "landing" }),
-  34: w("cockpit", "What did you learn?", "quiz", 40, { quiz: "cockpit" }),
+  34: w("cockpit", "What did you learn?", "quiz", 38, { quiz: "cockpit" }),
+  /* 3. New colours: first the new look shown off (FILMS.reveal) */
+  38: w("newlook", "The new colours.", "film", 39, { film: "reveal", show: NEW_ALL }),
+  39: w("newlook", "The new colours.", "playing", 40, { film: "reveal", show: NEW_ALL }),
   /* 4. New colours: the apron at Norman Manley Airport, December 1994 */
+  /* one walk (review, 25 November 2026): Aunt Marcia, Mr Hines by the nose, the name beside him, then along the side to the tail (the tail look used
+     to send you 27 m one way and Mr Hines 37 m straight back) */
   40: t("newlook", "Talk to Aunt Marcia by the new plane.", ["marcia94"], 41, { show: NEW_ALL, journal: "dee94" }),
-  41: l("newlook", "Look up at the new tail.", ["tail94"], 42, { show: NEW_ALL, journal: "newlook" }),
-  42: t("newlook", "Talk to Mr Hines by the nose.", ["hines94"], 43, { show: NEW_ALL, journal: "owners" }),
-  43: l("newlook", "Look at the name and the flag.", ["nose"], 44, { show: NEW_ALL, journal: "airbus" }),
+  41: t("newlook", "Talk to Mr Hines by the nose.", ["hines94"], 42, { show: NEW_ALL, journal: "owners" }),
+  42: l("newlook", "Look at the name and the flag.", ["nose"], 43, { show: NEW_ALL, journal: "airbus" }),
+  43: l("newlook", "Look up at the new tail.", ["tail94"], 44, { show: NEW_ALL, journal: "newlook" }),
   44: w("newlook", "The new look takes off.", "film", 45, { film: "newflight", show: NEW_ALL }),
   45: w("newlook", "The new look takes off.", "playing", 46, { film: "newflight", show: NEW_ALL }),
   46: w("newlook", "What did you learn?", "quiz", 50, { quiz: "newlook", show: NEW_ALL }),
   /* 3. The flying chef: the cabin of a jet in the 2000s, flying to Toronto */
-  50: t("cabin", "Talk to Mum at the back of the plane.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
+  50: t("cabin", "Talk to Mum in her seat near the back.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
   51: l("cabin", "Look at the magazine in your seat pocket.", ["magazine"], 52, { show: CABIN_ALL, journal: "skywritings" }),
   52: t("cabin", "Meet the chef at the front of the cabin.", ["chef"], 53, { show: CABIN_ALL, journal: "chef" }),
   53: l("cabin", "Look at the chef's trolley.", ["trolley"], 54, { show: CABIN_ALL, journal: "menu" }),
@@ -57,13 +65,13 @@ export const STEPS = {
   96: w("arrival", "The last flight home.", "end", null, { end: true, journal: "kept" }),
 };
 export const TASKS = {
-  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [0.69, 0.85, -1.98], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
+  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [CABIN.seatX[0], 0.85, CABIN.rows[0] + 0.42], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
 };
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while it happens. lines: the card after. */
 export const LOOKS = {
   tail: {
-    place: "apron", at: [23.5, -4.5], label: "Look at the tail", title: "The Love Bird",
+    place: "apron", at: [23.5, 6.0], label: "Look at the tail", title: "The Love Bird",
     sound: "engine",
     say: ["You walk back along the plane.", "Up on the tail there is a bird."],
     lines: ["The bird is the Doctor Bird, Jamaica's national bird.", "The airline calls it the Love Bird.", "Its colours are orange and white, like the stripe along the plane."],
@@ -102,7 +110,7 @@ LOOKS.magazine = {
   lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on the planes now.", "Go and meet him at the front."],
 };
 LOOKS.tail94 = {
-  place: "newlook", at: [24.5, 3.5], label: "Look at the tail", title: "The new tail",
+  place: "newlook", at: [24.5, 6.5], label: "Look at the tail", title: "The new tail",
   sound: "engine",
   say: ["You walk back along the new plane.", "The tail is dark blue now."],
   lines: ["The bird is still on the tail, yellow on dark blue.", "Pink and purple bars run across the top.", "Yellow, orange and pink bands sweep up from the body."],

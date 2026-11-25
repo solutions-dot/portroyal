@@ -149,9 +149,12 @@ export function powerCart() {
 export function held(kind) {
   if (kind === "clipboard") {
     const g = grp();
-    box(0.3, 0.02, 0.22, solid(0x7a5a3a, 0.8), 0, 0, 0, g);
-    box(0.26, 0.004, 0.18, solid(0xf0ece0, 0.9), 0, 0.012, 0, g);
-    return { obj: dynamic(g), handleY: 0.0, scale: 1, lift: 0.34, straighten: 0.5, label: "clipboard" };
+    /* carried as people carry one at their side: gripped by its top edge, hanging upright along the leg, the sheet held flat to the board
+       (owner, 25 November 2026: it was held flat like a tray, the fist on top of it) */
+    box(0.22, 0.31, 0.014, solid(0x7a5a3a, 0.8), 0, 0.155, 0, g);
+    box(0.19, 0.25, 0.02, solid(0xf0ece0, 0.9), 0, 0.14, 0, g);
+    box(0.08, 0.03, 0.026, solid(0x9a9e9c, 0.4, 0.6), 0, 0.29, 0, g);
+    return { obj: dynamic(g), handleY: 0.29, scale: 1, lift: 0.14, straighten: 0.6, hangs: true, label: "clipboard" };
   }
   if (kind === "bag") {
     const g = grp();

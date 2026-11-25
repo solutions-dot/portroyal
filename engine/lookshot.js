@@ -21,6 +21,11 @@
    LS.cancel();       a change of step or place mid-shot: everything put back at once (reveal(1) is called)
    LS.paused = true   holds the moment where it is (a dev screenshot mid-action)
    LS.tick(dt)        every frame; returns true while it is driving the camera, so the game skips its own camera that frame
+   Two more options (25 November 2026, The Shark Papers' spyglass; owner: "looking through the glass.. nothing to look through"):
+     first: { p, look, fov, hold = 1.4, share = 0.4 }   a close shot of the thing itself before the main view: the camera eases to it, holds
+                 `hold` seconds while reveal runs from 0 to `share` (the glass lifts off the companion), then eases on to `view`, where reveal runs
+                 from `share` to 1. Lines show in the main view.
+     scope: true  a round eyepiece over the main view (a dark ring, the view seen through the glass); it fades in there and out on back().
    frameOf(stand, focus, { dist, lift, fov }) is a framing from where the player stands to the thing, for a look with no `view` of its own.
 
    How to adopt it in a game (Windrush, Rose Hall, The Shark Papers have the old lookAt copy):
@@ -37,6 +42,20 @@ export function frameOf(stand, focus, { dist = 1.5, lift = 0.35, fov = 42 } = {}
     d = Math.hypot(dx, dz) || 1,
     r = Math.min(dist, d + 0.3);
   return { p: [focus[0] + (dx / d) * r, focus[1] + lift, focus[2] + (dz / d) * r], look: focus.slice(), fov };
+}
+/* the round eyepiece: one element for the page, under the letterbox bars (z-index 46 in the games) */
+let scopeEl = null;
+function scope(on) {
+  if (typeof document === "undefined") return;
+  if (!scopeEl) {
+    if (!on) return;
+    scopeEl = document.createElement("div");
+    scopeEl.id = "lookscope";
+    scopeEl.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:45;opacity:0;transition:opacity .5s ease;" +
+      "background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 0,rgba(0,0,0,0) 29vmin,rgba(40,28,10,.9) 30.5vmin,#000 33vmin,#000 100%)";
+    document.body.appendChild(scopeEl);
+  }
+  scopeEl.style.opacity = on ? "1" : "0";
 }
 export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () => {}, freeze = () => {}, sound = () => {}, quick = () => false, reduced = false, home }) {
   const L = { on: false, paused: false };
@@ -57,6 +76,7 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
       bars(true);
       const p = new THREE.Vector3(...o.view.p),
         look = new THREE.Vector3(...o.view.look),
+        F = o.first ? { p: new THREE.Vector3(...o.first.p), look: new THREE.Vector3(...o.first.look), fov: o.first.fov || 40, hold: o.first.hold ?? 1.4, share: o.first.share ?? 0.4 } : null,
         /* the camera creeps a little toward the thing while it acts, as a storybook page is leaned in to */
         push = p.clone().lerp(look, o.push ?? 0.12);
       S = {
@@ -64,7 +84,9 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
         p0: camera.position.clone(), q0: camera.quaternion.clone(), f0: fov(),
         p, push, q: aim(p, look), qPush: aim(push, look), f1: o.view.fov || 40,
         inT: reduced ? 0.01 : o.ease ?? 0.8, act: o.act ?? 2.2, line: o.line ?? 2.4, lines: o.lines || [], said: -1,
+        F, share: F ? F.share : 0, main: { p, q: aim(p, look), f: o.view.fov || 40 },
       };
+      if (F) Object.assign(S, { p: F.p, q: aim(F.p, F.look), f1: F.fov });   /* ease in to the close shot of the thing first */
       L.on = true;
     });
   L.back = () =>
@@ -76,6 +98,7 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
       }
       bars(false);
       say("");
+      scope(false);
       Object.assign(S, { phase: "out", t: 0, resolve, p0: camera.position.clone(), q0: camera.quaternion.clone(), f0: camera.fov, outT: reduced ? 0.01 : S.o.ease ?? 0.8 });
     });
   L.cancel = () => {
@@ -86,6 +109,7 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
     s.o.reveal?.(1);
     bars(false);
     say("");
+    scope(false);
     freeze(false);
     setFov(fov());
     s.resolve?.();
@@ -100,9 +124,28 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
       camera.quaternion.slerpQuaternions(s.q0, s.q, k);
       setFov(s.f0 + (s.f1 - s.f0) * k);
       if (s.t >= s.inT) {
-        s.phase = "act";
+        s.phase = s.F ? "first" : "act";
         s.t = 0;
         if (s.o.sound) sound(s.o.sound);
+        if (!s.F && s.o.scope) scope(true);
+      }
+    } else if (s.phase === "first") {
+      /* the close shot of the thing: hold while it starts to act, then move on to the main view */
+      s.o.reveal?.(s.share * Math.min(1, s.t / s.F.hold));
+      if (s.t >= s.F.hold) {
+        const m = s.main, look = new THREE.Vector3(...s.o.view.look);
+        Object.assign(s, { phase: "on", t: 0, p0: camera.position.clone(), q0: camera.quaternion.clone(), f0: camera.fov, p: m.p, q: m.q, f1: m.f, push: m.p.clone().lerp(look, s.o.push ?? 0.12) });
+        s.qPush = aim(s.push, look);
+      }
+    } else if (s.phase === "on") {
+      const k = ease(s.t / (reduced ? 0.01 : 0.9));
+      camera.position.lerpVectors(s.p0, s.p, k);
+      camera.quaternion.slerpQuaternions(s.q0, s.q, k);
+      setFov(s.f0 + (s.f1 - s.f0) * k);
+      if (s.o.scope && s.t > 0.55) scope(true);
+      if (s.t >= (reduced ? 0.01 : 0.9)) {
+        s.phase = "act";
+        s.t = 0;
       }
     } else if (s.phase === "act" || s.phase === "hold") {
       const k = ease(s.t / Math.max(s.act, s.lines.length * s.line));
@@ -110,7 +153,7 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
       camera.quaternion.slerpQuaternions(s.q, s.qPush, k);
       setFov(s.f1);
       if (s.phase === "act") {
-        s.o.reveal?.(Math.min(1, s.t / s.act));
+        s.o.reveal?.(s.share + (1 - s.share) * Math.min(1, s.t / s.act));
         const i = Math.min(s.lines.length - 1, Math.floor(s.t / s.line));
         if (i > s.said) say(s.lines[(s.said = i)]);
         if (s.t >= s.act && s.t >= s.lines.length * s.line) {

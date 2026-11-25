@@ -191,7 +191,7 @@ export const FILMS = {
       { t: 27, p: [-2.6, 1.4, 5.4], look: [4.4, 1.4, 3] },
     ],
     fov: [[0, 50], [5, 34], [9, 40], [12, 36], [16, 44], [21, 46], [27, 40]],
-    acts: [[11, "bogle", "HeadTurn"], [23, "constable", "LookAround"]],
+    acts: [[11, "bogle", "HeadTurn"], [23, "constable", "NervousLook"]],   /* held among the crowd: the owner's Mixamo "Nervously Look Around" */
     sounds: [[1, "begin"], [5, "steps"], [8, "steps"], [16, "shell"], [19, "drum"], [19.6, "drum"], [20.2, "drum"], [22, "crowd"]],
     duration: 32,
   },

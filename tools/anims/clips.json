@@ -131,5 +131,12 @@
  "HappyIdle2": "Happy_Idle_2.fbx",
  "StandPoseM": "Male_Standing_Pose.fbx",
  "Greet": "Standing_Greeting.fbx",
- "SitIdle5": "Sitting.fbx"
+ "SitIdle5": "Sitting.fbx",
+ "PullRope": "Pulling_A_Rope.fbx",
+ "PullStop": "Pull_Heavy_Object_Stop.fbx",
+ "NervousLook": "Nervously_Look_Around.fbx",
+ "SitSwitches": "Pilot_Flips_Switches.fbx",
+ "Wave2": "Waving.fbx",
+ "FishIdle": "Fishing_Idle.fbx",
+ "StandPoseM2": "Male_Standing_Pose_2.fbx"
 }

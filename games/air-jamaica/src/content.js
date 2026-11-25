@@ -25,7 +25,7 @@ export const CHAPTERS = [
     intro: "Years later, you fly home. Aunt Marcia takes you up to the flight deck.",
   },
   {
-    id: "newlook", name: "New colours", year: "December 1994", first: 40, last: 46, place: "newlook",
+    id: "newlook", name: "New colours", year: "December 1994", first: 38, last: 46, place: "newlook",
     caption: "Norman Manley Airport, Kingston · December 1994",
     intro: "Dee is grown up now. Air Jamaica has new owners, and a new look.",
   },
@@ -58,10 +58,10 @@ export const TALK = {
       L("You", "Is that the new plane?"),
       L("Aunt Marcia", "Yes. It is a Douglas DC-8. A big jet."),
       L("Aunt Marcia", "Air Jamaica is a Jamaican airline for Jamaican people."),
-      L("Aunt Marcia", "Go and look at the bird on its tail."),
+      L("Aunt Marcia", "Mr Hines is by the steps. Say hello."),
     ],
   },
-  12: {
+  11: {
     hines: [
       L("Mr Hines", "Mind the steps, young lady. They are new."),
       L("You", "Why are they blue and white?"),
@@ -72,7 +72,7 @@ export const TALK = {
       L("Mr Hines", "Now look along the line of crew. What a sight!"),
     ],
   },
-  14: {
+  13: {
     ross: [
       L("Captain Ross", "Good morning, young lady. Come to see us off?"),
       L("You", "Are you the pilot, sir?"),
@@ -81,8 +81,8 @@ export const TALK = {
       L("Captain Ross", "Jamaican pilots fly with us too."),
       L("You", "Where is the plane going?"),
       L("Captain Ross", "Up over the sea, and then north."),
-      L("Captain Ross", "Your Mum is up in the waving gallery."),
-      L("Captain Ross", "Go and wave. We leave very soon."),
+      L("Captain Ross", "Look at the bird on our tail on your way."),
+      L("Captain Ross", "Then go up to your Mum in the waving gallery."),
     ],
   },
 };
@@ -132,10 +132,10 @@ TALK[40] = {
     L("Aunt Marcia", "New owners took over the airline this year."),
     L("Aunt Marcia", "They gave the planes a whole new look."),
     L("You", "Is the bird still on the tail?"),
-    L("Aunt Marcia", "Go and look up at the tail."),
+    L("Aunt Marcia", "You will see. Say hello to Mr Hines first."),
   ],
 };
-TALK[42] = {
+TALK[41] = {
   hines94: [
     L("Mr Hines", "Dee! You were nine when the first jet flew."),
     L("You", "Mr Hines! You still work here?"),
@@ -429,6 +429,26 @@ FILMS.landing = {
   sounds: [[0.3, "begin"], [9, "drum"], [28.3, "drum"], [29, "jet"], [34, "jet"]],
   duration: 46,
 };
+/* the new colours, shown off at the start of chapter 3 (owner, 25 November 2026: "a brief cinematic entrance of the new plane look"): the camera
+   comes in low at the nose, glides along the side and rises to the blue tail. The Observer (July 2011) captions "the new-look Air Jamaica aircraft
+   on the tarmac at the Norman Manley International Airport before its inaugural flight in December 1994"; that this was the blue-tail look is a lean
+   (docs/games/air-jamaica.md), so the captions speak of new colours, not of a new aircraft. */
+FILMS.reveal = {
+  place: "newlook", next: 40, journal: "newlook", title: "New colours",
+  read: ["In December 1994 Air Jamaica showed off its new colours at Norman Manley Airport in Kingston, before the new look's first flight."],
+  captions: [[0, "December 1994. Norman Manley Airport, Kingston."], [2.6, "Air Jamaica has new colours."], [5.4, "Yellow, orange, pink and blue along the side."], [7.8, "And on the dark blue tail, the bird."]],
+  shots: [
+    { t: 0, p: [-28, 1.6, 9], look: [-9, 4, -8] },
+    { t: 2.6, p: [-15, 2.6, 7], look: [0, 4.2, -8] },
+    { t: 5.2, p: [8, 4.5, 9], look: [22, 7, -8] },
+    { t: 7.8, p: [19, 7.5, 7], look: [24.5, 9, -8] },
+    { t: 10, p: [20.5, 8, 6.5], look: [24.5, 9.2, -8] },
+  ],
+  fov: [[0, 46], [5.2, 44], [7.8, 38], [10, 36]],
+  acts: [],
+  sounds: [[0.4, "begin"], [7.8, "cheer"]],
+  duration: 10,   /* owner, 25 November 2026: ten seconds */
+};
 FILMS.newflight = {
   place: "newlook", next: 46, journal: "newlook", title: "The new look takes off",
   read: ["In December 1994 the first Air Jamaica plane in the new colours flew from Kingston.", "Guests and staff watched it roll out to the runway and take off."],
@@ -481,7 +501,7 @@ FILMS.lastlanding = {
   ],
   fov: [[0, 18], [15, 24], [27, 36], [42, 44], [50, 48], [56, 40], [63, 34]],
   acts: [],
-  sounds: [[0.3, "begin"], [10, "jet"], [16, "drum"], [17, "jet"], [56, "end"]],
+  sounds: [[0.3, "begin"], [10, "jet"], [16, "drum"], [17, "jet"], [56, "drum"]],   /* the ending music plays on the end card only (it played here, before the last quiz: owner, 25 November 2026) */
   duration: 63,
 };
 export const QUIZZES = {

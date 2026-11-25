@@ -615,7 +615,7 @@ async function lookAt(id) {
       save();
     };
   /* a framing from the look itself, or from the place when it depends on how the place was built (a ship out in the harbour) */
-  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  await LS.play({ view: lk.view || Q.lookViews?.[id], first: Q.lookFirst?.[id], scope: lk.scope, act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();

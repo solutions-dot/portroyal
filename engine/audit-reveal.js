@@ -40,6 +40,12 @@ export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02 } =
       for (const [o, b] of after) (moved(before.get(o), b) ? move : still).push([o, b]);
       if (globalThis.__REVEAL_DEBUG) out.push('debug ' + id + ' seen=' + seen + ' meshes=' + after.size + ' moved=' + move.length);
       if (!move.length) continue;
+      /* a moved piece that is not marked noBatch (on it or a parent) is merged into the place's still meshes when the place is built (engine/batch.js),
+         so in the game it never moves: Air Jamaica's box lid "never lift" (owner, 25 November 2026) though it moved here, before the merge */
+      if (seen) {
+        const frozen = move.filter(([o]) => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.noBatch) return false; return true; });
+        if (frozen.length) out.push(`reveal ${id}: ${frozen.length} moving piece${frozen.length > 1 ? 's are' : ' is'} not marked noBatch, so the merge freezes ${frozen.length > 1 ? 'them' : 'it'} and nothing moves in the game (mark the moving part dynamic)`);
+      }
       /* what can hold a thing up: a real surface, found with short rays against every mesh that did not move (merged scenery too: a ray
          meets its triangles, not its box). A box test let the hat pass: the cotton tree's box reaches far past its trunk. A piece rests
          when its lowest point is on the ground, or a ray from under it (down) or over it (up, a hook or a beam) meets a surface within tol

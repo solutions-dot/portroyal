@@ -23,11 +23,12 @@ import { createStory, createCarry, needList } from "../../../engine/story.js";
 import { createGuide } from "../../../engine/guide.js";   /* the gold arrow on the ground that shows the way (every game) */
 import { slideWalls, walkRoute } from "../../../engine/placement.js";
 import { releaseOnBlur, useInteractionKey } from "../../../engine/input.js";
-import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit } from "../../../engine/audio.js";
+import { AU, soundPref, setSound, audioInit, stepSound, uiSound, cue, setG, chirp, crackle, tone, noiseHit, mixBeds, bedTest, crowdCheer } from "../../../engine/audio.js";
 import { snapMeshes } from "../../../engine/audit.js";
 import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
-import { buildPlace, mergePlace } from "./places.js";
+import { buildPlace, mergePlace, PLACE_BEDS } from "./places.js";
+import { setPlaneParts } from "./planes.js";   /* the DC-8 parts taken from the owner's model */
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, QUIZZES } from "./content.js";
@@ -42,6 +43,7 @@ import { addExit, askExit } from '../../../engine/exit.js';
 const KEY = GAME.id + "-save-v1",
   q = new URLSearchParams(location.search),
   QUICK = __DEV__ && (q.has("auto") || q.has("test") || q.has("shot"));
+if (__DEV__ && q.get("test") === "beds") bedTest(PLACE_BEDS);   /* ?test=beds : each place's background sound against the shared range (engine/audio.js) */
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches,
   phone = touchFirst();   /* engine/device.js: an iPad in desktop mode and touch tablets too */
 soundPref(GAME.id + "-sound");
@@ -60,7 +62,7 @@ sky.objects.forEach((o) => scene.add(o));
 const hemi = new THREE.HemisphereLight(0xfff1d4, 0x819183, 2.5),
   sun = new THREE.DirectionalLight(0xffe2b6, 2.1);
 sun.position.set(-20, 42, 20);
-const SH = sunShadow(renderer, sun, { phone });   /* real sun shadows on desktop (engine/sunshadow.js) */
+const SH = sunShadow(renderer, sun, { phone, size: 96, map: 3072 });   /* real sun shadows on desktop (engine/sunshadow.js); the apron is wide open and the jets stand 30 to 50 m away, so the box is twice the usual size or a parked jet threw no shadow at all (review, 25 November 2026) */
 scene.add(hemi, sun);
 /* at night and indoors a soft light goes with you, as if your eyes had got used to the dark: faces near you can be read (owner rule 9) */
 const nightFill = new THREE.PointLight(0xffe2b8, 0, 16, 1.3);
@@ -123,6 +125,8 @@ addEventListener("resize", carry.fitView);
 export const blocked = (Q, x, z, r = 0.24) =>
   x < Q.bounds.x0 + r || x > Q.bounds.x1 - r || z < Q.bounds.z0 + r || z > Q.bounds.z1 - r ||
   Q.walls.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r);
+let partsP = null;
+const planeParts = () => partsP || (partsP = model("dc8_parts").then((g) => setPlaneParts("dc8_parts", g.scene)));
 function loadBase(id) {
   return bases[id]
     ? Promise.resolve(bases[id])
@@ -173,7 +177,7 @@ function holdThing(m, kind) {
   m.updateMatrixWorld(true);
   const h = P.held(kind);
   if (!h) return;
-  grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8 });
+  grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8, ...(h.hangs !== undefined ? { hangs: h.hangs } : {}), ...(h.yaw ? { yaw: h.yaw } : {}) });
   m.userData.held = [{ obj: h.obj, bone: "RightHand", label: h.label }];
 }
 function ensure(id) {
@@ -191,6 +195,7 @@ function ensure(id) {
 const PLACES = stepPlaces({ steps: STEPS, chapters: CHAPTERS, chapterOf: (s) => chapterOf(s), worlds, ensure: (id) => ensure(id), current: () => current, renderer, camera, scene });
 const { nextPlace, prepare, releaseFar } = PLACES;
 async function buildWorld(id) {
+  await planeParts();   /* the DC-8's glass, wings, engines, gear and tail come from a model (planes.js setPlaneParts) */
   const Q = buildPlace(id, { phone, reduced });
   Q.group.name = id;
   Q.group.visible = false;
@@ -485,6 +490,7 @@ async function advance(next) {
   if (chapterOf(next) !== chapterOf(S.stage)) {
     S.best = Math.max(S.best, chapterOf(next));
     save();
+    setGoal("Chapter " + (chapterOf(S.stage) + 1) + " is finished.");   /* the quiz is done: the goal no longer says "What did you learn?" while the next chapter is offered (owner, 25 November 2026) */
     nextPending = next;
     offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard, pause: QUICK ? 0 : undefined });
   } else await go(next, { keep: true });
@@ -517,6 +523,7 @@ async function waits(st) {
   if (kind === "film") {
     /* one card before a scene (engine/scene-warning.js): what happens, the standard lines if it may be frightening, Watch scene or Read instead */
     const data = CARDS[row.film];
+    if (!data) return go(st + 1, { keep: true });   /* a short, gentle scene with no card of its own (the new colours, 10 s) plays at once: no card to click first (review, 25 November 2026: it had no card, so chapter 3 stopped here) */
     sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
   } else if (kind === "playing") DIR.start(row.film);
   else if (kind === "note") {
@@ -563,7 +570,7 @@ function talk(n) {
 const LOOK_SFX = {
   engine: () => { noiseHit(380, 0.6, 2.4, 0.1, 0, 0); noiseHit(1500, 1.2, 1.4, 0.04, 0.2, 0.4); },   /* a jet turbine far off, winding up */
   click: () => [0, 0.3].forEach((d) => noiseHit(2600, 2, 0.06, 0.12, 0, d)),   /* a lever or a switch clicks */
-  cheer: () => [0, 0.35, 0.8].forEach((d) => noiseHit(900 + d * 400, 1.5, 0.5, 0.05, 0, d)),   /* the crew's soft hurrah, and their gloves */
+  cheer: () => crowdCheer(0.05),   /* the crew's soft hurrah, and their gloves (engine/audio.js) */
   page: () => [0, 0.45, 1.5, 1.75].forEach((d) => noiseHit(4200, 0.7, 0.2, 0.06, 0, d)),   /* paper: the magazine slides out of the pocket, and its cover turns over */
   lid: () => { [0, 0.25, 0.5, 0.75, 1.0].forEach((d) => noiseHit(3200, 4, 0.08, 0.1, 0, d)); noiseHit(5200, 0.8, 1.6, 0.03, 0.3, 0.4); },   /* five silver lids clink off, and the food sizzles */
 };
@@ -966,10 +973,9 @@ let bedT = 0;
 function audioTick(Q, dt) {
   if (!AU.ctx || !AU.on || AU.ctx.state !== "running" || (bedT += dt) < 0.1) return;
   const B = Q.beds || {},
-    k = talking ? 0.6 : 1,
     t = bedT;
   bedT = 0;
-  for (const ch of ["sea", "surf", "wind", "crowd", "room"]) if (AU.ch[ch]) setG(AU.ch[ch], (B[ch] || 0) * k, 0.8);
+  mixBeds(B, { duck: !!talking, tc: 0.8 });   /* the shared mixer: every bed a little lower while someone talks (engine/audio.js BED_RANGE) */
   if (B.bird && Math.random() < B.bird * t * 0.6) chirp();
   if (B.fire && Math.random() < B.fire * t * 2) crackle();
   if (B.owl && Math.random() < B.owl * t * 0.12) {

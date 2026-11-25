@@ -170,6 +170,7 @@ There are no audio files. Everything is Web Audio noise and oscillators.
 | `cue(kind)` | Short music phrases: `'begin'`, `'sad'`, `'end'`. |
 | `gullCry()`, `chirp()`, `crackle()`, `shipCreak()`, `hammer()`, `clink()` | One-shot ambience. |
 | `tone(f0, f1, dur, type, vol, pan, delay)`, `noiseHit(freq, q, dur, vol, pan, delay)`, `out(pan)` | Building blocks for new sounds. |
+| `crowdCheer(vol, pan, delay)` | A crowd's soft hurrah and clapping, for a film's "cheer" sound or a look (Air Jamaica, 25 November 2026: the scene asked for a cheer no game could play). |
 
 ### One ambient level (22 November 2026)
 
@@ -617,6 +618,10 @@ card(title, lines, [["Go on", async () => { await LS.back(); done(); }]]);
 - `LS.tick(dt)` goes before the game's own camera code each frame and returns true while it drives the camera. `LS.cancel()` goes wherever the game changes step. `LS.paused` holds the moment (a dev screenshot). `frameOf(stand, focus, { dist, lift, fov })` makes a framing for a look with no `view` of its own.
 - The place's reveal takes a number: `Q.reveal[id](k)`, 0 as found, 1 changed, called every frame while the thing acts (`true` and `false` still work, as 1 and 0, for restoring a place and for `engine/audit-reveal.js`).
 - Pass `DIR.on || LS.on` to `renderFramed`, so a phone held upright gets the wider cinematic lens.
+
+**`engine/audit-reveal.js` also reports a reveal that moves a piece not marked `noBatch`** (25 November 2026): the place's merge (`engine/batch.js`) freezes such a piece, so in the game nothing moves though the audit saw it move (Air Jamaica's box lid). Mark the moving part dynamic.
+
+**Two options added 25 November 2026** (The Shark Papers' spyglass, after the owner's "looking through the glass.. nothing to look through"): `first: { p, look, fov, hold, share }` puts a close shot of the thing itself (the glass lifting off the companion) before the main view, with `reveal` running from 0 to `share` there and on to 1 in the main view; `scope: true` lays a round eyepiece (a dark ring, the element `#lookscope`, z-index 45, under the letterbox bars) over the main view. Any look through a glass, a keyhole or a window can use them; pass them through from the game's `lookAt` (The Shark Papers takes `first` from the place's `Q.lookFirst[id]` and `scope` from the `LOOKS` entry).
 
 **Used by:** Kendal 1957, Hurricane Melissa, Eventide Home, Nanny Town and Bog Walk through `engine/lookkit.js` (below, 22 November 2026); The Mad Master of Edinburgh Castle (all eleven looks, 22 November 2026); The Shark Papers (all eight looks, 22 November 2026; a framing that depends on how a place was built, such as a ship out in the harbour, comes from the place's `Q.lookViews[id]`). **How to adopt it** (Windrush still has the old `lookAt` copy, a reveal and a card after 900 ms): 1) make one `LS` with the adapter, call `LS.tick(dt)` before the camera code and skip that code when it returns true; 2) give each `LOOKS` entry a `view` (or use `frameOf`), a `sound` and one or two `say` lines, and take the words the picture now shows out of the card; 3) let each `Q.reveal[id]` take `k` and move the thing (a lid on its hinge, a cloth along its rail), not just show it; 4) in `lookAt`, `await LS.play(...)`, then the card, with `LS.back()` on its button; `LS.cancel()` in the step change. Check `?auto=1` still ends with `FLOW 0` and `?test=audit` (the reveal check) stays at 0.
 

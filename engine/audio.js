@@ -51,6 +51,11 @@ export function tone(f0, f1, dur, type, vol, pan, delay = 0) { const c = AU.ctx,
   g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.02, dur * 0.2)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g); g.connect(d); o.start(t0); o.stop(t0 + dur + 0.02); }
 export function noiseHit(freq, q, dur, vol, pan, delay = 0) { const c = AU.ctx, t0 = c.currentTime + 0.02 + delay, src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain(), d = out(pan || 0); src.buffer = AU.crack; src.playbackRate.value = 0.5; bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
   g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); src.connect(bp); bp.connect(g); g.connect(d); src.start(t0); }
+/* a crowd's cheer, for a film's "cheer" sound or a look: a few voices rising in a soft hurrah, then clapping (review, 25 November 2026: the
+   new-colours scene asked for a cheer that no game could play, so it was silent) */
+export function crowdCheer(vol = 0.08, pan = 0, delay = 0) { if (!AU.ctx) return;
+  [0, 0.18, 0.4, 0.7].forEach((d, i) => noiseHit(700 + i * 260, 1.4, 0.9 - i * 0.12, vol * (1 - i * 0.15), pan + (i % 2 ? 0.3 : -0.3), delay + d));
+  for (let i = 0; i < 10; i++) noiseHit(2600 + (i % 3) * 400, 2.5, 0.05, vol * 0.5, pan + Math.sin(i * 2.1) * 0.5, delay + 0.9 + i * 0.13 + (i % 2) * 0.05); }
 export function shipCreak() { const c = AU.ctx, t0 = c.currentTime + 0.03, o = c.createOscillator(), g = c.createGain(), bp = c.createBiquadFilter(), d = out(0.5 + Math.random() * 0.4), dur = 0.6 + Math.random() * 0.7, f = 70 + Math.random() * 50;   /* timbers groaning as the hulls rock */
   o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t0); o.frequency.linearRampToValueAtTime(f * (1.15 + Math.random() * 0.3), t0 + dur); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 5; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.05, t0 + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 18 + Math.random() * 14; lg.gain.value = 0.04; lfo.connect(lg); lg.connect(g.gain); o.connect(bp); bp.connect(g); g.connect(d); o.start(t0); lfo.start(t0); o.stop(t0 + dur + 0.05); lfo.stop(t0 + dur + 0.05); }

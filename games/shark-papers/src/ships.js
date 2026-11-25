@@ -482,13 +482,13 @@ export function gunAtPort(side, len = 1.35) {
   q.position.x = side * 0.3;   /* run out: the muzzle stands in the port */
   g.add(q);
   for (const dz of [-0.42, 0.42]) {
-    /* the breeching: from its ring bolt in the bulwark to the back of the gun, hanging in a slight curve, not a straight pole */
-    const mid = [side * 0.17, 0.27, dz * 0.71];
-    rope([side * 0.78, 0.36, dz], mid, 0.022, SM.hemp, g, 5);
-    rope(mid, [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
+    /* the breeching: a heavy tarred rope from its ring bolt in the bulwark, slack, sagging down beside the carriage almost to the deck, and up round
+       the back of the gun. A smooth tube through points, not two straight pieces: they read as stiff pale poles (owner, 25 November 2026) */
+    const c = new THREE.CatmullRomCurve3([[side * 0.78, 0.36, dz], [side * 0.45, 0.16, dz * 0.92], [side * 0.05, 0.08, dz * 0.8], [side * -0.3, 0.2, dz * 0.62], [side * -0.44, 0.34, dz * 0.42]].map((p) => new THREE.Vector3(...p)));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 16, 0.016, 6), SM.tar));
     cyl(0.035, 0.035, 0.03, SM.iron, side * 0.78, 0.36, dz, g, 6).rotation.z = Math.PI / 2;
   }
-  rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.022, SM.hemp, g, 5);
+  rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.016, SM.tar, g, 6);
   return g;
 }
 /* a rope coiled down flat on the deck, or (hang) hung from a pin */
@@ -768,29 +768,61 @@ export function schoonerRig(g, F, { foreZ, mainZ, set = "set", foreH = 10.5, mai
   return { fore, main, sprit: sp, fh, mh, at };
 }
 /* HM cutter Sparrow, seen from another deck: one mast, a long bowsprit, a great gaff mainsail and two head sails (123 tons, about 66 feet) */
+/* HM cutter Sparrow (123 tons, about 66 feet, 10 carronades and 2 six-pounders, 40 men: docs/games/shark-papers.md). Shaped after Royal Navy cutters of
+   the 1790s as their draughts and paintings show them (owner, 25 November 2026: "the boat we see through the looking glass could be better"): a deep
+   sheer rising to a high bow, gunports along the bulwark in a pale band, a long running bowsprit nearly level over the stem, the main boom reaching well
+   past the stern, a square topsail set on the topmast above the gaff sail, and the navy's long pennant at the masthead with an ensign at the gaff peak.
+   STAND-INS (no drawing of the Sparrow herself is known): the hull lines and paint; the colours of the pennant and ensign, which in 1799 followed the
+   squadron of the admiral she served under (not checked: red is shown). In the calm every flag hangs straight down. */
 export function cutter(set = "set") {
-  const F = lines({ L: 20.2, B: 7.2, fb: 1.5, bul: 0.9, sheerF: 0.5, sheerA: 0.25, stern: 0.7, bowAt: 0.5, bluff: 2.2 }),
-    g = hull(F, { stripe: 0.34, N: 22, ports: [{ y: 0.42, n: 6, s0: 0.14, s1: 0.74, w: 0.6, h: 0.42 }] }),
+  const F = lines({ L: 20.2, B: 7.2, fb: 1.5, bul: 0.9, sheerF: 0.95, sheerA: 0.42, stern: 0.7, bowAt: 0.5, bluff: 2.2 }),
+    g = hull(F, { stripe: 0.18, N: 22, bands: [[0.74, 0.3, 0xd8c08a]], ports: [{ y: 0.42, n: 6, s0: 0.14, s1: 0.74, w: 0.5, h: 0.36 }] }),
     mz = F.z(0.6),
-    m = gaffMast(g, { z: mz, h: 14.5, top: 8, boom: F.z(0) - mz + 2.6, gaffL: 8.6, boomY: 2.5, swing: -0.1, set, r: 0.24 });
+    m = gaffMast(g, { z: mz, h: 14.5, top: 8, boom: F.z(0) - mz + 3.4, gaffL: 8.6, boomY: 2.5, swing: -0.1, set, r: 0.24 });
   shrouds(g, { z: mz + 0.1, hounds: 14.4, n: 4, at: (z) => F.half(F.s(z)), y0: F.bul + F.sheer(0.6), gap: 0.5, rat: 0.5 });
-  const sp = bowsprit(g, { z: F.z(1) + 0.2, y: F.bul + 0.8, len: 9, rise: 0.1, jibboom: 0, r: 0.16 });
-  rope(m.userData.hounds, [0, F.bul + 0.9, F.z(1) + 0.1], 0.02, SM.tar, g);
+  const bowY = F.bul + F.sheer(1);
+  const sp = bowsprit(g, { z: F.z(1) + 0.2, y: bowY + 0.25, len: 12.5, rise: 0.035, jibboom: 0, r: 0.17 });
+  rope(m.userData.hounds, [0, bowY + 0.3, F.z(1) + 0.1], 0.02, SM.tar, g);
   rope([0, 15.5, mz], sp.userData.cap, 0.016, SM.tar, g);
   rope([0, 22, mz - 0.24], sp.userData.cap, 0.012, SM.tar, g);
-  for (const s of [-1, 1]) rope([0, 21.5, mz - 0.24], [s * (F.half(0.3) + 0.06), F.bul, F.z(0.3)], 0.012, SM.tar, g);
+  rope(sp.userData.cap, [0, F.sheer(1) - 1.2, F.z(1) + 0.2], 0.018, SM.tar, g);   /* the bobstay, from the bowsprit's end down to the stem */
+  for (const s of [-1, 1]) rope([0, 21.5, mz - 0.24], [s * (F.half(0.3) + 0.06), F.bul + F.sheer(0.3), F.z(0.3)], 0.012, SM.tar, g);
   if (set === "set") {
-    jib([0, F.bul + 1.1, F.z(1) + 0.4], [0.3, F.bul + 1.6, mz - 1], [0, 13.6, mz - 0.6], 0.25, g);
-    jib([0, sp.userData.cap[1] + 0.3, sp.userData.cap[2] + 0.5], [-0.3, F.bul + 2.4, F.z(1) + 1.4], [0, 15, mz - 0.5], -0.25, g);
+    jib([0, bowY + 0.5, F.z(1) + 0.4], [0.3, bowY + 1.0, mz - 1], [0, 13.6, mz - 0.6], 0.25, g);
+    jib([0, sp.userData.cap[1] + 0.3, sp.userData.cap[2] + 0.5], [-0.3, bowY + 1.8, F.z(1) + 1.4], [0, 15, mz - 0.5], -0.25, g);
   }
-  /* the square topsail yard, the sail furled */
-  spar([-4.4, 16.2, mz - 0.5], [4.4, 16.2, mz - 0.5], 0.07, 0.07, SM.sparDark, g);
-  cyl(0.12, 0.12, 8, sailMat(), 0, 16.36, mz - 0.5, g, 8).rotation.z = Math.PI / 2;
+  /* the square topsail, set and hanging in the calm, between its yard and the crossjack yard below it */
+  const ty = 19.6, cy = 15.6, tz = mz - 0.5;
+  spar([-4.0, ty, tz], [4.0, ty, tz], 0.07, 0.06, SM.sparDark, g);
+  spar([-5.2, cy, tz], [5.2, cy, tz], 0.09, 0.07, SM.sparDark, g);
+  if (set === "set") sail([[-4.9, cy + 0.15, tz], [4.9, cy + 0.15, tz], [3.9, ty - 0.1, tz], [-3.9, ty - 0.1, tz]], 0.25, g, 6);
+  else cyl(0.12, 0.12, 7.6, sailMat(), 0, ty + 0.16, tz, g, 8).rotation.z = Math.PI / 2;
+  /* the long pennant from the masthead and the ensign from the gaff peak, both hanging limp in the calm (colours: a stand-in, see above) */
+  const red = new THREE.MeshStandardMaterial({ color: 0xb8262a, roughness: 0.9, side: THREE.DoubleSide });
+  const head = [0, 22.6, mz - 0.24];
+  const pen = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 5.5, 1, 10), red);
+  { const p = pen.geometry.attributes.position; for (let k = 0; k < p.count; k++) { const y = p.getY(k), t = (2.75 - y) / 5.5; p.setX(k, p.getX(k) * (1 - 0.7 * t) + Math.sin(t * 3) * 0.12); p.setZ(k, -t * 0.5); } pen.geometry.computeVertexNormals(); }
+  pen.position.set(head[0], head[1] - 2.75, head[2]); pen.rotation.y = Math.PI / 2; g.add(pen);
+  { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.5), new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: 0.9, side: THREE.DoubleSide })); w.position.set(head[0], head[1] - 0.25, head[2] + 0.003); w.rotation.y = Math.PI / 2; g.add(w); }   /* its white hoist */
+  const pk = m.userData.peak, ens = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.0, 1, 6), red);
+  { const p = ens.geometry.attributes.position; for (let k = 0; k < p.count; k++) { const t = (1 - p.getY(k)) / 2; p.setZ(k, Math.sin(t * 4 + p.getX(k)) * 0.06); } ens.geometry.computeVertexNormals(); }
+  ens.position.set(pk[0], pk[1] - 1.05, pk[2]); ens.rotation.y = Math.PI / 2; g.add(ens);
+  const canton = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.42), new THREE.MeshStandardMaterial({ map: unionTexture(), roughness: 0.9, side: THREE.DoubleSide }));
+  canton.position.set(pk[0] + 0.004, pk[1] - 0.24, pk[2] - 0.29); canton.rotation.y = Math.PI / 2; g.add(canton);   /* the union in the upper corner by the halyard */
   /* a low companion and a skylight, so her deck is not bare */
   const c = companion(1, 1.2, 0.8);
   c.position.set(0, F.sheer(0.25), F.z(0.25));
   g.add(c);
   return g;
+}
+/* the union of 1707 to 1800 (before Ireland's saltire was added in 1801): the red cross of St George, edged white, over the white saltire of St Andrew on blue */
+function unionTexture() {
+  return cv(120, 100, (x, W, H) => {
+    x.fillStyle = "#1f2f6b"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "#f2efe6"; x.lineWidth = 16; x.beginPath(); x.moveTo(0, 0); x.lineTo(W, H); x.moveTo(W, 0); x.lineTo(0, H); x.stroke();
+    x.fillStyle = "#f2efe6"; x.fillRect(W / 2 - 16, 0, 32, H); x.fillRect(0, H / 2 - 16, W, 32);
+    x.fillStyle = "#c8202a"; x.fillRect(W / 2 - 9, 0, 18, H); x.fillRect(0, H / 2 - 9, W, 18);
+  });
 }
 /* a merchant brig of the 1790s, about 125 tons: two square-rigged masts, the sails furled in port, a boat on deck, a caboose, a windlass.
    A general picture: no drawing of the Nancy is known. userData.hatchAt: where her main hatch is. */
@@ -992,5 +1024,33 @@ export function shark(L = 3.4) {
     }
   }
   g.traverse((o) => (o.userData.noBatch = true));
+  /* The body can bend, so a caught shark thrashes (owner, 25 November 2026: "no wriggle or any kind of animation for the shark"). Every part is
+     baked into the shark's own frame and keeps its rest shape; wriggle(a, ph) sweeps the body side to side in a wave that runs back along it, the
+     head nearly still and the tail swinging most, and curls it up a little (b) as a hooked fish does. wriggle(0) puts it back straight. */
+  g.updateMatrixWorld(true);
+  const parts = [];
+  for (const o of [...g.children]) {
+    if (!o.isMesh) continue;
+    o.updateMatrix();
+    const geo = o.geometry.clone();
+    geo.applyMatrix4(o.matrix);
+    o.geometry = geo;
+    o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.scale.set(1, 1, 1);
+    parts.push({ geo, rest: Float32Array.from(geo.attributes.position.array) });
+  }
+  const head = -1.7 * k, len = 3.25 * k;
+  g.userData.wriggle = (a = 0, ph = 0, b = 0) => {
+    for (const { geo, rest } of parts) {
+      const P = geo.attributes.position, arr = P.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        const z = rest[i + 2], u = Math.max(0, Math.min(1, (z - head) / len)), w = 0.12 + 0.88 * u * u;
+        arr[i] = rest[i] + a * k * w * Math.sin(ph - u * 4.2);
+        arr[i + 1] = rest[i + 1] + b * k * (u - 0.35) * (u - 0.35);
+        arr[i + 2] = z;
+      }
+      P.needsUpdate = true;
+      geo.computeBoundingSphere();
+    }
+  };
   return g;
 }
