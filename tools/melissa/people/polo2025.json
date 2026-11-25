@@ -1,0 +1,99 @@
+{
+ "name": "polo2025",
+ "era": 2025,
+ "body": {
+  "gender": 1.0,
+  "age": 0.5,
+  "muscle": 0.45,
+  "weight": 0.48,
+  "height": 0.5,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.3,
+  "trousers": true,
+  "shoes": true,
+  "hat": [
+   [
+    "baseball",
+    "Cap"
+   ]
+  ],
+  "hairvol": 0.1,
+  "untucked": true,
+  "denim": 1,
+  "sneakers": true,
+  "chain": 0.045,
+  "fade": 0.6,
+  "collar": "turn",
+  "polo": 2,
+  "belt": false,
+  "stripes": 0.024
+ },
+ "colors": {
+  "Skin": [
+   150,
+   102,
+   74
+  ],
+  "Shirt": [
+   34,
+   92,
+   150
+  ],
+  "Breeches": [
+   62,
+   84,
+   124
+  ],
+  "Shoes": [
+   244,
+   244,
+   240
+  ],
+  "Hat": [
+   205,
+   180,
+   116
+  ],
+  "Cap": [
+   200,
+   40,
+   40
+  ],
+  "HatBand": [
+   120,
+   90,
+   50
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ],
+  "Sole": [
+   244,
+   244,
+   240
+  ],
+  "Stripe": [
+   242,
+   240,
+   232
+  ],
+  "Collar": [
+   34,
+   92,
+   150
+  ],
+  "Buttons": [
+   240,
+   238,
+   230
+  ]
+ },
+ "face": "soft"
+}

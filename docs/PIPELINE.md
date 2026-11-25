@@ -402,6 +402,25 @@ and keeps its usual garment keys, because `era.py` still builds its own pieces f
 - **`"chefbuttons": 6`** on an untucked shirt with `"collar": "stand"` and `"buttons": false`: a chef's double-breasted jacket, two columns of small buttons (`Buttons`). Give it `"belt": false`, or the belt shows through the untucked hem.
 - **Hat `"toque"`**: a chef's tall pleated white hat (`Hat`), with three thin stripes round the band (`HatStripeR`, `HatStripeO`, `HatStripeY`, red, orange and yellow by default).
 
+## Modern clothes: 1988 to today (25 November 2026, Air Jamaica and Hurricane Melissa)
+
+The owner asked for a wardrobe of the late 20th and 21st centuries, true to each year: jeans, polo shirts (some striped), sneakers, sandals, baseball caps, fine gold chains, and women in trousers and modern tops, not long skirts. All of it is in `tools/garvey/era.py`, so every game gets it.
+
+| Key | What it makes |
+|---|---|
+| `"polo": n` | A polo shirt: with `"collar": "turn"`, the front band is short, at the throat, with n buttons. |
+| `"stripes": w` | Level stripes `w` metres deep (at a grown man's size) on the shirt's body, in `Stripe` on `Shirt`; the sleeves stay plain. The shirt is cut along every stripe's edge, so the edges are clean lines. A game that recolours `Shirt` loses the stripes: leave `Shirt` alone on a striped body. |
+| `"denim": 1` | Jeans: the `Breeches` colour paler where denim wears (the front of the thighs, the knees) and a little uneven. |
+| `"sneakers": true` | A deep rubber sole (about 2 cm) under the shoe; give `Shoes` and `Sole` white for white sneakers. |
+| `"sandals": 1` or `2` | Only the straps of the shoe are kept (one broad strap over the front of the foot; 2 adds a strap round the back of the ankle), the sole gets a top, and the bare foot shows. |
+| `"hat": [["baseball", "Cap"]]` | A baseball cap: a soft six-panel crown, a button, a stiff curved peak (`CapPeak`, the cap's colour unless given). The hair under the crown is removed. `hatdrop` lowers it (default 1.4 cm). |
+| `"chain": d` | A fine gold chain (`Chain`, a little metallic) lying on whatever is outermost at the base of the neck, hanging `d` metres lower at the front. |
+| `"woman": true` with `"trousers": true` | Women in trousers or jeans: works as for men. Tuck the top in (`"untucked": false`, `"belt": true`) for 1988 to the 1990s; wear it out for the 2000s on. |
+
+**Fixed in the builder on the way (25 November 2026):** an untucked shirt over long trousers had the trousers pushed out through its hem (the trousers were cleared over the shirt as for a tucked one). Now, with `untucked` and long trousers: the trousers are kept off the skin only, their top is cut away 3 cm inside the shirt's hem (never seen), the hem ends at the top of the hips (`HIP - 0.035`; with shorts it stays at `HIP - 0.075`), each point of the hem clears the trousers at its own height, and no belt is made (it would show over the shirt). And from `era` 1990 on, a point well inside the arm's line is the waist, not the arm, so a fuller figure's top no longer has a hole cut at the waist by the sleeve's reach.
+
+**Still to look at:** mid-stride, the front of a loose shirt's hem is pushed a little by the lifted thigh; the cap's crown reads a little tall from the front three-quarter.
+
 ## Hands keep their fingers when packed (17 November 2026)
 
 The owner saw spiky, claw-like fingers again. The cause was the packer: when the face was given its own share of triangles (`splitFaces`), the rest of the skin was cut harder and every finger collapsed into a long thin spike. `splitHands` in `tools/people/pack.mjs` now keeps the hands out of the general simplification too (80 per cent of their triangles on a full body, 35 per cent on a light copy), so fingers keep their shape. To bring a packer change to every game without Blender: `node tools/people/rebuild.mjs --repack` packs again from the bodies already built in `build/people-all/`. The sheet tool has a close-up hand view (`views=hand,handfront,handback`). `--repack` reaches every game: it is passed on to `tools/selassie/build-people.mjs` and `tools/windrush/build-people.mjs`, which then pack from the bodies in `build/selassie-people` and `build/windrush-people` and run no Blender. It stops with a clear message if a body was never built on this machine (`build/` is not in git), and it does not change how a body is built: see `docs/HANDOFF.md`, "Read this before any body is rebuilt".

@@ -1,4 +1,4 @@
-# Air Jamaica: handoff for the next session (24 November 2026)
+# Air Jamaica: handoff for the next session (updated 25 November 2026)
 
 Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research, sources, what is general), this file.
 
@@ -7,6 +7,13 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 - Chapter 1 "A flag in the sky" (apron + waving gallery, 1 April 1969) and chapter 2 "The view from the front" (DC-8 flight deck, landing) play end to end.
 - Code: `src/planes.js` (jet kit: DC-8, DC-9, livery painted as a texture, open door with reveal), `src/airport.js` (Palisadoes terminal from NLJ photos, waving gallery, runway 12/30 laid flat, taxiway), `src/places.js` (apron, gallery, cockpit), `src/cockpit.js` (flight deck rebuilt from the 1969 Finnair DC-8 photo), `src/props.js` (boarding steps), `src/content.js` / `src/steps.js` (words, steps, films, quiz), `src/cast.js`.
 - People: recipes in `tools/air-jamaica/people/`, built by `tools/air-jamaica/build-people.mjs` (shared builder `tools/garvey/era.py`). Builder options added this session: `hair:"straight"` (+`hairlen`), colours `Lipstick`, `Eyeshadow`, `Gloves`; armpit fix; short skirts follow each thigh (see `docs/PIPELINE.md`).
+
+## 25 November 2026: the later chapters built, and a modern wardrobe
+- **Done:** chapter 3 "New colours" (December 1994, steps 40 to 46, place `newlook`), chapter 5 "The sale" (April 2010, steps 70 to 73, place `home`), chapter 6 "The last flight home" (30 April 2010, steps 90 to 96, places `lastflight` and `arrival`). Chapters now run by date: 1969, the 1970s, 1994, the 2000s, April 2010, 30 April 2010. The chef chapter no longer ends the game; its quiz leads on to the sale.
+- **Planes:** `A320` in `planes.js`, the blue-tail look (`livery: "blue"`: paint bands, a curved title laid on the skin, the blue fin with the bird in an open ring). `airport(Q, { later: true })` leaves out the 1969 terminal and gallery and puts up a stand-in hangar.
+- **People:** 13 new bodies in period clothes (`tools/air-jamaica/people/aj_*94`, `*04`, `*10`); the Windrush 2018 stand-ins in chapter 4 are replaced and their copies removed. Builder options added for every game (`docs/PIPELINE.md`, "Modern clothes"): `polo`, `stripes`, `denim`, `sneakers`, `sandals`, the `baseball` cap, `chain`, women in trousers; fixes for untucked shirts over long trousers.
+- **Hurricane Melissa** got the same wardrobe on the owner's word (25 November 2026): its seven recipes (`tools/melissa/people/`) are built with `tools/melissa/build-people.mjs` and its 1988 and 2025 people and crowds use them (`games/melissa/src/cast.js`).
+- **Open:** a dated photograph of the 1994 and 2010 airport and hangars; the year the blue-tail look first flew; the later crew uniforms (crew in uniform are not shown after 1969); the cap's crown reads a little tall; a loose shirt's hem is pushed a little by the thigh mid-stride.
 
 ## Setting up the builder in a fresh container
 1. `python3 -m venv /tmp/venv && /tmp/venv/bin/pip install bpy==5.3.0 numpy`
@@ -17,7 +24,7 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 ## Checks (all must pass before done)
 - `python3 -m http.server 8765` at repo root, `node tools/build.mjs _air-jamaica --dev`
 - Audit: open `games/_air-jamaica/site/?test=audit` (title `AUDIT n`); last result 0 issues in apron, gallery, cockpit.
-- Autoplayer: `?auto=1&one` and `?auto=2&one` reach `AUTO END 30` / `AUTO END 34`.
+- Autoplayer: `?auto=N&one` for each chapter N = 1 to 6, and `?auto=1` for the whole story (reaches `AUTO END 96`).
 - People: `node tools/review/full-check.mjs _air-jamaica <ids> anims=Idle:0.4,Walk:0.3,Wave:0.5` and LOOK at every sheet (rule 15).
 - Screenshots: `node tools/review/look-shot.mjs _air-jamaica out.png "shot=10"`; phone size `414x706`.
 - Wikimedia: only standard thumbnail sizes work, e.g. `upload.wikimedia.org/wikipedia/commons/thumb/a/ab/<file>/1280px-<file>`.

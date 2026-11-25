@@ -8,6 +8,7 @@ const l = (place, goal, ids, next, extra) => row(place, goal, { do: ids }, next,
 const w = (place, goal, card, next, extra = {}) => ({ place, goal, wait: true, card, next, ...extra });
 const ALL = ["marcia", "hines", "ross"];
 const CABIN_ALL = ["dee2", "chef", "clarke"];
+const NEW_ALL = ["marcia94", "hines94"], HOME_ALL = ["marcia10", "dee10"], LAST_ALL = ["dee10s", "grant"];
 export const STEPS = {
   /* 1. A flag in the sky */
   10: t("apron", "Talk to Aunt Marcia in the line of crew.", ["marcia"], 11, { show: ALL, journal: "you" }),
@@ -24,7 +25,15 @@ export const STEPS = {
   31: l("cockpit", "Look at the four levers between the seats.", ["levers"], 32, { journal: "levers" }),
   32: w("cockpit", "The plane comes in to land.", "film", 33, { film: "landing" }),
   33: w("cockpit", "The plane comes in to land.", "playing", 34, { film: "landing" }),
-  34: w("cockpit", "What did you learn?", "quiz", 50, { quiz: "cockpit" }),
+  34: w("cockpit", "What did you learn?", "quiz", 40, { quiz: "cockpit" }),
+  /* 4. New colours: the apron at Norman Manley Airport, December 1994 */
+  40: t("newlook", "Talk to Aunt Marcia by the new plane.", ["marcia94"], 41, { show: NEW_ALL, journal: "dee94" }),
+  41: l("newlook", "Look up at the new tail.", ["tail94"], 42, { show: NEW_ALL, journal: "newlook" }),
+  42: t("newlook", "Talk to Mr Hines by the nose.", ["hines94"], 43, { show: NEW_ALL, journal: "owners" }),
+  43: l("newlook", "Look at the name and the flag.", ["nose"], 44, { show: NEW_ALL, journal: "airbus" }),
+  44: w("newlook", "The new look takes off.", "film", 45, { film: "newflight", show: NEW_ALL }),
+  45: w("newlook", "The new look takes off.", "playing", 46, { film: "newflight", show: NEW_ALL }),
+  46: w("newlook", "What did you learn?", "quiz", 50, { quiz: "newlook", show: NEW_ALL }),
   /* 3. The flying chef: the cabin of a jet in the 2000s, flying to Toronto */
   50: t("cabin", "Talk to Mum at the back of the plane.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
   51: l("cabin", "Look at the magazine in your seat pocket.", ["magazine"], 52, { show: CABIN_ALL, journal: "skywritings" }),
@@ -32,8 +41,20 @@ export const STEPS = {
   53: l("cabin", "Look at the chef's trolley.", ["trolley"], 54, { show: CABIN_ALL, journal: "menu" }),
   54: d("cabin", "Carry the ackee and saltfish to Mr Clarke.", ["plate"], 55, { show: CABIN_ALL }),
   55: t("cabin", "Talk to Mr Clarke.", ["clarke"], 56, { show: CABIN_ALL, journal: "taste" }),
-  56: w("cabin", "What did you learn?", "quiz", 57, { quiz: "chef", show: CABIN_ALL }),
-  57: w("cabin", "The flying chef.", "end", null, { end: true, show: CABIN_ALL }),
+  56: w("cabin", "What did you learn?", "quiz", 70, { quiz: "chef", show: CABIN_ALL }),
+  /* 5. The sale: Aunt Marcia's front room in Kingston, April 2010 */
+  70: t("home", "Talk to Aunt Marcia.", ["marcia10"], 71, { show: HOME_ALL, journal: "sale" }),
+  71: l("home", "Open Aunt Marcia's old box.", ["box"], 72, { show: HOME_ALL, journal: "keepsakes" }),
+  72: t("home", "Talk to Mum by the door.", ["dee10"], 73, { show: HOME_ALL, journal: "tia14" }),
+  73: w("home", "What did you learn?", "quiz", 90, { quiz: "sale", show: HOME_ALL }),
+  /* 6. The last flight home: on board from Fort Lauderdale, 30 April 2010, and the landing at Kingston */
+  90: t("lastflight", "Talk to Mum in the seat beside yours.", ["dee10s"], 91, { show: LAST_ALL, journal: "lastflight" }),
+  91: t("lastflight", "Talk to Mr Grant across the aisle.", ["grant"], 92, { show: LAST_ALL, journal: "grant" }),
+  92: l("lastflight", "Look out of the window.", ["window"], 93, { show: LAST_ALL }),
+  93: w("lastflight", "The last flight comes home.", "film", 94, { film: "lastlanding", show: LAST_ALL }),
+  94: w("arrival", "The last flight comes home.", "playing", 95, { film: "lastlanding" }),
+  95: w("arrival", "What did you learn?", "quiz", 96, { quiz: "last" }),
+  96: w("arrival", "The last flight home.", "end", null, { end: true, journal: "kept" }),
 };
 export const TASKS = {
   plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [0.69, 0.85, -1.98], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
@@ -79,4 +100,28 @@ LOOKS.magazine = {
   sound: "page",
   say: ["You pull the magazine from the seat pocket.", "It opens on a story about the airline."],
   lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on the planes now.", "Go and meet him at the front."],
+};
+LOOKS.tail94 = {
+  place: "newlook", at: [24.5, 3.5], label: "Look at the tail", title: "The new tail",
+  sound: "engine",
+  say: ["You walk back along the new plane.", "The tail is dark blue now."],
+  lines: ["The bird is still on the tail, yellow on dark blue.", "Pink and purple bars run across the top.", "Yellow, orange and pink bands sweep up from the body."],
+};
+LOOKS.nose = {
+  place: "newlook", at: [-8.6, 2.4], label: "Look at the name", title: "The name and the flag",
+  sound: "cheer",
+  say: ["You walk round to the front of the plane.", "Big round letters, pink and blue."],
+  lines: ["The name reads air in pink and Jamaica in dark blue.", "The Jamaican flag sits under the cockpit windows.", "People called these some of the prettiest planes in the sky."],
+};
+LOOKS.box = {
+  place: "home", at: [0.9, 0.2], label: "Open the box", title: "Aunt Marcia's box",
+  sound: "page",
+  say: ["The lid lifts.", "Inside, folded neatly, is a bright yellow dress."],
+  lines: ["Aunt Marcia wore this dress on her first day, 1 April 1969.", "Her white gloves are with it.", "And a photo of the first crew in a long, bright line."],
+};
+LOOKS.window = {
+  place: "lastflight", at: [-0.3, 0.75], label: "Look out of the window", title: "Nearly home",
+  sound: "engine",
+  say: ["You lift the window blind.", "The sky is pink and gold over the sea."],
+  lines: ["The sun is going down.", "Lights shine along the coast of Jamaica.", "The plane starts to come down toward Kingston."],
 };

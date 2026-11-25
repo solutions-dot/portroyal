@@ -4,10 +4,10 @@
    a DC-9, another of the first four jets, stands behind it. The crew stand in a line along the plane, as in the photograph of the first crew.
    Story people: person(). Background people: crowd(). Walls: wall(). Every solid thing lists its walking wall; the audits check them. */
 import * as THREE from "three";
-import { T, std, solid, plane, grp, batchStatic } from "./gfx.js";
+import { T, std, solid, plane, grp, batchStatic, box, cyl, cv } from "./gfx.js";
 import * as P from "./props.js";
-import { dc8, dc9, DC8 } from "./planes.js";
-import { airport, GALLERY } from "./airport.js";
+import { dc8, dc9, a320, DC8, A320 } from "./planes.js";
+import { airport, GALLERY, HANGAR } from "./airport.js";
 import { buildCockpit, SEATS } from "./cockpit.js";
 import { buildCabin, CABIN, DISHES, lidPlace, buildMagazine, magazineAt } from "./cabin.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
@@ -68,46 +68,52 @@ export const APRON = {
 };
 
 /* what both places share: the airport, the DC-8 at the steps, the DC-9 behind it, the ground gear. Returns the parts the first-flight scene moves. */
-function scene(Q, { deck = false } = {}) {
+function scene(Q, { deck = false, later = false } = {}) {
   Q.beds = { wind: 0.04, crowd: 0.03 };
   Q.light = { top: 0x4f9ed6, hor: 0xe6eee4, fog: [0xd8e6e6, 260, 1400], sun: [0xfff2d0, 2.8, -40, 60, 40], hemi: [0xffffff, 0x8aa0a0, 2.6] };
   /* the concrete apron: a large pale slab, with the grass and sea set round it by airport() */
   const ap = plane(150, 130, std(T.concrete([60, 52], [168, 165, 154])), 0, 0.001, 8, Q.group);
   ap.rotation.x = -Math.PI / 2;
   ap.name = "terrain";
-  airport(Q, { deck });
-  /* the DC-8, nose west, the port side (the door side) toward the terminal */
-  const jet = dc8({ doorOpen: true }); /* boarding: the forward door stands open at the steps */
+  airport(Q, { deck, later });
+  /* the jet, nose west, the port side (the door side) toward the terminal: in 1969 the DC-8 with its door open at the steps; in the later chapters an
+     Airbus A320 in the blue-tail look, its doors shut */
+  const S = later ? A320 : DC8;
+  const jet = later ? a320({}) : dc8({ doorOpen: true });
   add(Q, jet, APRON.plane.x, APRON.plane.z, 0, Math.PI);
   P.dynamic(jet);
   Q.props.plane = jet;
-  /* its shadow: a long soft patch under the fuselage, and a smaller one under each pair of wheels */
-  const shadows = [groundShadow(Q, 52, 15, APRON.plane.x, APRON.plane.z, 0, 0.5)];
-  const wheelShadows = [[APRON.plane.x - 17, APRON.plane.z], [APRON.plane.x + 3, APRON.plane.z + 3.6], [APRON.plane.x + 3, APRON.plane.z - 3.6]].map(([x, z]) => groundShadow(Q, 3, 3, x, z, 0, 0.7));
+  /* its shadow: a long soft patch under the fuselage, and a smaller one under each set of wheels */
+  const half = S.profile[S.profile.length - 1][0], G0 = S.gear, mainWX = APRON.plane.x - G0.mainX;
+  const shadows = [groundShadow(Q, half * 2 + 6, 15, APRON.plane.x, APRON.plane.z, 0, 0.5)];
+  const wheelShadows = [[APRON.plane.x - G0.noseX, APRON.plane.z], [mainWX, APRON.plane.z + G0.mainZ], [mainWX, APRON.plane.z - G0.mainZ]].map(([x, z]) => groundShadow(Q, 3, 3, x, z, 0, 0.7));
   Q.props.shadows = { shadows, wheelShadows };
-  /* its walls: the fuselage, the two port engines, the port main gear (the nose gear is inside the fuselage footprint) */
-  wall(Q, APRON.plane.x - 22.9, APRON.plane.z - 1.9, APRON.plane.x + 23.0, APRON.plane.z + 1.9);
-  for (const [lz, lx] of [[7.4, -0.69], [13.2, -4.0]]) {
-    const ex = APRON.plane.x - lx, ez = APRON.plane.z + lz;
-    wall(Q, ex - 2.3, ez - 0.75, ex + 2.3, ez + 0.75);
+  /* its walls: the fuselage, the port engines, the port main gear (the nose gear is inside the fuselage footprint) */
+  wall(Q, APRON.plane.x - half - 0.1, APRON.plane.z - 2.0, APRON.plane.x + half + 0.2, APRON.plane.z + 2.0);
+  const wg = S.wing, lead = (z) => wg.root[0] + (wg.tip[0] - wg.root[0]) * (z / wg.span);
+  for (const lz of S.engines.z) {
+    const ex = APRON.plane.x - (lead(lz) + 0.5 + (S.engines.fwd || 0)), ez = APRON.plane.z + lz, hl = S.engines.len / 2 + 0.3, hw = S.engines.r + 0.15;
+    wall(Q, ex - hl, ez - hw, ex + hl, ez + hw);
   }
-  wall(Q, APRON.plane.x + 3 - 1.0, APRON.plane.z + 3.6 - 0.45, APRON.plane.x + 3 + 1.0, APRON.plane.z + 3.6 + 0.45);
-  /* the DC-9 east of it, another of the airline's first four jets, parked nose west */
-  const small = dc9();
-  add(Q, small, 66, -12, 0, Math.PI);
-  P.dynamic(small);
-  Q.props.plane2 = small;
-  /* the boarding steps at the forward door: blue and white, the platform against the fuselage */
-  const steps = P.airstairs({ top: DC8.doors[0].sill, run: 3.9, w: 1.25, treads: 10 });
-  add(Q, steps, APRON.stairs.x, APRON.stairs.z, 0, 0);
-  P.dynamic(steps);
-  Q.props.stairs = steps;
-  wall(Q, APRON.stairs.x - 0.75, APRON.plane.z + 1.9, APRON.stairs.x + 0.75, APRON.stairs.z + 4.0);
+  wall(Q, mainWX - 1.0, APRON.plane.z + G0.mainZ - 0.45, mainWX + 1.0, APRON.plane.z + G0.mainZ + 0.45);
+  /* 1969: the DC-9 east of it, another of the airline's first four jets, parked nose west, and the boarding steps at the DC-8's forward door */
+  let steps = null;
+  if (!later) {
+    const small = dc9();
+    add(Q, small, 66, -12, 0, Math.PI);
+    P.dynamic(small);
+    Q.props.plane2 = small;
+    steps = P.airstairs({ top: DC8.doors[0].sill, run: 3.9, w: 1.25, treads: 10 });
+    add(Q, steps, APRON.stairs.x, APRON.stairs.z, 0, 0);
+    P.dynamic(steps);
+    Q.props.stairs = steps;
+    wall(Q, APRON.stairs.x - 0.75, APRON.plane.z + 1.9, APRON.stairs.x + 0.75, APRON.stairs.z + 4.0);
+  }
   /* ground gear: a power cart at the nose, chocks at the main wheels, cones */
   const cart = P.powerCart();
   add(Q, cart, -17.5, -2.5, 0, 0.2);
   wall(Q, -18.4, -3.0, -16.6, -2.0);
-  for (const dx of [-0.5, 0.5]) add(Q, P.chock(), APRON.plane.x + 3 + dx * 1.3, APRON.plane.z + 3.6 + 0.9, 0, 0);
+  for (const dx of [-0.5, 0.5]) add(Q, P.chock(), mainWX + dx * 1.3, APRON.plane.z + G0.mainZ + 0.9, 0, 0);
   for (const [x, z] of [[6.0, 14.5], [17.0, 14.5], [-14.5, -1.4], [3.5, -2.2]]) add(Q, P.cone(), x, z, 0, 0);
   /* the first flight (content.js FILMS.takeoff): the crew wave, the steps are pulled away, the DC-8 taxis west, turns out to the runway at
      z -83, rolls east and lifts off. keys: [time, x, z, yaw, height, pitch]; the plane's yaw is its heading (west is pi, north is pi/2, east is 0). */
@@ -138,10 +144,19 @@ function scene(Q, { deck = false } = {}) {
     jet.rotation.set(0, yaw, pitch, "YXZ");
     for (const sh of [...shadows, ...wheelShadows]) sh.visible = t < 0 || y < 0.3 || false;
     if (t >= 0) { shadows[0].position.set(x, 0.02, z); shadows[0].rotation.z = yaw; shadows[0].scale.setScalar(Math.max(0.05, 1 - y / 14)); wheelShadows.forEach((w) => (w.visible = false)); }
-    steps.visible = t < 0 || t < 5;
-    steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
-    if (t < 0) steps.position.z = APRON.stairs.z;
+    if (steps) {
+      steps.visible = t < 0 || t < 5;
+      steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
+      if (t < 0) steps.position.z = APRON.stairs.z;
+    }
   };
+  Q.jetPose = (x, z, yaw, y, pitch) => {   /* for a place's own camera scene: put the jet and its shadow somewhere */
+    jet.position.set(x, y, z);
+    jet.rotation.set(0, yaw, pitch, "YXZ");
+    shadows[0].visible = y < 14; shadows[0].position.set(x, 0.02, z); shadows[0].rotation.z = yaw; shadows[0].scale.setScalar(Math.max(0.05, 1 - y / 14));
+    wheelShadows.forEach((w) => (w.visible = false));
+  };
+  Q.jetKeys = (KEYS) => (t) => { let i = 0; while (i < KEYS.length - 2 && t > KEYS[i + 1][0]) i++; const a = KEYS[i], b = KEYS[i + 1], k = smooth(Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0])))); return a.slice(1).map((v, j) => v + (b[j + 1] - v) * k); };
   return { jet, steps };
 }
 
@@ -293,8 +308,8 @@ function cabin() {
   person(Q, "dee2", "dee2", -1.25, 2.55, face(-1.25, 2.55, 0.3, 2.2), { kind: "idle" });
   person(Q, "chef", "chef", 0.92, -3.86, face(0.92, -3.86, 0.1, -3.0), { kind: "idle" });
   const seatAt = (x, z) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips: ["SitIdle"] });
-  person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]), { raw: true });
-  crowd(Q, "wr_man18", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
+  person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]));
+  crowd(Q, "aj_pass04", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
   /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
   for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
@@ -308,7 +323,141 @@ function cabin() {
   Q.enter = () => {};
   return Q;
 }
-const builders = { apron, gallery, cockpit, cabin };
+/* 5. New colours (December 1994): the apron at Norman Manley Airport, the new-look Airbus outside the hangar before its first flight in the new
+   colours. Aunt Marcia (off duty) and Mr Hines, now an engineer, stand by it; guests and staff look on. The A320 and the hangar: planes.js and
+   airport.js say what is a general picture. */
+function newlook() {
+  const Q = base("newlook", [-34, -5.5, 36, 33.4], [-3, 24, 0]);
+  scene(Q, { later: true });
+  Q.light = { top: 0x4f9ed6, hor: 0xe6eee4, fog: [0xd8e6e6, 260, 1400], sun: [0xfff2d0, 2.8, -40, 60, 40], hemi: [0xffffff, 0x8aa0a0, 2.6] };
+  person(Q, "marcia94", "marcia94", -2.5, 2.2, face(-2.5, 2.2, 4, -4), { kind: "idle" });
+  person(Q, "hines94", "hines94", -12.6, 1.4, face(-12.6, 1.4, -9, -6), { kind: "idle" });
+  const guests = [[-7, 6, "aj_guest94a"], [-5.8, 6.6, "aj_guest94b"], [4, 6.2, "aj_guest94c"], [5.4, 5.6, "aj_guest94b"], [12, 7, "aj_guest94a"], [-18, 9, "aj_guest94c"]];
+  guests.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 6, -8), { kind: "watch", at: [6, -8], react: ["Wave", "Nod"], every: [5, 9] }));
+  Q.keepOff = [{ pts: [[-3, 24], [-3, 12], [-3, 4]], w: 1.4 }];
+  Q.lookViews = {
+    tail: { p: [24.5, 2.6, 6.5], look: [24.0, 3.75 + 5.6, -8.0], fov: 38 },
+    nose: { p: [-9.5, 1.7, 3.2], look: [-3.4, 4.4, -6.1], fov: 46 },
+  };
+  /* the new look's first flight (FILMS.newflight): the same way out as in 1969, watched from the apron by the hangar */
+  Q.films.newflight = Q.films.takeoff;
+  Q.view = { pos: [-3, 1.6, 20], look: [6, 3.2, -8] };
+  Q.enter = () => Q.films.takeoff(-1);
+  return Q;
+}
+/* 6. Aunt Marcia's front room in Kingston, April 2010, in the evening: tiled floor, painted walls, a louvre window with a grille, a sofa, a low table
+   with her old box on it, a television, pictures. A general picture of a Kingston home of the time, made for the game. */
+export const ROOM = { x0: -2.6, x1: 2.6, z0: -2.2, z1: 2.4, h: 2.7, box: [0.35, 0.47, -0.55] };
+function home() {
+  const R = ROOM, Q = base("home", [R.x0 + 0.1, R.z0 + 0.1, R.x1 - 0.1, R.z1 - 0.1], [0.9, 1.7, 0.4]);
+  Q.indoor = true;
+  Q.light = { top: 0x2a3550, hor: 0x7a6a7a, stars: 0, fog: [0x2a2a30, 30, 120], sun: [0xffd8a8, 0.6, -10, 20, 10], hemi: [0xfff0dc, 0x8a7a6a, 2.2], fill: 1.2 };
+  Q.beds = { room: 0.03 };
+  const g = Q.group, W = R.x1 - R.x0, D = R.z1 - R.z0, cx = (R.x0 + R.x1) / 2, cz = (R.z0 + R.z1) / 2;
+  const tiles = new THREE.MeshStandardMaterial({ color: 0xd8d0c0, roughness: 0.5 });
+  box(W, 0.04, D, tiles, cx, -0.02, cz, g);
+  for (let x = R.x0 + 0.5; x < R.x1; x += 0.5) box(0.01, 0.002, D, solid(0xb8b0a0, 0.6), x, 0.001, cz, g);
+  for (let z = R.z0 + 0.5; z < R.z1; z += 0.5) box(W, 0.002, 0.01, solid(0xb8b0a0, 0.6), cx, 0.001, z, g);
+  const paint = solid(0xcfe0c8, 0.9), trim = solid(0xf2efe6, 0.7), wood = solid(0x6a4630, 0.6), dark = solid(0x2a2522, 0.6);
+  box(W, R.h, 0.1, paint, cx, R.h / 2, R.z0 - 0.05, g);
+  box(W, R.h, 0.1, paint, cx, R.h / 2, R.z1 + 0.05, g);
+  box(0.1, R.h, D, paint, R.x0 - 0.05, R.h / 2, cz, g);
+  box(0.1, R.h, D, paint, R.x1 + 0.05, R.h / 2, cz, g);
+  box(W, 0.06, D, trim, cx, R.h, cz, g);
+  for (const [x, z, w, d] of [[cx, R.z0, W, 0.02], [cx, R.z1, W, 0.02], [R.x0, cz, 0.02, D], [R.x1, cz, 0.02, D]]) box(w, 0.1, d, trim, x, 0.05, z, g);
+  /* the window on the left wall: glass louvres, half open, with a white grille in front and the evening outside */
+  const ev = new THREE.MeshBasicMaterial({ color: 0x5a4a78 }); ev.userData.noGlow = true;
+  box(0.02, 1.1, 1.3, ev, R.x0 + 0.01, 1.55, 0.2, g);
+  for (let i = 0; i < 9; i++) { const l = box(0.1, 0.012, 1.24, solid(0xb8c8cc, 0.15, 0.2), R.x0 + 0.06, 1.06 + i * 0.12, 0.2, g); l.rotation.z = 0.5; }
+  for (let i = 0; i <= 6; i++) box(0.02, 1.12, 0.02, trim, R.x0 + 0.13, 1.55, 0.2 - 0.65 + i * (1.3 / 6), g);
+  for (let i = 0; i <= 4; i++) box(0.02, 0.02, 1.32, trim, R.x0 + 0.13, 1.0 + i * 0.275, 0.2, g);
+  /* the sofa against the back wall, the low table, the television on its stand, a lamp, pictures */
+  const sofa = grp(g, 0.2, 0, -1.75), cloth = solid(0x7a3a3a, 0.95);
+  box(2.0, 0.42, 0.8, cloth, 0, 0.21, 0, sofa); box(2.0, 0.5, 0.18, cloth, 0, 0.62, -0.31, sofa);
+  for (const x of [-0.92, 0.92]) box(0.18, 0.6, 0.8, cloth, x, 0.3, 0, sofa);
+  wall(Q, -0.85, -2.2, 1.25, -1.33);
+  const table = grp(g, 0.35, 0, -0.55);
+  box(1.1, 0.04, 0.6, wood, 0, 0.43, 0, table);
+  for (const [x, z] of [[-0.5, -0.25], [0.5, -0.25], [-0.5, 0.25], [0.5, 0.25]]) box(0.04, 0.42, 0.04, wood, x, 0.21, z, table);
+  wall(Q, -0.25, -0.88, 0.95, -0.22);
+  const tv = grp(g, 2.2, 0, 0.3);
+  box(0.45, 0.55, 1.3, wood, 0, 0.275, 0, tv); box(0.08, 0.5, 0.85, dark, -0.05, 0.84, 0, tv);
+  const screen = new THREE.MeshBasicMaterial({ color: 0x334455 }); box(0.01, 0.42, 0.76, screen, -0.1, 0.84, 0, tv);
+  wall(Q, 1.95, -0.4, 2.55, 1.0);
+  const lampL = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.4); lampL.position.set(-1.6, 2.0, -1.4); g.add(lampL);
+  cyl(0.12, 0.16, 0.25, solid(0xf2e6c8, 0.8), -1.6, 2.45, -1.4, g, 12); /* the ceiling light's shade */
+  for (const [x, w, c] of [[-0.6, 0.5, 0x3a6a9a], [0.4, 0.35, 0x8a4a3a], [1.2, 0.45, 0x4a7a4a]]) { box(w + 0.06, w * 0.75 + 0.06, 0.02, wood, x, 1.75, R.z0 + 0.01, g); box(w, w * 0.75, 0.01, solid(c, 0.8), x, 1.75, R.z0 + 0.025, g); }
+  /* Aunt Marcia's old box on the table: a wooden box with a lid on hinges at the back. Inside: her yellow dress from 1969, folded; her white gloves; a
+     photograph of the first crew in a line */
+  const bx = grp(g, ...R.box);
+  const boxW = 0.44, boxD = 0.3, boxH = 0.12;
+  box(boxW, 0.01, boxD, wood, 0, 0.005, 0, bx);
+  for (const [x, z, w, d] of [[0, -boxD / 2, boxW, 0.015], [0, boxD / 2, boxW, 0.015], [-boxW / 2, 0, 0.015, boxD], [boxW / 2, 0, 0.015, boxD]]) box(w, boxH, d, wood, x, boxH / 2, z, bx);
+  box(0.3, 0.05, 0.2, solid(0xf2c230, 0.95), -0.04, 0.035, 0.0, bx); /* the yellow dress, folded */
+  box(0.3, 0.012, 0.2, solid(0xe0aa20, 0.95), -0.04, 0.062, 0.0, bx);
+  for (const dx of [0.13, 0.155]) { const gl = box(0.05, 0.016, 0.11, solid(0xf6f4ee, 0.9), dx + 0.03, 0.072, -0.02, bx); gl.rotation.y = 0.3; }
+  const photo = new THREE.MeshStandardMaterial({ roughness: 0.6, map: cv(256, 180, (x, W, H) => {
+    x.fillStyle = "#f2efe6"; x.fillRect(0, 0, W, H); x.fillStyle = "#9cc4dc"; x.fillRect(10, 10, W - 20, 90); x.fillStyle = "#b8b4a8"; x.fillRect(10, 100, W - 20, H - 110);
+    x.fillStyle = "#f1efe8"; x.fillRect(20, 52, 220, 26); x.fillStyle = "#e86a1c"; x.fillRect(20, 64, 220, 6);
+    ["#f3d23a", "#e0457f", "#a8d04a", "#f3d23a", "#e0457f", "#a8d04a", "#f3d23a", "#e0457f", "#a8d04a", "#f3d23a"].forEach((c, i) => { x.fillStyle = "#7a5038"; x.beginPath(); x.arc(32 + i * 21, 102, 4, 0, 7); x.fill(); x.fillStyle = c; x.fillRect(27 + i * 21, 107, 10, 24); x.fillStyle = "#f6f4ee"; x.fillRect(36 + i * 21, 128, 5, 5); });
+  }) });
+  const ph = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.09), photo); ph.rotation.x = -Math.PI / 2; ph.rotation.z = -0.2; ph.position.set(0.07, 0.083, 0.07); bx.add(ph);
+  const lid = grp(bx, 0, boxH, -boxD / 2);
+  box(boxW + 0.01, 0.018, boxD + 0.01, wood, 0, 0.009, boxD / 2, lid);
+  box(0.06, 0.012, 0.03, solid(0xc8a860, 0.3, 0.7), 0, 0.012, boxD - 0.005, lid); /* a little brass clasp */
+  Q.reveal.box = (k) => { k = Number(k); lid.rotation.x = -1.9 * k; };
+  person(Q, "marcia10", "marcia10", -1.0, -0.2, face(-1.0, -0.2, 0.6, 0.9), { kind: "idle" });
+  person(Q, "dee10", "dee10", 1.5, 1.6, face(1.5, 1.6, 0.2, 0.6), { kind: "idle" });
+  Q.lookViews = { box: { p: [0.75, 1.15, -0.05], look: [0.35, 0.5, -0.58], fov: 40 } };
+  Q.view = { pos: [1.6, 1.5, 2.1], look: [-0.4, 0.9, -1.2] };
+  Q.enter = () => {};
+  return Q;
+}
+/* 7. The last flight home, 30 April 2010: the cabin of the A320 from Fort Lauderdale, in the evening, coming down toward Kingston (cabin.js says
+   what is a general picture). No chef and no trolley on this flight. Mum sits by the window seat beside Tia's; Mr Grant across the aisle. */
+function lastflight() {
+  const Q = base("lastflight", [-1.75, -2.9, 1.75, 2.85], [0.0, 1.0, 0]);
+  Q.light = { top: 0x34406a, hor: 0xe0a080, fog: [0x3a3a4a, 40, 400], sun: [0xffb070, 1.0, -20, 10, 30], hemi: [0xffe8d8, 0x8a7a70, 2.4], fill: 1.4 };
+  Q.indoor = true;
+  Q.beds = { wind: 0.0, room: 0.02 };
+  const room = buildCabin({ dusk: true, trolley: false });
+  P.dynamic(room);
+  Q.group.add(room);
+  const { blinds } = room.userData.parts, R = CABIN.rows, X = CABIN.seatX, top = CABIN.seatTop;
+  const blind = blinds["-1:3"]; /* the window beside Tia's seat (row 4 on the left) */
+  Q.reveal.window = (k) => { k = Number(k); blind.position.y = 1.06 + 0.2 * k; blind.scale.y = 3.2 - 2.2 * k; };
+  const seatAt = (x, z) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips: ["SitIdle"] });
+  person(Q, "dee10s", "dee10", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
+  person(Q, "grant", "grant", X[0], R[3], Math.PI, seatAt(X[0], R[3]));
+  crowd(Q, "aj_pass10", -X[0], R[1], Math.PI, seatAt(-X[0], R[1]));
+  crowd(Q, "aj_pass10w", X[1], R[2], Math.PI, seatAt(X[1], R[2]));
+  crowd(Q, "aj_pass04", X[2], R[0], Math.PI, seatAt(X[2], R[0]));
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, CABIN.rows[CABIN.rows.length - 1] + 0.35);
+  wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
+  Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
+  Q.lookViews = { window: { p: [-1.25, 1.12, 0.95], look: [-1.83, 1.06, 0.65], fov: 44 } };
+  Q.enter = () => {};
+  return Q;
+}
+/* 8. The arrival at Kingston at evening, 30 April 2010 (FILMS.lastlanding): the A320 comes in over the sea, lands, taxis back and stops by the hangar;
+   the camera rises to the bird on its tail. The time of day of the real landing is not known: the evening light is the game's choice. */
+function arrival() {
+  const Q = base("arrival", [-34, -5.5, 36, 33.4], [-3, 24, 0]);
+  scene(Q, { later: true });
+  Q.light = { top: 0x2e3f6e, hor: 0xf0a070, fog: [0xd09078, 300, 1600], sun: [0xffa860, 1.6, 80, 14, -60], hemi: [0x9aa0c8, 0x5a4a44, 1.8], fill: 0.5 };
+  Q.beds = { wind: 0.04 };
+  const pose = Q.jetKeys([
+    [0, 760, -83, Math.PI, 46, -0.05], [10, 420, -83, Math.PI, 18, -0.05], [16, 230, -83, Math.PI, 2.2, 0.04], [17.5, 195, -83, Math.PI, 0, 0.05],
+    [19, 160, -83, Math.PI, 0, 0], [27, -30, -83, Math.PI, 0, 0], [30, -44, -79, Math.PI * 1.25, 0, 0], [33, -46, -62, Math.PI * 1.5, 0, 0],
+    [40, -46, -28, Math.PI * 1.5, 0, 0], [44, -40, -14, Math.PI * 1.75, 0, 0], [48, -26, -8, Math.PI * 2, 0, 0], [55, 8, -8, Math.PI * 2, 0, 0], [70, 8, -8, Math.PI * 2, 0, 0],
+  ]);
+  Q.films.lastlanding = (t) => { const [x, z, yaw, y, pitch] = t < 0 ? [8, -8, Math.PI * 2, 0, 0] : pose(t); Q.jetPose(x, z, yaw, y, pitch); };
+  Q.films.lastlanding(-1);
+  Q.view = { pos: [-3, 1.6, 20], look: [6, 3.2, -8] };
+  Q.enter = () => {};
+  return Q;
+}
+const builders = { apron, gallery, cockpit, cabin, newlook, home, lastflight, arrival };
 export const PLACE_IDS = Object.keys(builders);
 export function buildPlace(id, opts = {}) {
   const Q = builders[id](opts);

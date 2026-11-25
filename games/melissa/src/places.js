@@ -132,7 +132,7 @@ function village({ id, year, phase }) {
   } else if (y88) {
     people.push(person('dad', 'dad88', 'Dad', -27.6, -3.3, 0.1, { h: 1.85 }), person('mama', 'mama88', 'Mama', -23.3, -3.2, -0.2, { h: 1.75 }), person('delroy', 'delroy88', 'Delroy', -30.4, -1.6, 0.5, { h: 1.2 }), person('clifford', 'clifford88', 'Mass Clifford', 14.6, -3.4, 0.2, { h: 1.75 }));
     extras.push(extra('mama88', 4.4, 6.6, PI, 'Talk1', { skin: 1.1 }), extra('dad88', 31, 4.4, PI, 'Talk2', { skin: 0.95 }));
-    const fl = folk(5, 31, [-8, 4.2, 40, 5.2], { kids: 0.25, modern: false }); extras.push(...walkers(fl, 5, [-40, 3.8, 46, 6.2], 0.5, 6));
+    const fl = folk(5, 31, [-8, 4.2, 40, 5.2], { kids: 0.25, modern: false, era: 1988 }); extras.push(...walkers(fl, 5, [-40, 3.8, 46, 6.2], 0.5, 6));
   } else if (!after && !today) {
     people.push(person('pearl', 'pearl', 'Mum', -27.6, -3.3, 0.1, { h: 1.75 }), person('winston', 'winston', 'Grandpa', -23.2, -3.0, -0.3, { h: 1.7 }), person('bev', 'bev', 'Miss Bev', 30, 4.9, PI, { h: 1.78 }), person('raymond', 'raymond', 'Mr. Raymond', 14.2, -3.2, 0.1, { h: 1.84 }), person('hyacinth', 'hyacinth', 'Miss Hyacinth', -3.8, 4.2, PI, { h: 1.6 }));
     extras.push(extra('marlon', -30.4, -1.6, 0.5, 'Idle', { skin: 1.05 }), extra('youth', 8.2, 5.4, PI * 0.8, 'Talk1', { skin: 1.0 }));

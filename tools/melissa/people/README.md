@@ -2,7 +2,23 @@
 
 Follows `docs/PEOPLE.md` (on `main` since PR 50). Every recipe sets `era`, `hat` as `[kind, material]` pairs, a `collar` kind and `colors` for each garment.
 
-## Status: recipes written, bodies NOT built yet
+## Status, 25 November 2026: built, in modern clothes, and in the game
+
+The owner asked for a modern wardrobe in this game too ("we need the wardrobe upgrade for hurricane melissa too as that is modern clothes"). The six recipes were rewritten in the clothes of their year and a seventh added, then built with `tools/melissa/build-people.mjs` (each body and a light `_lo` copy, every garment its own material so `cast.js` can recolour it):
+
+| Recipe | Clothes | Used for |
+|---|---|---|
+| `man1988` | polo shirt tucked into high-waisted jeans, belt, white sneakers; a cap or a straw hat | Dad (1988), men in 1988 crowds |
+| `woman1988` | top tucked into belted high-waisted jeans, white sneakers | Mama (1988), women in 1988 crowds |
+| `man2025` | loose T-shirt over jeans, white sneakers, a fine chain (hidden on some), a baseball cap or a straw hat | Mr. Raymond, the sawman, the lineman, men in crowds |
+| `polo2025` | striped polo worn out over jeans, white sneakers, a baseball cap (its shirt is never recoloured: that would hide the stripes) | Jordan, young men in crowds |
+| `woman2025` | loose top over jeans, sandals, a fine chain | Mum, Miss Bev, Simone, Miss Campbell, women in crowds |
+| `elderman2025` | polo shirt tucked into slacks, belt, sneakers; a cap or a straw hat | Grandpa, Mass Clifford (1988), older men |
+| `elderwoman2025` | blouse tucked into slacks, sandals; a head tie or a hat | Gran, Miss Hyacinth, older women |
+
+Still borrowed: the children (`boy`, `girl`, `girl_small`), the 1951 people (Kendal's 1950s bodies, right for their time), Pastor Gayle (`man_shirt`, a shirt and tie), the soldier (`man_work` in olive), Andre (`student2020`).
+
+## Before (kept for the record): recipes written, bodies NOT built yet
 
 MakeHuman and Blender are not in the container this game was started in, so `tools/garvey/era.py` could not run. Until these six are built and packed, the game uses bodies already built for Kendal 1957 and copied into `games/melissa/site/models/` (allowed by `PEOPLE.md` section 2: a body used by two games is built once and copied). Colours are set per person in `games/melissa/src/cast.js`.
 

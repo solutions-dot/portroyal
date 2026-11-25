@@ -1060,7 +1060,7 @@ if G.get('chain') and not OLD:      # a fine gold chain round the neck (1990s on
         r0,r1=rings[i],rings[(i+1)%48]
         for j in range(6): bm.faces.new((r0[j],r0[(j+1)%6],r1[(j+1)%6],r1[j]))
     COL.setdefault('Chain',srgb((214,172,72))); _cm=colmat('Chain',0.3); next(n for n in _cm.node_tree.nodes if n.type=='BSDF_PRINCIPLED').inputs['Metallic'].default_value=0.9; soft('Chain',bm,'Chain',only=('Spine1','Spine2','Neck'),src=ON('shirt'))
-if G.get('trousers') and G.get('belt',True) and (not G.get('waistcoat') or G.get('belt')=='always') and not G.get('apron') and not G.get('jacket'):     # a belt round the waistband, with a buckle
+if G.get('trousers') and G.get('belt',True) and not G.get('untucked') and (not G.get('waistcoat') or G.get('belt')=='always') and not G.get('apron') and not G.get('jacket'):     # a belt round the waistband, with a buckle
     TT=tree_of(PART['breeches']); bm=bmesh.new(); seg=28; rows=[]; WCT=tree_of(PART['waistcoat']) if PART.get('waistcoat') else None; cov={}
     for z,e in ((HIP+0.082,0.004),(HIP+0.083,0.009),(HIP+0.113,0.009),(HIP+0.114,0.004)):
         ring=[]

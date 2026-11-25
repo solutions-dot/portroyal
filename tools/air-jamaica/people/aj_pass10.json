@@ -33,7 +33,8 @@
   "untucked": true,
   "denim": 1,
   "sneakers": true,
-  "chain": 0.05
+  "chain": 0.05,
+  "buttons": false
  },
  "colors": {
   "Skin": [

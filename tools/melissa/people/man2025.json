@@ -1,1 +1,87 @@
-{"name": "man2025", "era": 2025, "body": {"gender": 1.0, "age": 0.5, "muscle": 0.45, "weight": 0.48, "height": 0.5, "proportions": 0.55, "african": 1.0, "caucasian": 0.0, "asian": 0.0}, "garments": {"sleeve": 0.3, "trousers": true, "belt": "always", "shoes": true, "collar": false, "buttons": true, "hat": [["flat", "Cap"], ["straw", "Hat"]], "hairvol": 0.3}, "colors": {"Skin": [150, 102, 74], "Shirt": [200, 76, 58], "Breeches": [46, 74, 120], "Shoes": [236, 232, 224], "Hat": [205, 180, 116], "Cap": [42, 42, 48], "HatBand": [120, 90, 50], "Hair": [22, 18, 16]}, "face": "soft"}
+{
+ "name": "man2025",
+ "era": 2025,
+ "body": {
+  "gender": 1.0,
+  "age": 0.5,
+  "muscle": 0.45,
+  "weight": 0.48,
+  "height": 0.5,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.3,
+  "trousers": true,
+  "shoes": true,
+  "hat": [
+   [
+    "baseball",
+    "Cap"
+   ],
+   [
+    "straw",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.1,
+  "collar": false,
+  "buttons": false,
+  "untucked": true,
+  "belt": false,
+  "denim": 1,
+  "sneakers": true,
+  "chain": 0.045,
+  "fade": 0.6
+ },
+ "colors": {
+  "Skin": [
+   150,
+   102,
+   74
+  ],
+  "Shirt": [
+   200,
+   76,
+   58
+  ],
+  "Breeches": [
+   52,
+   72,
+   114
+  ],
+  "Shoes": [
+   244,
+   244,
+   240
+  ],
+  "Hat": [
+   205,
+   180,
+   116
+  ],
+  "Cap": [
+   42,
+   42,
+   48
+  ],
+  "HatBand": [
+   120,
+   90,
+   50
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ],
+  "Sole": [
+   244,
+   244,
+   240
+  ]
+ },
+ "face": "soft"
+}

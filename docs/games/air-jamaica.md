@@ -1,6 +1,18 @@
-# Air Jamaica: Our Own Wings (`games/air-jamaica/`, not started)
+# Air Jamaica: Our Own Wings (`games/_air-jamaica/`, six chapters playable, not live)
 
-**Status, 24 November 2026: design only.** No code, no bodies, no places. This page holds the idea (owner, 24 November 2026), the chapter plan, the rules and the research still to do. Nothing here has been checked at source yet except the broad outline in "What the first search found". Start from `games/_template/` (`docs/NEW_GAME.md`).
+**The first design note (24 November 2026, before any code; kept for its reasoning).** This page holds the idea (owner, 24 November 2026), the chapter plan, the rules and the research still to do. Nothing here has been checked at source yet except the broad outline in "What the first search found". Start from `games/_template/` (`docs/NEW_GAME.md`).
+
+## Status, 25 November 2026: six chapters playable (not live; folder `games/_air-jamaica/`)
+
+1. A flag in the sky (1 April 1969), 2. The view from the front (the 1970s), 3. **New colours (December 1994, steps 40 to 46, place `newlook`)**, 4. The flying chef (the 2000s), 5. **The sale (April 2010, steps 70 to 73, place `home`)**, 6. **The last flight home (30 April 2010, steps 90 to 96, places `lastflight` and `arrival`)**. The order is by date: the 1994 chapter comes before the chef. Handoff and checks: `docs/games/air-jamaica/HANDOFF.md`.
+
+**What the new chapters show, and what is a stand-in (say so to the owner):**
+- **The Airbus A320 in the blue-tail look** (`planes.js`, `A320`): published sizes; the colours from the owner's photographs (`ref-a320-blue-tail.jpg`, `ref-a340-blue-tail.jpg`, `ref-727-and-a321.jpg`). The Observer (July 2011) shows "the new-look Air Jamaica aircraft ... before its inaugural flight in December 1994", but that the December 1994 look was this blue-tail look is a **lean, not a date** (see "What this tells us about the dates"), and which plane wore it first is not known (an A300 wore it by February 1996). The journal says both. No registration is drawn.
+- **The later airport** (`airport.js`, `later`): the 1969 terminal and its waving gallery are left out; a **general hangar** stands on the player's side. It is a stand-in and carries no name. To do: a dated photograph of Norman Manley's hangars and terminal of 1994 and 2010.
+- **Aunt Marcia's front room** (2010): a general Kingston home, made for the game; her box of keepsakes is fictional.
+- **The cabin of the last flight**: the general cabin of chapter 3 at evening, with no chef or trolley. The time of day of the last landing is **not in the sources**; the evening light is the game's choice and the journal says so.
+- **The sale** in dialogue is the one plain idea agreed with the owner (owed a lot of money, Jamaica could not keep paying, Caribbean Airlines took over the planes and flights). The figures (40 losing years of 42, the 16 percent part, the debts kept by the state, about 1,000 re-hired) are in "Dig deeper" only, from the World Bank and IFC brief.
+- **People, in the clothes of their year** (owner, 25 November 2026: "period appropriate clothes", "women... more modern clothes", baseball caps, chains, striped polos, sandals): 1994, tucked-in polos and blouses, belts, high-waisted trousers and jeans, white sneakers (`aj_marcia94`, `aj_hines94`, `aj_guest94a/b/c`); 2004, Mum in a top, jeans and sandals, Mr Clarke in a tucked-in polo, a young man in a striped polo, jeans, white sneakers, a cap and a chain (`aj_dee04`, `aj_clarke04`, `aj_pass04`, replacing the Windrush 2018 stand-ins); 2010, Aunt Marcia in a blouse and slacks with sandals, Mum in a loose top, jeans and sneakers, Mr Grant in a shirt and slacks, passengers in T-shirts, jeans, a cap and chains (`aj_marcia10`, `aj_dee10`, `aj_grant10`, `aj_pass10`, `aj_pass10w`). These are general pictures of each decade, not copies of photographs of these people (all fictional). Crew in uniform are not shown after 1969, because the year of the later uniforms is still not known.
 
 ## The idea
 

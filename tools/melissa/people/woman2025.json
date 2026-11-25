@@ -1,1 +1,99 @@
-{"name": "woman2025", "era": 2025, "body": {"gender": 0.0, "age": 0.42, "muscle": 0.4, "weight": 0.5, "height": 0.5, "proportions": 0.6, "cupsize": 0.45, "firmness": 0.6, "african": 1.0, "caucasian": 0.0, "asian": 0.0}, "garments": {"sleeve": 0.25, "woman": true, "skirt": true, "hem": 0.62, "flare": 1.0, "pleats": 0, "shoes": true, "collar": false, "belt": true, "hat": [["straw", "Hat"], ["flat", "Cap"]], "hairvol": 0.3, "hair": "plaits"}, "colors": {"Skin": [150, 102, 74], "Shirt": [58, 142, 156], "Skirt": [42, 58, 90], "Shoes": [40, 32, 30], "Hat": [232, 220, 192], "HatBand": [90, 58, 82], "Cap": [42, 42, 48], "Belt": [42, 32, 48], "Hair": [22, 18, 16]}, "face": "strong"}
+{
+ "name": "woman2025",
+ "era": 2025,
+ "body": {
+  "gender": 0.0,
+  "age": 0.42,
+  "muscle": 0.4,
+  "weight": 0.5,
+  "height": 0.5,
+  "proportions": 0.6,
+  "cupsize": 0.45,
+  "firmness": 0.6,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.25,
+  "woman": true,
+  "shoes": true,
+  "collar": false,
+  "hat": [
+   [
+    "straw",
+    "Hat"
+   ],
+   [
+    "flat",
+    "Cap"
+   ]
+  ],
+  "hairvol": 0.3,
+  "hair": "plaits",
+  "trousers": true,
+  "untucked": true,
+  "denim": 1,
+  "sandals": 2,
+  "chain": 0.02,
+  "legwidth": 0.9
+ },
+ "colors": {
+  "Skin": [
+   150,
+   102,
+   74
+  ],
+  "Shirt": [
+   58,
+   142,
+   156
+  ],
+  "Skirt": [
+   42,
+   58,
+   90
+  ],
+  "Shoes": [
+   120,
+   80,
+   50
+  ],
+  "Hat": [
+   232,
+   220,
+   192
+  ],
+  "HatBand": [
+   90,
+   58,
+   82
+  ],
+  "Cap": [
+   42,
+   42,
+   48
+  ],
+  "Belt": [
+   42,
+   32,
+   48
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ],
+  "Breeches": [
+   56,
+   78,
+   122
+  ],
+  "Sole": [
+   70,
+   50,
+   36
+  ]
+ },
+ "face": "strong"
+}

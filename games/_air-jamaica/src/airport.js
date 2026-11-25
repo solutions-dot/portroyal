@@ -25,12 +25,13 @@ const CREAM = P.CREAM,
   blue = solid(0x2f6b8f, 0.6);
 /* the waving gallery: its deck, in world metres. The staircase climbs along the front, from x 25 up to x 34. */
 export const GALLERY = { x0: 34.5, x1: 44, z0: 28.9, z1: 35, top: 4.6, stairX0: 24.5, stairX1: 34.5, stairZ: 29.7, stairW: 1.5 };
-export function airport(Q, { deck = false } = {}) {
+export function airport(Q, { deck = false, later = false } = {}) {
   const g = Q.group;
   const sea = createSea(g, { kind: "caribbean", y: -0.14, at: [0, 0], size: 300, far: 3000, farDrop: 0.15, swell: 0.5 }).near;
   Q.tickers.push((t) => sea?.tick?.(t));
   const land = plane(2600, 110, std(T.grass([260, 12], [129, 141, 105])), 0, -0.04, -83, g);
   land.rotation.x = -Math.PI / 2;
+  if (!later) {
   /* ---- the terminal block: a recessed ground floor, three upper floors on white slabs with ribbon windows, a roof parapet, the cab ---- */
   box(32, 3.4, 9, dark, 0, 1.7, 42.5, g); /* the recessed ground floor, glazed and dark */
   for (let x = -15; x <= 15; x += 3) box(0.4, 3.4, 0.4, concrete, x, 1.7, 37.6, g);
@@ -139,6 +140,7 @@ export function airport(Q, { deck = false } = {}) {
   }
   Q.walls.push([G.stairX0, G.stairZ - G.stairW / 2 - 0.1, G.stairX1, G.stairZ + G.stairW / 2 + 0.1]);
   if (!deck) Q.walls.push([G.x0, G.z0, G.x1, G.z1]); /* on the apron the gallery's building is solid; up on the deck it is the floor */
+  } else hangar(Q);
   /* ---- baggage carts, the runway, planters, hills and palms (adapted from Selassie's Palisadoes) ---- */
   for (const [x, z] of [[-24, 27], [-28, 27], [-12, 28]]) {
     const cart = grp(g, x, 0, z);
@@ -221,7 +223,47 @@ export function airport(Q, { deck = false } = {}) {
   }
   for (let i = 0; i < 8; i++) {
     const tree = palm(6.5, i + 91);
+    if (later && -54 + i * 16 > HANGAR.x0 - 3 && -54 + i * 16 < HANGAR.x1 + 3) continue; /* no palm inside the hangar */
     tree.position.set(-54 + i * 16, 0, 56 + (i % 3) * 3);
     g.add(tree);
   }
+}
+
+/* Norman Manley Airport in the later chapters (1994, 2010): the 1969 terminal and its waving gallery are left out (the terminal was rebuilt after
+   Hurricane Gilbert in 1988 and changed again later; no dated photograph of it has been looked at, docs/games/air-jamaica.md). In their place, on the
+   player's side, stands a maintenance hangar. THE HANGAR IS A STAND-IN: a general picture of a steel aircraft hangar of the time (a wide door opening, a
+   low curved roof, cladding panels), not the real Air Jamaica hangar, and it carries no name. */
+export const HANGAR = { x0: -38, x1: 14, z0: 34, z1: 66, h: 13 };
+function hangar(Q) {
+  const g = Q.group, H = HANGAR, w = H.x1 - H.x0, d = H.z1 - H.z0, cx = (H.x0 + H.x1) / 2, cz = (H.z0 + H.z1) / 2;
+  const clad = new THREE.MeshStandardMaterial({ map: cv(256, 256, (x, W) => { x.fillStyle = "#c9ccc6"; x.fillRect(0, 0, W, W); for (let i = 0; i < W; i += 16) { x.fillStyle = "rgba(60,64,66,0.18)"; x.fillRect(i, 0, 3, W); x.fillStyle = "rgba(255,255,255,0.12)"; x.fillRect(i + 4, 0, 2, W); } }), roughness: 0.7, metalness: 0.2 });
+  clad.map.wrapS = clad.map.wrapT = THREE.RepeatWrapping; clad.map.repeat.set(w / 4, 3);
+  const inside = solid(0x55585a, 0.9), steel = solid(0x8a8f90, 0.5, 0.5), floor = solid(0xa7a49a, 0.95);
+  box(w, H.h, 0.4, clad, cx, H.h / 2, H.z1, g); /* the back wall */
+  for (const x of [H.x0, H.x1]) box(0.4, H.h, d, clad, x, H.h / 2, cz, g); /* the side walls */
+  box(w - 0.4, H.h - 0.4, 0.1, inside, cx, H.h / 2, H.z1 - 0.3, g); /* the dim inside of the back wall */
+  box(w, 0.05, d, floor, cx, 0.02, cz, g);
+  /* the roof: a shallow curve of panels over steel arches, and a deep beam over the door opening */
+  const N = 16, rise = 2.2, yAt = (u) => H.h + rise * (1 - (2 * u - 1) ** 2); /* a shallow arch across the width, made of flat panels */
+  for (let i = 0; i < N; i++) {
+    const u0 = i / N, u1 = (i + 1) / N, xa = H.x0 + w * u0, xb = H.x0 + w * u1, ya = yAt(u0), yb = yAt(u1);
+    const pn = box(Math.hypot(xb - xa, yb - ya) + 0.05, 0.15, d + 0.6, clad, (xa + xb) / 2, (ya + yb) / 2, cz, g);
+    pn.rotation.z = Math.atan2(yb - ya, xb - xa);
+  }
+  for (const z of [H.z0, H.z1]) { /* the end walls close up to the arch */
+    const sh = new THREE.Shape(); sh.moveTo(H.x0, H.h); for (let i = 0; i <= N; i++) sh.lineTo(H.x0 + (w * i) / N, yAt(i / N)); sh.lineTo(H.x1, H.h); sh.closePath();
+    const gable = new THREE.Mesh(new THREE.ShapeGeometry(sh), clad); gable.position.z = z; g.add(gable); gable.material.side = THREE.DoubleSide;
+  }
+  box(w + 0.6, 2.2, 1.0, clad, cx, H.h - 1.1, H.z0, g);
+  for (let x = H.x0 + 6; x < H.x1 - 1; x += 6.5) box(0.35, H.h - 2.2, 0.35, steel, x, (H.h - 2.2) / 2, H.z1 - 0.8, g);
+  /* the door leaves, slid back to each end of the opening, and lights hanging inside */
+  for (const x of [H.x0 + 2.4, H.x1 - 2.4]) box(4.2, H.h - 2.4, 0.3, clad, x, (H.h - 2.4) / 2, H.z0 - 0.5, g);
+  const lamp = new THREE.MeshBasicMaterial({ color: 0xfff4d8 }); lamp.userData.glow = true;
+  for (let x = H.x0 + 6; x < H.x1 - 3; x += 9) for (const z of [H.z0 + 8, H.z0 + 20]) { mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.4, 12), steel, x, H.h - 2.6, z, g); mesh(new THREE.CircleGeometry(0.45, 12), lamp, x, H.h - 2.81, z, g).rotation.x = Math.PI / 2; }
+  /* inside: a tool cart, a stand of steps for working on an engine, drums */
+  box(1.4, 1.0, 0.7, solid(0xb83a2a, 0.6), H.x0 + 6, 0.5, H.z0 + 12, g);
+  box(2.0, 3.0, 1.4, steel, H.x1 - 8, 1.5, H.z0 + 16, g);
+  for (const [x, z] of [[H.x0 + 3, H.z1 - 3], [H.x0 + 4.2, H.z1 - 3], [H.x0 + 3.6, H.z1 - 4.1]]) cyl(0.3, 0.3, 0.9, solid(0x2f5a8a, 0.6, 0.3), x, 0.45, z, g, 12);
+  Q.walls.push([H.x0 - 0.3, H.z0, H.x0 + 0.3, H.z1], [H.x1 - 0.3, H.z0, H.x1 + 0.3, H.z1], [H.x0, H.z1 - 0.3, H.x1, H.z1 + 0.3]);
+  for (const x of [H.x0 + 2.4, H.x1 - 2.4]) Q.walls.push([x - 2.2, H.z0 - 0.7, x + 2.2, H.z0 - 0.3]);
 }

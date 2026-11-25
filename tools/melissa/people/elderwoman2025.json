@@ -1,1 +1,99 @@
-{"name": "elderwoman2025", "era": 2025, "body": {"gender": 0.0, "age": 0.86, "muscle": 0.4, "weight": 0.62, "height": 0.5, "proportions": 0.6, "cupsize": 0.45, "firmness": 0.6, "african": 1.0, "caucasian": 0.0, "asian": 0.0}, "garments": {"sleeve": 0.5, "woman": true, "skirt": true, "hem": 0.5, "flare": 1.2, "shoes": true, "collar": false, "bun": true, "hat": [["wrap", "Wrap"], ["straw", "Hat"]], "hairvol": 0.3}, "colors": {"Skin": [140, 96, 70], "Shirt": [134, 176, 200], "Skirt": [90, 74, 58], "Shoes": [28, 24, 22], "Hat": [232, 220, 192], "HatBand": [230, 226, 236], "Wrap": [200, 80, 58], "Hair": [196, 194, 188]}, "face": "elder"}
+{
+ "name": "elderwoman2025",
+ "era": 2025,
+ "body": {
+  "gender": 0.0,
+  "age": 0.86,
+  "muscle": 0.4,
+  "weight": 0.62,
+  "height": 0.5,
+  "proportions": 0.6,
+  "cupsize": 0.45,
+  "firmness": 0.6,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.5,
+  "woman": true,
+  "shoes": true,
+  "collar": false,
+  "bun": true,
+  "hat": [
+   [
+    "wrap",
+    "Wrap"
+   ],
+   [
+    "straw",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.3,
+  "trousers": true,
+  "untucked": false,
+  "belt": true,
+  "sandals": 2,
+  "chain": 0.015,
+  "legwidth": 0.95
+ },
+ "colors": {
+  "Skin": [
+   140,
+   96,
+   70
+  ],
+  "Shirt": [
+   134,
+   176,
+   200
+  ],
+  "Skirt": [
+   90,
+   74,
+   58
+  ],
+  "Shoes": [
+   110,
+   76,
+   50
+  ],
+  "Hat": [
+   232,
+   220,
+   192
+  ],
+  "HatBand": [
+   230,
+   226,
+   236
+  ],
+  "Wrap": [
+   200,
+   80,
+   58
+  ],
+  "Hair": [
+   196,
+   194,
+   188
+  ],
+  "Breeches": [
+   214,
+   206,
+   188
+  ],
+  "Sole": [
+   70,
+   50,
+   36
+  ],
+  "Belt": [
+   70,
+   50,
+   36
+  ]
+ },
+ "face": "elder"
+}

@@ -369,9 +369,9 @@ export function journal(ids, memory, read, sel) {
     }
     if (p.source && SOURCES[p.source]) {
       const sp = document.createElement("p"),
-        a = document.createElement("a");
+        a = document.createElement(SOURCES[p.source].url ? "a" : "span");   /* a source read in print or in a copy with no web address is named, not linked */
       sp.className = "source";
-      a.href = SOURCES[p.source].url;
+      if (SOURCES[p.source].url) a.href = SOURCES[p.source].url;
       a.textContent = SOURCES[p.source].name;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
@@ -439,9 +439,9 @@ $("chcred").onclick = () => show("credits");
 $("sourceList").replaceChildren(
   ...Object.values(SOURCES).map((s) => {
     const p = document.createElement("p"),
-      a = document.createElement("a");
+      a = document.createElement(s.url ? "a" : "span");
     p.className = "source";
-    a.href = s.url;
+    if (s.url) a.href = s.url;
     a.textContent = s.name;
     a.target = "_blank";
     a.rel = "noopener noreferrer";

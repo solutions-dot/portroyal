@@ -35,7 +35,14 @@ const M = {
   curtain: solid(0x2f4f8f, 0.95),
 };
 /* the sky outside each window: bright blue going pale at the bottom, with a few clouds below */
-function skyTexture() {
+function skyTexture(dusk) {
+  if (dusk) /* evening over the sea near Kingston: a deep blue sky going gold and pink at the horizon, the sea dark below, a line of lights along the coast */
+    return cv(128, 192, (x, W, H) => {
+      const g = x.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#28386a"); g.addColorStop(0.45, "#c77a74"); g.addColorStop(0.58, "#f3b25e"); g.addColorStop(0.6, "#2c3150"); g.addColorStop(1, "#151a2c");
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      x.fillStyle = "#ffd89a"; for (let i = 0; i < 26; i++) x.fillRect(((i * 37) % W), 120 + ((i * 13) % 9), 2, 2);
+    });
   return cv(128, 192, (x, W, H) => {
     const g = x.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#5f9fdc");
@@ -97,16 +104,16 @@ function cloche() {
   return c;
 }
 export const DISHES = ["ackee", "calaloo", "rundung", "festival", "jerk"];
-export function buildCabin() {
+export function buildCabin(opts = {}) {
   const g = grp();
   const H = CABIN.half, L = CABIN.front, B = CABIN.back + 0.05, len = B - L, mid = (B + L) / 2;
   box(H * 2, 0.04, len, M.floor, 0, -0.02, mid, g);
   /* the side walls: a lower panel, the window belt, and the curve up to the bins */
-  const sky = new THREE.MeshBasicMaterial({ map: skyTexture() });
+  const sky = new THREE.MeshBasicMaterial({ map: skyTexture(opts.dusk) }), blinds = {};
   sky.userData.noGlow = true;
   for (const s of [-1, 1]) {
     box(0.06, 2.18, len, M.wall, s * H, 1.09, mid, g);
-    for (const z of CABIN.rows) {
+    for (const [r, z] of CABIN.rows.entries()) {
       const w = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.32), sky);
       w.position.set(s * (H - 0.032), 1.06, z + 0.2);
       w.rotation.y = -s * Math.PI / 2;
@@ -116,7 +123,7 @@ export function buildCabin() {
       fr.position.set(s * (H - 0.034), 1.06, z + 0.2);
       fr.rotation.y = -s * Math.PI / 2;
       g.add(fr);
-      box(0.012, 0.1, 0.24, M.bin, s * (H - 0.04), 1.26, z + 0.2, g); /* the blind, pushed up */
+      blinds[s + ":" + r] = box(0.012, 0.1, 0.24, M.bin, s * (H - 0.04), 1.26, z + 0.2, g); /* the blind, pushed up */
     }
     /* the overhead bins: a deep box over the seats with a curved door; a reading-light strip under them */
     box(0.82, 0.42, len - 1.6, M.bin, s * (H - 0.41), 1.83, mid + 0.4, g);
@@ -140,6 +147,9 @@ export function buildCabin() {
   /* the back: a curtain across the cabin */
   const ct = box(H * 2, 2.12, 0.03, M.curtain, 0, 1.06, CABIN.back, g);
   void ct;
+  const plates = {}, lids = {};
+  g.userData.parts = { plates, lids, blinds };
+  if (opts.trolley !== false) {
   /* the chef's trolley: a steel cart with a white cloth on top, the five dishes of the menu, each under a silver dome */
   const T = CABIN.trolley, cart = grp(g, T.x, 0, T.z);
   box(0.82, 0.96, 0.32, M.steel, 0, 0.5, 0, cart);
@@ -147,7 +157,6 @@ export function buildCabin() {
   box(0.84, 0.12, 0.012, M.cloth, 0, 0.93, 0.172, cart); /* the cloth hangs a little over the front */
   for (const x of [-0.36, 0.36]) for (const z of [-0.12, 0.12]) cyl(0.025, 0.025, 0.02, M.dark, x, 0.012, z, cart, 10);
   box(0.06, 0.03, 0.03, M.metal, 0.44, 0.92, 0, cart); /* the handle */
-  const plates = {}, lids = {};
   DISHES.forEach((k, i) => {
     const x = -0.32 + i * 0.16;
     const p = dish(k);
@@ -159,9 +168,9 @@ export function buildCabin() {
     g.add(c);
     lids[k] = c;
   });
-  g.userData.parts = { plates, lids };
+  }
   /* soft light from the reading lights and the ceiling */
-  const lamp = new THREE.PointLight(0xfff0d8, 0.8, 7, 1.6);
+  const lamp = new THREE.PointLight(0xfff0d8, opts.dusk ? 1.1 : 0.8, 7, 1.6);
   lamp.position.set(0, 2.0, -3.6);
   g.add(lamp);
   return g;

@@ -69,6 +69,28 @@ export const DC9 = {
   cockpit: { x: 14.6, dx: 0.5, n: 3, dy: 0.92, front: 16.4 },
 };
 
+/* The Airbus A320, in the airline's later look (the blue tail: ref-a320-blue-tail.jpg, ref-a340-blue-tail.jpg, ref-727-and-a321.jpg). Published
+   sizes: 37.57 m long, 34.1 m span, 11.76 m to the top of the fin, a body 3.95 m across; two engines under the wings; two main wheels a side.
+   Everything else (where the doors and the gear sit along the body, the fin's outline) is read from the photographs, not from a drawing. */
+export const A320 = {
+  name: "A320-200", livery: "blue",
+  profile: [[-18.8, 0.1], [-18.2, 0.42], [-15.5, 0.98], [-12.0, 1.55], [-8.5, 1.95], [-7.0, 1.98], [13.4, 1.98], [15.4, 1.86], [16.9, 1.58], [17.9, 1.16], [18.5, 0.62], [18.8, 0.1]],
+  Y0: 3.75, lift: { from: -7.0, over: 11.8, up: 0.62 },
+  windows: { from: -12.6, to: 12.8, step: 0.53, dy: 0.5 },
+  doors: [{ x: 14.0, side: -1, w: 0.81, h: 1.85, sill: 3.3, main: true }, { x: 14.0, side: 1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: -1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: 1, w: 0.81, h: 1.85, sill: 3.3 }],
+  overwing: [{ x: -0.2, side: -1 }, { x: -0.2, side: 1 }, { x: -1.1, side: -1 }, { x: -1.1, side: 1 }],
+  cargo: [{ x: 8.4, side: 1 }, { x: -6.2, side: 1 }],
+  wing: { root: [3.8, -3.4], tip: [-5.2, -6.8], span: 17.05, y: 2.25, tilt: 0.085, thick: 0.38 },
+  engines: { kind: "wing", z: [5.75], y: 1.12, len: 4.4, r: 0.92, fwd: 1.6 },
+  tail: { fin: [[-9.6, 1.4], [-15.0, 8.0], [-17.6, 8.0], [-18.5, 1.2]], finTop: 8.0, stab: { y: 0.85, pts: [[-13.2, 0], [-16.8, 6.2], [-18.2, 6.2], [-17.6, 0]] }, tee: false },
+  gear: { noseX: 12.6, mainX: -0.4, mainZ: 3.8, bogie: 2, wheel: 0.58, noseWheel: 0.38 },
+  stripeEnd: 99, roofEnd: 14.6,
+  title: { x: 6.0, w: 9.6, dy: 1.36 },
+  flag: { x: 16.2, dy: -0.85 },
+  cockpit: { x: 15.9, dx: 0.5, n: 3, dy: 0.95, front: 17.55 },
+  tailBlue: -8.6, /* where the bands start to sweep up toward the fin; behind it the rear body is dark blue */
+};
+export const NAVY = 0x1f2f8a, PURPLE = 0x6b3a96, BPINK = 0xe0457f, BORANGE = 0xf07a22, BYELLOW = 0xf6c12a;
 /* ---- the kit ---- */
 function radiusAt(S, x) {
   const P = S.profile;
@@ -110,7 +132,17 @@ function fuselage(S, holes = []) {
   /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows; every face takes one flat
      colour, so the edges of the stripes are crisp. The stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and
      the yellow roof band at the windscreen. */
-  const paint = (dy, x) => {
+  const paint = S.livery === "blue" ? (dy, x) => {
+    /* the blue-tail look: a yellow roof, then orange (the windows), pink, a thin purple line, a blue stripe and a white belly; toward the tail the bands
+       sweep up into the fin and the body behind and below them is dark blue. The nose has no yellow: its top is white. */
+    const lift = x < S.tailBlue ? (S.tailBlue - x) * 0.42 : 0, d = dy - lift;
+    if (d > 1.02) return x < S.tailBlue - 0.5 ? C(NAVY) : x > S.roofEnd + (dy - 1.02) * 0.9 ? C(WHITE) : C(BYELLOW);
+    if (d > 0.26) return C(BORANGE);
+    if (d > -0.04) return C(BPINK);
+    if (d > -0.11) return C(PURPLE);
+    if (d > -0.34) return C(NAVY);
+    return x < S.tailBlue - 1.6 - (dy + 2) * 0.3 ? C(NAVY) : C(WHITE);
+  } : (dy, x) => {
     if (x > S.roofEnd) return C(WHITE);
     if (dy > 1.0) return C(YELLOW);
     if (x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE);
@@ -232,7 +264,15 @@ export function roundelTexture() {
     x.restore();
   });
 }
-function titleTexture() {
+function titleTexture(livery) {
+  if (livery === "blue") /* the later title: a pink "air" and a dark blue "Jamaica", round and heavy, each letter outlined in white (ref-a320-blue-tail.jpg) */
+    return cv(1024, 200, (x, W, H) => {
+      x.clearRect(0, 0, W, H);
+      x.font = "900 136px 'Arial Rounded MT Bold', 'Trebuchet MS', Verdana, sans-serif"; x.textBaseline = "middle"; x.lineJoin = "round";
+      const wa = x.measureText("air").width, y = H / 2 + 8;
+      x.lineWidth = 16; x.strokeStyle = "#ffffff"; x.strokeText("air", 24, y); x.strokeText("Jamaica", 24 + wa + 4, y);
+      x.fillStyle = "#d63a86"; x.fillText("air", 24, y); x.fillStyle = "#1f2f8a"; x.fillText("Jamaica", 24 + wa + 4, y);
+    });
   return cv(1024, 180, (x, W, H) => {
     x.clearRect(0, 0, W, H);
     x.fillStyle = "#d9531b"; x.font = "700 128px 'Trebuchet MS', Verdana, sans-serif"; x.textBaseline = "middle";
@@ -253,6 +293,23 @@ export function flagTexture() {
 function finPaint(S) {
   const F = S.tail.fin, xs = F.map((p) => p[0]), ys = F.map((p) => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), w = x1 - x0, h = y1 - y0;
+  if (S.livery === "blue") {
+    /* the blue fin: dark blue, with pink and purple bars across the top and the bands of the body sweeping up into its foot at the front; the yellow
+       Doctor Bird inside an open yellow ring (ref-a320-blue-tail.jpg, ref-a340-blue-tail.jpg) */
+    const tex = cv(512, Math.round(512 * (h / w)), (x, W, H) => {
+      x.clearRect(0, 0, W, H);
+      const X = (m) => ((m - x0) / w) * W, Y = (m) => ((y1 - m) / h) * H;
+      x.save(); x.beginPath(); F.forEach(([a, b], i) => (i ? x.lineTo(X(a), Y(b)) : x.moveTo(X(a), Y(b)))); x.closePath(); x.clip();
+      x.fillStyle = "#1f2f8a"; x.fillRect(0, 0, W, H);
+      [["#e0457f", 0.0, 0.035], ["#6b3a96", 0.035, 0.07], ["#e0457f", 0.09, 0.115], ["#6b3a96", 0.115, 0.14], ["#e0457f", 0.16, 0.175]].forEach(([c, a, b]) => { x.fillStyle = c; x.fillRect(0, a * H, W, (b - a) * H); });
+      [["#f07a22", 0.0], ["#e0457f", 0.06], ["#6b3a96", 0.1]].forEach(([c, k]) => { x.fillStyle = c; x.beginPath(); x.moveTo(W * (1.05 - k), H); x.lineTo(W * (0.98 - k), H * (0.86 + k * 0.4)); x.lineTo(W * (0.9 - k * 0.6), H); x.closePath(); x.fill(); });
+      x.restore();
+      const R = W * 0.2, cx = W * 0.5, cy = H * 0.42;
+      x.strokeStyle = "#f6c12a"; x.lineWidth = W * 0.022; x.beginPath(); x.arc(cx + R * 0.15, cy + R * 0.1, R, -1.2, 2.4); x.stroke();
+      x.save(); x.translate(cx - R, cy - R); drawBird(x, R * 2, "#f6c12a", "#1f2f8a"); x.restore();
+    });
+    return { tex, w, h, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+  }
   const tex = cv(512, Math.round(512 * (h / w)), (x, W, H) => {
     x.clearRect(0, 0, W, H);
     const X = (m) => ((m - x0) / w) * W, Y = (m) => ((y1 - m) / h) * H, u = (a, b) => [x0 + a * w, y0 + b * h];
@@ -438,18 +495,31 @@ export function makeJet(S, opts = {}) {
   const md = S.doors.find((d) => d.main), mo = onSide(S, md.x, md.sill + md.h / 2 - centreY(S, md.x), md.side);
   g.userData.door = { x: md.x, y: md.sill, z: mo.z + md.side * 0.04, sill: md.sill, w: md.w, h: md.h, side: md.side };
   /* the title near the nose and the flag by the registration, on both sides */
-  const title = titleTexture(), flag = flagTexture();
+  const title = titleTexture(S.livery), flag = flagTexture();
   for (const s of [-1, 1]) {
+    if (S.title.dy) {
+      /* high on the body the side curves away too much for a flat sheet: the title is laid on the curve itself, a grid that follows the skin */
+      const tw = S.title.w, th = tw * (200 / 1024), x0 = S.title.x - tw / 2, pos = [], uv = [], idx = [], NX = 16, NY = 6;
+      for (let i = 0; i <= NX; i++) for (let j = 0; j <= NY; j++) {
+        const x = x0 + (tw * i) / NX, dy = S.title.dy - th / 2 + (th * j) / NY, r = radiusAt(S, x), cy = centreY(S, x), d = Math.min(dy, r * 0.97), z = s * Math.sqrt(Math.max(0, r * r - d * d)), k = 1 + 0.02 / r;
+        pos.push(x, cy + d * k, z * k); uv.push(s > 0 ? i / NX : 1 - i / NX, j / NY);
+      }
+      for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) { const a = i * (NY + 1) + j, b = a + NY + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: title, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+      m.name = "title"; g.add(m);
+    } else {
     const x = S.title.x, o = onSide(S, x, 0.05, s), t = decal(S.title.w, S.title.w * 0.1774, title);
     t.position.set(x, o.y, o.z + s * 0.025); t.rotation.set(s > 0 ? -o.tilt : o.tilt, s > 0 ? 0 : Math.PI, 0);
     g.add(t);
+    }
     if (S.flag.onEngine) {
       const E = S.engines, f = decal(0.6, 0.4, flag);
       f.position.set(E.x + 0.6, S.Y0 + E.y + 0.12, s * (E.z + E.r + 0.012));
       if (s < 0) f.rotation.y = Math.PI;
       g.add(f);
     } else {
-      const fx = S.flag.x, fo = onSide(S, fx, 0.15, s), f = decal(0.7, 0.46, flag);
+      const fx = S.flag.x, fo = onSide(S, fx, S.flag.dy ?? 0.15, s), f = decal(0.7, 0.46, flag);
       f.position.set(fx, fo.y, fo.z + s * 0.025); f.rotation.set(s > 0 ? -fo.tilt : fo.tilt, s > 0 ? 0 : Math.PI, 0);
       g.add(f);
     }
@@ -480,9 +550,9 @@ export function makeJet(S, opts = {}) {
   if (E.kind === "wing")
     for (const s of [-1, 1])
       for (const z of E.z) {
-        const ex = lead(z) + 0.5, ey = E.y + TILT * z;
+        const ex = lead(z) + 0.5 + (E.fwd || 0), ey = E.y + TILT * z;
         pod(g, ex, ey, z * s, E.len, E.r);
-        pylon(g, ex, ey + E.r * 0.8, z * s, 2.6, wg.y - ey - E.r * 0.8 - 0.05);
+        pylon(g, ex - (E.fwd || 0) * 0.6, ey + E.r * 0.8, z * s, 2.6 + (E.fwd || 0), Math.max(0.2, wg.y - ey - E.r * 0.8 - 0.05 + (E.fwd ? TILT * z : 0)));
       }
   else
     for (const s of [-1, 1]) {
@@ -551,4 +621,5 @@ export function makeJet(S, opts = {}) {
 }
 export const dc8 = (opts) => makeJet(DC8, opts);
 export const dc9 = (opts) => makeJet(DC9, opts);
+export const a320 = (opts) => makeJet(A320, opts);
 export const radius = radiusAt, centre = centreY;
