@@ -438,7 +438,7 @@ function home() {
   person(Q, "marcia10", "marcia10", -1.0, -0.2, face(-1.0, -0.2, 0.6, 0.9), { kind: "idle" });
   person(Q, "dee10", "dee10", 1.5, 1.6, face(1.5, 1.6, 0.2, 0.6), { kind: "idle" });
   Q.lookViews = { box: { p: [0.75, 1.15, -0.05], look: [0.35, 0.5, -0.58], fov: 40 } };
-  Q.view = { pos: [1.6, 1.5, 2.1], look: [-0.4, 0.9, -1.2] };
+  Q.view = { pos: [0.3, 1.5, 2.2], look: [-0.4, 0.9, -1.2] };   /* from the doorway, not right behind Mum */
   Q.enter = () => {};
   return Q;
 }
