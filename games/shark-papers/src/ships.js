@@ -482,13 +482,13 @@ export function gunAtPort(side, len = 1.35) {
   q.position.x = side * 0.3;   /* run out: the muzzle stands in the port */
   g.add(q);
   for (const dz of [-0.42, 0.42]) {
-    /* the breeching: from its ring bolt in the bulwark to the back of the gun, hanging in a slight curve, not a straight pole */
-    const mid = [side * 0.17, 0.27, dz * 0.71];
-    rope([side * 0.78, 0.36, dz], mid, 0.022, SM.hemp, g, 5);
-    rope(mid, [side * -0.44, 0.34, dz * 0.42], 0.022, SM.hemp, g, 5);
+    /* the breeching: a heavy tarred rope from its ring bolt in the bulwark, slack, sagging down beside the carriage almost to the deck, and up round
+       the back of the gun. A smooth tube through points, not two straight pieces: they read as stiff pale poles (owner, 25 November 2026) */
+    const c = new THREE.CatmullRomCurve3([[side * 0.78, 0.36, dz], [side * 0.45, 0.16, dz * 0.92], [side * 0.05, 0.08, dz * 0.8], [side * -0.3, 0.2, dz * 0.62], [side * -0.44, 0.34, dz * 0.42]].map((p) => new THREE.Vector3(...p)));
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 16, 0.016, 6), SM.tar));
     cyl(0.035, 0.035, 0.03, SM.iron, side * 0.78, 0.36, dz, g, 6).rotation.z = Math.PI / 2;
   }
-  rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.022, SM.hemp, g, 5);
+  rope([side * -0.44, 0.34, -0.18], [side * -0.44, 0.34, 0.18], 0.016, SM.tar, g, 6);
   return g;
 }
 /* a rope coiled down flat on the deck, or (hang) hung from a pin */
@@ -992,5 +992,33 @@ export function shark(L = 3.4) {
     }
   }
   g.traverse((o) => (o.userData.noBatch = true));
+  /* The body can bend, so a caught shark thrashes (owner, 25 November 2026: "no wriggle or any kind of animation for the shark"). Every part is
+     baked into the shark's own frame and keeps its rest shape; wriggle(a, ph) sweeps the body side to side in a wave that runs back along it, the
+     head nearly still and the tail swinging most, and curls it up a little (b) as a hooked fish does. wriggle(0) puts it back straight. */
+  g.updateMatrixWorld(true);
+  const parts = [];
+  for (const o of [...g.children]) {
+    if (!o.isMesh) continue;
+    o.updateMatrix();
+    const geo = o.geometry.clone();
+    geo.applyMatrix4(o.matrix);
+    o.geometry = geo;
+    o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.scale.set(1, 1, 1);
+    parts.push({ geo, rest: Float32Array.from(geo.attributes.position.array) });
+  }
+  const head = -1.7 * k, len = 3.25 * k;
+  g.userData.wriggle = (a = 0, ph = 0, b = 0) => {
+    for (const { geo, rest } of parts) {
+      const P = geo.attributes.position, arr = P.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        const z = rest[i + 2], u = Math.max(0, Math.min(1, (z - head) / len)), w = 0.12 + 0.88 * u * u;
+        arr[i] = rest[i] + a * k * w * Math.sin(ph - u * 4.2);
+        arr[i + 1] = rest[i + 1] + b * k * (u - 0.35) * (u - 0.35);
+        arr[i + 2] = z;
+      }
+      P.needsUpdate = true;
+      geo.computeBoundingSphere();
+    }
+  };
   return g;
 }

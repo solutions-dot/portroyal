@@ -9,24 +9,27 @@ import * as THREE from "three";
 import { grp, mesh, box, cyl, solid, cv } from "./gfx.js";
 
 export const ORANGE = 0xe86a1c, RED = 0xc8321e, YELLOW = 0xf3b61f, PINK = 0xd8467a, WHITE = 0xf1efe8;
+/* painted metal is smooth: every material here is the plane's own and marked noGrain, and makeJet marks the whole plane noSurface, so the engine's
+   plaster and grain (engine/look.js, engine/surfaces.js) never land on it (owner, 25 November 2026: the fin and tailplane came out speckled like a wall) */
+const own = (c, r, m) => { const x = solid(c, r, m, {}); x.userData.noGrain = true; return x; };
 const M = {
-  white: solid(WHITE, 0.5, 0.05),
-  grey: solid(0xc9ccc8, 0.45, 0.1),
-  metal: solid(0xb9bdbb, 0.32, 0.65),
-  steel: solid(0x7d8280, 0.4, 0.6),
-  dark: solid(0x1c2120, 0.6),
-  seam: solid(0x55595a, 0.7),
-  tyre: solid(0x1b1d1c, 0.92),
-  glass: solid(0x0f1a20, 0.12, 0.5),
-  frame: solid(0x2a2f31, 0.5, 0.2),
-  rim: solid(0x3a3f42, 0.45, 0.3),
-  reveal: (() => { const m = solid(0xb8bcb9, 0.6, 0.2); m.side = THREE.DoubleSide; return m; })(),
-  cabin: solid(0x5a5650, 0.9),
+  white: own(WHITE, 0.5, 0.05),
+  grey: own(0xc9ccc8, 0.45, 0.1),
+  metal: own(0xb9bdbb, 0.32, 0.65),
+  steel: own(0x7d8280, 0.4, 0.6),
+  dark: own(0x1c2120, 0.6),
+  seam: own(0x55595a, 0.7),
+  tyre: own(0x1b1d1c, 0.92),
+  glass: own(0x0f1a20, 0.12, 0.5),
+  frame: own(0x2a2f31, 0.5, 0.2),
+  rim: own(0x3a3f42, 0.45, 0.3),
+  reveal: (() => { const m = own(0xb8bcb9, 0.6, 0.2); m.side = THREE.DoubleSide; return m; })(),
+  cabin: own(0x5a5650, 0.9),
   cabinLight: new THREE.MeshBasicMaterial({ color: 0xfff1d6 }),
-  floor: solid(0x3c4a5a, 0.95),
-  doorSkin: solid(0xf1efe8, 0.4, 0.1),
-  doorInner: solid(0xb3b6b2, 0.7, 0.2),
-  doorEdge: (() => { const m = solid(0x9ea2a0, 0.5, 0.4); m.side = THREE.DoubleSide; return m; })(),
+  floor: own(0x3c4a5a, 0.95),
+  doorSkin: own(0xf1efe8, 0.4, 0.1),
+  doorInner: own(0xb3b6b2, 0.7, 0.2),
+  doorEdge: (() => { const m = own(0x9ea2a0, 0.5, 0.4); m.side = THREE.DoubleSide; return m; })(),
   red: (() => { const m = new THREE.MeshBasicMaterial({ color: 0xff3a2a }); m.userData.glow = true; return m; })(),
   green: (() => { const m = new THREE.MeshBasicMaterial({ color: 0x3aff6a }); m.userData.glow = true; return m; })(),
 };
@@ -46,6 +49,7 @@ export const DC8 = {
   engines: { kind: "wing", z: [7.4, 13.2], y: 1.1, len: 4.0, r: 0.62 },
   tail: { fin: [[-10.5, 1.0], [-13.2, 9.8], [-17.2, 9.8], [-19.8, 1.0]], finTop: 9.8, stab: { y: 0.9, pts: [[-15.5, 0], [-19.2, 7.0], [-22.0, 7.0], [-21.4, 0]] }, tee: false },
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
+  band: { roundel: [-13.9, 7.5], r: 1.25, phi: 62, R: 4.0 }, /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
   stripeEnd: 15.6, roofEnd: 19.3, /* where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
   flag: { x: -5.0 },
@@ -63,6 +67,7 @@ export const DC9 = {
   engines: { kind: "rear", z: 2.55, y: 0.55, x: -11.6, len: 4.0, r: 0.6 },
   tail: { fin: [[-9.0, 1.0], [-12.0, 6.0], [-16.2, 6.0], [-17.0, 1.0]], finTop: 6.0, stab: { y: 6.0, pts: [[-11.6, 0], [-15.6, 4.4], [-17.8, 4.4], [-16.4, 0]] }, tee: true },
   gear: { noseX: 13.4, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
+  band: { roundel: [-12.3, 4.1], r: 0.95, phi: 50, R: 3.0 }, /* the roundel half way up, close behind the leading edge (ref-dc9-6Y-JGB) */
   stripeEnd: 12.6, roofEnd: 15.0,
   title: { x: 4.9, w: 5.6 },
   flag: { x: -3.0, onEngine: true }, /* the flag is on the engine pod (photograph 6Y-JIJ) */
@@ -74,7 +79,8 @@ export const DC9 = {
    Everything else (where the doors and the gear sit along the body, the fin's outline) is read from the photographs, not from a drawing. */
 export const A320 = {
   name: "A320-200", livery: "blue",
-  profile: [[-18.8, 0.1], [-18.2, 0.42], [-15.5, 0.98], [-12.0, 1.55], [-8.5, 1.95], [-7.0, 1.98], [13.4, 1.98], [15.4, 1.86], [16.9, 1.58], [17.9, 1.16], [18.5, 0.62], [18.8, 0.1]],
+  profile: [[-18.8, 0.1], [-18.2, 0.42], [-15.5, 0.98], [-12.0, 1.55], [-8.5, 1.95], [-7.0, 1.98], [13.4, 1.98], [15.2, 1.9], [16.6, 1.7], [17.6, 1.38], [18.3, 0.98], [18.75, 0.55], [18.95, 0.06]],
+  droop: { from: 13.6, down: 0.95 }, /* the A320's nose: blunt, its tip low, the top sloping down to it and the belly nearly straight, so the stripes curve down to the tip (ref-a320-blue-tail.jpg) */
   Y0: 3.75, lift: { from: -7.0, over: 11.8, up: 0.62 },
   windows: { from: -12.6, to: 12.8, step: 0.53, dy: 0.5 },
   doors: [{ x: 14.0, side: -1, w: 0.81, h: 1.85, sill: 3.3, main: true }, { x: 14.0, side: 1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: -1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: 1, w: 0.81, h: 1.85, sill: 3.3 }],
@@ -86,8 +92,9 @@ export const A320 = {
   gear: { noseX: 12.6, mainX: -0.4, mainZ: 3.8, bogie: 2, wheel: 0.58, noseWheel: 0.38 },
   stripeEnd: 99, roofEnd: 14.6,
   title: { x: 6.0, w: 9.6, dy: 1.36 },
-  flag: { x: 16.2, dy: -0.85 },
-  cockpit: { x: 15.9, dx: 0.5, n: 3, dy: 0.95, front: 17.55 },
+  flag: { x: 15.9, dy: -1.45 }, /* on the white under the blue (photograph) */
+  cockpit: { x: 14.95, dx: 0.5, n: 3, dy: 0.95, front: 17.15, glassEnd: 18.15, painted: true }, /* the flight deck's glass, from the last side window's back edge to the windscreen's front (photograph) */ /* windows painted into the skin (noseWindows) */
+  tipFence: true, /* the A320's wingtip fences: a small arrowhead plate standing above and below each wing tip */
   tailBlue: -8.6, /* where the bands start to sweep up toward the fin; behind it the rear body is dark blue */
 };
 export const NAVY = 0x1f2f8a, PURPLE = 0x6b3a96, BPINK = 0xe0457f, BORANGE = 0xf07a22, BYELLOW = 0xf6c12a;
@@ -100,13 +107,42 @@ function radiusAt(S, x) {
 function centreY(S, x) {
   const { from, over, up } = S.lift;
   const t = Math.max(0, Math.min(1, (from - x) / over));
-  return S.Y0 + up * t * t;
+  let y = S.Y0 + up * t * t;
+  if (S.droop && x > S.droop.from) { const P = S.profile, k = Math.min(1, (x - S.droop.from) / (P[P.length - 1][0] - S.droop.from)); y -= S.droop.down * Math.pow(k, 1.7); }
+  return y;
 }
 /* a point on the body's side at height dy above the centre line: its y and z on side s, and the tilt of the surface there */
 function onSide(S, x, dy, s) {
   const r = radiusAt(S, x), cy = centreY(S, x), d = Math.min(dy, r * 0.95);
   const dz = Math.sqrt(Math.max(0.0001, r * r - d * d));
   return { y: cy + d, z: s * dz, tilt: Math.asin(d / r) };
+}
+/* The first look's stripes, as one ribbon seen from the side (x along the body, H the height above S.Y0): level along the body, then from S.band
+   they bend up through an arc and climb the fin in a straight run that ends under the roundel. Its order across the ribbon is the body's from the
+   bottom up: pink line, white, red, orange, yellow; so on the fin the yellow is the band nearest the leading edge and the pink the one nearest the
+   trailing edge, and behind the bend the tail cone is white (photographs ref-dc9-6Y-JGB, ref-727-6Y-JMO, ref-1969-crew-and-dc8; owner, 25 November 2026:
+   "the tail and emblem and stripe not proper": the stripes ran straight on to the tail cone and the fin had a separate, unrelated sweep). */
+const H0 = 0.3, YELLOW_TOP = 1.7;
+function ribbon(S) {
+  if (S._ribbon) return S._ribbon;
+  const B = S.band, phi = (B.phi * Math.PI) / 180, R = B.R, sn = Math.sin(phi), cs = Math.cos(phi), mid = 0.85;
+  const pd = [B.roundel[0] - mid * sn, B.roundel[1] - mid * cs], eh = H0 + R * (1 - cs), lline = (pd[1] - eh) / sn;
+  const bx = pd[0] + lline * cs + R * sn, E = [bx - R * sn, eh];
+  return (S._ribbon = { bx, R, phi, sn, cs, E, sEnd: R * phi + lline });
+}
+/* across (offset from the pink line's lower edge, toward the yellow) and along (distance along the ribbon from the start of the bend) */
+function ribbonAt(S, x, H) {
+  const r = ribbon(S);
+  if (x >= r.bx) return { o: H - H0, s: r.bx - x };
+  const qx = x - r.bx, qh = H - (H0 + r.R), t = Math.atan2(-qx, -qh);
+  if (t >= 0 && t <= r.phi) return { o: r.R - Math.hypot(qx, qh), s: r.R * t };
+  const dx = x - r.E[0], dh = H - r.E[1];
+  return { o: dx * r.sn + dh * r.cs, s: r.R * r.phi + (-dx * r.cs + dh * r.sn) };
+}
+function ribbonColour(S, x, H) {
+  const { o, s } = ribbonAt(S, x, H);
+  if (s > ribbon(S).sEnd) return WHITE;
+  return o < 0 ? WHITE : o < 0.1 ? PINK : o < 0.2 ? WHITE : o < 0.54 ? RED : o < 0.7 ? ORANGE : o < YELLOW_TOP ? YELLOW : WHITE;
 }
 /* the skin's panel work, laid over the paint: frames every 0.53 m round the body, lap joints along it, rows of rivets, and a little grime under the belly.
    u runs along the body (0 at the tail), v round it (0 at the top). Light grey on white, so the paint's colours stay as they are. */
@@ -127,6 +163,37 @@ function skinTexture(len) {
     x.fillStyle = g; x.fillRect(0, H * 0.38, W, H * 0.24); /* the belly (v about 0.5) picks up a little grime */
   }));
 }
+/* The A320's flight deck windows, painted into the skin (ref-a320-blue-tail.jpg; owner, 25 November 2026: the nose was "all wrong", a dark slab on
+   top and black squares at the sides). A black band wraps round the nose; the windows sit in it as dark glass with thin pale frames: the two side
+   windows and the windscreen, whose panes run round the front. Toward the front the band and the glass slope down with the nose, and the black
+   dips below the windscreen to the orange. Painted by height, so the band goes right round the front with no seam. Returns a colour or null. */
+function noseWindows(S, x, dy) {
+  const C = S.cockpit;
+  if (!C.painted) return null;
+  /* Measured from the enlarged photograph (ref-a320-blue-tail.jpg, the nose): no band round the windows. Each pane is dark glass in a broad white
+     frame, low on the nose (a fifth to a half of the radius up at the side windows); the white cap comes down to their tops. The windscreen's front
+     panes climb over the top of the nose to its centre post. The only black is a strip under the windscreen that runs forward and down to the nose
+     tip, over the pink. Heights are shares of the radius round the drooping nose's own centre. */
+  const r = radiusAt(S, x), back = C.x, xf = C.front, tip = S.profile[S.profile.length - 1][0];
+  const f = Math.max(0, Math.min(1, (x - back) / (xf - back))), ff = f * f;
+  const g0 = r * (0.17 + 0.32 * ff), g1 = r * (0.5 + 0.55 * ff), fr = 0.045;
+  const glassBack = back + Math.max(0, dy - g0) * 0.3, xg = C.glassEnd;
+  /* the windscreen's front panes run on over the top of the nose to xg, their foot at half the radius: from the front they read as glass across
+     the top of the nose with the black strip under it, as in the photograph */
+  if (x >= glassBack && x <= xg && dy >= g0 && dy <= g1) {
+    if (dy > g1 - fr || dy < g0 + fr || x < glassBack + fr || x > xg - fr || Math.abs(x - xf) < fr / 2) return 0xeeeeea;
+    for (const px of [back + 0.55, back + 1.32]) if (Math.abs(x - px - (dy - g0) * 0.3) < fr / 2) return 0xeeeeea;
+    return 0x16222a;
+  }
+  /* the black strip: from under the sliding window's front, deepening forward under the windscreen, then down round the nose to the tip */
+  const bs = back + 1.32;
+  if (x > bs) {
+    const k = Math.min(1, (x - bs) / (xf - bs)), rf = radiusAt(S, xf);
+    if (x <= xf) { if (dy < g0 && dy > g0 - 0.38 * k * k) return 0x101214; }
+    else { const u = Math.sqrt((x - xf) / (tip - xf)); if (dy > lerp(rf * 0.49 - 0.38, -0.1, u) && (dy < g0 || x > xg)) return 0x101214; }
+  }
+  return null;
+}
 function fuselage(S, holes = []) {
   const C = (h) => new THREE.Color(h);
   /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows; every face takes one flat
@@ -135,18 +202,26 @@ function fuselage(S, holes = []) {
   const paint = S.livery === "blue" ? (dy, x) => {
     /* the blue-tail look: a yellow roof, then orange (the windows), pink, a thin purple line, a blue stripe and a white belly; toward the tail the bands
        sweep up into the fin and the body behind and below them is dark blue. The nose has no yellow: its top is white. */
+    const w = noseWindows(S, x, dy);
+    if (w) return C(w);
     const lift = x < S.tailBlue ? (S.tailBlue - x) * 0.42 : 0, d = dy - lift;
-    if (d > 1.02) return x < S.tailBlue - 0.5 ? C(NAVY) : x > S.roofEnd + (dy - 1.02) * 0.9 ? C(WHITE) : C(BYELLOW);
-    if (d > 0.26) return C(BORANGE);
-    if (d > -0.04) return C(BPINK);
-    if (d > -0.11) return C(PURPLE);
-    if (d > -0.34) return C(NAVY);
+    /* band heights measured on the photograph at the forward door (the door's own sill and head as the scale): the yellow down to 0.77 m above the
+       centre line, the orange (the windows) to 0.12 m below it, a deep pink to 0.62 m below, a thin purple line, the blue to 1.08 m below, then white */
+    if (d > 0.77) {
+      if (x < S.tailBlue - 0.5) return C(NAVY);
+      /* the white cap over the flight deck: down to the windows' tops, its rear edge a curve from over the door to behind the last window */
+      const r = radiusAt(S, x), h = (dy - r * 0.5) / (r * 0.5);
+      return h > 0 && x > S.cockpit.x - 0.05 - 0.75 * Math.sqrt(Math.min(1, h)) ? C(WHITE) : C(BYELLOW);
+    }
+    if (d > -0.12) return C(BORANGE);
+    if (d > -0.62) return C(BPINK);
+    if (d > -0.68) return C(PURPLE);
+    if (d > -1.08) return C(NAVY);
     return x < S.tailBlue - 1.6 - (dy + 2) * 0.3 ? C(NAVY) : C(WHITE);
   } : (dy, x) => {
     if (x > S.roofEnd) return C(WHITE);
-    if (dy > 1.0) return C(YELLOW);
-    if (x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE);
-    return dy > 0.84 ? C(ORANGE) : dy > 0.5 ? C(RED) : dy > 0.4 ? C(WHITE) : dy > 0.3 ? C(PINK) : C(WHITE);
+    if (dy <= 1.0 && x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE); /* the orange stripe ends behind the forward door in a slant; the yellow runs on */
+    return C(ribbonColour(S, x, dy + centreY(S, x) - S.Y0));
   };
   const x0 = S.profile[0][0], x1 = S.profile[S.profile.length - 1][0], TAU = Math.PI * 2;
   /* the rings along the body and the lines round it, with the edges of every hole added exactly, so a cut-out has straight, clean edges */
@@ -297,33 +372,35 @@ function finPaint(S) {
     /* the blue fin: dark blue, with pink and purple bars across the top and the bands of the body sweeping up into its foot at the front; the yellow
        Doctor Bird inside an open yellow ring (ref-a320-blue-tail.jpg, ref-a340-blue-tail.jpg) */
     const tex = cv(512, Math.round(512 * (h / w)), (x, W, H) => {
-      x.clearRect(0, 0, W, H);
+      x.fillStyle = "#f1efe8"; x.fillRect(0, 0, W, H);
       const X = (m) => ((m - x0) / w) * W, Y = (m) => ((y1 - m) / h) * H;
       x.save(); x.beginPath(); F.forEach(([a, b], i) => (i ? x.lineTo(X(a), Y(b)) : x.moveTo(X(a), Y(b)))); x.closePath(); x.clip();
       x.fillStyle = "#1f2f8a"; x.fillRect(0, 0, W, H);
       [["#e0457f", 0.0, 0.035], ["#6b3a96", 0.035, 0.07], ["#e0457f", 0.09, 0.115], ["#6b3a96", 0.115, 0.14], ["#e0457f", 0.16, 0.175]].forEach(([c, a, b]) => { x.fillStyle = c; x.fillRect(0, a * H, W, (b - a) * H); });
       [["#f07a22", 0.0], ["#e0457f", 0.06], ["#6b3a96", 0.1]].forEach(([c, k]) => { x.fillStyle = c; x.beginPath(); x.moveTo(W * (1.05 - k), H); x.lineTo(W * (0.98 - k), H * (0.86 + k * 0.4)); x.lineTo(W * (0.9 - k * 0.6), H); x.closePath(); x.fill(); });
       x.restore();
-      const R = W * 0.15, cx = W * 0.62, cy = H * 0.5; /* well inside the fin's outline: larger, the bird's head and the ring ran off its leading edge (owner, 25 November 2026) */
-      x.strokeStyle = "#f6c12a"; x.lineWidth = W * 0.022; x.beginPath(); x.arc(cx + R * 0.15, cy + R * 0.1, R, -1.2, 2.4); x.stroke();
-      x.save(); x.translate(cx - R, cy - R); drawBird(x, R * 2, "#f6c12a", "#1f2f8a"); x.restore();
+      /* the emblem: the bird alone, its two tail ribbons making the loops (there is no separate ring: ref-a320-blue-tail.jpg, enlarged), a little
+         above half height and aft of the middle of the fin, about a third of the fin's height, well clear of the leading edge (owner, 25 November 2026:
+         "hummingbird is off there": an extra ring was drawn and the emblem sat over the leading edge) */
+      const size = (2.6 / w) * W, ex = X(lerp(x0, x1, 0.35)), ey = Y(lerp(y0, y1, 0.54));
+      x.save(); x.translate(ex - size / 2, ey - size / 2); drawBird(x, size, "#e2b43a", "#1f2f8a"); x.restore();
     });
-    return { tex, w, h, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+    return { tex, w, h, x0, y0 };
   }
+  /* the first look: the stripes' ribbon, painted pixel by pixel from the same rule as the body (ribbonColour), so the bands run on from the body
+     without a seam, and the roundel where the ribbon ends */
   const tex = cv(512, Math.round(512 * (h / w)), (x, W, H) => {
-    x.clearRect(0, 0, W, H);
-    const X = (m) => ((m - x0) / w) * W, Y = (m) => ((y1 - m) / h) * H, u = (a, b) => [x0 + a * w, y0 + b * h];
-    x.save();
-    x.beginPath(); F.forEach(([a, b], i) => (i ? x.lineTo(X(a), Y(b)) : x.moveTo(X(a), Y(b)))); x.closePath(); x.clip();
-    const poly = (fill, pts) => { x.fillStyle = fill; x.beginPath(); pts.forEach((p, i) => { const [a, b] = u(p[0], p[1]); i ? x.lineTo(X(a), Y(b)) : x.moveTo(X(a), Y(b)); }); x.closePath(); x.fill(); };
-    /* panel fractions: u from the tail end (0) to the nose end (1), v from the bottom (0) to the top (1) */
-    poly("#f3b61f", [[1.02, 0.0], [1.02, 0.18], [0.78, 0.55], [0.42, 0.8], [0.3, 0.52], [0.52, 0.34], [0.72, 0.0]]);
-    poly("#e86a1c", [[0.72, 0.0], [0.52, 0.34], [0.3, 0.52], [0.22, 0.34], [0.38, 0.18], [0.46, 0.0]]);
-    x.restore();
-    const R = W * 0.19, cx = W * 0.56, cy = H * 0.12 + R;
+    const img = x.createImageData(W, H), d = img.data;
+    for (let j = 0; j < H; j++)
+      for (let i = 0; i < W; i++) {
+        const c = new THREE.Color(ribbonColour(S, x0 + (i / (W - 1)) * w, y1 - (j / (H - 1)) * h)), k = (j * W + i) * 4;
+        d[k] = Math.round(Math.pow(c.r, 1 / 2.2) * 255); d[k + 1] = Math.round(Math.pow(c.g, 1 / 2.2) * 255); d[k + 2] = Math.round(Math.pow(c.b, 1 / 2.2) * 255); d[k + 3] = 255;
+      }
+    x.putImageData(img, 0, 0);
+    const B = S.band, R = (B.r / w) * W, cx = ((B.roundel[0] - x0) / w) * W, cy = ((y1 - B.roundel[1]) / h) * H;
     x.drawImage(roundelTexture().image, cx - R, cy - R, R * 2, R * 2);
   });
-  return { tex, w, h, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
+  return { tex, w, h, x0, y0 };
 }
 function decal(w, h, tex) {
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
@@ -349,11 +426,16 @@ function pod(parent, x, y, z, len, r) {
   const soot = cyl(r * 0.92, r * 0.9, 0.5, solid(0x3a3c3c, 0.9, 0.2), -len / 2 + 0.25, 0, 0, e, 20); soot.rotation.z = Math.PI / 2; /* the tail of the cowl, darkened by the exhaust */
   return e;
 }
-/* a wing-mounted pylon: a tapered fairing from the pod's top up to the wing's underside */
-function pylon(parent, x, y, z, len, top) {
-  const p = slab([[0, 0], [len, 0], [len * 0.75, top], [len * 0.1, top]], 0.18, M.white);
-  p.position.set(x - len * 0.35, y, z);
+/* a wing-mounted pylon, in the plane of the pod (constant z): its foot runs along the pod's top from near the intake to past the cowl's tail, its head
+   runs into the wing's underside from just ahead of the leading edge to well under the wing, and its front edge slants up from the pod to the wing.
+   The head is sunk 12 cm into the wing so no daylight shows between them (owner, 25 November 2026: the engines were "not attached to anything"). */
+function pylon(parent, z, podTop, podFront, podBack, wingUnder, leadX) {
+  const foot = podTop - 0.12, head = wingUnder + 0.12;
+  const p = slab([[podBack - 0.4, foot], [podFront - 0.5, foot], [leadX + 0.05, head], [leadX - 2.8, head], [podBack - 0.4, foot + 0.15]], 0.24, M.white);
+  p.position.set(0, 0, z);
+  p.name = "pylon";
   parent.add(p);
+  return p;
 }
 export function makeJet(S, opts = {}) {
   const g = grp();
@@ -392,7 +474,7 @@ export function makeJet(S, opts = {}) {
   /* the flight deck's windows, high on the nose above the cabin window line: on each side a short row of panes with pale frames, and across the top of
      the nose the windscreen itself, a dark glazed block that slopes down to the front (as in the photograph of 6Y-JIJ) */
   const C = S.cockpit;
-  for (const s of [-1, 1])
+  if (!C.painted) for (const s of [-1, 1])
     for (let i = 0; i < C.n; i++) {
       const x = C.x + i * C.dx, r = radiusAt(S, x), o = onSide(S, x, Math.min(C.dy, r * 0.8), s);
       const w = i === C.n - 1 ? 0.3 : 0.4;
@@ -425,7 +507,12 @@ export function makeJet(S, opts = {}) {
     g.add(m);
     return m;
   };
-  {
+  if (C.painted) {
+    /* the windscreen's centre post, along the top of the nose where the painted glass crosses it */
+    let xa = null, xb = null;
+    for (let x = C.x; x < S.profile[S.profile.length - 1][0]; x += 0.01) { const r = radiusAt(S, x); if (noseWindows(S, x, r * 0.999) === 0x16222a) { if (xa === null) xa = x; xb = x; } }
+    if (xa !== null) patch(xa - 0.02, xb + 0.02, -0.022, 0.022, own(0xd9dcd8, 0.5, 0.1), 0.004, 8, 1);
+  } else {
     const xa = C.front - 0.7, xb = C.front + 0.35, A = 0.6; /* two panes each side of a centre post, about 35 degrees round the nose each way (photograph 6Y-JIJ) */
     patch(xa - 0.05, xb + 0.05, -A - 0.05, A + 0.05, M.frame, 0.006);
     patch(xa, xb, -A, -0.04, M.glass, 0.014);
@@ -544,6 +631,13 @@ export function makeJet(S, opts = {}) {
     const tipZ = wg.span * 0.995;
     mesh(new THREE.SphereGeometry(0.12, 8, 6), s < 0 ? M.red : M.green, trail(tipZ) + 0.4, wg.y, sz(tipZ), holder);
     box(0.5, 0.04, 0.04, M.steel, lead(tipZ) - 0.6, wg.y + 0.35, sz(tipZ) * 0.985, holder);
+    if (S.tipFence) {
+      /* drawn in the x-y plane at the tip's span: the leading point forward of the tip, the plate rising 0.85 m above and 0.6 m below the wing */
+      const lx = lead(wg.span), tx = trail(wg.span);
+      const fence = slab([[lx + 0.25, wg.y], [tx + 0.35, wg.y + 0.85], [tx - 0.05, wg.y + 0.85], [tx - 0.05, wg.y - 0.6], [tx + 0.35, wg.y - 0.6]], 0.06, M.white);
+      fence.position.z = sz(wg.span + 0.02); fence.name = "fence";
+      holder.add(fence);
+    }
   }
   /* engines */
   const E = S.engines;
@@ -552,7 +646,8 @@ export function makeJet(S, opts = {}) {
       for (const z of E.z) {
         const ex = lead(z) + 0.5 + (E.fwd || 0), ey = E.y + TILT * z;
         pod(g, ex, ey, z * s, E.len, E.r);
-        pylon(g, ex - (E.fwd || 0) * 0.6, ey + E.r * 0.8, z * s, 2.6 + (E.fwd || 0), Math.max(0.2, wg.y - ey - E.r * 0.8 - 0.05 + (E.fwd ? TILT * z : 0)));
+        /* the wing at this span: tilted up by TILT about the body's axis, so its underside here is TILT * z higher than at the root */
+        pylon(g, z * s, ey + E.r, ex + E.len / 2, ex - E.len / 2, wg.y - wg.thick / 2 + Math.sin(TILT) * z, lead(z));
       }
   else
     for (const s of [-1, 1]) {
@@ -561,15 +656,13 @@ export function makeJet(S, opts = {}) {
       box(1.9, 0.22, E.z - rr + 0.15, M.white, E.x + 0.1, ey - 0.02, s * (rr + (E.z - rr) / 2 - 0.05), g);
     }
   /* tail: a swept fin standing on the rear fuselage with its own paint, a rudder line, a cap and a beacon; the horizontal tail with elevator lines */
-  const T = S.tail, fin = slab(T.fin, 0.22, M.white);
+  /* the paint is the fin's own picture, lit like the rest of the plane: the two faces of the extruded fin take their texture coordinates from the
+     outline itself (x, y), so the picture is placed by its repeat and offset; the thin edges stay plain white */
+  const T = S.tail, fp = finPaint(S);
+  fp.tex.repeat.set(1 / fp.w, 1 / fp.h); fp.tex.offset.set(-fp.x0 / fp.w, -fp.y0 / fp.h); fp.tex.anisotropy = 8;
+  const finMat = new THREE.MeshStandardMaterial({ map: fp.tex, roughness: 0.4, metalness: 0.05 }); finMat.userData.noGrain = true;
+  const fin = slab(T.fin, 0.22, [finMat, M.white]);
   fin.position.set(0, S.Y0, 0); fin.name = "fin"; g.add(fin);
-  const fp = finPaint(S);
-  for (const s of [-1, 1]) {
-    const f = decal(fp.w, fp.h, fp.tex);
-    f.position.set(fp.cx, S.Y0 + fp.cy, s * 0.125);
-    if (s < 0) { f.rotation.y = Math.PI; f.scale.x = -1; }
-    g.add(f);
-  }
   const rudderX = (y) => lerp(T.fin[2][0], T.fin[3][0], 1 - (y - 1.0) / (T.finTop - 1.0)) + 0.7;
   const l0 = [rudderX(T.finTop), T.finTop], l1 = [rudderX(1.0), 1.0];
   for (const s of [-1, 1]) {
@@ -616,6 +709,7 @@ export function makeJet(S, opts = {}) {
     for (const [dx, dz] of ws) wheel(G.wheel, 0.3, mg, dx, G.wheel, dz);
     box(2.0, 0.04, 0.9, M.grey, -0.2, wg.y - 0.18, s * -0.1, mg);
   }
+  g.userData.noSurface = true;
   g.traverse((o) => { o.userData.noBatch = true; });
   return g;
 }

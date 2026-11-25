@@ -63,7 +63,7 @@ export const TASKS = {
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while it happens. lines: the card after. */
 export const LOOKS = {
   tail: {
-    place: "apron", at: [23.5, -4.5], label: "Look at the tail", title: "The Love Bird",
+    place: "apron", at: [23.5, 6.0], label: "Look at the tail", title: "The Love Bird",
     sound: "engine",
     say: ["You walk back along the plane.", "Up on the tail there is a bird."],
     lines: ["The bird is the Doctor Bird, Jamaica's national bird.", "The airline calls it the Love Bird.", "Its colours are orange and white, like the stripe along the plane."],
@@ -102,7 +102,7 @@ LOOKS.magazine = {
   lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on the planes now.", "Go and meet him at the front."],
 };
 LOOKS.tail94 = {
-  place: "newlook", at: [24.5, 3.5], label: "Look at the tail", title: "The new tail",
+  place: "newlook", at: [24.5, 6.5], label: "Look at the tail", title: "The new tail",
   sound: "engine",
   say: ["You walk back along the new plane.", "The tail is dark blue now."],
   lines: ["The bird is still on the tail, yellow on dark blue.", "Pink and purple bars run across the top.", "Yellow, orange and pink bands sweep up from the body."],

@@ -329,11 +329,10 @@ function deck() {
     b.scale.setScalar(0.8);
     add(Q, b, x, z);
   }
+  /* the swab laid down along the rail (it stood up leaning on nothing: owner, 25 November 2026) */
   const swab = S.swab();
-  swab.position.set(2.42, 0, 2.0);
-  swab.rotation.x = -1.05;
-  swab.rotation.y = 0.2;
-  swab.position.y = 0.02;
+  swab.position.set(2.32, 0, 1.4);
+  swab.rotation.y = 0.04;
   Q.group.add(swab);
   for (const [x, z, r] of [[2.2, 5.6, 0.26], [-2.1, -1.9, 0.24], [1.9, -6.2, 0.26], [-1.6, 7.9, 0.22], [2.1, 0.3, 0.22]]) add(Q, S.coil(r, 4), x, z);
   /* ---- aft: the companion to the cabin, the binnacle, the tiller, the taffrail ---- */
@@ -343,7 +342,12 @@ function deck() {
   const tiller = grp();
   S.spar([0, 0.5, 9.05], [0, 0.98, 9.0], 0.1, 0.09, S.SM.woodDark, tiller);   /* the rudder head */
   S.spar([0, 0.95, 9.0], [0.12, 0.9, 8.05], 0.05, 0.03, S.SM.wood, tiller);
-  for (const s of [-1, 1]) S.rope([0.12, 0.9, 8.2], [s * 1.6, 0.6, 8.35], 0.012, S.SM.hemp, tiller, 4);   /* lashed amidships: there is no wind to steer by */
+  /* lashed amidships (there is no wind to steer by): two thin tarred lines from the tiller back to ring bolts in the quarters by the taffrail, so
+     they run low and aft, out of everyone's way (owner, 25 November 2026: they crossed the deck at waist height like poles, through Mr Fitton) */
+  for (const s of [-1, 1]) {
+    S.rope([0.12, 0.88, 8.2], [s * 1.55, 0.72, 8.95], 0.008, S.SM.tar, tiller, 4);
+    cyl(0.03, 0.03, 0.04, S.SM.iron, s * 1.58, 0.72, 8.95, tiller, 6).rotation.z = Math.PI / 2;
+  }
   Q.group.add(tiller);
   wall(Q, 0.06, 8.6, 0.4, 1.0);
   /* a spyglass on the companion top */
@@ -395,7 +399,10 @@ function deck() {
     glass.visible = k < 0.35;
     glass.position.y = 1.0 + Math.min(1, k / 0.35) * 0.25;
   };
-  Q.lookViews = { sparrow: { p: [2.25, 1.55, 2.25], look: [205, SEA + 4, -46], fov: 9 } };
+  /* first a close shot of the glass on the companion lifting off it, then the view along it, seen through its round eyepiece (engine/lookshot.js
+     first and scope; owner, 25 November 2026: "looking through the glass.. nothing to look through"). You stand by the companion to take it. */
+  Q.lookFirst = { sparrow: { p: [1.55, 1.42, 5.25], look: [0.7, 1.05, 6.0], fov: 38, hold: 1.5 } };
+  Q.lookViews = { sparrow: { p: [1.35, 1.5, 5.7], look: [205, SEA + 4, -46], fov: 9 } };
   /* the sharks: fins cutting the water round a dead bullock far off the port quarter, and two or three under the stern */
   const bull = S.bullock();
   bull.position.set(-46, SEA + 0.05, 44);
@@ -468,6 +475,7 @@ function deck() {
   Q.walls.push(sharkWall);
   const showShark = (on) => {
     shark.visible = on;
+    shark.userData.wriggle?.(0);
     shark.position.set(REST[0], 0, REST[2]);
     shark.rotation.set(0, REST[3], 0.12);
     sharkWall.splice(0, 4, ...(on ? [-1.85, 4.75, -0.6, 8.3] : [99, 99, 99, 99]));
@@ -499,7 +507,7 @@ function deck() {
     GIG.p = stage < 14 ? 0.14 : stage < 20 ? Math.max(0.3, Math.min(GIG.p, 0.5)) : stage < 24 ? Math.max(0.6, Math.min(GIG.p, 0.86)) : 1;
     /* where the people are in each part of the morning */
     if (stage < 20) {
-      stand(Q, "fitton", 0.9, 8.35, 0.4, 4);
+      stand(Q, "fitton", 1.2, 8.0, 0.4, 4);
       stand(Q, "cato", -1.5, 1.6, 1.6, 3.6);
     } else {
       stand(Q, "fitton", 0.6, 4.2, -0.2, 6.2);
@@ -508,9 +516,9 @@ function deck() {
   };
 
   /* ---- the catch, as a camera scene: the line goes tight, all hands haul, the shark comes over the side ---- */
-  const film = { on: false, homes: null, rope: unitRope(0.016), rope2: unitRope(0.016) };
-  film.rope.visible = film.rope2.visible = false;
-  Q.group.add(film.rope, film.rope2);
+  const film = { on: false, homes: null, rope: unitRope(0.016), rope2: unitRope(0.016), rope3: unitRope(0.016) };
+  film.rope.visible = film.rope2.visible = film.rope3.visible = false;
+  Q.group.add(film.rope, film.rope2, film.rope3);
   const ROW = [[-1.25, 8.2], [-1.3, 7.1], [-1.35, 6.0], [-1.4, 4.9], [-1.45, 3.8]],
     ROUND = [[-0.7, 4.1], [-0.1, 5.0], [-0.15, 6.6], [-0.55, 8.65], [-1.3, 3.62]],   /* where the hands stand round the shark once it is on deck */
     _nose = new THREE.Vector3();
@@ -530,7 +538,7 @@ function deck() {
         });
       film.homes = null;
       film.on = false;
-      film.rope.visible = film.rope2.visible = false;
+      film.rope.visible = film.rope2.visible = film.rope3.visible = false;
       showShark(false);
       return;
     }
@@ -541,15 +549,17 @@ function deck() {
       film.clip = "";
     }
     /* the hands: Mr Fitton at the taffrail from the start; the others come to the line when it goes tight */
-    const hauling = t >= 5.5 && t < 20.5,
+    const hauling = t >= 5.5 && t < 17.6,
       clip = t < 5.5 ? "IdleM" : t < 20.5 ? "CarryIdle" : "Cheer";
     hands.forEach((n, i) => {
-      const at = t >= 20.5 ? ROUND[i] : i === 0 || t >= 5.5 ? ROW[i] : film.homes[i];
+      /* as the fish swings in over the rail, the hands step back out of its way to their places round where it will lie (it came down through them) */
+      const back = sm((t - 17.6) / 1.4),
+        at = t >= 19 ? ROUND[i] : t >= 17.6 ? [ROW[i][0] + (ROUND[i][0] - ROW[i][0]) * back, ROW[i][1] + (ROUND[i][1] - ROW[i][1]) * back] : i === 0 || t >= 5.5 ? ROW[i] : film.homes[i];
       n.x = at[0];
       n.z = at[1];
       const heave = hauling ? Math.max(0, Math.sin(t * 2.6 - i * 0.25)) : 0;
       n.m.position.set(at[0], 0, at[1] - heave * 0.16);
-      if (i === 0 || t >= 5.5) n.m.rotation.set(t < 20.5 ? -(heave * 0.2 + (hauling ? 0.06 : 0)) : 0, t < 20.5 ? 0 : face(at[0], at[1], REST[0], REST[2]), 0);
+      if (i === 0 || t >= 5.5) n.m.rotation.set(hauling ? -(heave * 0.2 + 0.06) : 0, t < 17.6 ? 0 : face(at[0], at[1], REST[0], REST[2]), 0);
     });
     if (film.clip !== clip) {
       film.clip = clip;
@@ -562,13 +572,24 @@ function deck() {
     bigOut = out;
     shark.visible = out;
     const f = fins[0].position,
-      rail = [-3.0, 1.0, 7.3];
+      rail = [-(half(7.6) + 0.04), 1.05, 7.6];
     if (out) {
-      const x = -3.25 + (REST[0] + 3.25) * over,
-        y = SEA - 0.5 + (1.05 - SEA + 0.5) * up - 1.05 * over + Math.sin(over * Math.PI) * 0.35,
-        z = 8.6 + (REST[2] - 8.6) * over;
-      shark.position.set(x, y, z);
-      shark.rotation.set((1 - up) * -0.9 + Math.sin(over * Math.PI) * 0.1, REST[3] + (1 - over) * 0.5, 0.12 + (1 - over) * 0.7 * Math.sin(up * Math.PI * 0.5));
+      /* a hooked fish comes up head first: it hangs from the hook in its mouth, nose up, its body down the ship's side, while the hands haul the line
+         in over the rail; at the rail it is swung in and laid down flat on the deck (it floated level in the air: owner, 25 November 2026) */
+      const lift = sm(over / 0.45), swing = sm((over - 0.4) / 0.6);   /* first hoisted clear above the rail, then swung in and lowered */
+      shark.rotation.set(1.25 * (1 - swing) - 0.55 * lift * (1 - swing), REST[3] + (1 - swing) * 0.5, 0.12 * swing);   /* nose up: the head (local -z) turned toward +y */
+      shark.position.set(0, 0, 0);
+      shark.updateMatrixWorld();
+      const off = shark.parent.worldToLocal(shark.localToWorld(_nose.set(0, 0.2, -1.6))).clone(),
+        nz = 8.6 - 1.0 * up, nx = -(half(nz) + 1.15), ny = SEA + 0.15 + (1.15 - SEA - 0.15) * up,   /* clear of the ship's side where it narrows to the stern */
+        hang = [nx - off.x, ny - off.y, nz - off.z];
+      const hy = hang[1] + 1.15 * lift;   /* lifted till its belly clears the rail */
+      shark.position.set(hang[0] + (REST[0] - hang[0]) * swing, hy + (0 - hy) * swing, hang[2] + (REST[2] - hang[2]) * swing);
+      /* it fights all the way: hard sweeps of the tail as it comes up the side, still thrashing over the rail, then a few flaps on the deck that
+         die away (all hands keep clear; nobody is hurt) */
+      const fight = t < 18 ? 0.34 : t < 20.6 ? 0.28 : 0.22 * Math.max(0, 1 - (t - 20.6) / 4.2),
+        beat = t < 20.6 ? 9.5 : 6.5;
+      shark.userData.wriggle?.(fight, t * beat, t < 18 ? 0.25 * Math.sin(t * 3.1) : 0);
     }
     /* the line: from the hands over the taffrail to the fish; a second part from the main boom end lifts it in */
     if (out) {
@@ -576,10 +597,13 @@ function deck() {
       shark.localToWorld(_nose.set(0, 0.2, -1.6));   /* the hook is in its mouth */
     }
     const nose = out ? [_nose.x, _nose.y, _nose.z] : [f.x, SEA - 0.1, f.z];
+    /* the hauling part runs along the row of hands at hand height, beside them (it ran across the row through their bodies: owner's screenshot),
+       then turns to the lead (the cleat, then the rail as the fish comes up) */
+    const lead = t < 13.5 ? CLEAT : rail, turn = [-0.88, 0.95, 7.75];
     film.rope.visible = t < 19.5;
-    film.rope2.visible = t >= 5.5 && t < 20.5;
-    if (film.rope.visible) stretch(film.rope, t < 13.5 ? CLEAT : rail, nose);
-    if (film.rope2.visible) stretch(film.rope2, [-1.3, 1.02, 3.6], t < 13.5 ? CLEAT : rail);
+    film.rope2.visible = film.rope3.visible = t >= 5.5 && t < 20.5;
+    if (film.rope.visible) stretch(film.rope, lead, nose);
+    if (film.rope2.visible) { stretch(film.rope2, [-0.88, 0.95, 3.3], turn); stretch(film.rope3, turn, lead); }
   };
 
   /* ---- dawn, as a camera scene: the ship becalmed, the sharks at the bullock, the Sparrow in shore; Mr Fitton points to her at the end ---- */

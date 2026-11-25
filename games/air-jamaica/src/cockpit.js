@@ -283,6 +283,7 @@ export function buildCockpit() {
   /* a map light and a little jump seat folded against the back wall for the visitor */
   box(0.4, 0.06, 0.34, M.seat, -0.9, 0.55, 1.2, g);
   g.userData.parts = { pedestal: [0, 0.5, -1.0] };
+  g.userData.noSurface = true; /* painted and trimmed metal, not a wall: the engine's plaster picture made the ceiling speckled (engine/surfaces.js) */
   return g;
 }
 export const SEATS = { captain: { x: -0.7, z: -0.15, top: 0.56 }, first: { x: 0.7, z: -0.15, top: 0.56 }, engineer: { x: 0.68, z: 0.55, top: 0.56 } };

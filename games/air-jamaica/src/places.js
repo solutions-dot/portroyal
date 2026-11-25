@@ -349,7 +349,7 @@ function newlook() {
    with her old box on it, a television, pictures. A general picture of a Kingston home of the time, made for the game. */
 export const ROOM = { x0: -2.6, x1: 2.6, z0: -2.2, z1: 2.4, h: 2.7, box: [0.35, 0.47, -0.55] };
 function home() {
-  const R = ROOM, Q = base("home", [R.x0 + 0.1, R.z0 + 0.1, R.x1 - 0.1, R.z1 - 0.1], [0.9, 1.7, 0.4]);
+  const R = ROOM, Q = base("home", [R.x0 + 0.1, R.z0 + 0.1, R.x1 - 0.1, R.z1 - 0.1], [0.4, 1.9, 0.4]); /* clear of Mum by the door (the audit had her on the start) */
   Q.indoor = true;
   Q.light = { top: 0x2a3550, hor: 0x7a6a7a, stars: 0, fog: [0x2a2a30, 30, 120], sun: [0xffd8a8, 0.6, -10, 20, 10], hemi: [0xfff0dc, 0x8a7a6a, 2.2], fill: 1.2 };
   Q.beds = { room: 0.03 };
@@ -386,6 +386,7 @@ function home() {
   wall(Q, 1.95, -0.4, 2.55, 1.0);
   const lampL = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.4); lampL.position.set(-1.6, 2.0, -1.4); g.add(lampL);
   cyl(0.12, 0.16, 0.25, solid(0xf2e6c8, 0.8), -1.6, 2.45, -1.4, g, 12); /* the ceiling light's shade */
+  cyl(0.012, 0.012, 0.12, solid(0x2a2a2a, 0.6), -1.6, 2.63, -1.4, g, 6); /* the flex it hangs from, up to the ceiling */
   for (const [x, w, c] of [[-0.6, 0.5, 0x3a6a9a], [0.4, 0.35, 0x8a4a3a], [1.2, 0.45, 0x4a7a4a]]) { box(w + 0.06, w * 0.75 + 0.06, 0.02, wood, x, 1.75, R.z0 + 0.01, g); box(w, w * 0.75, 0.01, solid(c, 0.8), x, 1.75, R.z0 + 0.025, g); }
   /* Aunt Marcia's old box on the table: a wooden box with a lid on hinges at the back. Inside: her yellow dress from 1969, folded; her white gloves; a
      photograph of the first crew in a line */

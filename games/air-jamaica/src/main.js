@@ -173,7 +173,7 @@ function holdThing(m, kind) {
   m.updateMatrixWorld(true);
   const h = P.held(kind);
   if (!h) return;
-  grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8 });
+  grip(m, "Right", h.obj, { handleY: h.handleY, scale: h.scale || 1, lift: h.lift || 0.3, straighten: h.straighten || 0.8, ...(h.hangs !== undefined ? { hangs: h.hangs } : {}), ...(h.yaw ? { yaw: h.yaw } : {}) });
   m.userData.held = [{ obj: h.obj, bone: "RightHand", label: h.label }];
 }
 function ensure(id) {

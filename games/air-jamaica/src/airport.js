@@ -259,7 +259,7 @@ function hangar(Q) {
   /* the door leaves, slid back to each end of the opening, and lights hanging inside */
   for (const x of [H.x0 + 2.4, H.x1 - 2.4]) box(4.2, H.h - 2.4, 0.3, clad, x, (H.h - 2.4) / 2, H.z0 - 0.5, g);
   const lamp = new THREE.MeshBasicMaterial({ color: 0xfff4d8 }); lamp.userData.glow = true;
-  for (let x = H.x0 + 6; x < H.x1 - 3; x += 9) for (const z of [H.z0 + 8, H.z0 + 20]) { mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.4, 12), steel, x, H.h - 2.6, z, g); mesh(new THREE.CircleGeometry(0.45, 12), lamp, x, H.h - 2.81, z, g).rotation.x = Math.PI / 2; }
+  for (let x = H.x0 + 6; x < H.x1 - 3; x += 9) for (const z of [H.z0 + 8, H.z0 + 20]) { mesh(new THREE.CylinderGeometry(0.5, 0.7, 0.4, 12), steel, x, H.h - 2.6, z, g); { const top = yAt((x - H.x0) / w) - 0.05; cyl(0.03, 0.03, top - (H.h - 2.4), steel, x, (top + H.h - 2.4) / 2, z, g, 6); } /* each lamp hangs on a rod from the roof (the audit found them floating) */ mesh(new THREE.CircleGeometry(0.45, 12), lamp, x, H.h - 2.81, z, g).rotation.x = Math.PI / 2; }
   /* inside: a tool cart, a stand of steps for working on an engine, drums */
   box(1.4, 1.0, 0.7, solid(0xb83a2a, 0.6), H.x0 + 6, 0.5, H.z0 + 12, g);
   box(2.0, 3.0, 1.4, steel, H.x1 - 8, 1.5, H.z0 + 16, g);
