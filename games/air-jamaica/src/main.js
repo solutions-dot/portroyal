@@ -485,6 +485,7 @@ async function advance(next) {
   if (chapterOf(next) !== chapterOf(S.stage)) {
     S.best = Math.max(S.best, chapterOf(next));
     save();
+    setGoal("Chapter " + (chapterOf(S.stage) + 1) + " is finished.");   /* the quiz is done: the goal no longer says "What did you learn?" while the next chapter is offered (owner, 25 November 2026) */
     nextPending = next;
     offerNextChapter({ still: () => nextPending === next, clear: () => !openPanel() && $("cineControls").hidden, show: nextCard, pause: QUICK ? 0 : undefined });
   } else await go(next, { keep: true });

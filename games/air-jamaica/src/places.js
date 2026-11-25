@@ -11,6 +11,7 @@ import { airport, GALLERY, HANGAR } from "./airport.js";
 import { buildCockpit, SEATS } from "./cockpit.js";
 import { buildCabin, CABIN, DISHES, lidPlace, buildMagazine, magazineAt } from "./cabin.js";
 import { AU, noiseHit } from "../../../engine/audio.js";
+import { reachTo } from "../../../engine/grip.js";
 /* a soft dark patch on the ground under something, so it sits on the ground and does not seem to hover; follow(o) keeps it under a moving thing */
 function groundShadow(Q, w, d, x, z, ry = 0, alpha = 0.55) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: P.shadowTexture(), transparent: true, depthWrite: false, opacity: alpha, polygonOffset: true, polygonOffsetFactor: -1 }));
@@ -83,6 +84,10 @@ function scene(Q, { deck = false, later = false } = {}) {
   add(Q, jet, APRON.plane.x, APRON.plane.z, 0, Math.PI);
   P.dynamic(jet);
   Q.props.plane = jet;
+  /* for the first flight the door is shut before she moves: a copy with the door closed takes over once the steps have rolled away (the open door
+     and its slab stayed out while she taxied: owner, 25 November 2026) */
+  const shut = later ? null : dc8({});
+  if (shut) { add(Q, shut, APRON.plane.x, APRON.plane.z, 0, Math.PI); P.dynamic(shut); shut.visible = false; }
   /* its shadow: a long soft patch under the fuselage, and a smaller one under each set of wheels */
   const half = S.profile[S.profile.length - 1][0], G0 = S.gear, mainWX = APRON.plane.x - G0.mainX;
   const shadows = [groundShadow(Q, half * 2 + 6, 15, APRON.plane.x, APRON.plane.z, 0, 0.5)];
@@ -142,12 +147,14 @@ function scene(Q, { deck = false, later = false } = {}) {
     const [x, z, yaw, y, pitch] = t < 0 ? [APRON.plane.x, APRON.plane.z, Math.PI, 0, 0] : jetAt(t);
     jet.position.set(x, y, z);
     jet.rotation.set(0, yaw, pitch, "YXZ");
+    if (shut) { shut.position.copy(jet.position); shut.rotation.copy(jet.rotation); const closed = t >= 5.5; shut.visible = closed; jet.visible = !closed; }
     for (const sh of [...shadows, ...wheelShadows]) sh.visible = t < 0 || y < 0.3 || false;
     if (t >= 0) { shadows[0].position.set(x, 0.02, z); shadows[0].rotation.z = yaw; shadows[0].scale.setScalar(Math.max(0.05, 1 - y / 14)); wheelShadows.forEach((w) => (w.visible = false)); }
     if (steps) {
-      steps.visible = t < 0 || t < 5;
-      steps.position.z = APRON.stairs.z + (t > 3 && t < 5 ? (t - 3) * 3 : 0);
-      if (t < 0) steps.position.z = APRON.stairs.z;
+      /* the steps are rolled back from the door, well clear of the wing, and left standing there while she taxis away (they used to vanish at 5 s,
+         after moving only 3 m, so she seemed to leave with them still at the door) */
+      steps.visible = true;
+      steps.position.z = APRON.stairs.z + (t < 0 ? 0 : 7 * smooth(Math.max(0, Math.min(1, (t - 2) / 4))));
     }
   };
   Q.jetPose = (x, z, yaw, y, pitch) => {   /* for a place's own camera scene: put the jet and its shadow somewhere */
@@ -216,7 +223,7 @@ function gallery() {
    windows (the same airport as the apron, rotated so the runway lies ahead) and moved past the windscreen for the landing. The crew of three sit in
    their seats; Dee stands behind them. Chapter 2 (docs/games/air-jamaica.md, "Cockpit"). */
 function cockpit() {
-  const Q = base("cockpit", [-0.55, 0.55, 0.7, 1.1], [0.1, 0.9, 0]);
+  const Q = base("cockpit", [-1.15, 0.6, 0.95, 2.05], [-0.1, 1.55, 0]);   /* the room runs 0.9 m further back so you can step away from the seats and see all three crew (owner, 25 November 2026) */
   Q.light = { top: 0x6fa8dc, hor: 0xe3eef2, fog: [0xdce8ee, 900, 9000], sun: [0xfff2d0, 2.6, -30, 60, 40], hemi: [0xffffff, 0x9aa8a8, 2.5], fill: 1.35 };
   Q.beds = { wind: 0.02 };
   const room = buildCockpit();
@@ -234,16 +241,17 @@ function cockpit() {
   Q.props.pivot = pivot;
   Q.props.ext = ext;
   /* the crew of three, seated: the captain on the left, the first officer on the right, the flight engineer behind him, turned to his panel */
-  const sit = (look, S, ry) => crowd(Q, look, S.x, S.z, ry, { kind: "sit", seat: { top: S.top, x: S.x, z: S.z, ry }, clips: ["SitIdle"] });
+  const sit = (look, S, ry, clips = ["SitIdle"]) => crowd(Q, look, S.x, S.z, ry, { kind: "sit", seat: { top: S.top, x: S.x, z: S.z, ry }, clips });
   sit("aj_ross", SEATS.captain, Math.PI);
   sit("aj_first", SEATS.first, Math.PI);
-  sit("aj_engineer", SEATS.engineer, Math.PI / 2);
+  sit("aj_engineer", SEATS.engineer, Math.PI / 2, ["SitSwitches"]);   /* at his panel, setting switches (the owner's Mixamo "Pilot Flips Switches") */
   /* the walls: the seats, the pedestal, the columns, the front wall, the engineer's panel, the jump seat */
-  wall(Q, -1.0, -0.45, -0.4, 0.15);
-  wall(Q, 0.4, -0.45, 1.0, 0.15);
+  wall(Q, -1.0, -0.8, -0.4, -0.2);   /* the pilots' seats, slid forward */
+  wall(Q, 0.4, -0.8, 1.0, -0.2);
   wall(Q, -0.27, -1.6, 0.27, -0.4);
   wall(Q, 0.4, 0.3, 1.3, 0.85);
-  wall(Q, -1.2, 1.0, -0.6, 1.4);
+  wall(Q, -1.2, 1.9, -0.6, 2.3);   /* the jump seat, folded against the back wall */
+  wall(Q, 1.1, 0.3, 1.45, 1.5);   /* the engineer's desk under his longer panel */
   Q.view = { pos: [0.05, 1.5, 0.75], look: [0.0, 1.05, -2.2] };
   Q.lookViews = {
     panel: { p: [-0.6, 1.26, -0.85], look: [-0.62, 0.72, -1.82], fov: 40 },
@@ -251,14 +259,18 @@ function cockpit() {
   };
   /* the landing (content.js FILMS.landing): the aircraft's place on the approach in the airport's own coordinates, [time, x along the runway, height of
      the wheels, pitch]. The airport is moved the opposite way past the windscreen. Touchdown is at x -440. */
+  /* on a 3 degree glide path (a usual approach angle) to the aiming point at x -560, coming in over the sea at about 75 m a second (roughly 145 knots),
+     the flare over the threshold (x -900) and touchdown at 28.5 s, with the caption "Bump!". It started 850 m short of the runway at 66 m, so it looked as
+     if the plane was already on the ground (owner, 25 November 2026). A slight nose-down pitch keeps the runway in view over the glareshield. */
   const KEYS = [
-    [0, -1750, 66, -0.03],
-    [12, -1150, 36, -0.035],
-    [22, -600, 11, -0.035],
-    [26, -490, 2.6, 0.0],
-    [28, -440, 0.0, 0.05],
-    [30, -400, 0.0, 0.02],
-    [38, -180, 0.0, 0.0],
+    [0, -2700, 113, -0.075],
+    [10, -1950, 74, -0.07],
+    [18, -1350, 42, -0.065],
+    [24, -900, 18, -0.05],
+    [27, -680, 5, -0.01],
+    [28.5, -570, 0.0, 0.045],
+    [30.5, -430, 0.0, 0.02],
+    [38, -120, 0.0, 0.0],
     [46, 40, 0.0, 0.0],
   ];
   const at = (t) => {
@@ -267,11 +279,22 @@ function cockpit() {
     const a = KEYS[i], b = KEYS[i + 1], k = Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0])));
     return a.slice(1).map((v, j) => v + (b[j + 1] - v) * k);
   };
+  /* the two pilots fly it: both hands on their control wheel's grips through the landing (owner, 25 November 2026: "they are not holding the controls").
+     The engine's two-bone reach (engine/grip.js reachTo) sets each arm after the body's own clip has played this frame (the people tick before the film). */
+  const _g = new THREE.Vector3();
+  const hold = () => {
+    for (const [look, sx] of [["aj_ross", -0.7], ["aj_first", 0.7]]) {
+      const n = Q.extras.find((e) => e.look === look);
+      if (!n) continue;
+      for (const [side, dx] of [["Left", -0.17], ["Right", 0.17]]) reachTo(n.m, side, room.localToWorld(_g.set(sx + dx, 0.95, -1.08)));
+    }
+  };
   Q.films.landing = (t) => {
     const [ax, ay, pitch] = t < 0 ? [-250, 0, 0] : at(t);
     const az = -83; /* the runway's centre line */
     ext.position.set(-az, -(ay + 3.8), ax);
     pivot.rotation.x = -pitch;
+    if (t >= 0 && t < 44) hold();
   };
   Q.films.landing(-1);
   Q.enter = () => {};
@@ -280,7 +303,7 @@ function cockpit() {
 /* 4. The cabin of a jet in the 2000s, on a flight from Jamaica to Toronto (chapter 3, "The flying chef"; cabin.js says what is a general picture).
    Mum waits at the back; the flying chef stands by his trolley in the galley at the front; Mr Clarke sits in row 2 on the aisle, his tray down. */
 function cabin() {
-  const Q = base("cabin", [-1.75, -4.24, 1.75, 2.85], [0.35, 2.3, 0]);
+  const Q = base("cabin", [-1.85, -4.24, 1.85, 3.6], [0.35, 3.0, 0]);
   Q.light = { top: 0x8fbce6, hor: 0xeef2f4, fog: [0xe6edf2, 40, 400], sun: [0xfff4e0, 1.4, -20, 40, 30], hemi: [0xffffff, 0xb8b4a8, 2.6], fill: 1.4 };
   Q.indoor = true;
   Q.beds = { wind: 0.0 };
@@ -305,20 +328,21 @@ function cabin() {
     },
   };
   const R = CABIN.rows, X = CABIN.seatX, top = CABIN.seatTop;
-  person(Q, "dee2", "dee2", -1.25, 2.55, face(-1.25, 2.55, 0.3, 2.2), { kind: "idle" });
+  const seatAt = (x, z, clips = ["SitIdle"]) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips });
+  /* Mum in her seat near the back, beside Tia's empty aisle seat (row 4 on the left); she stood behind the seats with her head in the bins (owner, 25 November 2026) */
+  person(Q, "dee2", "dee2", -X[1], R[3], Math.PI, seatAt(-X[1], R[3], ["SitIdle", "SitTalk"]));
   person(Q, "chef", "chef", 0.92, -3.86, face(0.92, -3.86, 0.1, -3.0), { kind: "idle" });
-  const seatAt = (x, z) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips: ["SitIdle"] });
   person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]));
-  crowd(Q, "aj_pass04", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
+  crowd(Q, "aj_pass04", X[2], R[2], Math.PI, seatAt(X[2], R[2]));   /* moved across the aisle: Mum has his old seat */
   /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
-  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, CABIN.rows[CABIN.rows.length - 1] + 0.35);
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   wall(Q, -0.42, CABIN.trolley.z - 0.17, 0.42, CABIN.trolley.z + 0.17);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
   Q.keepOff = [];
   Q.lookViews = {
     trolley: { p: [0.3, 1.42, -3.4], look: [0.0, 1.0, -4.1], fov: 42 },
-    magazine: { p: [-0.62, 1.45, 1.42], look: [-0.69, 0.84, 0.86], fov: 44 },
+    magazine: { p: [-(CABIN.seatX[0] - 0.07), 1.45, CABIN.rows[3] + 0.97], look: [-CABIN.seatX[0], 0.84, CABIN.rows[3] + 0.41], fov: 44 },
   };
   Q.enter = () => {};
   return Q;
@@ -341,6 +365,7 @@ function newlook() {
   };
   /* the new look's first flight (FILMS.newflight): the same way out as in 1969, watched from the apron by the hangar */
   Q.films.newflight = Q.films.takeoff;
+  Q.films.reveal = () => {};   /* the plane stands still; the camera does the work (content.js FILMS.reveal) */
   Q.view = { pos: [-3, 1.6, 20], look: [6, 3.2, -8] };
   Q.enter = () => Q.films.takeoff(-1);
   return Q;
@@ -404,8 +429,10 @@ function home() {
   }) });
   const ph = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.09), photo); ph.rotation.x = -Math.PI / 2; ph.rotation.z = -0.2; ph.position.set(0.07, 0.083, 0.07); bx.add(ph);
   const lid = grp(bx, 0, boxH, -boxD / 2);
+  lid.userData.fixed = true;   /* held on its hinges (audit-reveal) */
   box(boxW + 0.01, 0.018, boxD + 0.01, wood, 0, 0.009, boxD / 2, lid);
   box(0.06, 0.012, 0.03, solid(0xc8a860, 0.3, 0.7), 0, 0.012, boxD - 0.005, lid); /* a little brass clasp */
+  P.dynamic(bx);   /* the box and its lid move with the look: left unmarked, the place's merge froze the lid shut (owner, 25 November 2026: "the lid never lift") */
   Q.reveal.box = (k) => { k = Number(k); lid.rotation.x = -1.9 * k; };
   person(Q, "marcia10", "marcia10", -1.0, -0.2, face(-1.0, -0.2, 0.6, 0.9), { kind: "idle" });
   person(Q, "dee10", "dee10", 1.5, 1.6, face(1.5, 1.6, 0.2, 0.6), { kind: "idle" });
@@ -417,7 +444,7 @@ function home() {
 /* 7. The last flight home, 30 April 2010: the cabin of the A320 from Fort Lauderdale, in the evening, coming down toward Kingston (cabin.js says
    what is a general picture). No chef and no trolley on this flight. Mum sits by the window seat beside Tia's; Mr Grant across the aisle. */
 function lastflight() {
-  const Q = base("lastflight", [-1.75, -2.9, 1.75, 2.85], [0.0, 1.0, 0]);
+  const Q = base("lastflight", [-1.85, -2.9, 1.85, 3.6], [0.0, 1.0, 0]);
   Q.light = { top: 0x34406a, hor: 0xe0a080, fog: [0x3a3a4a, 40, 400], sun: [0xffb070, 1.0, -20, 10, 30], hemi: [0xffe8d8, 0x8a7a70, 2.4], fill: 1.4 };
   Q.indoor = true;
   Q.beds = { wind: 0.0, room: 0.02 };
@@ -426,17 +453,17 @@ function lastflight() {
   Q.group.add(room);
   const { blinds } = room.userData.parts, R = CABIN.rows, X = CABIN.seatX, top = CABIN.seatTop;
   const blind = blinds["-1:3"]; /* the window beside Tia's seat (row 4 on the left) */
-  Q.reveal.window = (k) => { k = Number(k); blind.position.y = 1.06 + 0.2 * k; blind.scale.y = 3.2 - 2.2 * k; };
+  Q.reveal.window = (k) => { k = Number(k); blind.position.y = 1.18 + 0.2 * k; blind.scale.y = 3.4 - 2.4 * k; };   /* the blind slides up off the window (cabin.js: windows at 1.18 m) */
   const seatAt = (x, z) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips: ["SitIdle"] });
   person(Q, "dee10s", "dee10", -X[1], R[3], Math.PI, seatAt(-X[1], R[3]));
   person(Q, "grant", "grant", X[0], R[3], Math.PI, seatAt(X[0], R[3]));
   crowd(Q, "aj_pass10", -X[0], R[1], Math.PI, seatAt(-X[0], R[1]));
   crowd(Q, "aj_pass10w", X[1], R[2], Math.PI, seatAt(X[1], R[2]));
   crowd(Q, "aj_pass04", X[2], R[0], Math.PI, seatAt(X[2], R[0]));
-  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -1.85 : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : 1.85, CABIN.rows[CABIN.rows.length - 1] + 0.35);
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
-  Q.lookViews = { window: { p: [-1.25, 1.12, 0.95], look: [-1.83, 1.06, 0.65], fov: 44 } };
+  Q.lookViews = { window: { p: [-1.3, 1.22, 0.78], look: [-1.93, 1.18, CABIN.rows[3] - 0.08], fov: 44 } };
   Q.enter = () => {};
   return Q;
 }

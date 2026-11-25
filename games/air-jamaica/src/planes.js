@@ -430,7 +430,7 @@ function pod(parent, x, y, z, len, r) {
    runs into the wing's underside from just ahead of the leading edge to well under the wing, and its front edge slants up from the pod to the wing.
    The head is sunk 12 cm into the wing so no daylight shows between them (owner, 25 November 2026: the engines were "not attached to anything"). */
 function pylon(parent, z, podTop, podFront, podBack, wingUnder, leadX) {
-  const foot = podTop - 0.12, head = wingUnder + 0.12;
+  const foot = podTop - 0.12, head = wingUnder + 0.03;   /* 3 cm into the wing: enough to close the gap, under the audit's 4 cm overlap */
   const p = slab([[podBack - 0.4, foot], [podFront - 0.5, foot], [leadX + 0.05, head], [leadX - 2.8, head], [podBack - 0.4, foot + 0.15]], 0.24, M.white);
   p.position.set(0, 0, z);
   p.name = "pylon";

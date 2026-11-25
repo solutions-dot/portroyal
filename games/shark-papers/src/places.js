@@ -519,8 +519,17 @@ function deck() {
   const film = { on: false, homes: null, rope: unitRope(0.016), rope2: unitRope(0.016), rope3: unitRope(0.016) };
   film.rope.visible = film.rope2.visible = film.rope3.visible = false;
   Q.group.add(film.rope, film.rope2, film.rope3);
-  const ROW = [[-1.25, 8.2], [-1.3, 7.1], [-1.35, 6.0], [-1.4, 4.9], [-1.45, 3.8]],
-    ROUND = [[-0.7, 4.1], [-0.1, 5.0], [-0.15, 6.6], [-0.55, 8.65], [-1.3, 3.62]],   /* where the hands stand round the shark once it is on deck */
+  /* the hands stand in a line facing aft under the main boom, each with his hands on the fall as it comes down from the block at the boom end:
+     the owner's "Pulling A Rope" clip pulls hand over hand on a rope from above, so the line is led that way (it ran level at their waists) */
+  const BLOCK = [-0.92, 2.36, 8.85], FALL = [-1.3, 1.12, 4.1], TAIL = [-1.22, 0.04, 3.3];
+  const block = grp();
+  cyl(0.07, 0.07, 0.06, S.SM.woodDark, 0, 0, 0, block, 10).rotation.z = Math.PI / 2;
+  S.rope([0, 0.03, 0], [0, 0.12, 0], 0.012, S.SM.hemp, block, 4);   /* its strop round the boom */
+  block.position.set(...BLOCK);
+  block.visible = false;
+  Q.group.add(block);
+  const ROW = [[-1.3, 8.1], [-1.3, 7.25], [-1.3, 6.4], [-1.3, 5.55], [-1.3, 4.7]],
+    ROUND = [[-0.55, 8.65], [-0.25, 7.15], [-0.18, 6.0], [-0.22, 4.95], [-0.85, 4.2]],   /* where the hands stand round the shark once it is on deck: each steps inboard from his place on the line, so no path crosses another */
     _nose = new THREE.Vector3();
   const sm = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
   Q.films.catch = (t) => {
@@ -538,7 +547,7 @@ function deck() {
         });
       film.homes = null;
       film.on = false;
-      film.rope.visible = film.rope2.visible = film.rope3.visible = false;
+      film.rope.visible = film.rope2.visible = film.rope3.visible = block.visible = false;
       showShark(false);
       return;
     }
@@ -550,16 +559,15 @@ function deck() {
     }
     /* the hands: Mr Fitton at the taffrail from the start; the others come to the line when it goes tight */
     const hauling = t >= 5.5 && t < 17.6,
-      clip = t < 5.5 ? "IdleM" : t < 20.5 ? "CarryIdle" : "Cheer";
+      clip = t < 5.5 ? "IdleM" : t < 17.6 ? "PullRope" : t < 19 ? "PullStop" : "Cheer";   /* the owner's Mixamo clips: hand over hand on the line, then the last heave as they let go */
     hands.forEach((n, i) => {
       /* as the fish swings in over the rail, the hands step back out of its way to their places round where it will lie (it came down through them) */
       const back = sm((t - 17.6) / 1.4),
         at = t >= 19 ? ROUND[i] : t >= 17.6 ? [ROW[i][0] + (ROUND[i][0] - ROW[i][0]) * back, ROW[i][1] + (ROUND[i][1] - ROW[i][1]) * back] : i === 0 || t >= 5.5 ? ROW[i] : film.homes[i];
       n.x = at[0];
       n.z = at[1];
-      const heave = hauling ? Math.max(0, Math.sin(t * 2.6 - i * 0.25)) : 0;
-      n.m.position.set(at[0], 0, at[1] - heave * 0.16);
-      if (i === 0 || t >= 5.5) n.m.rotation.set(hauling ? -(heave * 0.2 + 0.06) : 0, t < 17.6 ? 0 : face(at[0], at[1], REST[0], REST[2]), 0);
+      n.m.position.set(at[0], 0, at[1]);   /* the pull is in the clip itself now: no made-up lean or bob */
+      if (i === 0 || t >= 5.5) n.m.rotation.set(0, t < 17.6 ? 0 : face(at[0], at[1], REST[0], REST[2]), 0);
     });
     if (film.clip !== clip) {
       film.clip = clip;
@@ -571,11 +579,10 @@ function deck() {
       out = t >= 13.5;
     bigOut = out;
     shark.visible = out;
-    const f = fins[0].position,
-      rail = [-(half(7.6) + 0.04), 1.05, 7.6];
+    const f = fins[0].position;
     if (out) {
       /* a hooked fish comes up head first: it hangs from the hook in its mouth, nose up, its body down the ship's side, while the hands haul the line
-         in over the rail; at the rail it is swung in and laid down flat on the deck (it floated level in the air: owner, 25 November 2026) */
+         down through the block on the boom; at the rail it is swung in and laid down flat on the deck (it floated level in the air: owner, 25 November 2026) */
       const lift = sm(over / 0.45), swing = sm((over - 0.4) / 0.6);   /* first hoisted clear above the rail, then swung in and lowered */
       shark.rotation.set(1.25 * (1 - swing) - 0.55 * lift * (1 - swing), REST[3] + (1 - swing) * 0.5, 0.12 * swing);   /* nose up: the head (local -z) turned toward +y */
       shark.position.set(0, 0, 0);
@@ -599,11 +606,12 @@ function deck() {
     const nose = out ? [_nose.x, _nose.y, _nose.z] : [f.x, SEA - 0.1, f.z];
     /* the hauling part runs along the row of hands at hand height, beside them (it ran across the row through their bodies: owner's screenshot),
        then turns to the lead (the cleat, then the rail as the fish comes up) */
-    const lead = t < 13.5 ? CLEAT : rail, turn = [-0.88, 0.95, 7.75];
+    const lead = t < 5.5 ? CLEAT : BLOCK;
+    block.visible = t >= 5.5 && t < 20.5;
     film.rope.visible = t < 19.5;
     film.rope2.visible = film.rope3.visible = t >= 5.5 && t < 20.5;
-    if (film.rope.visible) stretch(film.rope, lead, nose);
-    if (film.rope2.visible) { stretch(film.rope2, [-0.88, 0.95, 3.3], turn); stretch(film.rope3, turn, lead); }
+    if (film.rope.visible) stretch(film.rope, lead, nose);   /* from the fish up to the block (or, while Mr Fitton waits, to the cleat) */
+    if (film.rope2.visible) { stretch(film.rope2, BLOCK, FALL); stretch(film.rope3, FALL, TAIL); }   /* the fall down through the hands, its end on the deck */
   };
 
   /* ---- dawn, as a camera scene: the ship becalmed, the sharks at the bullock, the Sparrow in shore; Mr Fitton points to her at the end ---- */

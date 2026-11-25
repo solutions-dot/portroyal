@@ -1,6 +1,7 @@
 /* The story table (engine/story.js). t: talk. d: carry something and put it down (TASKS). l: look at or do something that changes where
    you can see it (LOOKS). w: a card or the quiz. show: the story people who are there in that step.
    Chapter 1: A flag in the sky (the apron at Palisadoes, 1 April 1969). */
+import { CABIN } from "./cabin.js";   /* Mr Clarke's tray follows the seats */
 const row = (place, goal, needs, next, extra = {}) => ({ place, goal, needs, next, ...extra });
 const t = (place, goal, ids, next, extra) => row(place, goal, { talk: ids }, next, extra);
 const d = (place, goal, ids, next, extra) => row(place, goal, { do: ids.map((id) => ({ id, carry: id })) }, next, extra);
@@ -25,7 +26,10 @@ export const STEPS = {
   31: l("cockpit", "Look at the four levers between the seats.", ["levers"], 32, { journal: "levers" }),
   32: w("cockpit", "The plane comes in to land.", "film", 33, { film: "landing" }),
   33: w("cockpit", "The plane comes in to land.", "playing", 34, { film: "landing" }),
-  34: w("cockpit", "What did you learn?", "quiz", 40, { quiz: "cockpit" }),
+  34: w("cockpit", "What did you learn?", "quiz", 38, { quiz: "cockpit" }),
+  /* 3. New colours: first the new look shown off (FILMS.reveal) */
+  38: w("newlook", "The new colours.", "film", 39, { film: "reveal", show: NEW_ALL }),
+  39: w("newlook", "The new colours.", "playing", 40, { film: "reveal", show: NEW_ALL }),
   /* 4. New colours: the apron at Norman Manley Airport, December 1994 */
   40: t("newlook", "Talk to Aunt Marcia by the new plane.", ["marcia94"], 41, { show: NEW_ALL, journal: "dee94" }),
   41: l("newlook", "Look up at the new tail.", ["tail94"], 42, { show: NEW_ALL, journal: "newlook" }),
@@ -35,7 +39,7 @@ export const STEPS = {
   45: w("newlook", "The new look takes off.", "playing", 46, { film: "newflight", show: NEW_ALL }),
   46: w("newlook", "What did you learn?", "quiz", 50, { quiz: "newlook", show: NEW_ALL }),
   /* 3. The flying chef: the cabin of a jet in the 2000s, flying to Toronto */
-  50: t("cabin", "Talk to Mum at the back of the plane.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
+  50: t("cabin", "Talk to Mum in her seat near the back.", ["dee2"], 51, { show: CABIN_ALL, journal: "tia" }),
   51: l("cabin", "Look at the magazine in your seat pocket.", ["magazine"], 52, { show: CABIN_ALL, journal: "skywritings" }),
   52: t("cabin", "Meet the chef at the front of the cabin.", ["chef"], 53, { show: CABIN_ALL, journal: "chef" }),
   53: l("cabin", "Look at the chef's trolley.", ["trolley"], 54, { show: CABIN_ALL, journal: "menu" }),
@@ -57,7 +61,7 @@ export const STEPS = {
   96: w("arrival", "The last flight home.", "end", null, { end: true, journal: "kept" }),
 };
 export const TASKS = {
-  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [0.69, 0.85, -1.98], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
+  plate: { place: "cabin", item: "plate", from: [-0.25, -3.4], to: [0.2, -1.6], at: [CABIN.seatX[0], 0.85, CABIN.rows[0] + 0.42], label: "Pick up the ackee and saltfish", put: "Set it on Mr Clarke's tray" },
 };
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while it happens. lines: the card after. */

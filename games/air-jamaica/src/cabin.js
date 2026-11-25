@@ -8,13 +8,13 @@ import * as THREE from "three";
 import { grp, mesh, box, cyl, solid, cv } from "./gfx.js";
 
 export const CABIN = {
-  half: 1.85, // the side walls (the cabin is 3.7 m wide)
-  aisle: 0.46, // half the aisle's width
-  rows: [-2.4, -1.45, -0.5, 0.45, 1.4], // each row's seat cushion centre, along z: 95 cm apart, so a passenger has room for knees, hands and a tray (at 80 cm, with these thick seats, the seat ahead was against his chest: owner, 24 November 2026)
-  seatX: [0.69, 1.15, 1.61], // the three seats of a side, from the aisle out
+  half: 1.95, // the side walls: 3.9 m across, a little wider than a real A320's 3.7 m, so the aisle can be wider (owner, 25 November 2026: "the cabin needs a bit more space to move")
+  aisle: 0.56, // half the aisle's width (1.12 m; a real one is about half that: a game's allowance, so you can walk past people)
+  rows: [-2.8, -1.7, -0.6, 0.5, 1.6], // 1.1 m apart (owner, 25 November 2026: more space between one row and the next); // each row's seat cushion centre, along z: 95 cm apart, so a passenger has room for knees, hands and a tray (at 80 cm, with these thick seats, the seat ahead was against his chest: owner, 24 November 2026)
+  seatX: [0.8, 1.25, 1.7], // the three seats of a side, from the aisle out
   seatTop: 0.48,
   front: -4.7, // the front wall of the galley
-  back: 2.95, // the curtain at the back
+  back: 3.75, // the curtain at the back: 0.8 m more room behind the last row
   trolley: { x: 0, z: -4.05 },
   counter: { z0: -4.7, z1: -4.28, top: 1.0 },
 };
@@ -114,16 +114,19 @@ export function buildCabin(opts = {}) {
   for (const s of [-1, 1]) {
     box(0.06, 2.18, len, M.wall, s * H, 1.09, mid, g);
     for (const [r, z] of CABIN.rows.entries()) {
-      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.32), sky);
-      w.position.set(s * (H - 0.032), 1.06, z + 0.2);
+      /* each window beside the seated passenger's head, forward of his seat back and above the one in front: they sat behind the seat backs, at their
+         height, so the seats hid every window (owner, 25 November 2026: "no windows") */
+      const WY = 1.18, WZ = z - 0.08;
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.34), sky);
+      w.position.set(s * (H - 0.032), WY, WZ);
       w.rotation.y = -s * Math.PI / 2;
       g.add(w);
       const fr = new THREE.Mesh(new THREE.RingGeometry(0.13, 0.16, 24), M.bin);
       fr.scale.y = 1.35;
-      fr.position.set(s * (H - 0.034), 1.06, z + 0.2);
+      fr.position.set(s * (H - 0.034), WY, WZ);
       fr.rotation.y = -s * Math.PI / 2;
       g.add(fr);
-      blinds[s + ":" + r] = box(0.012, 0.1, 0.24, M.bin, s * (H - 0.04), 1.26, z + 0.2, g); /* the blind, pushed up */
+      blinds[s + ":" + r] = (b => (b.userData.fixed = true, b))(box(0.012, 0.1, 0.26, M.bin, s * (H - 0.04), WY + 0.2, WZ, g)); /* the blind, pushed up; fixed in its track in the wall (audit-reveal) */
     }
     /* the overhead bins: a deep box over the seats with a curved door; a reading-light strip under them */
     box(0.82, 0.42, len - 1.6, M.bin, s * (H - 0.41), 1.83, mid + 0.4, g);
@@ -173,6 +176,7 @@ export function buildCabin(opts = {}) {
   const lamp = new THREE.PointLight(0xfff0d8, opts.dusk ? 1.1 : 0.8, 7, 1.6);
   lamp.position.set(0, 2.0, -3.6);
   g.add(lamp);
+  g.userData.noSurface = true;   /* a plastic lining, not plastered walls (the engine's plaster picture speckled them: engine/surfaces.js) */
   return g;
 }
 /* where each lid goes when it is lifted: off the plate, up, and set down in a row on the galley counter behind */
@@ -187,7 +191,9 @@ export function lidPlace(i, k) {
 
 /* SkyWritings, Air Jamaica's in-flight magazine (docs/games/air-jamaica.md, "SkyWritings"). The name and the cover's layout are real (a 2008
    cover the owner sent); the cover painting and the two story pages are made for this game, and the journal page says so. The facts on the page are the sourced ones of the earlier chapters. */
-export const MAG = { page: [0.19, 0.25], tray: [-0.69, 0.852, 0.87], pocket: [-0.785, 0.56, 0.783] };
+/* the magazine's places follow the seats: the pocket and the tray on the back of the aisle seat of row 4 on the left (it was fixed to the old seat positions) */
+const _X0 = CABIN.seatX[0], _RZ = CABIN.rows[3];
+export const MAG = { page: [0.19, 0.25], tray: [-_X0, 0.852, _RZ + 0.42], pocket: [-(_X0 + 0.095), 0.56, _RZ + 0.333] };
 function magTexture(kind) {
   return cv(608, 800, (x, W, H) => {
     const text = (t, px, py, size, color = "#1d2a44", weight = "bold", align = "left", font = "Georgia, serif") => { x.fillStyle = color; x.font = weight + " " + size + "px " + font; x.textAlign = align; x.fillText(t, px, py); };
@@ -277,7 +283,7 @@ export function buildMagazine() {
    edge and turns flat (to 0.45), settles onto the tray (to 0.6), then the cover turns over (to 1). It never passes through the tray. */
 export function magazineAt(mag, k) {
   const P = MAG.pocket, T = MAG.tray, sm = (t) => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-  const out = [P[0], 0.62, 1.07], up = [P[0] + 0.05, 1.0, 1.07];
+  const out = [P[0], 0.62, CABIN.rows[3] + 0.62], up = [P[0] + 0.05, 1.0, CABIN.rows[3] + 0.62];
   const lerp = (A, B, t) => A.map((v, i) => v + (B[i] - v) * t);
   let pos, flat = 0;
   if (k < 0.25) pos = lerp(P, out, sm(k / 0.25));
