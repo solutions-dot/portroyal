@@ -87,7 +87,7 @@ function scene(Q, { deck = false, later = false } = {}) {
   /* for the first flight the door is shut before she moves: a copy with the door closed takes over once the steps have rolled away (the open door
      and its slab stayed out while she taxied: owner, 25 November 2026) */
   const shut = later ? null : dc8({});
-  if (shut) { add(Q, shut, APRON.plane.x, APRON.plane.z, 0, Math.PI); P.dynamic(shut); shut.visible = false; }
+  if (shut) { P.dynamic(shut); shut.visible = false; }   /* kept out of the place until she moves (the audit saw it inside the other copy) */
   /* its shadow: a long soft patch under the fuselage, and a smaller one under each set of wheels */
   const half = S.profile[S.profile.length - 1][0], G0 = S.gear, mainWX = APRON.plane.x - G0.mainX;
   const shadows = [groundShadow(Q, half * 2 + 6, 15, APRON.plane.x, APRON.plane.z, 0, 0.5)];
@@ -147,7 +147,7 @@ function scene(Q, { deck = false, later = false } = {}) {
     const [x, z, yaw, y, pitch] = t < 0 ? [APRON.plane.x, APRON.plane.z, Math.PI, 0, 0] : jetAt(t);
     jet.position.set(x, y, z);
     jet.rotation.set(0, yaw, pitch, "YXZ");
-    if (shut) { shut.position.copy(jet.position); shut.rotation.copy(jet.rotation); const closed = t >= 5.5; shut.visible = closed; jet.visible = !closed; }
+    if (shut) { const closed = t >= 5.5; if (closed && !shut.parent) Q.group.add(shut); if (!closed && shut.parent) shut.parent.remove(shut); shut.position.copy(jet.position); shut.rotation.copy(jet.rotation); shut.visible = closed; jet.visible = !closed; }
     for (const sh of [...shadows, ...wheelShadows]) sh.visible = t < 0 || y < 0.3 || false;
     if (t >= 0) { shadows[0].position.set(x, 0.02, z); shadows[0].rotation.z = yaw; shadows[0].scale.setScalar(Math.max(0.05, 1 - y / 14)); wheelShadows.forEach((w) => (w.visible = false)); }
     if (steps) {
@@ -335,7 +335,7 @@ function cabin() {
   person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]));
   crowd(Q, "aj_pass04", X[2], R[2], Math.PI, seatAt(X[2], R[2]));   /* moved across the aisle: Mum has his old seat */
   /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
-  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, CABIN.rows[0] - 0.65, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   wall(Q, -0.42, CABIN.trolley.z - 0.17, 0.42, CABIN.trolley.z + 0.17);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
@@ -433,7 +433,8 @@ function home() {
   box(boxW + 0.01, 0.018, boxD + 0.01, wood, 0, 0.009, boxD / 2, lid);
   box(0.06, 0.012, 0.03, solid(0xc8a860, 0.3, 0.7), 0, 0.012, boxD - 0.005, lid); /* a little brass clasp */
   P.dynamic(bx);   /* the box and its lid move with the look: left unmarked, the place's merge froze the lid shut (owner, 25 November 2026: "the lid never lift") */
-  Q.reveal.box = (k) => { k = Number(k); lid.rotation.x = -1.9 * k; };
+  box(boxW, 0.008, 0.04, solid(0xb08a40, 0.4, 0.6), 0, boxH + 0.004, -boxD / 2, bx);   /* the brass hinge strip along the back edge, that the open lid stands on */
+  Q.reveal.box = (k) => { k = Number(k); lid.rotation.x = -1.62 * k; };   /* opens to just past upright, resting on its hinges */
   person(Q, "marcia10", "marcia10", -1.0, -0.2, face(-1.0, -0.2, 0.6, 0.9), { kind: "idle" });
   person(Q, "dee10", "dee10", 1.5, 1.6, face(1.5, 1.6, 0.2, 0.6), { kind: "idle" });
   Q.lookViews = { box: { p: [0.75, 1.15, -0.05], look: [0.35, 0.5, -0.58], fov: 40 } };
@@ -460,7 +461,7 @@ function lastflight() {
   crowd(Q, "aj_pass10", -X[0], R[1], Math.PI, seatAt(-X[0], R[1]));
   crowd(Q, "aj_pass10w", X[1], R[2], Math.PI, seatAt(X[1], R[2]));
   crowd(Q, "aj_pass04", X[2], R[0], Math.PI, seatAt(X[2], R[0]));
-  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, -3.01, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
+  for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, CABIN.rows[0] - 0.65, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
   Q.lookViews = { window: { p: [-1.3, 1.22, 0.78], look: [-1.93, 1.18, CABIN.rows[3] - 0.08], fov: 44 } };

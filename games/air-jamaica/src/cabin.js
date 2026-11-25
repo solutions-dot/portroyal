@@ -146,7 +146,7 @@ export function buildCabin(opts = {}) {
   for (let i = 0; i < 6; i++) { box(0.48, 0.5, 0.01, solid(0xc9c7bf, 0.7), -1.25 + i * 0.5, 1.75, C.z0 + 0.345, g); box(0.1, 0.02, 0.02, M.metal, -1.25 + i * 0.5, 1.6, C.z0 + 0.36, g); }
   for (let i = 0; i < 6; i++) box(0.48, 0.84, 0.01, solid(0xcfcdc5, 0.7), -1.25 + i * 0.5, 0.45, C.z1 + 0.006, g);
   /* a seat row's screen wall behind the galley: a low partition each side, so the galley is its own little room at the front */
-  for (const s of [-1, 1]) box(1.3, 1.6, 0.06, M.wall, s * (CABIN.aisle + 0.75), 0.8, -2.98, g);
+  for (const s of [-1, 1]) box(1.3, 1.6, 0.06, M.wall, s * (CABIN.aisle + 0.75), 0.8, CABIN.rows[0] - 0.62, g);   /* the galley's side screens, clear of the front row's knees */
   /* the back: a curtain across the cabin */
   const ct = box(H * 2, 2.12, 0.03, M.curtain, 0, 1.06, CABIN.back, g);
   void ct;

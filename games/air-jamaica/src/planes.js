@@ -190,7 +190,13 @@ function noseWindows(S, x, dy) {
   if (x > bs) {
     const k = Math.min(1, (x - bs) / (xf - bs)), rf = radiusAt(S, xf);
     if (x <= xf) { if (dy < g0 && dy > g0 - 0.38 * k * k) return 0x101214; }
-    else { const u = Math.sqrt((x - xf) / (tip - xf)); if (dy > lerp(rf * 0.49 - 0.38, -0.1, u) && (dy < g0 || x > xg)) return 0x101214; }
+    else {
+      /* ahead of the windscreen only a narrow strip, sloping down toward the tip and ending short of it; above it the nose is white (the photograph,
+         seen from the front: the black covered the whole tip) */
+      const u = Math.sqrt((x - xf) / (tip - xf)), sb = lerp(rf * 0.49 - 0.38, -0.05, u), st = sb + lerp(0.3, 0.12, u);
+      if (u < 0.88 && dy > sb && dy < st && (dy < g0 || x > xg)) return 0x101214;
+      if (x > xg && dy >= st) return WHITE;
+    }
   }
   return null;
 }
