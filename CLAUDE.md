@@ -19,6 +19,7 @@ All ten games are **live** (owner, 21 November 2026), so every change reaches re
 - **Windrush: Two Places Called Home** (`games/windrush/`) follows a fictional family between Jamaica and England, 1948 to 2018, in eight chapters. Read `docs/games/windrush.md` first. It is new and awaits independent review.
 - **Morant Bay, 1865** (`games/morant-bay/`, first playable build, **published on the menu** at the owner's request on 23 November 2026, still being polished) is the newest game (owner, 23 November 2026), a **Mature 13+** story of the 1865 rebellion told through a fictional girl of Stony Gut, with some violence and no blood. Research and design are done. Read `docs/games/morant-bay.md` first, then `docs/games/morant-bay/README.md`: Bogle and Gordon have no invented words and are modelled on the images the owner accepted.
 - **Air Jamaica** (`games/air-jamaica/`, on the menu since 25 November 2026, still being polished) follows a fictional family and the national airline from the first flight on 1 April 1969 to the last on 30 April 2010, in six chapters (the apron and waving gallery, the DC-8 flight deck, the new colours of 1994, the flying chef, the sale, the last flight home). The DC-8 is built from the owner's 3D model (manilov.ap, CC BY 4.0, credited). Read `docs/games/air-jamaica.md` first, then `docs/games/air-jamaica/HANDOFF.md`: Chef Louis Bailey's words are imagined, and the sale is told to children in one plain idea agreed with the owner.
+- **Xaymaca, 1503** (`games/xaymaca/`, first playable build, on the menu at the owner's request on 25 November 2026) is an all-ages story: a fictional Taino child of Maima, above St Ann's Bay, through the year Columbus's men were stranded there (June 1503 to June 1504), in seven chapters. It has **not yet been seen by a Taino-heritage reviewer**. Read `docs/games/xaymaca.md` first: the record is Spanish only, nothing sacred is shown, no Taino word or name is invented, and Columbus has no invented words.
 - New games start from `games/_template/`.
 
 Audience: **children aged 6 and up, plus adults**. Every choice follows from that.
@@ -52,6 +53,7 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 | Working on Hurricane Melissa | `docs/games/melissa.md` |
 | Working on Tivoli | `docs/games/tivoli.md` |
 | Working on Morant Bay, 1865 | `docs/games/morant-bay.md` and `docs/games/morant-bay/README.md` |
+| Working on Xaymaca, 1503 | `docs/games/xaymaca.md` (and the script, `docs/games/xaymaca/script.md`) |
 | Working on Air Jamaica | `docs/games/air-jamaica.md` and `docs/games/air-jamaica/HANDOFF.md` |
 
 ## Rules the owner has set (follow them every time)

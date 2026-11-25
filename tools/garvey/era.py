@@ -191,6 +191,11 @@ def trim_seat(bm):
         if v.co.y>cap: v.co.y=cap+(v.co.y-cap)*0.3
     bm.normal_update()
 G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
+# "bare": true (Xaymaca, 25 November 2026): no shirt. The shoulders, chest and back are the body's own skin, as the record says of the Taino of 1503
+# ("both men and women go entirely naked", Ferdinand Columbus). The shirt is still made, so every later step that measures against it works the same, and is
+# taken away before the body is written out. The skin it would have hidden stays. "band": true keeps a strip of the shirt round the chest only, a cotton band
+# (a choice made for a children's game, said so in the game). With "bare", a cotton wrap at the hips is "trousers" + "shorts" with a negative "shortslen".
+BARE=bool(G.get('bare')); BAND=BARE and bool(G.get('band')); BAND_Z=(SH.z-G.get('bandlow',0.24)*s,SH.z-G.get('bandtop',0.045)*s)      # the band: from under the bust up to just below the armpit
 LATE=OLD and P.get('era',1690)>=1770      # coats of 1773 and 1799 (Hutchinson, Shark Papers; owner 23 November 2026, "collars and sleeves look awful on these"): a slim sleeve to the wrist with a close cuff, and a neckcloth that sits close round the throat, not the 1690 wide sleeve and broad cravat
 if LATE and G.get('coat') and G.get('coatsleeves',True): G['coatsleeve']=max(G.get('coatsleeve',0.82),0.92)
 if G.get('skirt') and not OLD and not G.get('belt') and G.get('waistband',True):      # a later skirt without a belt gets its own waistband, in the skirt's cloth: it covers the join of blouse and skirt, which otherwise flickered and showed ragged when seated
@@ -208,6 +213,7 @@ if CK: CK='stand' if CK is True and P.get('era',1915)<1925 and not G.get('softco
 if OLD and not CK and 'collar' in G and not G.get('bands'): CK='plain'      # "collar": false on an old shirt: a plain rounded opening, no band (Nanny Town's Maroon men, 21 November 2026)
 if OLD and not CK and not G.get('bands') and not (G.get('coat') and G.get('coatsleeves',True)): CK='band'      # a 1690 shirt worn without a coat ends in a narrow neckband, open at the throat: it is built like the later collars, so its edge is clean and no skin shows under it
 if not OLD and not CK and not G.get('scarf'): CK='plain'      # later eras too: a shirt, blouse or frock with no collar ends in a clean round opening, cut and finished by neckwear.py (owner, 21 November 2026: "most just need a round opening for the garment")
+if BARE and OLD and G.get('woman') and CK=='plain': CK='band'      # a bare body's collar is never seen (it goes with the shirt), and an old woman's shirt has no plain opening to build
 FLAT=CK in ('camp','round')      # the flat collars of the 1950s: 'camp' is an open pointed collar over a V neck (men's sports shirts, women's blouses), 'round' a flat round collar on a close neckline
 VD=G.get('vdepth',0.13 if G.get('woman') else 0.115)*s; VZ=NECK-VD; VK=G.get('vslope',2.1)      # the V of a camp collar: its lowest point, and how steep its sides are
 NCUT=NECK-(0.004 if G.get('highneck') else (0.014 if CK and CK not in ('open','camp') else 0.035))*s-(0.06*s if G.get('coat') and G.get('coatsleeves',True) else 0)
@@ -1887,10 +1893,22 @@ if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen
         bmesh.ops.smooth_vert(bm,verts=[v for v in bm.verts if not v.is_boundary],factor=0.4,use_axis_x=True,use_axis_y=True,use_axis_z=True)
         smooth_edge(bm,14)      # and its cut edges (seen through the coat's open sides) run clean, not in steps
         bm.to_mesh(o.data); bm.free(); o.data.update()
+if BAND:      # the chest band: one smooth tube of cotton round the body, from under the bust to below the armpits. Worked out like the straight hair: at each angle and
+    # height the body's widest point (arms left out), 6 mm further out, evened round, so the cloth bridges the hollows as cloth does and never dips into them
+    _cy=J('Spine2').y; _NA,_NZ=56,7; _bins={}
+    for v in h.data.vertices:
+        c=v.co
+        if not BAND_Z[0]-0.03<c.z<BAND_Z[1]+0.03 or (side_arm(c) is not None and abs(c.x)>SX*0.9) or abs(c.x)>SX*0.95: continue      # the torso only: never the upper arm beside it
+        a_=math.atan2(c.x,-(c.y-_cy)); i=int((a_+math.pi)/(2*math.pi)*_NA)%_NA; k=int((c.z-BAND_Z[0])/((BAND_Z[1]-BAND_Z[0])/_NZ))
+        r=math.hypot(c.x,c.y-_cy)
+        for kk in (k-1,k,k+1): _bins[(i,kk)]=max(_bins.get((i,kk),0),r)
+    BAND_BINS=_bins
 # body: remove what the clothes fully hide, so nothing pokes through
 bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']
 cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0, G.get('jacketsleeve',0.9) if G.get('jacket') else 0)
 def hidden(c):
+    if BAND and BAND_Z[0]+0.03<c.z<BAND_Z[1]-0.03 and abs(c.x)<SX*0.62 and side_arm(c) is None: return True      # under a chest band, only the skin well inside it goes (near its edges the skin stays, so no gap opens)
+    if BARE and c.z>HIP+0.05: return False      # bare: the torso and arms are skin, down to where the wrap or skirt begins
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False      # the neck and a little chest show inside the V of a camp collar
     if NW_SEAMLESS and HIP+0.05<c.z<SEAM_Z(nw_ang(c))-0.010 and abs(c.x)<SX*0.8: return True      # a collar sewn to the shirt (neckwear.py): the skin goes up to 1 cm under the seam, wherever the seam runs
     if NW_SEAMLESS and CK!='camp' and (abs(c.x)<SX*0.8 or (abs(c.x)<SX*1.05 and c.z>SH.z+0.01)) and HIP+0.05<c.z<SEAM_Z(nw_ang(c))+0.03 and math.hypot(c.x,c.y-nw_cy(c.z))>SEAM_R(nw_ang(c))+0.007: return True      # and the slope of the shoulder outside the seam, which on a woman or a child rises above the seam's own height: left in, it showed through the cloth as a patch on top of the shoulder (out to the shoulder joint: between 0.8 of the way there and the arm's own rule a strip was covered by neither)
@@ -1934,7 +1952,7 @@ if not OLD:
     # Later eras: skin that lies under a garment no game ever hides (shirt, trousers, skirt, jacket) is removed wherever it is well inside that garment's edges.
     # What is not there cannot show through, in any pose. Skin near an opening (a cuff, a neckline, a hem) stays, because the eye can see a little way in.
     from mathutils.kdtree import KDTree
-    for _k in ('shirt','breeches','skirt','jacket','jacketskirt'):
+    for _k in (('breeches','skirt','jacket','jacketskirt') if BARE else ('shirt','breeches','skirt','jacket','jacketskirt')):
         _o=PART.get(_k)
         if not _o or not len(_o.data.polygons): continue
         _b=bmesh.new(); _b.from_mesh(_o.data); _b.normal_update(); _bv=[v.co.copy() for v in _b.verts if v.is_boundary]; _kd=KDTree(max(1,len(_bv)))
@@ -2121,7 +2139,7 @@ def tuck_under_skirt():
     kv=KDTree(len(sk.data.vertices))
     for v in sk.data.vertices: kv.insert(v.co,v.index)
     kv.balance(); on={g.index:g.name for g in sk.vertex_groups}; n=0
-    Jy=J('Hips').y; covers=[x for x in (PART.get('shirt'),sk) if x is not None and len(x.data.polygons)]; trees=[]
+    Jy=J('Hips').y; covers=[x for x in ((None if BARE else PART.get('shirt')),sk) if x is not None and len(x.data.polygons)]; trees=[]      # (a bare body's shirt is only a measure: it goes before export)
     for x in covers:
         bb=bmesh.new(); bb.from_mesh(x.data); bb.normal_update(); trees.append(BVHTree.FromBMesh(bb)); bb.free()
     dead=set()
@@ -2552,6 +2570,22 @@ if globals().get('APRON_SEAT') and PART.get('skirt') and bpy.data.objects.get('A
         bpy.data.objects.remove(bpy.data.objects['Belt'],do_unlink=True); print('BELT UNDER APRON BAND REMOVED')
 # The face is marked on the skin (1 on every point from the brow to the chin, cheek to cheek), and carried into the .glb as the attribute _FACE. tools/people/pack.mjs gives the
 # marked part its own share of triangles when it makes a light, crowd or phone copy, so eyes, brows and lips survive (simplified with the rest of the skin, a face in a crowd lost them).
+if BARE:      # the shirt goes (and anything made of its cloth at the neck, its buttons and pocket)
+    for _o in [o for o in bpy.data.objects if o.type=='MESH' and o.data.materials and all(m and m.name.split('.')[0] in ('Shirt','Collar','Buttons','Pocket') for m in o.data.materials)]:
+        print('BARE: removed',_o.name); bpy.data.objects.remove(_o,do_unlink=True)
+if BARE and PART.get('skirt') is not None and len(PART['skirt'].data.polygons):      # a bare body shows the top of its wrap or skirt (no blouse or belt over it): its cut edge is evened out, not left in teeth
+    _b=bmesh.new(); _b.from_mesh(PART['skirt'].data); smooth_edge(_b,12,lambda c:c.z>HIP-0.02); _b.to_mesh(PART['skirt'].data); _b.free(); PART['skirt'].data.update()
+if BAND:      # the chest band itself, from the measure taken before the body was trimmed (BAND_BINS)
+    _bins=BAND_BINS; _cy=J('Spine2').y; _NA,_NZ=56,7; _rows=[]
+    for k in range(_NZ+1):
+        z=BAND_Z[0]+(BAND_Z[1]-BAND_Z[0])*k/_NZ
+        rr=[max(_bins.get((i,k),0),_bins.get((i,k-1),0),0.05*s)+0.006+0.008*abs(math.sin(2*math.pi*(i+0.5)/_NA)) for i in range(_NA)]      # more room at the sides, where the chest moves with the arms
+        for _ in range(6): rr=[(rr[(i-1)%_NA]+2*rr[i]+rr[(i+1)%_NA])/4 for i in range(_NA)]
+        _rows.append([(math.sin(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],_cy-math.cos(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],z) for i in range(_NA)])
+    _bb=bmesh.new(); _vv=[[_bb.verts.new(p) for p in row] for row in _rows]
+    for k in range(_NZ):
+        for i in range(_NA): _bb.faces.new((_vv[k][i],_vv[k][(i+1)%_NA],_vv[k+1][(i+1)%_NA],_vv[k+1][i]))
+    _bo=soft('Band',_bb,'Shirt',only=('Hips','Spine','Spine1','Spine2')); paint(_bo); print('BARE: chest band',len(_bo.data.polygons))
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')
 for v in h.data.vertices:
     c=v.co; _fa.data[v.index].value=1.0 if (c.y<EYE[1].y+ER*2.4 and EYE[1].z-ER*4.4<c.z<EYE[1].z+ER*1.7 and abs(c.x)<EYE[1].x+ER*2.3) else 0.0

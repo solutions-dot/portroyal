@@ -1,0 +1,58 @@
+{
+ "name": "xa_gran",
+ "era": 1900,
+ "body": {
+  "gender": 0.0,
+  "age": 0.92,
+  "muscle": 0.35,
+  "weight": 0.45,
+  "height": 0.42,
+  "proportions": 0.6,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7,
+  "cupsize": 0.35,
+  "firmness": 0.3
+ },
+ "garments": {
+  "bare": true,
+  "shoes": false,
+  "collar": false,
+  "hair": "straight",
+  "hairlen": 0.6,
+  "hairopen": 1.05,
+  "hat": [],
+  "skirt": true,
+  "band": true,
+  "woman": true,
+  "hem": 0.9,
+  "flare": 0.9,
+  "sleeve": 0.0,
+  "belt": false,
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   146,
+   98,
+   70
+  ],
+  "Shirt": [
+   226,
+   214,
+   186
+  ],
+  "Skirt": [
+   222,
+   208,
+   176
+  ],
+  "Hair": [
+   150,
+   146,
+   140
+  ]
+ },
+ "face": "elder",
+ "smile": 0.15
+}

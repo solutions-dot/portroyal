@@ -1,0 +1,70 @@
+{
+ "name": "xa_visitor",
+ "era": 2026,
+ "crowd": true,
+ "body": {
+  "gender": 1.0,
+  "age": 0.5,
+  "muscle": 0.45,
+  "weight": 0.55,
+  "height": 0.52,
+  "proportions": 0.55,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0
+ },
+ "garments": {
+  "sleeve": 0.3,
+  "trousers": true,
+  "shorts": true,
+  "shoes": true,
+  "sneakers": true,
+  "collar": false,
+  "untucked": true,
+  "hat": [
+   [
+    "baseball",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.1
+ },
+ "colors": {
+  "Skin": [
+   144,
+   98,
+   70
+  ],
+  "Shirt": [
+   220,
+   90,
+   60
+  ],
+  "Breeches": [
+   70,
+   90,
+   120
+  ],
+  "Shoes": [
+   230,
+   230,
+   230
+  ],
+  "Sole": [
+   230,
+   228,
+   220
+  ],
+  "Hat": [
+   30,
+   40,
+   70
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "broad"
+}

@@ -1,0 +1,62 @@
+{
+ "name": "xa_mendez",
+ "era": 1503,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.42,
+  "muscle": 0.5,
+  "weight": 0.48,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.86,
+  "breeches": true,
+  "breechkind": "slops",
+  "hairvol": 0.2,
+  "hat": [],
+  "shoes": true,
+  "belt": false,
+  "coat": true,
+  "coatbuttons": false,
+  "coathem": 0.02,
+  "necktuck": true,
+  "coatopen": false
+ },
+ "colors": {
+  "Skin": [
+   200,
+   156,
+   124
+  ],
+  "Shirt": [
+   206,
+   196,
+   170
+  ],
+  "Breeches": [
+   52,
+   40,
+   34
+  ],
+  "Hair": [
+   50,
+   36,
+   28
+  ],
+  "Shoes": [
+   50,
+   38,
+   28
+  ],
+  "Coat": [
+   64,
+   46,
+   40
+  ]
+ },
+ "face": "strong"
+}

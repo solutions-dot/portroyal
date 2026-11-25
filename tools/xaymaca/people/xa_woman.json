@@ -1,0 +1,59 @@
+{
+ "name": "xa_woman",
+ "era": 1900,
+ "body": {
+  "gender": 0.0,
+  "age": 0.45,
+  "muscle": 0.55,
+  "weight": 0.47,
+  "height": 0.5,
+  "proportions": 0.6,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7,
+  "cupsize": 0.45,
+  "firmness": 0.55
+ },
+ "garments": {
+  "bare": true,
+  "shoes": false,
+  "collar": false,
+  "hair": "straight",
+  "hairlen": 0.7,
+  "hairopen": 1.05,
+  "hat": [],
+  "skirt": true,
+  "band": true,
+  "woman": true,
+  "hem": 0.9,
+  "flare": 0.9,
+  "sleeve": 0.0,
+  "belt": false,
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   150,
+   100,
+   70
+  ],
+  "Shirt": [
+   226,
+   214,
+   186
+  ],
+  "Skirt": [
+   214,
+   200,
+   170
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "round",
+ "smile": 0.15,
+ "crowd": true
+}

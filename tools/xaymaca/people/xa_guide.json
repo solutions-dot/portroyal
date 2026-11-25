@@ -1,0 +1,72 @@
+{
+ "name": "xa_guide",
+ "era": 2026,
+ "body": {
+  "gender": 0.0,
+  "age": 0.42,
+  "muscle": 0.45,
+  "weight": 0.5,
+  "height": 0.5,
+  "proportions": 0.56,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "cupsize": 0.45,
+  "firmness": 0.55
+ },
+ "garments": {
+  "sleeve": 0.3,
+  "polo": true,
+  "trousers": true,
+  "shoes": true,
+  "sneakers": true,
+  "collar": false,
+  "hat": [],
+  "woman": true,
+  "hairvol": 0.25
+ },
+ "colors": {
+  "Skin": [
+   148,
+   100,
+   72
+  ],
+  "Shirt": [
+   46,
+   110,
+   74
+  ],
+  "Collar": [
+   46,
+   110,
+   74
+  ],
+  "Buttons": [
+   230,
+   228,
+   220
+  ],
+  "Breeches": [
+   200,
+   186,
+   150
+  ],
+  "Shoes": [
+   60,
+   56,
+   52
+  ],
+  "Sole": [
+   230,
+   228,
+   220
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "round",
+ "smile": 0.3
+}

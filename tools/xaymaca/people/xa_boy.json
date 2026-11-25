@@ -1,0 +1,55 @@
+{
+ "name": "xa_boy",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "age": 0.19,
+  "muscle": 0.4,
+  "weight": 0.42,
+  "height": 0.5,
+  "proportions": 0.5,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7
+ },
+ "garments": {
+  "bare": true,
+  "shoes": false,
+  "collar": false,
+  "hair": "straight",
+  "hairlen": 0.4,
+  "hairopen": 1.05,
+  "hat": [],
+  "skirt": true,
+  "hem": 1.3,
+  "flare": 0.7,
+  "belt": false,
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   150,
+   100,
+   70
+  ],
+  "Shirt": [
+   226,
+   214,
+   186
+  ],
+  "Skirt": [
+   222,
+   208,
+   176
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "long",
+ "smile": 0.15,
+ "upscale": 1.26,
+ "crowd": true
+}

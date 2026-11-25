@@ -1,0 +1,638 @@
+Journal of Caribbean Archaeology
+Copyright 2022
+ISBN 1524-4776
+
+
+The Structure and Material Assemblage of a Jamaican Taíno Residence at First
+                              Spanish Contact
+
+                                              David V. Burley
+                                        Department of Archaeology
+                                          Simon Fraser University
+                                     Burnaby, British Columbia, Canada
+                                               burley@sfu.ca
+
+Excavations at the village of Maima in St. Ann’s Bay in 2015 provide insight into both the architecture and material
+culture of a Jamaican Taíno household on the eve of Spanish colonisation. Situated adjacent to the first Spanish
+capital, Sevilla la Nueva (1509-1534), Maima was a hillside settlement spread over an area 1 ha or more in size.
+Construction of houses at Maima occurred on artificially constructed platforms, or on in-filled terraces of
+marl/limestone gravels. Block area excavation on one of the terraces exposed a circular, centre-pole structure with a
+diverse assemblage of ceramics and other artifacts. The house configuration and artifact suite reflect upon the nature
+of Taíno society, economy, daily life, and ritual practice. A small number of in situ Spanish artifacts indicate
+Taíno/Spanish engagement. Rapid abandonment of the village seems to have taken place immediately thereafter.
+
+Les fouilles menées dans le village de Maima, à St. Ann's Bay, en Jamaïque, donnent un aperçu de l'architecture et
+de la culture matérielle d'un foyer taïno jamaïcain à la veille de la colonisation espagnole. Situé à proximité de la
+première capitale espagnole, Sevilla la Nueva (1509-1534), Maima était un village situé à flanc de colline et s'étendant
+sur une superficie de 1,5 ha ou plus. Les maisons de Maima étaient construites sur des plates-formes artificielles ou
+sur des terrasses remplies de graviers marneux/calcaires. La fouille en aires ouvertes par zone sur l'une des terrasses
+a mis au jour une structure circulaire centrale de poteau avec un assemblage divers de céramiques et d'autres
+artefacts. La configuration de la maison et l'ensemble des artefacts reflètent la nature de la société taïno, son
+économie, sa vie quotidienne et ses pratiques rituelles. Un petit nombre d'artefacts espagnols in situ indique un
+engagement taïno/espagnol. L'abandon rapide du village a eu lieu immédiatement après.
+
+Excavaciones en el pueblo taíno de Maima en St. Ann’s Bay, Jamaica, facilitan la comprensión de la arquitectura y
+cultura material de una residencia taíno-jamaiquina en vísperas de la colonización española. Situada adyacente a la
+primera capital española, Sevilla la Nueva (1509-1534), Maima fue un asentamiento en las laderas que ocupaba un
+área de un tamaño de 1.5 ha o más. Las casas en Maima fueron construidas en plataformas creadas artificialmente,
+o en terrazas con relleno de grava de roca caliza / marga. La excavación en bloque de una de las terrazas reveló una
+estructura circular con poste central, además de un variado conjunto de cerámicas y otros artefactos. La
+configuración de la casa y el surtido de artefactos reflejan la naturaleza de la sociedad, economía, vida diaria y
+prácticas rituales taínas. Un reducido número de artefactos españoles in situ es indicativo de interacción taíno-
+española. El pueblo fue abandonado de manera rápida inmediatamente después.
+
+Introduction                                                    Provisions from this village were central to the
+        On his fourth voyage to the New World,                  survival of Columbus and his crew for the
+Christopher Columbus became stranded in                         ensuing year. The Spanish returned to St. Ann’s
+Jamaica from 25th June 1503 to 29th June 1504.                  Bay in 1509 to establish Sevilla la Nueva, the
+His worm-eaten caravels, the Santiago and La                    initial Spanish settlement on the island.
+Capitana, were no longer seaworthy, being                       Knowledge of Maima and other Taíno villages in
+pulled ashore in St. Ann’s Bay. In this, they are               the region no doubt was a factor in the
+described as being “a quarter league distant” from              settlement’s location. From its origins to
+the Taíno village of Maima (Morison 1963:367).                  abandonment in 1534, events at Sevilla la Nueva
+Journal of Caribbean Archaeology                                                          Volume 22, 2022
+
+
+have been roughly pieced together (Wynter-              parcel were extant structures and archaeological
+Carew 1981, Morales Padrón 2003, Woodward               features from a 17th – 20th century British sugar
+2006). Spanish records at the same time are all         plantation as well as a pre-European Taíno village
+but silent for the Jamaican Taíno, contributing         (Figure 1). We identify the latter as Maima
+little to an understanding of their culture and their   (Burley et al. 2017a). These sites currently
+fate. It can be certain that European disease,          configure the Seville Heritage Park, where the
+forced labour through encomienda, and outright          Taíno, Spanish, British and African contributions
+conflict resulted in substantial and devastating        to the Jamaican past are interpreted to the public.
+impacts to the Taíno over this period.                  As part of a larger program of archaeology at
+           The Jamaican government in 1971              Sevilla la Nueva, Burley and Woodward initiated
+purchased the land on which much of Sevilla la          a survey and test excavation project at Maima in
+Nueva had been established. Included within this        2014.
+
+
+
+
+Figure 1. Taíno village of Maima, Seville Heritage Park, St. Ann’s Bay, Jamaica. The Sevilla la Nueva
+settlement also extends to the south of the Queens Highway.
+
+         The Maima project recorded artificial          (Howard 1965). A smaller but diverse collection
+terraces and platforms on which houses had been         of other artifacts was recovered, including
+built. Excavations in 2015 tested a number of           Spanish items illustrating Taíno interaction with
+these, including the full exposure of a terrace and     the residents of Sevilla la Nueva. In the following
+residential features for House 10, as it was            paper, I examine the House 10 data, as these
+defined in the field (Burley et al 2017b). The          reflect upon the nature of Taíno daily life and
+artifact assemblage recovered from House 10             society on the eve of sustained Spanish presence.
+includes ceramics typical of the White Marl phase
+
+
+                                                                                                         2
+First Spanish Contact                                                                                    Burley
+
+
+Site Context                                             village. The probability that the site extends even
+          Much of Jamaica’s early archaeology            further to the west across still another gulley into
+was conducted by a core of dedicated amateurs            the suburb of Seville Heights is suggested in a
+(see      Allsworth-Jones      2008).      Jamaican      survey by S.T. Tyndale-Biscoe in the early 1950s
+archaeologist George “Tony” Aarons (1984)                (Aarons 1984: 29). The most significant aspect of
+provides a summary of the surveys, discoveries,          the 2014 project was the discovery of platforms
+and varied interpretations of several of these           and terraces for residential construction, as noted.
+individuals in their efforts to identify the village     This feature type heretofore had gone
+of Maima. Suffice it to say that that the hills to the   unrecognized in Jamaican archaeology.
+west, south and east of St. Ann’s Bay have a                      The 2015 project had several goals,
+scattered but continuous distribution of Taíno           including preparation of plan view and contour
+occupation sites. As leadup to the Columbus              maps for Maima East. This area incorporates six,
+quincentennial, the Jamaican and Spanish                 almost step-like natural terraces, on which 12
+governments        initiated    a      collaborative     potential house features were identified. If
+archaeological venture at Sevilla la Nueva               constructed platforms and house terraces were
+(Woodward 2009). Between 1981 and 1987,                  leveled surfaces upon which houses were built,
+survey and excavations were carried out by               they potentially represented a canvas onto which
+Spanish archaeologist Lorenzo E. Lopez y                 architectural features were imprinted. This led to
+Sebastian. Lopez (1986) also initiated test              the almost complete excavation of the House 10
+excavations at the Taíno site northwest of the           terrace surface, the partial excavation of House 7,
+Great House on the Seville Estate. As we were            and single 1 x 1 m test excavations at three
+able to document in 2014 and 2015, this site is          tentatively identified houses. Settlement pattern
+large, it has a degree of time depth, and it is          and feature descriptions have been published
+exactly a quarter league (1.4 km) straight line          previously (Burley et al. 2017b). The excavation
+distance to an optimal location on St Ann’s Bay          of House 10 revealed a centre-pole circular house
+for a beaching of the Santiago and La Capitana           with a 4 m diameter and floor area of 12.5 m2
+(Burley et al 2017a). It also is located no more         (Figure 2). In a relative sense to house sizes
+than 800 m from Sevilla la Nueva. The presence           recorded elsewhere in the Greater Antilles
+of in situ Spanish items, and a rapid abandonment        (Samson 2010), this seemed shockingly small.
+of the village coeval with Spanish settlement,           Yet the partial excavation of House 7, and limited
+provides as strong a case for Maima as can be            data from elsewhere in Jamaica, are comparable
+made with archaeological data.                           (Burley et al. 2017b: 12). House 10, thus, may
+          Our objectives in 2014 were to record site     provide a template for the Jamaican Taíno
+extent through surface survey, shovel tests and          residential type, at least in scale. In this, it defines
+controlled test excavation. Maima extends over           a nuclear family occupation as opposed to a larger
+an approximate area of 1.5 ha on upland terrain          extended family group. This is in line with
+overlooking the Caribbean Sea. A deeply cut              interpretations of Curet and Oliver (1998: 222)
+gulley dissects it into east and west segments.          who, for Puerto Rico, report a change in house
+Maima East is situated within bush and vegetable         sizes from large communal structures to smaller
+gardens on the Seville Estate; Maima West now            ones sometime between 900 and 1200 AD.
+occurs within a densely settled unsanctioned
+
+
+
+
+                                                                                                               3
+Journal of Caribbean Archaeology                                                       Volume 22, 2022
+
+
+
+
+Figure 2. House 10 excavation plan and architectural features, Maima east 2015. The door location
+is interpreted to be on the western perimeter where post holes were not identified (Burley et al.
+2017b). This is opposite the prevailing wind direction.
+
+        The House 10 terrace was constructed of      unit. Provenience for artifact recovery was
+limestone/marl/clay aggregate with larger            maintained by stratum within 1 x 1 m units.
+limestone chunks forming the base. A loam of         Exposure of the terrace surface revealed the
+variable thickness accumulated on the terrace        posthole pattern defining House 10. It also
+after the site was abandoned. Small hand tool        revealed an uneven surface with protruding
+excavations removed this as a single stratigraphic   limestone rock as well as a natural drainage
+unit; the upper 10 cm of terrace fill was            feature cutting through the platform. The original
+subsequently excavated as a second stratigraphic     occupation surface would have incorporated
+
+
+                                                                                                     4
+First Spanish Contact                                                                               Burley
+
+
+compacted marl, silts, and clay, as encountered at     hutia (Geocapromys brownii), bird, and a single
+other of the house features. Rainwater runoff,         dog element (Henry 2017: 188). Virtually all this
+unfortunately, had scoured house floor deposits        bone is light weight and diminutive in size.
+removing finer sediments. Charcoal samples for         Smaller beads of shell or bone, or implements
+radiocarbon dating of House 10 were not                made of bird bone including needles (Allsworth-
+acquired. Radiocarbon dates from House 8               Jones and Wesler 2012:15), similarly could have
+suggest initial site occupation no later than 1032-    been impacted at House 10. These types of
+1154 AD (68.2% probability). The beginning of          specimens, though, were not recovered elsewhere
+terrace construction, at least for House 8, began      in the 2015 excavations.
+in the interval 1291-1395 AD (Burley et al.
+2017b: 344).                                           Ceramic Vessels in the Domestic Sphere
+                                                                The 2014/2015 excavation of the House
+The House 10 Assemblage                                10 terrace recovered a range of ceramic vessel
+         The House 10 artifact collection is large,    forms as well as appliqué fragments including
+including 11,568 ceramic fragments as well as          handles, lugs, notched bands, and various other
+444 nonceramic specimens. The latter is                modeled pieces (Figure 3). Based on decorative
+dominated by flaked stone, but overall diversity       application and other attributes, these closely
+in artifact types supports its interpretation as a     associate with the White Marl phase (900 AD –
+household assemblage. The nature of some               contact) as presently defined (Allsworth-Jones
+material implies an unplanned and rapid                2008, Wesler 2013). Ceramics are low
+abandonment of the area without removal of             temperature, open-fired earthen wares. With
+household goods. As later described, this              exception of modeled pieces and casabe griddle
+importantly includes a unique concreted boulder        fragments, vessels are coil built with smoothed
+with inward spiral core. This specimen was             surfaces. They mainly incorporate a temper mix
+recovered from the house entrance, a position          of calcareous sand with lithic inclusions, but
+hypothetically ascribing it a spiritual or             where crushed shell and grog (crushed ceramic
+emblematic importance. How long House 10 had           fabric) are also employed. The vast majority of
+been lived in prior to its abandonment is difficult    fragments are undiagnostic body sherds
+to infer. A thin buildup of refuse midden on the       (n=9,854) with most (98%) under 30 mm across.
+house perimeter, and the lack of evidence for                   Rim sherds large enough to identify
+house refurbishment implies a shorter rather than      vessel form were classified as jars (n=50), bowls
+longer occupation span. All of this in                 (n=216), cups (n=12), boat form (n=34), and
+consideration, and with one exception to be            platter (n=1). Jars were differentiated from bowls
+noted, this assemblage provides an opportunity to      based on their larger size (d =< 300mm) and
+gain insight into the material world and its           straight to incurved rim orientations. Admittedly,
+potential use within a Taíno domestic unit. It is as   however, their differentiation was intuitive, and it
+close to a moment in time as we might expect in        may be a spurious distinction relative to overall
+Taíno archaeology without cataclysmic or               use. Cups might also be small bowls but their size
+intentional burial.                                    (d=> 100 mm) and typically straight to slightly
+         The exception has been the downslope          everted rim provides a more reliable
+flow of water since site abandonment. This not         interpretation. Boat shaped vessels, as described
+only removed finer floor sediments, but any small      by Rodney-Harrack (2006: 148) have a
+or lighter materials incorporated within that floor.   distinctive rim course where ends are elevated
+In consequence, whatever faunal remains may            and often converge “with cylindrical or flat
+have been present were for the most part removed       handles that flare at the tips”. These vessels do
+or destroyed, with only 46 specimens recovered.        indeed take the shape of a boat, often with
+The more limited excavations at House 7, by            decorative application or adorno features added
+comparison, had a NISP faunal count of 1203            to bow and stern. The single platter was circular,
+dominated by fish (1,020), but also including          large, and shallow without defined shoulder.
+
+
+
+
+                                                                                                         5
+Journal of Caribbean Archaeology                                                        Volume 22, 2022
+
+
+
+
+Figure 3. House 10 Domestic Ceramics. a – incised lug/handle with button, b – fishtail insert for boat
+vessel end, c – filleted rim with serrated lug on shoulder, d – rim with punctates, e – rim and rounded
+shoulder of a jar, f – rim/shoulder sherd of carinated bowl with incised open alternate oblique parallel
+line decoration.
+
+         Rodney-Harrack (2006: 149) describes                   With perhaps the exception of boat
+surface decoration as “the most distinguishing         shaped vessels, this collection seems standard
+feature of Taíno pottery.” Decorative features         fare for household tasks, including storage, food
+within the Maima assemblage include incision,          preparation and cooking, serving, or as eating or
+appliqué modelling, punctation of the rim, and         drinking vessels. There was no evidence for
+notching of the rim, shoulder, lugs, and boat          specialized water jars/bottles nor vessels with
+handles/ends. Incised motifs are simple                spouts, though the larger jars might have
+geometric applications involving open or closed        provided some ability for water storage. The
+triangles, cross hatch as well as horizontal and       boat-shaped vessels are common in White Marl
+diagonal lines. On decorated vessels with              phase sites but rarely have reports given insight
+carinated shoulders, the carination break serves as    into their use. The more elaborate ones with
+a zone marker with incised motifs occurring            adorno, side lugs or other decorative elements
+above. Rim sherds with fillets were rare with but      surely had service beyond the kitchen, perhaps as
+six specimens present, two of these having             receptacles central to ritual, or as ornate
+incised horizontal lines. The number of decorated      presentation vessels. Duerden (2008: 280)
+vessels as represented by sherd counts is low,         documents their use as mortuary pots, describing
+with decorated sherds inclusive of isolated lugs       and illustrating examples from Goat Island and
+and other applications accounting for only 1.5%        Richmond Hill caves with human crania
+of the assemblage. Decorated rim sherds however        positioned inside. Other examples from these and
+are 6.1% of the overall rim total.
+
+
+                                                                                                      6
+First Spanish Contact                                                                             Burley
+
+
+other burial caves also may have been employed
+as containers for funerary offerings.
+          The Taíno burén is a thick clay griddle as
+much as 0.5 m or more in diameter used to cook
+casabe (bammy), a type of bread made from the
+root of manioc (Manihot esculenta). This was
+central to Taíno diet, and a principal food
+provided by the people of Maima to Columbus
+during his 1503-1504 sojourn in St. Ann’s Bay.
+The 110 burén sherds excavated at House 10,
+thus, seems limited given the overall size of the
+ceramic assemblage. If these sherds were able to
+be reassembled into complete griddles, they
+would account for no more than two vessels at
+most. Food preparation activities must have been
+carried out elsewhere, in a kitchen area divorced
+from the residence. The absence of a cooking
+hearth on the House 10 terrace alludes to this as
+well. The partial excavations at House 7
+recovered only 57 burén fragments, similarly
+pointing to food preparation in specialized
+facilities away from the house.
+
+Expedient Flaked Stone Tool Production and its
+By-products
+         The production of flaked-stone tools and
+related debitage comprise the largest assemblage       Figure 4. House 10 Lithics. a – chert handstone
+of non-ceramic artifacts in House 10. This             that has been flaked and potentially used as a
+includes 400 specimens with a combined weight          hammerstone, b – chert core tool with notch, c
+of 10.2 kg. All but 12 of these are of light tan to    – chert core tool with prepared edge for
+cream coloured chert, the exceptions being             cutting/scraping, d – quartz core, e – large
+quartz. Exposed quartz veins or nodule quartz are      chert core.
+rare on the Jamaican north coast but do occur
+(Sawkins 1869). Chert, on the other hand, is a                  Debitage consists of cores (n=37), flakes
+locally abundant tool stone found as nodules or in     (n=218) and shatter (n=97). Shatter is produced
+tabular form within the bedded limestone               by nodule fragmentation prior to core
+formation of the Clarendon Block, Jamaican             preparation, with blocky, angular fragments
+White Limestone Group (Robinson and Mitchell           having no identifiable flake attributes. Cores are
+1999). This material is malleable with excellent       of various sizes, with some rather large
+qualities for percussion flaking. Within the           specimens. All are reduced through hard hammer
+assemblage there are no formalized tool types or       percussion. The larger cores imply stock piling,
+styles, with expedient tool production and use         where abundant material is available for the quick
+identified by use wear or intentional retouch on       production of useable flakes as needed. It is
+flakes (n=36) or cores (n=12) (Figure 4). Flake        probable that several if not many of the flakes
+tools are interpreted as cutting or scraping           identified as debitage were employed as cutting
+implements with three having a flaked notch.           tools, but where incidental use wear is not
+Core tools are formed on larger pieces where           evident. Tools and debitage are distributed
+multiple flake scars identify a core reduction         widely across the House 10 terrace. There are two
+strategy. The overall size or shape of these           areas however with overall higher frequencies
+implements suggest a possible use for cutting,         suggesting tool production and probable use. One
+scraping, cleaving or as a pick.                       (ca 1 x 1.5 m) occurs in the southeast corner of
+
+
+                                                                                                       7
+Journal of Caribbean Archaeology                                                           Volume 22, 2022
+
+
+the house. The other is on the southern terrace        Most are artifacts associated with food
+edge outside of the house, integrated within           preparation, including hand stones (n=8), smaller
+limited midden deposits.                               mortars (n=3), shell scrapers (n=11) and,
+                                                       possibly, staghorn and plate coral fragments
+A Taíno Residential Tool Kit Beyond Flaked             (n=12) (Figure 5). Also present was a petaloid
+Stone                                                  celt, a fragmented net weight, two abrasive
+       The remainder of non-ceramic artifacts          stones, and lithic curiosities (n=7), the latter being
+from the House 10 excavations relating to a            small stone oddities without modification.
+household use or task specific tool kit are varied.
+
+
+
+
+Figure 5. House 10 Tools and Curiosities. a – unmodified quartz nodule, b – unmodified lithic
+curiosity with perforations, c – handstone and mortar, d – petaloid adze, e – plate coral fragment, f
+– notched sinker stone, g – staghorn coral finger.
+
+
+Hand stones are rounded to elongated cobbles of        3.6 cm and a weight of 1280 g. The remaining
+chert, limestone, or in one case, coral rock. Each     specimens have been fractured through use.
+is easily wielded in the hand with pitting/pecking     These would have been similar in size and
+observed on the working surfaces. These are            material to the complete specimen.
+assumed to be pestles or pounders for use in food               Shell scrapers are best described as
+or medicinal preparations. It is possible that a few   probable artifacts. All are valves from Codakia
+may have been employed as hammerstones for             orbicularis with ventral edge damage, but where
+flaking stone. Only one of the mortars is              evidence for intentional preparation of this edge
+complete, it being recovered in situ from the          as a scraping plane is absent. O’Day and Keegan
+house floor. This specimen is a flattened oval         (2001) describe and illustrate similar specimens,
+limestone cobble that has pitting and grinding         suggesting edge damage results from use in
+wear on both of its flattened surfaces. The            peeling vegetables, scaling of fish, and similar
+maximum length is 15.5 cm, with a thickness of         activities. The bivalve Codakia orbicularis
+
+
+                                                                                                           8
+First Spanish Contact                                                                              Burley
+
+
+accounts for over 70% of all bivalves at House 10     grinding/polishing. Both are similar in size with
+(Henry 2017) providing an ample supply of             lengths of 5.9 and 6 cm, and respective widths of
+valves for scraping tasks.                            3.7 and 3.5 cm.
+         The assemblage of staghorn (n=9) and                  Lithic curiosities are a collection of
+plate (n=3) coral fragments might also be             smaller odd-shaped pieces as well as two
+categorized as probable artifacts, though their       unmodified quartz pebbles. The former includes
+presence alone indicates intentional acquisition.     concretions with bulbous projections or natural
+The staghorn corals (Acropora cervicornis) are        perforations. That these may have been present in
+small finger segments, some with tips and others      original site sediments is a possibility. The quartz
+being mid-sections or small branches. None have       pebbles, on the other hand, would have been
+obvious use-wear. Staghorn coral fingers have         acquired elsewhere. These are of sling-stone size,
+been recovered elsewhere in Jamaican Taíno            possibly for use as a bola. Though small, they
+sites, notably including Rodney House where 165       also could have been part of the raw material
+specimens were excavated in 1978 by J.C.              stockpile for stone tool production, if not for use
+Wilman. As reported by Allsworth-Jones (2008:         in some other fashion.
+169), Wilman believed “these had been fitted into
+wooden frames to make scrapers for cassava            Ritual Sphere in a Taíno House
+[manioc] preparation.” How this grater was                     The Jamaican Taíno had a complex
+constructed, or its efficacy is unknown. Two of       religious system with elaborate rituals and a
+the House 10 corals were submitted to the             sacred iconography through which gods and
+University of Queensland for uranium thorium          ancestors were celebrated, accessed, and
+dating. For U/Th dates to be accurate there can be    consulted. Major rituals related to divination or
+no diagenetic alteration and one must assume the      healing were conducted by specialists or high-
+corals were picked live (Burley et al. 2012). The     ranking caciques who had access to the gods and
+dates of 598 ± 5 AD and 762 ± 7 AD (95.4%             their material representations (Ostapkowicz
+probability) are considerably earlier than the        2012). Closely associated with and integrated into
+House 10 occupation, suggesting the specimens         these rituals was the snuffing of cohoba, a
+were collected from beach rubble rather than          hallucinogen prepared from the seeds of the tree
+being harvested from the reef. The fragments of       Anadenanthera peregrina. How ritual and
+star coral (Orbicella spp.) plates provide a          iconography translate into the household of
+flattened surface with projecting coralites for use   commoners is unknown. Various specimens from
+as a rasp-like abrader.                               archaeological contexts nevertheless have been
+         The single petaloid celt from House 10 is    identified as cemís, images of gods, ancestors, or
+well formed, manufactured of a hard, white            other types of spirits. Bird bone tubes found in
+siltstone. It has a lenticular cross section with     archaeological contexts are also interpreted as a
+maximum thickness of 0.95 cm, a maximum               form of snuff tube for ritual inhalation
+length of 6.3 cm, and a maximum width of 4.5          (Ostapkowicz 2020: 55-56). With an assumption
+cm. It was recovered from the terrace surface         that Taíno religious practice was essential at the
+immediately north of the structure. Petaloid celts    household level, archaeological residues should
+are commonplace in Jamaican archaeological            similarly be present. Potentially related to these
+assemblages, and a diagnostic artifact type of the    in the excavated assemblage of House 10 are four
+White Marl phase (Howard 1950: 114). The              ceramic      adorno     with    anthropomorphic/
+single net weight may have fractured while being      zoomorphic representations, a ceramic tube
+produced. It is manufactured from an extrusive        possibly for snuffing cohoba, a small
+volcanic lithic, presumably dacite. It has a          groundstone pallet with red ochre staining, and
+shallow notched girdle for attachment and a           the large concretion with inward spiral previously
+weight of 90 g. An identical complete specimen        noted (Figure 6).
+was excavated from House 7. The abraders are
+flattened segments of sandstone with evidence for
+
+
+
+
+                                                                                                        9
+Figure 6. House 10 Assemblage with Possible Ritual Use or Representation. a, b, d, e – adorno (b
+anthropomorphic, d zoomorphic), c – concretion with inward spiral-like rings, f – opposite end view
+of clay tube.
+
+The adorno are modeled pieces with incised or                  A single sandstone pallet fragment was
+punctate eyes, projecting nose, and incised           recovered from House 10 with reddish surface
+features added to the face. Three have notching       stains attributed to red ochre preparation. Red
+that define the upper edge or sides of the head.      ochre samples (n=3) additionally were recovered
+One is clearly anthropomorphic, one appears to        from House 7 as small lumps. Applications of red
+be a zoomorph, while the remaining two are open       ochre are documented as a paint component in
+to question. These are smaller images, less than      Taíno pictographs, in Taíno burial contexts, as
+5 cm across. As a group, they appear to be            body paint, and for sacred use (Keegan 2007;
+incarnations formerly applied to ceramic vessels.     Schaffer et al. 2010:60-61). A use in household
+A bottle stopper type base occurs on two, these       ritual seems probable. The ceramic tube has no
+being similar to fishtail-like ends associated with   comparable      documentation      in   Jamaican
+boat-shaped vessels. Whether they represent           archaeology of which I am aware. It is formed as
+cemís is open to debate. Over interpretation, as      a rolled cylinder, 2.9 cm long with different end
+Saunders and Gray (2006: 168) caution, may            diameters of 1.1 and 1.5 cm. It could have
+obscure insights into the nature of Taíno             functioned as a snuff tube for cohoba, similar in
+sacredness and the spirit world. Yet it seems         respect to bone tubes illustrated by Ostapkowicz
+likely that they were a part of bowls employed in     (2020: 56). As Ostapkowicz also notes, thicker
+ritual or social events.                              shorter tubes alternatively may have been used as
+                                                      cigar holders or pipes.
+First Spanish Contact                                                                             Burley
+
+
+         Within the ritual sphere of artifacts, one   second fragment is a small dark green glass flake
+specimen stands out. This is a spherical              with regular thickness (0.5 cm), and cross section.
+concretion (17 x 13.5 x 8 cm) with one end            It is all but impossible to determine what this
+broken off exposing circular, spiral-like rings       might have originated from. The illustration of
+progressing inward. This is a unique piece, one       similarly colored glass goblet fragments from the
+creating excited debate as to its meaning when        16th century colony of Puerto Real in Haiti
+first exposed. It is not hard to anticipate similar   provides a possibility (McEwan 1995). The
+discussions by the Taíno residents of House 10        House 10 specimen has retouch along one edge
+when initially discovered. Taíno depiction of         indicating use as a scraper or cutting tool.
+spirals imbued with transcendent spiritualty are
+most apparent in petroglyph images of La Piedra
+Escrita in Puerto Rico (Hayward et al. 2013). In
+a Jamaican Taíno context, the inset circles might
+also have been associated with guey, the sun
+(Atkinson Swaby 2022, pers. com). This
+specimen’s position in the door area of the
+residence (Burley 2017b), nevertheless, suggests
+a protective role for the house or as a symbol of
+identity.
+
+Spanish Interaction
+         A small assemblage of Spanish artifacts
+was recovered from House 10 (Figure 7). This
+includes two shards of glass, six hand wrought
+nails, a small fragment of Spanish roof tile,
+several highly corroded fragments of sheet metal,
+and a metatarsal and phalange from a sheep.
+These can hardly be characterized as evidence for
+trade, gifts, or any other type of structured
+interaction. Rather it appears as a mixed bag,
+possibly pilfered or collected from discarded
+rubbish of the Sevilla la Nueva residents or,
+perhaps, from the Columbus caravels after
+abandonment. Noting the paucity of European
+goods at en Bas Saline in Haiti, Deagan (2004:
+621) suggests the Taíno may have been
+indifferent to most elements of Spanish material
+culture. These, it is presumed, provided little in
+the way of economic or social advantage (also see
+Keehnen 2019).
+         The glass fragments are individually         Figure 7. House 10 Spanish Artifacts. a – soda
+varied, being from quite different containers. The    lime glass fragment, b – dark green glass shard
+larger of the two is a curved piece of green soda     with retouch on edge, c – Spanish roof tile
+lime glass with an irregular thickness ranging up     fragment used as a polisher, d, e, f, - hand
+to 1.2 cm. Its form, and thickness, are close to      wrought nails.
+those of Venetian glass grenades of the 13th
+through 16th centuries (Triantafyllidis 2016: 298).           The hand wrought nails fall within the
+These are a type of armament we might expect to       range of variation for nails recovered from the
+find on Spanish caravels in their voyages to the      Sevilla la Nueva excavations (Burley and
+New World. The piece has an iridescent patina         Woodward 2020). For the most part they are
+covering both inner and outer surfaces. The           highly corroded with little core metal remaining.
+
+
+                                                                                                      11
+Journal of Caribbean Archaeology                                                              Volume 22, 2022
+
+
+Two of the nails are 4.5 to 5.5 cm in length, three       documented site fits what we know about the
+are between 3 and 4 cm and the sixth is a nail            location or its archaeological context. It is exactly
+fragment. It is difficult to identify head form           a quarter league to St. Ann’s Bay, it is but 800 m
+though three appear to have been flattened with           from Sevilla la Nueva, and Spanish artifacts
+one possibly of rose head type. The metal                 incorporated and used within Taíno household
+fragments are too corroded to define their original       occupation deposits attests to interaction. Beyond
+form beyond flat metal. Their most probable               its association with Columbus, however, Maima
+source is iron strapping, perhaps from a barrel           may have been rather ordinary on the Taíno
+hoop. The fragment of Spanish roof tile (teja) is         settlement landscape. The limited accounts in
+small (3.2 x 1.9 x 1.3 cm) but distinguished by its       Spanish chronicles imply a nested political
+reddish orange terra cotta paste. Surface striations      hierarchy in which regional polities, cacicazgos,
+indicate use as a fine abrader for polishing.             were integrated and overseen by higher chiefs,
+         The metatarsal and phalange are unique,          caciques (Wesler 2013: 253). That neither
+incorporated in the House 10 assemblage as                Columbus nor his son Ferdinand identify the
+oddities, not food waste. Perhaps they were               name or rank of the Maima cacique suggests a
+retained as talismans, acquired from the discarded        subordinate position. The archaeological record
+lower hind limb of a cloven-hoofed creature               as it has been encountered similarly is without
+beyond Taíno conception. The identification of            evidence for high-ranking élites, large houses or
+caprine remains as either sheep or goat is                features such as a ball court.
+difficult. In our faunal analysis of a Spanish                     Beyond its history, the Taíno village
+butchery at Sevilla la Nueva, DNA was                     within the Seville Heritage Park does have
+successfully extracted and sequenced from six             considerable importance today for its
+caprine left humeri (Speller and Yang 2007). All          archaeological context and integrity. The
+were identified as sheep (Ovis aries), an                 identification of artificial terraces and platforms
+identification    fitting   available     historical      on which houses were constructed is a significant
+knowledge for early Spanish presence in Jamaica           recognition. It provides the potential not only for
+(Wynter-Carew 1981).                                      an interpretation of the Taíno residence, but an
+                                                          exploration of the house floor and surrounding
+Conclusion                                                areas where day to day activities were taking
+         The Taíno village of Maima is of                 place, where social and sacred protocols were
+recognizable consequence in Jamaican history. It          enacted, and where all of this became deposited
+was central to the provisioning of Christopher            as material residues in the archaeological record.
+Columbus and his crew when marooned in St.                An account of this in terms of the material culture
+Ann’s Bay in 1503/1504. It also was influential in        for a single household at the time of first Spanish
+the 1509 decision to establish Sevilla la Nueva,          contact has been the intent of this paper. It is
+the first Spanish capital in Jamaica. That the            hoped that future work either at Maima or other
+Taíno site within the Seville Heritage Park is            late period sites in Jamaica will add to these
+Maima could be debated, albeit no other                   insights.
+______________________________________________________________________________
+Acknowledgements: Archaeological fieldwork at Maima was carried out under permit from the Jamaica
+National Heritage Trust. Our Jamaican field crews in 2014 and 2015 were exceptional and are deserving
+of true gratitude. Fieldwork was supported in part by a SFU Social Sciences and Humanities Research
+Council of Canada small projects grant in 2014 and by SFU Faculty of Environment Chairs research grants
+in 2014 and 2015. My sincerest gratitude is given to Robyn Woodward who, after initiating her program
+of work at Sevilla la Nueva in 2000, convinced me to participate in subsequent years. Vienna ChiChi Lam
+prepared the figures and photos for the paper with considerable expertise. The Spanish and French
+translations of the abstract respectfully were done by Elena Sierra and Leena Edmeads. Finally, I wish to
+thank Lesley-Gail Atkinson Swaby for her invitation to participate in this special edition of the Journal of
+Caribbean Archaeology. I also thank her for comments on the manuscript as well as her meticulous
+editorial skills.
+
+
+                                                                                                           12
+References                                          Tuscaloosa: The University of Alabama Press
+Aarons, A. 1984. Sevilla la Nueva: Microcosm of     (original publication in July 1897, Journal of the
+Spain in Jamaica, Part 2. Jamaica Journal 17: 28-   Institute of Jamaica, Vol. 2, No. 4).
+37.
+                                                    Hayward, M.H., L-G. Atkinson, M.A. Cinquino
+Allsworth-Jones, P. 2008. Pre-Columbian             and G. Richard. 2013. Rock art of the Caribbean.
+Jamaica. Tuscaloosa: The University of Alabama      In The Oxford Handbook of Caribbean
+Press.                                              Archaeology, edited by W.F. Keegan, C.L.
+                                                    Hofman, and R. Rodríguez Ramos. Oxford:
+Allsworth-Jones, P. and K.W. Wesler. 2012. The      University of Oxford Press.
+Taíno Settlement at Guayguata, Excavations in St
+Mary Parish, Jamaica. Oxford: Archaeopress,         Henry S. 2017. The Taino Village of Maima:
+BAR International Series, No. 2407.                 Zooarchaeological Evidence of Subsistence
+                                                    Economy and Diet at Maima Jamaica. Ph.D.
+Burley, D.V., M. Weisler and X-J Zhao. 2012.        dissertation, Simon Fraser University, Burnaby.
+High precision U/Th dating of first Polynesian
+settlement. PLoS ONE 7(11): e48769.                 Howard, R.R. 1950. The Archeology of Jamaica
+doi:10.1371/journal.pone.0048769.                   and its Position in Relation to Circum-Caribbean
+                                                    Culture. Ph.D. Dissertation, Yale University,
+Burley, D.V., R. Woodward, S. Henry, and I.         New Haven.
+Connolley. 2017a. Report on the Survey and
+Excavations      at      Maima,      a      Late    Howard, R.R. 1965 New perspectives on
+Prehistoric/Protohistoric Taino Village in St       Jamaican Archaeology. American Antiquity
+Ann’s Bay, Jamaica. Unpublished report,             31(2):250–255.
+Jamaican National Heritage Trust, Kingston.
+                                                    Keegan, W.F. 2007. Taino Indian Myth and
+Burley, D.V., R. Woodward, S. Henry, and I.         Practice: The Arrival of the Stranger King.
+Connolley. 2017b. Jamaican Taino settlement         Gainesville: University Presses of Florida.
+configuration at the time of Christopher
+Columbus. Latin American Antiquity 28: 337-         Keehnen, F.W.M. 2019. Treating “Trifles”: The
+352.                                                indigenous adoption of European material goods
+                                                    in early colonial Hispaniola (1492-1550). In
+Burley, D.V. and R. Woodward. 2020.                 Material    Encounters       and     Indigenous
+Excavations of an Early 16th Century Spanish        Transformations in the Early Colonial Americas:
+Butchery at Sevilla La Nueva, St Ann’s Bay,         Archaeological case Studies, edited by C.L.
+Jamaica. Unpublished report, Jamaican National      Hofman and F.W.M. Keehnen, pp. 58-83.
+Heritage Trust, Kingston.                           Leiden: Koninklijke Brill NV.
+
+Curet, L. A., and J. R. Oliver. 1998. Mortuary      Lopez y Sebastian, L.E. 1986. El proyecto Sevilla
+practices, social development, and ideology in      la Nueva, Jamaica. Primera fase. Revista
+Precolumbian Puerto Rico. Latin American            Espanola de Antropologia Americana. XVI: 295-
+Antiquity 9: 217–239.                               302.
+                                                    McEwan, B. 1995. Spanish precedents and
+Deagan, K. 2004. Reconsidering Taino social         domestic Life at Puerto Real: The archaeology of
+dynamics after Spanish conquest: Gender and         two Spanish homesites. In Puerto Real: The
+class in culture contact studies. American          Archaeology of a Sixteenth-Century Spanish
+Antiquity 69: 597-626.                              Town in Hispaniola, edited by K. Deagan,
+                                                    pp.195-229. Gainesville, University of Florida
+Duerden, J. E. 2008. Appendix D: Aboriginal         Press.
+Indian remains in Jamaica. In Pre-Columbian
+Jamaica, by P. Allsworth-Jones, pp.198-286.
+Journal of Caribbean Archaeology                                                      Volume 22, 2022
+
+
+Morales Padrón, F. 2003. Spanish Jamaica.            Lesley-Gail Atkinson, pp. 187-198. Mona:
+Kingston:    Randle    Publishers, originally        University of West Indies Press.
+published 1952 in Spanish.
+                                                     Sawkins, J.G. 1869. Reports of the Geology of
+Morison, S.E. 1963. Journals and Other Docu-         Jamaica. London: Longmans, Green and Co.,
+ments on the Life and Voyages of Christopher         London, Memoirs of the Geological Survey.
+Columbus. New York: Heritage Press.
+                                                     Schaffer, W.C., R.S. Carr, J.S. Day, and M P.
+O’Day, S. and W.F. Keegan. 2001. Expedient           Pateman. 2010. Lucayan-Taino burials from
+shell tools from the northern West Indies. Latin     Preacher's Cave, Eleuthera, Bahamas. Inter-
+American Antiquity 12: 274-290.                      national Journal of Osteoarchaeology 22: 45-69
+
+Ostapkowicz, J. 2012. “Gods … adorned with the       Speller, C. and D. Yang. 2007. Species
+embroiderer’s needle”: The materials, making         Identification of Archaeological Faunal Remains
+and meaning of a Taino cotton reliquary. Latin       from Sevilla la Nueva Using Ancient DNA
+American Antiquity 23: 300-326.                      Techniques. Unpublished report. Department of
+                                                     Archaeology, Simon Fraser University, Burnaby.
+Ostapkowicz, J. 2020. Conduits to the
+supernatural: Bifurcated snuff tubes in the pre-     Triantafyllidis, P. 2016. War in medieval
+Columbian Caribbean. Journal of Caribbean            Mytilene, Lesbos, Greece: Glass grenades of the
+Archaeology 20: 45-67.                               14th and 15th centuries. Journal of Glass Studies
+                                                     58: 296-300
+Robinson, E. and S.F. Mitchell 1999. Upper
+Cretacious to Oligocene stratigraphy in Jamaica.     Wesler, K. 2013. Jamaica. In The Oxford
+In Middle Eocene to Oligocene Stratigraphy and       Handbook of Caribbean Archaeology, edited by
+Palaeogeography in Jamaica: A Window on the          W.F. Keegan, C.L. Hofman, and R. Rodriguez
+Nicaragua Rise, edited by S.F. Mitchell, pp. 1-24.   Ramos, pp. 250-263. Oxford: University of
+Mona: University of West Indies Contributions to     Oxford Press.
+Geology Mona 4.
+                                                     Woodward, R.P. 2006. Medieval Legacies: The
+Rodney-Harrack, N. 2006. Jamaican Taino              Industrial Archaeology of an Early Sixteenth-
+pottery. In The Earliest Inhabitants: The            Century Sugar Mill at Sevilla la Nueva, Jamaica.
+Dynamics of the Jamaican Taíno, edited by            PhD dissertation, Simon Fraser University,
+Lesley- Gail Atkinson, pp. 146-152. Mona:            Burnaby.
+University of West Indies Press, Mona.
+                                                     Woodward, R.P. 2009. Sevilla la Nueva: A
+Samson, A.V.M. 2010. Renewing the House:             review of 72 years of archaeological
+Trajectories of Social Life in the Yucayeque         investigations. In Xaymaca: Life in Spanish
+(Community) of El Cabo, Higuey, Dominican            Jamaica, 1494-1655, compiled by the IOJ,
+Republic, AD 800 to 1504. Leiden: Sidestone          JNHT, and Ministry of Culture, Spain, pp. 32-44.
+Press.                                               Kingston: Institute of Jamaica.
+
+Saunders, N. and D. Gray (2006). Zemis, trees        Wynter-Carew, S. 1981. Report on Research
+and symbolic landscapes: Three Taino carvings        Mission to Spain (Madrid, Seville, Granada) for
+from Jamaica. In The Earliest Inhabitants: The       the Government of Jamaica, August 28 – October
+Dynamics of the Jamaican Taíno, edited by            4. Unpublished report, Jamaica National Heritage
+                                                     Trust, Kingston.
+
+
+
+
+                                                                                                   14
+

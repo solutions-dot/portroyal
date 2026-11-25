@@ -1,0 +1,54 @@
+{
+ "name": "xa_interp",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "age": 0.4,
+  "muscle": 0.55,
+  "weight": 0.45,
+  "height": 0.5,
+  "proportions": 0.6,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7
+ },
+ "garments": {
+  "sleeve": 0.6,
+  "breeches": true,
+  "breechkind": "slops",
+  "collar": false,
+  "shoes": false,
+  "hair": "straight",
+  "hairlen": 0.5,
+  "hairopen": 1.05,
+  "hat": [],
+  "belt": false,
+  "waistband": false,
+  "buttons": false,
+  "pocket": false
+ },
+ "colors": {
+  "Skin": [
+   150,
+   100,
+   70
+  ],
+  "Shirt": [
+   214,
+   206,
+   186
+  ],
+  "Breeches": [
+   150,
+   128,
+   96
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "lean",
+ "smile": 0.1
+}

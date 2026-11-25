@@ -1,0 +1,54 @@
+{
+ "name": "xa_man",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "age": 0.5,
+  "muscle": 0.6,
+  "weight": 0.5,
+  "height": 0.5,
+  "proportions": 0.6,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7
+ },
+ "garments": {
+  "bare": true,
+  "shoes": false,
+  "collar": false,
+  "hair": "straight",
+  "hairlen": 0.7,
+  "hairopen": 1.05,
+  "hat": [],
+  "skirt": true,
+  "hem": 1.5,
+  "flare": 0.7,
+  "belt": false,
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   150,
+   100,
+   70
+  ],
+  "Shirt": [
+   226,
+   214,
+   186
+  ],
+  "Skirt": [
+   210,
+   196,
+   166
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "broad",
+ "smile": 0.15,
+ "crowd": true
+}
