@@ -513,6 +513,22 @@ function jetFromModel(S, opts, MODEL) {
   g.userData.noBatch = true; g.userData.spec = S.name;
   P.updateMatrixWorld(true);
   const body = []; P.traverse((o) => { if (o.isMesh && (o.name.startsWith("body") || (o.parent && o.parent.name.startsWith("body")))) body.push(o); });
+  /* the roundel centred on the model's own fin: measure the fin's chord (front and back edge in side view) at seven tenths of its height and put the
+     disc in the middle of it, as wide as fits with a margin; the stripes' ribbon then climbs to it (the guess at the fin's outline put it over the
+     swept leading edge, and half the bird was cut off: owner, 25 November 2026) */
+  {
+    const fv = [], xs = [], v = new THREE.Vector3(), w = new THREE.Vector3();
+    P.traverse((o) => { if (o.isMesh && (o.name.startsWith("fin") || (o.parent && o.parent.name.startsWith("fin")))) { const a = o.geometry.attributes.position, ix = o.geometry.index; const pt = (k) => new THREE.Vector3().fromBufferAttribute(a, k).applyMatrix4(o.matrixWorld);
+      const n = ix ? ix.count : a.count, id = (k) => (ix ? ix.getX(k) : k); for (let t = 0; t < n; t += 3) fv.push([pt(id(t)), pt(id(t + 1)), pt(id(t + 2))]); } });
+    void v; void w;
+    if (fv.length) {
+      const ys = fv.flat().map((p) => p.y), y0 = Math.min(...ys), y1 = Math.max(...ys), hy = y0 + (y1 - y0) * 0.68;
+      for (const tri of fv) for (let e = 0; e < 3; e++) { const a = tri[e], b = tri[(e + 1) % 3]; if ((a.y - hy) * (b.y - hy) <= 0 && a.y !== b.y) xs.push(a.x + (b.x - a.x) * (hy - a.y) / (b.y - a.y)); }   /* where the fin's edges cross that height */
+      const xa = Math.min(...xs), xb = Math.max(...xs), r = Math.min(1.3, (xb - xa) * 0.36);
+      if (!isFinite(xa) || !isFinite(r)) { /* keep the spec's roundel */ } else {
+      S.band = { ...S.band, roundel: [(xa + xb) / 2, hy - S.Y0], r }; delete S._ribbon; }
+    }
+  }
   /* the extent of the picture */
   const bb = new THREE.Box3(); body.forEach((o) => bb.expandByObject(o));
   const X0 = bb.min.x - 0.05, X1 = bb.max.x + 0.05, DY = 2.4, TW = 4096, TH = 1024, half = TH / 2;
