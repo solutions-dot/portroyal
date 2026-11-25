@@ -82,7 +82,7 @@ export const DC9 = {
 export const A320 = {
   name: "A320-200", livery: "blue",
   profile: [[-18.8, 0.1], [-18.2, 0.42], [-15.5, 0.98], [-12.0, 1.55], [-8.5, 1.95], [-7.0, 1.98], [13.4, 1.98], [15.2, 1.9], [16.6, 1.7], [17.6, 1.38], [18.3, 0.98], [18.75, 0.55], [18.95, 0.06]],
-  droop: { from: 13.6, down: 0.95 }, /* the A320's nose: blunt, its tip low, the top sloping down to it and the belly nearly straight, so the stripes curve down to the tip (ref-a320-blue-tail.jpg) */
+  droop: { from: 13.6, down: 0.5 }, /* the tip comes down to about the middle of the body, in the pink and blue (photograph) */ /* the A320's nose: blunt, its tip low, the top sloping down to it and the belly nearly straight, so the stripes curve down to the tip (ref-a320-blue-tail.jpg) */
   Y0: 3.75, lift: { from: -7.0, over: 11.8, up: 0.62 },
   windows: { from: -12.6, to: 12.8, step: 0.53, dy: 0.5 },
   doors: [{ x: 14.0, side: -1, w: 0.81, h: 1.85, sill: 3.3, main: true }, { x: 14.0, side: 1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: -1, w: 0.81, h: 1.85, sill: 3.3 }, { x: -11.7, side: 1, w: 0.81, h: 1.85, sill: 3.3 }],
@@ -95,7 +95,7 @@ export const A320 = {
   stripeEnd: 99, roofEnd: 14.6,
   title: { x: 6.0, w: 9.6, dy: 1.36 },
   flag: { x: 15.9, dy: -1.45 }, /* on the white under the blue (photograph) */
-  cockpit: { x: 14.95, dx: 0.5, n: 3, dy: 0.95, front: 17.15, glassEnd: 18.15, painted: true, lo: [0.17, 0.3], hi: [0.44, 0.5] }, /* panes a little shorter than first drawn (the owner's photograph) */ /* the flight deck's glass, from the last side window's back edge to the windscreen's front (photograph) */ /* windows painted into the skin (noseWindows) */
+  cockpit: { x: 14.95, dx: 0.5, n: 3, dy: 0.95, front: 17.15, glassEnd: 18.15, painted: true, a320: true }, /* panes a little shorter than first drawn (the owner's photograph) */ /* the flight deck's glass, from the last side window's back edge to the windscreen's front (photograph) */ /* windows painted into the skin (noseWindows) */
   tipFence: true, /* the A320's wingtip fences: a small arrowhead plate standing above and below each wing tip */
   tailBlue: -8.6, /* where the bands start to sweep up toward the fin; behind it the rear body is dark blue */
 };
@@ -203,16 +203,39 @@ function noseWindows(S, x, dy) {
   }
   return null;
 }
+/* The A320's flight deck, drawn as the photograph shows it from the side (ref-a320-blue-tail.jpg; owner, 25 November 2026: "very wrong, try a different
+   approach"): x along the body, h the height above the body's level centre line (not the drooping nose's). A row of four panes with level bottoms in the
+   top of the orange band, their tops level, then curving down over the nose; each pane dark, in a broad white frame, the posts leaning back. Above them
+   the white cap, which reaches back over the forward door; ahead of them the nose is white down to a short black strip under the front panes, then
+   orange, pink and blue round the tip. Returns a colour, or null where the bands below decide. */
+function a320Nose(S, x, h) {
+  if (!S.cockpit.a320) return null;
+  /* panes about as tall as the orange band is deep, the front pane's foot sloping down toward the nose (the photograph) */
+  const XB = 14.95, XF = 17.95, bot = (q) => 0.27 - Math.max(0, q - 16.5) * 0.2, top = (q) => (q < 16.45 ? 1.08 : 1.08 - (q - 16.45) * 0.55), fr = 0.06, G0 = bot(x);
+  const back = XB + Math.max(0, h - G0) * 0.25;
+  if (x >= back && x <= XF && h >= G0 && h <= top(x)) {
+    if (h < G0 + fr || h > top(x) - fr || x < back + fr || x > XF - fr) return 0xf2f2ee;
+    for (const px of [15.62, 16.32, 17.0]) if (Math.abs(x - px - (h - G0) * 0.3) < fr / 2) return 0xf2f2ee;
+    return 0x16222a;
+  }
+  const capBack = h > 1.08 ? 14.75 - (h - 1.08) * 1.1 : back;
+  if (h > G0 && x > capBack && (x > back || h > 0.77) && (h > top(Math.min(x, XF)) - 0.02 || x < back)) return 0xf1efe8;   /* white only over the panes and behind them: ahead of the front pane the black strip and the bands run on to the tip */   /* the white cap over and ahead of the windows */
+  if (x > 16.6 && x < 18.7 && h < top(Math.min(x, XF)) && h > bot(Math.min(x, XF)) - 0.08 - (x - 16.6) * 0.08) return 0x111315;   /* the black under and ahead of the front panes, up to the white cap, sweeping down toward the tip (the photograph) */   /* the black strip under the front panes, tapering forward */
+  return null;
+}
 function fuselage(S, holes = []) {
   const C = (h) => new THREE.Color(h);
   /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows; every face takes one flat
      colour, so the edges of the stripes are crisp. The stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and
      the yellow roof band at the windscreen. */
-  const paint = S.livery === "blue" ? (dy, x) => {
+  const paint = S.livery === "blue" ? (dy0, x) => {
+    /* toward the nose the bands are painted at fixed heights, level, and the drooping nose passes down through them, so its tip is pink and blue
+       (owner, 25 November 2026, the photograph: measured from the nose's own centre line, every band bent down with it) */
+    const dy = x > 0 ? dy0 + centreY(S, x) - S.Y0 : dy0;
+    const n = a320Nose(S, x, dy);
+    if (n !== null) return C(n);
     /* the blue-tail look: a yellow roof, then orange (the windows), pink, a thin purple line, a blue stripe and a white belly; toward the tail the bands
        sweep up into the fin and the body behind and below them is dark blue. The nose has no yellow: its top is white. */
-    const w = noseWindows(S, x, dy);
-    if (w) return C(w);
     const lift = x < S.tailBlue ? (S.tailBlue - x) * 0.42 : 0, d = dy - lift;
     /* band heights measured on the photograph at the forward door (the door's own sill and head as the scale): the yellow down to 0.77 m above the
        centre line, the orange (the windows) to 0.12 m below it, a deep pink to 0.62 m below, a thin purple line, the blue to 1.08 m below, then white */
@@ -524,7 +547,7 @@ export function makeJet(S, opts = {}) {
   if (C.painted) {
     /* the windscreen's centre post, along the top of the nose where the painted glass crosses it */
     let xa = null, xb = null;
-    for (let x = C.x; x < S.profile[S.profile.length - 1][0]; x += 0.01) { const r = radiusAt(S, x); if (noseWindows(S, x, r * 0.999) === 0x16222a) { if (xa === null) xa = x; xb = x; } }
+    for (let x = C.x; x < S.profile[S.profile.length - 1][0]; x += 0.01) { const r = radiusAt(S, x); if ((C.a320 ? a320Nose(S, x, r * 0.999 + centreY(S, x) - S.Y0) : noseWindows(S, x, r * 0.999)) === 0x16222a) { if (xa === null) xa = x; xb = x; } }
     if (xa !== null) patch(xa - 0.02, xb + 0.02, -0.022, 0.022, own(0xd9dcd8, 0.5, 0.1), 0.004, 8, 1);
   } else {
     const xa = C.front - 0.7, xb = C.front + 0.35, A = 0.6; /* two panes each side of a centre post, about 35 degrees round the nose each way (photograph 6Y-JIJ) */
