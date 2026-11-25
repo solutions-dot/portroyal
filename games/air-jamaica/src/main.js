@@ -28,6 +28,7 @@ import { snapMeshes } from "../../../engine/audit.js";
 import { propSnap } from "../../../engine/audit-props.js";
 import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
+import { setPlaneParts } from "./planes.js";   /* the DC-8 parts taken from the owner's model */
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, QUIZZES } from "./content.js";
@@ -123,6 +124,8 @@ addEventListener("resize", carry.fitView);
 export const blocked = (Q, x, z, r = 0.24) =>
   x < Q.bounds.x0 + r || x > Q.bounds.x1 - r || z < Q.bounds.z0 + r || z > Q.bounds.z1 - r ||
   Q.walls.some((w) => x > w[0] - r && x < w[2] + r && z > w[1] - r && z < w[3] + r);
+let partsP = null;
+const planeParts = () => partsP || (partsP = model("dc8_parts").then((g) => setPlaneParts("dc8_parts", g.scene)));
 function loadBase(id) {
   return bases[id]
     ? Promise.resolve(bases[id])
@@ -191,6 +194,7 @@ function ensure(id) {
 const PLACES = stepPlaces({ steps: STEPS, chapters: CHAPTERS, chapterOf: (s) => chapterOf(s), worlds, ensure: (id) => ensure(id), current: () => current, renderer, camera, scene });
 const { nextPlace, prepare, releaseFar } = PLACES;
 async function buildWorld(id) {
+  await planeParts();   /* the DC-8's glass, wings, engines, gear and tail come from a model (planes.js setPlaneParts) */
   const Q = buildPlace(id, { phone, reduced });
   Q.group.name = id;
   Q.group.visible = false;

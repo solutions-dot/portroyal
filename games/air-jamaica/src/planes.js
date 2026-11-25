@@ -42,22 +42,27 @@ export const DC8 = {
   /* the nose measured from manilov.ap's DC-8 model (Sketchfab, CC BY 4.0; a real-scale DC-8, 3.83 m across): at each distance behind the tip, the radius
      and how far the nose's centre lies below the body's. The flight deck and nose are the same on every DC-8 series. It was 2.8 m too long, with its
      tip too high (owner, 25 November 2026, who sent the model) */
-  profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [16.45, 1.85], [17.95, 1.78], [18.95, 1.68], [19.95, 1.53], [20.95, 1.32], [21.95, 0.95], [22.45, 0.67], [22.8, 0.36], [22.95, 0.05]],
-  noseDrop: [[0, -0.69], [0.5, -0.52], [1, -0.4], [2, -0.26], [3, -0.14], [4, -0.06], [5, -0.02], [6.5, 0], [999, 0]],
-  Y0: 3.2, lift: { from: -11, over: 12, up: 0.55 },
+  /* 25 November 2026, later: the whole body now follows the model (tools/air-jamaica/dc8_from_model.py writes its outline), its plugs taken out so it
+     is a DC-8-50 of 45.9 m: the tail cone sweeps up, so the fin and tailplane taken from the model sit on it. The DC-8's body is a little taller (4.03 m)
+     than wide (3.73 m); the tube is round, 1.94 m in radius, between the two. */
+  profile: [[-23.12, 0.15], [-22.6, 0.66], [-21.6, 0.81], [-20.35, 0.94], [-18.1, 1.22], [-15.35, 1.49], [-13.6, 1.61], [-12.35, 1.72], [-11.35, 1.79], [-10.35, 1.83], [-9.35, 1.89], [-8.6, 1.94], [16.45, 1.94], [17.0, 1.89], [18.0, 1.84], [19.0, 1.68], [20.0, 1.48], [21.0, 1.13], [21.75, 0.87], [22.25, 0.68], [22.75, 0.36], [22.95, 0.05]], /* the nose too as measured on the model (its glass sat buried under a fuller nose) */
+  centreTable: [[-23.12, 1.32], [-22.6, 1.22], [-21.6, 1.14], [-20.35, 1.1], [-18.1, 0.87], [-15.35, 0.54], [-13.6, 0.37], [-12.35, 0.25], [-11.35, 0.17], [-10.35, 0.11], [-9.35, 0.06], [-8.6, 0], [16.45, 0], [17.0, -0.17], [18.0, -0.19], [19.0, -0.21], [20.0, -0.36], [21.0, -0.69], [21.75, -0.8], [22.25, -0.86], [22.75, -0.94], [22.95, -0.93]],
+  parts: "dc8_parts", /* the glass, frames, wings, engines, gear, fin and tailplane from the model (setPlaneParts) */
+  Y0: 4.12, lift: { from: -99, over: 1, up: 0 },
   windows: { from: -17.0, to: 16.0, step: 0.78, dy: 0.7 }, /* the first cabin window is behind the forward door (photograph): ahead of it they showed as black squares under the windscreen */
-  doors: [{ x: 17.0, side: -1, w: 0.86, h: 1.8, sill: 2.4, main: true }, { x: 17.0, side: 1, w: 0.8, h: 1.65, sill: 2.45 }, /* 6 m behind the tip (the model) */ { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 2.45 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
+  doors: [{ x: 17.0, side: -1, w: 0.86, h: 1.8, sill: 3.32, main: true }, { x: 17.0, side: 1, w: 0.8, h: 1.65, sill: 3.37 }, /* 6 m behind the tip (the model); sills 0.8 m under the centre line, which is 4.12 m up on the model's gear */ { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 3.55 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 3.55 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
   overwing: [{ x: -3.2, side: -1 }, { x: -3.2, side: 1 }, { x: -5.4, side: -1 }, { x: -5.4, side: 1 }],
   cargo: [{ x: 9.0, side: 1 }, { x: -9.4, side: -1 }],
   wing: { root: [3.0, -7.5], tip: [-9.0, -11.8], span: 21.2, y: 2.3, tilt: 0.05, thick: 0.34 },
   engines: { kind: "wing", z: [7.4, 13.2], y: 1.1, len: 4.0, r: 0.62 },
-  tail: { fin: [[-10.5, 1.0], [-13.2, 9.8], [-17.2, 9.8], [-19.8, 1.0]], finTop: 9.8, stab: { y: 0.9, pts: [[-15.5, 0], [-19.2, 7.0], [-22.0, 7.0], [-21.4, 0]] }, tee: false },
+  tail: { fin: [[-13.0, 1.85], [-13.0, 8.55], [-23.3, 8.55], [-23.3, 1.85]], finTop: 8.55, stab: { y: 1.8, pts: [[-18.5, 0], [-22.0, 7.4], [-24.0, 7.4], [-24.0, 0]] }, tee: false }, /* the model's fin and tailplane (their extent: the painted picture is laid over the fin by it) */
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
-  band: { roundel: [-13.9, 7.5], r: 1.25, phi: 62, R: 4.0 }, /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
+  band: { roundel: [-19.8, 6.0], r: 1.05, phi: 40, R: 3.0 }, /* on the model's fin: near the top of its front, the stripes climbing the leading edge to it */
+  finBox: [-23.3, 1.85, -13.0, 8.55], /* the model fin's extent in side view (x0, H0, x1, H1 above Y0), for its painted picture */ /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
   stripeEnd: 17.6, roofEnd: 18.3, /* both begin just behind the forward door, the cockpit area all white (photograph of 6Y-JGB, 25 November 2026; they ran on round the windscreen). Earlier: where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
   flag: { x: -5.0 },
-  cockpit: { x: 19.45, front: 20.95, painted: true, side: { xb: 19.45, xf: 20.95, lo: 0.57, hi: 1.14, lean: 0.45, posts: [20.35, 19.95] } }, /* the glass 2.0 to 3.5 m behind the tip, 0.57 to 1.14 m above the body's centre line, its front edge leaning back (the model) */ /* as on the DC-9: just ahead of the door, high on the nose */ /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
+  cockpit: { x: 19.45, front: 20.95, n: 0, painted: false }, /* the glass and its frames are the model's own (parts) */ /* the glass 2.0 to 3.5 m behind the tip, 0.57 to 1.14 m above the body's centre line, its front edge leaning back (the model) */ /* as on the DC-9: just ahead of the door, high on the nose */ /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
 };
 export const DC9 = {
   name: "DC-9-30",
@@ -113,6 +118,7 @@ function centreY(S, x) {
   const { from, over, up } = S.lift;
   const t = Math.max(0, Math.min(1, (from - x) / over));
   let y = S.Y0 + up * t * t;
+  if (S.centreTable) { const T = S.centreTable; if (x <= T[T.length - 1][0]) for (let j = 1; j < T.length; j++) if (x <= T[j][0]) { y += lerp(T[j - 1][1], T[j][1], (x - T[j - 1][0]) / (T[j][0] - T[j - 1][0])); break; } }
   if (S.noseDrop) { const P = S.profile, d = P[P.length - 1][0] - x, T = S.noseDrop; for (let j = 1; j < T.length; j++) if (d <= T[j][0]) { y += lerp(T[j - 1][1], T[j][1], (d - T[j - 1][0]) / (T[j][0] - T[j - 1][0])); break; } }
   else if (S.droop && x > S.droop.from) { const P = S.profile, k = Math.min(1, (x - S.droop.from) / (P[P.length - 1][0] - S.droop.from)); y -= S.droop.down * Math.pow(k, 1.7); }
   return y;
@@ -236,7 +242,7 @@ function a320Nose(S, x, h) {
   if (x > 16.6 && x < 18.7 && h < top(Math.min(x, XF)) && h > bot(Math.min(x, XF)) - 0.08 - (x - 16.6) * 0.08) return 0x111315;   /* the black under and ahead of the front panes, up to the white cap, sweeping down toward the tip (the photograph) */   /* the black strip under the front panes, tapering forward */
   return null;
 }
-function fuselage(S, holes = []) {
+function liveryPaint(S) {
   const C = (h) => new THREE.Color(h);
   /* paint by height above the centre line, so the stripes stay level along the body and run straight through the windows; every face takes one flat
      colour, so the edges of the stripes are crisp. The stripes end before the nose: the orange stripe stops behind the forward door, in a slant, and
@@ -270,6 +276,10 @@ function fuselage(S, holes = []) {
     if (dy <= 1.0 && x > S.stripeEnd - (dy - 0.3) * 1.2) return C(WHITE); /* the orange stripe ends behind the forward door in a slant; the yellow runs on */
     return C(ribbonColour(S, x, dy + centreY(S, x) - S.Y0));
   };
+  return paint;
+}
+function fuselage(S, holes = []) {
+  const paint = liveryPaint(S);
   const x0 = S.profile[0][0], x1 = S.profile[S.profile.length - 1][0], TAU = Math.PI * 2;
   /* the rings along the body and the lines round it, with the edges of every hole added exactly, so a cut-out has straight, clean edges */
   const xs = [], as = [];
@@ -487,7 +497,118 @@ function pylon(parent, z, podTop, podFront, podBack, wingUnder, leadX) {
   parent.add(p);
   return p;
 }
+/* parts of a plane taken from a model (the DC-8's, tools/air-jamaica/dc8_from_model.py): the game loads them once (main.js) and each plane clones them */
+const PARTS = {};
+export function setPlaneParts(name, scene) { PARTS[name] = scene; }
+/* A plane built from a model's parts (the DC-8: tools/air-jamaica/dc8_from_model.py, from manilov.ap's model, CC BY 4.0): the model's own body, glass,
+   frames, wings, engines, gear and tail, so everything sits as it does on the real aircraft, and the livery painted onto its body and fin. The body takes
+   one picture laid on from the side (x along the body, height above the level centre line): the stripes from the same rule as the drawn planes
+   (liveryPaint, ribbonColour), the cabin windows, the door and hatch outlines, the title and the flag, so nothing stands off the skin. The two sides
+   use the two halves of the picture (the port side's title drawn mirrored, so it reads from that side). An open door is painted as a dark opening with
+   the door leaf swung out beside it on two arms. */
+function jetFromModel(S, opts, MODEL) {
+  const g = grp(), P = MODEL.clone(true);
+  g.userData.noBatch = true; g.userData.spec = S.name;
+  P.updateMatrixWorld(true);
+  const body = []; P.traverse((o) => { if (o.isMesh && (o.name.startsWith("body") || (o.parent && o.parent.name.startsWith("body")))) body.push(o); });
+  /* the extent of the picture */
+  const bb = new THREE.Box3(); body.forEach((o) => bb.expandByObject(o));
+  const X0 = bb.min.x - 0.05, X1 = bb.max.x + 0.05, DY = 2.4, TW = 4096, TH = 1024, half = TH / 2;
+  const U = (x) => ((x - X0) / (X1 - X0)) * TW, R = (h, port) => (port ? half : 0) + ((DY - h) / (2 * DY)) * half;   /* canvas x and row for a place on the body */
+  const paint = liveryPaint(S), dc = {};
+  const tex = cv(TW, TH, (x) => {
+    const img = x.createImageData(TW, half), d = img.data;
+    for (let i = 0; i < TW; i++) {
+      const xx = X0 + (i / (TW - 1)) * (X1 - X0), cy = centreY(S, xx) - S.Y0;
+      for (let j = 0; j < half; j++) {
+        const h = DY - (j / (half - 1)) * 2 * DY, c = paint(h - cy, xx), k = (j * TW + i) * 4, key = c.getHex();
+        let rgb = dc[key]; if (!rgb) rgb = dc[key] = [Math.round(Math.pow(c.r, 1 / 2.2) * 255), Math.round(Math.pow(c.g, 1 / 2.2) * 255), Math.round(Math.pow(c.b, 1 / 2.2) * 255)];
+        d[k] = rgb[0]; d[k + 1] = rgb[1]; d[k + 2] = rgb[2]; d[k + 3] = 255;
+      }
+    }
+    x.putImageData(img, 0, 0); x.putImageData(img, 0, half);
+    for (const port of [false, true]) {
+      const side = port ? -1 : 1, sx = (TW / (X1 - X0)), sy = half / (2 * DY);
+      const rr = (x0, h0, w, hh, r) => { const a = U(x0 - w / 2), b = R(h0 + hh / 2, port), W = w * sx, H = hh * sy, q = Math.min(r * sx, W / 2, H / 2); x.beginPath(); x.moveTo(a + q, b); x.lineTo(a + W - q, b); x.quadraticCurveTo(a + W, b, a + W, b + q); x.lineTo(a + W, b + H - q); x.quadraticCurveTo(a + W, b + H, a + W - q, b + H); x.lineTo(a + q, b + H); x.quadraticCurveTo(a, b + H, a, b + H - q); x.lineTo(a, b + q); x.quadraticCurveTo(a, b, a + q, b); x.closePath(); };
+      /* cabin windows, pale rims and dark glass, skipping the doors and exits */
+      const Wn = S.windows, skip = [...S.doors.map((q) => q.x), ...S.overwing.map((q) => q.x)];
+      for (let xx = Wn.from; xx <= Wn.to; xx += Wn.step) {
+        if (skip.some((k) => Math.abs(k - xx) < 0.9)) continue;
+        const h = Wn.dy + centreY(S, xx) - S.Y0;
+        rr(xx, h, 0.3, 0.39, 0.11); x.fillStyle = "#d2d4cf"; x.fill();
+        rr(xx, h, 0.24, 0.33, 0.09); x.fillStyle = "#16202a"; x.fill();
+      }
+      /* door, exit and hatch outlines; the open door a dark opening */
+      x.strokeStyle = "rgba(60,64,66,0.85)"; x.lineWidth = 2.2;
+      for (const q of S.doors.filter((q) => q.side === side)) {
+        const h0 = q.sill - S.Y0;
+        rr(q.x, h0 + q.h / 2, q.w, q.h, 0.12);
+        if (q.main && opts.doorOpen) { x.fillStyle = "#151617"; x.fill(); } else x.stroke();
+      }
+      for (const q of S.overwing.filter((q) => q.side === side)) { rr(q.x, 0.62 + centreY(S, q.x) - S.Y0, 0.5, 0.72, 0.1); x.stroke(); }
+      for (const q of S.cargo.filter((q) => q.side === side)) { rr(q.x, -0.95 + centreY(S, q.x) - S.Y0, 1.2, 0.9, 0.06); x.stroke(); }
+      /* the title and the flag */
+      const tImg = titleTexture(S.livery).image, tw = S.title.w * sx, th = S.title.w * 0.1774 * sy, tc = [U(S.title.x), R(0.05 + centreY(S, S.title.x) - S.Y0, port)];
+      x.save(); x.translate(tc[0], tc[1]); if (port) x.scale(-1, 1); x.drawImage(tImg, -tw / 2, -th / 2, tw, th); x.restore();
+      const fImg = flagTexture().image, fw = 0.7 * sx, fh = 0.46 * sy, fc = [U(S.flag.x), R((S.flag.dy ?? 0.15) + centreY(S, S.flag.x) - S.Y0, port)];
+      x.drawImage(fImg, fc[0] - fw / 2, fc[1] - fh / 2, fw, fh);
+    }
+  });
+  tex.anisotropy = 8;
+  const skin = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.36, metalness: 0.1 }); skin.userData.noGrain = true;
+  for (const o of body) {
+    let geo = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+    const pos = geo.attributes.position, uv = new Float32Array(pos.count * 2), v = new THREE.Vector3(), mw = o.matrixWorld;
+    for (let t = 0; t < pos.count; t += 3) {
+      let zc = 0; const pts = [];
+      for (let k = 0; k < 3; k++) { v.fromBufferAttribute(pos, t + k).applyMatrix4(mw); pts.push(v.clone()); zc += v.z; }
+      const port = zc < 0;
+      pts.forEach((p, k) => { uv[(t + k) * 2] = U(p.x) / TW; uv[(t + k) * 2 + 1] = 1 - R(p.y - S.Y0, port) / TH; });
+    }
+    geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+    if (!geo.attributes.normal) geo.computeVertexNormals();
+    o.geometry = geo; o.material = skin;
+  }
+  /* the other parts' materials; the fin carries the livery's climbing stripes and roundel (finPaint), laid on by side-view position */
+  const fp = finPaint(S); fp.tex.anisotropy = 8;
+  const finMat = new THREE.MeshStandardMaterial({ map: fp.tex, roughness: 0.4, metalness: 0.05 }); finMat.userData.noGrain = true;
+  const mats = { glass: M.glass, frame: own(0xd6d8d4, 0.45, 0.2), tyre: M.tyre, wingskin: own(0xdfe1df, 0.42, 0.25), tailskin: own(0xe6e6e2, 0.45, 0.15), metal: own(0xc4c8c8, 0.38, 0.45), fin: finMat };
+  P.traverse((o) => {
+    if (!o.isMesh || body.includes(o)) return;
+    const k = Object.keys(mats).find((n) => o.name.startsWith(n) || (o.parent && o.parent.name.startsWith(n))) || "metal";
+    o.material = mats[k];
+    if (k === "fin") {
+      const pos = o.geometry.attributes.position, uv = new Float32Array(pos.count * 2), v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); uv[i * 2] = (v.x - fp.x0) / fp.w; uv[i * 2 + 1] = (v.y - S.Y0 - fp.y0) / fp.h; }
+      o.geometry = o.geometry.clone(); o.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+    }
+    if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+  });
+  g.add(P);
+  /* where the skin is on each side at a height: a ray in from outside onto the model's body */
+  const ray = new THREE.Raycaster(), hitMat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+  const probe = body.map((o) => { const m = new THREE.Mesh(o.geometry, hitMat); m.matrix.copy(o.matrixWorld); m.matrixWorld.copy(o.matrixWorld); m.matrixAutoUpdate = false; return m; });
+  const skinZ = (x, y, side) => { ray.set(new THREE.Vector3(x, y, side * 6), new THREE.Vector3(0, 0, -side)); const h = ray.intersectObjects(probe, false)[0]; return h ? h.point.z : side * radiusAt(S, x); };
+  const md = S.doors.find((q) => q.main), dz = skinZ(md.x, md.sill + md.h / 2, md.side);
+  g.userData.door = { x: md.x, y: md.sill, z: dz + md.side * 0.04, sill: md.sill, w: md.w, h: md.h, side: md.side };
+  if (opts.doorOpen) {
+    /* the door leaf swung out and forward to lie 25 cm off the body beside the opening, on two hinge arms */
+    const fx = md.x + md.w + 0.15, leaf = box(md.w, md.h, 0.09, M.doorSkin, fx, md.sill + md.h / 2, dz + md.side * 0.3, g);
+    box(md.w - 0.04, md.h - 0.04, 0.01, M.doorInner, fx, md.sill + md.h / 2, dz + md.side * 0.25, g);
+    void leaf;
+    for (const f of [0.28, 0.72]) {
+      const y = md.sill + md.h * f, p0 = new THREE.Vector3(md.x + md.w / 2, y, dz), p1 = new THREE.Vector3(fx - md.w / 2 + 0.05, y, dz + md.side * 0.27);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, p0.distanceTo(p1), 8), M.metal);
+      arm.position.copy(p0).add(p1).multiplyScalar(0.5); arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p1.clone().sub(p0).normalize()); g.add(arm);
+    }
+    g.userData.hole = { x0: md.x - md.w / 2, x1: md.x + md.w / 2, side: md.side };
+  }
+  g.userData.noSurface = true;
+  g.traverse((o) => { o.userData.noBatch = true; });
+  return g;
+}
 export function makeJet(S, opts = {}) {
+  if (S.parts && PARTS[S.parts]) return jetFromModel(S, opts, PARTS[S.parts]);
   const g = grp();
   g.userData.noBatch = true;
   g.userData.spec = S.name;
