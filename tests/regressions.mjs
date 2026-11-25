@@ -376,7 +376,7 @@ test('menu lists every game in Jamaica\'s timeline, oldest first', async () => {
   assert.deepEqual(years, [...years].sort((a, b) => a - b), 'menu cards out of order: ' + years.join(', '));
   const menuGames = cards.map((a) => a.match(/data-game="([a-z0-9-]+)"/)[1]);
   const playableGames = readdirSync('games').filter((g) => !g.startsWith('_') && existsSync('games/' + g + '/site/index.html')).sort();
-  assert.equal(playableGames.length, 14, 'expected the ten first games, The Mad Master of Edinburgh Castle, The Shark Papers, The White Witch of Rose Hall and Morant Bay, 1865');
+  assert.equal(playableGames.length, 15, 'expected the ten first games, The Mad Master of Edinburgh Castle, The Shark Papers, The White Witch of Rose Hall, Morant Bay, 1865 and Air Jamaica');
   assert.deepEqual([...menuGames].sort(), playableGames, 'every playable game must have exactly one main menu card');
 });
 
