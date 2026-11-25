@@ -193,6 +193,17 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
 </style>
 <link rel="stylesheet" href="title.css" />
   <link rel="stylesheet" href="chapters.css">
+<style>
+  #title .intro-with-audio{display:flex;align-items:center;justify-content:center;gap:.65rem;margin:.65rem auto;max-width:42rem}
+  #title .intro-with-audio .intro{margin:0;min-width:0}
+  #intro-audio-toggle{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid var(--brass);border-radius:50%;background:#211e19;color:var(--brass);box-shadow:0 0 9px currentColor;cursor:pointer;animation:intro-glow 2.2s ease-in-out 3}
+  #intro-audio-toggle[hidden],#intro-audio-toggle .intro-pause,#intro-audio-toggle.is-playing .intro-speaker{display:none}
+  #intro-audio-toggle.is-playing{animation:none;box-shadow:none}
+  #intro-audio-toggle.is-playing .intro-pause{display:block}
+  #intro-audio-toggle:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+  @keyframes intro-glow{50%{box-shadow:0 0 16px currentColor}}
+  @media(prefers-reduced-motion:reduce){#intro-audio-toggle{animation:none}}
+</style>
 </head>
   <body>
     <canvas
@@ -205,7 +216,15 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
       <div class="card">
         <p class="place">Rose Hall, St James, Jamaica &middot; the legend and the record &middot; Mature 13+</p>
         <h1>Rose Hall: The White Witch</h1>
-        <p class="intro">You’re visiting Rose Hall after dark. Follow your guide into the great house and hear the legend of Annie Palmer. Then search the old records for the names of people the ghost story leaves out.</p>
+        <div class="intro-with-audio">
+    <p class="intro">You’re visiting Rose Hall after dark. Follow your guide into the great house and hear the legend of Annie Palmer. Then search the old records for the names of people the ghost story leaves out.</p>
+    <button id="intro-audio-toggle" type="button" aria-label="Listen to intro" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path class="intro-speaker" d="M11 5 6 9H3v6h3l5 4V5Zm4 4a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/>
+        <path class="intro-pause" d="M9 5v14M15 5v14"/>
+      </svg>
+    </button>
+  </div>
         <div class="loading title-actions">
           <button id="start" class="btn" disabled>Loading</button>
           <button id="tchap" class="btn ghost" hidden>Chapters</button>
@@ -376,6 +395,38 @@ body:has(:is(#journal,#chapters,#credits,#card):not([hidden])) :is(#sub,#holdwra
       ><button id="readCine" class="btn ghost">Read instead</button>
     </div>
     <pre id="autolog" hidden></pre>
-    <script src="app.js"></script>
+    <audio id="intro-audio" src="rose-hall-intro.mp3" preload="auto" autoplay></audio>
+    <script>
+      (() => {
+        const audio = document.getElementById('intro-audio');
+        const toggle = document.getElementById('intro-audio-toggle');
+        const updateLabel = () => {
+          toggle.setAttribute('aria-label', audio.paused ? 'Listen to intro' : 'Pause intro');
+          toggle.classList.toggle('is-playing', !audio.paused);
+        };
+
+        toggle.hidden = false;
+        for (const event of ['play', 'pause', 'ended']) {
+          audio.addEventListener(event, updateLabel);
+        }
+        updateLabel();
+        toggle.addEventListener('click', () => {
+          if (audio.paused) audio.play().catch(updateLabel);
+          else audio.pause();
+        });
+        audio.addEventListener('error', () => { toggle.hidden = true; });
+
+        const stopIntro = () => {
+          audio.autoplay = false;
+          audio.pause();
+          audio.currentTime = 0;
+        };
+        for (const id of ['start', 'tchap', 'allgames']) {
+          document.getElementById(id).addEventListener('click', stopIntro, { capture: true });
+        }
+        window.addEventListener('pagehide', stopIntro);
+      })();
+    </script>
+<script src="app.js"></script>
   </body>
 </html>
