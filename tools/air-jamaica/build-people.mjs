@@ -14,7 +14,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 const out = path.resolve("build/air-jamaica-people"),
-  models = "games/_air-jamaica/site/models";
+  models = "games/air-jamaica/site/models";
 mkdirSync(out, { recursive: true });
 mkdirSync(models, { recursive: true });
 /* --repack (or REPACK=1): pack again from the bodies already built in build/air-jamaica-people, with no Blender (after a change to tools/people/pack.mjs). */

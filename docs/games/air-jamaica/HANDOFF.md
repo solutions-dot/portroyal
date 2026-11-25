@@ -3,7 +3,7 @@
 Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research, sources, what is general), this file.
 
 ## Where things are
-- Game: `games/_air-jamaica/` (underscore = not live, skipped by `tools/dist.mjs` and tests). Rename to `games/air-jamaica/` only when finished and checked.
+- Game: `games/air-jamaica/`, live on the menu since 25 November 2026 at the owner's request, to test; still being polished.
 - Chapter 1 "A flag in the sky" (apron + waving gallery, 1 April 1969) and chapter 2 "The view from the front" (DC-8 flight deck, landing) play end to end.
 - Code: `src/planes.js` (jet kit: DC-8, DC-9, livery painted as a texture, open door with reveal), `src/airport.js` (Palisadoes terminal from NLJ photos, waving gallery, runway 12/30 laid flat, taxiway), `src/places.js` (apron, gallery, cockpit), `src/cockpit.js` (flight deck rebuilt from the 1969 Finnair DC-8 photo), `src/props.js` (boarding steps), `src/content.js` / `src/steps.js` (words, steps, films, quiz), `src/cast.js`.
 - People: recipes in `tools/air-jamaica/people/`, built by `tools/air-jamaica/build-people.mjs` (shared builder `tools/garvey/era.py`). Builder options added this session: `hair:"straight"` (+`hairlen`), colours `Lipstick`, `Eyeshadow`, `Gloves`; armpit fix; short skirts follow each thigh (see `docs/PIPELINE.md`).
@@ -13,6 +13,8 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 - **Planes:** `A320` in `planes.js`, the blue-tail look (`livery: "blue"`: paint bands, a curved title laid on the skin, the blue fin with the bird in an open ring). `airport(Q, { later: true })` leaves out the 1969 terminal and gallery and puts up a stand-in hangar.
 - **People:** 13 new bodies in period clothes (`tools/air-jamaica/people/aj_*94`, `*04`, `*10`); the Windrush 2018 stand-ins in chapter 4 are replaced and their copies removed. Builder options added for every game (`docs/PIPELINE.md`, "Modern clothes"): `polo`, `stripes`, `denim`, `sneakers`, `sandals`, the `baseball` cap, `chain`, women in trousers; fixes for untucked shirts over long trousers.
 - **Hurricane Melissa** got the same wardrobe on the owner's word (25 November 2026): its seven recipes (`tools/melissa/people/`) are built with `tools/melissa/build-people.mjs` and its 1988 and 2025 people and crowds use them (`games/melissa/src/cast.js`).
+- **Owner's faults to fix first (25 November 2026):** the A320's nose and cockpit are "all wrong" (owner's screenshot): the windscreen is a dark slab on top of the nose and the three side panes read as black squares; rebuild them from `ref-a320-blue-tail.jpg` (a black band round the cockpit windows, the windows set into it, orange below to the nose tip). The forward door's outline floats as a thin box. The tail bird ran off the fin (made smaller and moved inside it on 25 November; look again).
+- **Not yet done this session:** the full `?test=audit` (it ran past 30 minutes on this machine's software renderer and was stopped), `?auto` for chapters 3 and 5 and the whole story, phone screenshots, and the full sheets (rule 15) for the 13 Air Jamaica and 7 Melissa bodies (only front, three-quarter, side and back were looked at). `?auto=6&one` reached `AUTO END 96`, with layout 0 in all eight places.
 - **Open:** a dated photograph of the 1994 and 2010 airport and hangars; the year the blue-tail look first flew; the later crew uniforms (crew in uniform are not shown after 1969); the cap's crown reads a little tall; a loose shirt's hem is pushed a little by the thigh mid-stride.
 
 ## Setting up the builder in a fresh container
@@ -22,11 +24,11 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 4. Build: `BPY_PYTHON=/tmp/venv/bin/python3 MAKEHUMAN=/tmp/mh/makehuman node tools/air-jamaica/build-people.mjs [names]`
 
 ## Checks (all must pass before done)
-- `python3 -m http.server 8765` at repo root, `node tools/build.mjs _air-jamaica --dev`
-- Audit: open `games/_air-jamaica/site/?test=audit` (title `AUDIT n`); last result 0 issues in apron, gallery, cockpit.
+- `python3 -m http.server 8765` at repo root, `node tools/build.mjs air-jamaica --dev`
+- Audit: open `games/air-jamaica/site/?test=audit` (title `AUDIT n`); last result 0 issues in apron, gallery, cockpit.
 - Autoplayer: `?auto=N&one` for each chapter N = 1 to 6, and `?auto=1` for the whole story (reaches `AUTO END 96`).
-- People: `node tools/review/full-check.mjs _air-jamaica <ids> anims=Idle:0.4,Walk:0.3,Wave:0.5` and LOOK at every sheet (rule 15).
-- Screenshots: `node tools/review/look-shot.mjs _air-jamaica out.png "shot=10"`; phone size `414x706`.
+- People: `node tools/review/full-check.mjs air-jamaica <ids> anims=Idle:0.4,Walk:0.3,Wave:0.5` and LOOK at every sheet (rule 15).
+- Screenshots: `node tools/review/look-shot.mjs air-jamaica out.png "shot=10"`; phone size `414x706`.
 - Wikimedia: only standard thumbnail sizes work, e.g. `upload.wikimedia.org/wikipedia/commons/thumb/a/ab/<file>/1280px-<file>`.
 
 ## New primary source (owner, 24 November 2026): `docs/games/air-jamaica/ref-1969-ad-dc9-crew.jpg`

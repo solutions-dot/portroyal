@@ -304,7 +304,7 @@ function finPaint(S) {
       [["#e0457f", 0.0, 0.035], ["#6b3a96", 0.035, 0.07], ["#e0457f", 0.09, 0.115], ["#6b3a96", 0.115, 0.14], ["#e0457f", 0.16, 0.175]].forEach(([c, a, b]) => { x.fillStyle = c; x.fillRect(0, a * H, W, (b - a) * H); });
       [["#f07a22", 0.0], ["#e0457f", 0.06], ["#6b3a96", 0.1]].forEach(([c, k]) => { x.fillStyle = c; x.beginPath(); x.moveTo(W * (1.05 - k), H); x.lineTo(W * (0.98 - k), H * (0.86 + k * 0.4)); x.lineTo(W * (0.9 - k * 0.6), H); x.closePath(); x.fill(); });
       x.restore();
-      const R = W * 0.2, cx = W * 0.5, cy = H * 0.42;
+      const R = W * 0.15, cx = W * 0.62, cy = H * 0.5; /* well inside the fin's outline: larger, the bird's head and the ring ran off its leading edge (owner, 25 November 2026) */
       x.strokeStyle = "#f6c12a"; x.lineWidth = W * 0.022; x.beginPath(); x.arc(cx + R * 0.15, cy + R * 0.1, R, -1.2, 2.4); x.stroke();
       x.save(); x.translate(cx - R, cy - R); drawBird(x, R * 2, "#f6c12a", "#1f2f8a"); x.restore();
     });
