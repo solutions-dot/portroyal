@@ -264,7 +264,7 @@ function easeMood(st, dt) {
    anything a game marks userData.glow. Each frame they alone are drawn into a small buffer, with everything else drawn black (so a wall or a person still
    hides a lamp behind it; see-through things are left out, so a lamp glows through glass), the buffer is blurred, and the glow is added to the picture.
    Nothing that is not a light can ever glow. A light marked userData.noGlow is left out. ?noglow, ?glowview (four times stronger, to see what glows). */
-const DARK = new Map();
+const DARK = new Map(), _fr = new THREE.Frustum(), _pm = new THREE.Matrix4();
 function darkFor(m) {      /* black, but with the same faces and cut-outs, so it hides a light exactly as the real thing does */
   const key = (m.side ?? 0) + ':' + (m.alphaTest > 0 && m.map ? m.map.uuid + ':' + m.alphaTest : '');
   let d = DARK.get(key);
@@ -286,7 +286,11 @@ function glowSources(scene, st) {
 /* draws the lights alone into st.gcomp's buffer: every other mesh black (or hidden, if see-through, a sprite or points), no fog, a black background */
 function drawGlow(renderer, scene, camera, st) {
   const lights = glowSources(scene, st); let any = false;
-  for (const o of lights) { let v = true; for (let q = o; q; q = q.parent) if (!q.visible) { v = false; break; } if (v) { any = true; break; } }
+  _pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _fr.setFromProjectionMatrix(_pm);
+  for (const o of lights) {      /* only when a light is shown and on screen: otherwise the whole extra drawing is skipped (most daytime frames) */
+    let v = true; for (let q = o; q; q = q.parent) if (!q.visible) { v = false; break; }
+    if (v && (o.isSprite ? _fr.intersectsSprite(o) : _fr.intersectsObject(o))) { any = true; break; }
+  }
   if (!any) return false;
   const swapped = [], hidden = [], keep = new Set(lights), bg = scene.background, fog = scene.fog;
   scene.traverseVisible((o) => {
@@ -335,7 +339,7 @@ function composerFor(renderer, scene, camera, st) {
     st.grade = new ShaderPass(GradeShader); st.comp.addPass(st.grade);
     st.w = st.h = st.pr = 0;
   }
-  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); if (st.gcomp) { st.gcomp.setPixelRatio(pr * 0.5); st.gcomp.setSize(size.x, size.y); } st.w = size.x; st.h = size.y; st.pr = pr; }
+  if (size.x !== st.w || size.y !== st.h || pr !== st.pr) { st.comp.setPixelRatio(pr); st.comp.setSize(size.x, size.y); if (st.gcomp) { st.gcomp.setPixelRatio(pr * 0.5); st.gcomp.setSize(size.x, size.y); }   /* half size: a quarter lost the glazing bars and left blocky edges */ st.w = size.x; st.h = size.y; st.pr = pr; }
   st.rp.scene = scene; st.rp.camera = camera;
   if (st.ao) { st.ao.scene = scene; st.ao.camera = camera; st.ao.enabled = LOOK.ao; }
   if (st.gcomp) {
