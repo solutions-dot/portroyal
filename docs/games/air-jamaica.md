@@ -2,7 +2,9 @@
 
 **The first design note (24 November 2026, before any code; kept for its reasoning).** This page holds the idea (owner, 24 November 2026), the chapter plan, the rules and the research still to do. Nothing here has been checked at source yet except the broad outline in "What the first search found". Start from `games/_template/` (`docs/NEW_GAME.md`).
 
-## Status, 25 November 2026: six chapters playable (not live; folder `games/air-jamaica/`)
+## Status, 25 November 2026: six chapters playable, live on the menu (folder `games/air-jamaica/`; merged to `main` in solutions-dot/portroyal#160)
+
+All checks pass (audit, held, ambient, layout and sound levels 0 in all eight places; the autoplayer plays the whole story; phone screenshots and the full body checks looked at). What is left is in `HANDOFF.md`, "What is left": chiefly the owner's judgement of the planes' noses and tails.
 
 1. A flag in the sky (1 April 1969), 2. The view from the front (the 1970s), 3. **New colours (December 1994, steps 40 to 46, place `newlook`)**, 4. The flying chef (the 2000s), 5. **The sale (April 2010, steps 70 to 73, place `home`)**, 6. **The last flight home (30 April 2010, steps 90 to 96, places `lastflight` and `arrival`)**. The order is by date: the 1994 chapter comes before the chef. Handoff and checks: `docs/games/air-jamaica/HANDOFF.md`.
 

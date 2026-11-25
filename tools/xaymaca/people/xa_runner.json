@@ -1,0 +1,53 @@
+{
+ "name": "xa_runner",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "age": 0.35,
+  "muscle": 0.58,
+  "weight": 0.42,
+  "height": 0.55,
+  "proportions": 0.6,
+  "african": 0.2,
+  "caucasian": 0.1,
+  "asian": 0.7
+ },
+ "garments": {
+  "bare": true,
+  "shoes": false,
+  "collar": false,
+  "hair": "straight",
+  "hairlen": 0.45,
+  "hairopen": 1.05,
+  "hat": [],
+  "skirt": true,
+  "hem": 1.5,
+  "flare": 0.7,
+  "belt": false,
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   154,
+   104,
+   74
+  ],
+  "Shirt": [
+   226,
+   214,
+   186
+  ],
+  "Skirt": [
+   200,
+   184,
+   150
+  ],
+  "Hair": [
+   22,
+   18,
+   16
+  ]
+ },
+ "face": "long",
+ "smile": 0.15
+}

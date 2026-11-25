@@ -1,0 +1,67 @@
+{
+ "name": "xa_sailor",
+ "era": 1900,
+ "body": {
+  "gender": 1.0,
+  "proportions": 0.55,
+  "african": 0.0,
+  "caucasian": 1.0,
+  "asian": 0.0,
+  "age": 0.34,
+  "muscle": 0.5,
+  "weight": 0.48,
+  "height": 0.5
+ },
+ "garments": {
+  "sleeve": 0.6,
+  "breeches": true,
+  "breechkind": "slops",
+  "collar": false,
+  "hairvol": 0.0,
+  "hat": [
+   [
+    "pillbox",
+    "Hat"
+   ]
+  ],
+  "shoes": false,
+  "belt": false,
+  "waistband": false,
+  "buttons": false,
+  "pocket": false
+ },
+ "colors": {
+  "Skin": [
+   200,
+   156,
+   124
+  ],
+  "Shirt": [
+   214,
+   206,
+   186
+  ],
+  "Breeches": [
+   110,
+   96,
+   74
+  ],
+  "Hair": [
+   60,
+   44,
+   32
+  ],
+  "Shoes": [
+   50,
+   38,
+   28
+  ],
+  "Hat": [
+   150,
+   40,
+   34
+  ]
+ },
+ "face": "narrow",
+ "crowd": true
+}

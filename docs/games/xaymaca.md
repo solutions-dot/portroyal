@@ -1,0 +1,138 @@
+# Xaymaca, 1503 to 1504 (working title) (`games/xaymaca/`, first playable build, on the menu)
+
+An all-ages game (owner, 25 November 2026: "Lets build this"). A Taino child of the village of Maima, above St Ann's Bay, watches Columbus's two broken ships run aground and lives through the year the strangers were stranded there, from June 1503 to June 1504. The question that runs through it: **will the village keep feeding the strangers, and will Cousin come home?**
+
+**Status (25 November 2026):** first playable build, **on the menu at the owner's request** (25 November 2026: "I will need a menu card"), for testing. **It has not yet been seen by a Taino-heritage reviewer** (see "Review before it goes live"); the owner should arrange that review, and the game can come off the menu again by removing its card. Everything marked "to check" is unconfirmed.
+
+## What is built (25 November 2026)
+
+- **The kit:** The Shark Papers' story kit (story table, places, director, journal, quiz) in `games/xaymaca/src/`: `content.js` (every word), `steps.js` (the story table, carries and close-up looks), `places.js` (Maima, Maima at night, the shore, the crossing, Seville Heritage Park), `xaymaca.js` (round houses, buren, pots, baskets, calabash, cassava mounds, fish rack, net, the caravels, the eclipse moon, Navassa), `cast.js`.
+- **Seven chapters, 47 steps**, seven camera scenes (the arrival, the trade, the canoes set off, the crossing, the ten canoes, the red moon, the ships sail), six close-up looks (rule 13: the cake turned on the buren, the ships from the rock, the hawk's bell, the new ship, the round house, the sign), four carries.
+- **People:** 16 `xa_` bodies in `tools/xaymaca/people/` (`BPY_PYTHON=/tmp/venv/bin/python3 MAKEHUMAN=/tmp/mh/makehuman node tools/xaymaca/build-people.mjs`). Taino villagers with the new `"bare"` and `"band"` keys; Diego Mendez in a sayo, the interpreter and two sailors in shirts and slops (see "People and clothes"); the park guide and a visitor of 2026.
+- **The menu card** (`menu/index.html`, first by date, `menu/xaymaca.jpg` from the shore) and the recap pictures (`site/recap/`).
+- **Far figures:** the paddlers in the canoes (the crossing, the departure, the mutiny) are plain shapes seen only from afar in camera scenes, not bodies. To do: real seated paddlers.
+
+## Start here
+
+1. Read `CLAUDE.md`, then this page, then the script (`docs/games/xaymaca/script.md`, made from `games/xaymaca/src/content.js` by `node tools/xaymaca/script.mjs`; never edit it by hand).
+2. The sources are saved in `docs/games/xaymaca/sources/` (see "Sources"). Quote them by page.
+3. The game's words live in `src/content.js`, the story table in `src/steps.js`, the places in `src/places.js` and `src/xaymaca.js` (the caravels, canoes, houses and the moon), the people in `tools/xaymaca/people/`.
+
+## Rules for this game (follow them every time)
+
+1. **The record is Spanish only.** Every fact of 1503 to 1504 comes from men on the ships: Ferdinand Columbus (the Admiral's son, then about 15), Diego Mendez and Columbus himself. No Taino account exists. The child's thoughts, the family and the village's talk are invented, and the journal says so on every page that uses them.
+2. **Nothing sacred is shown.** No cemi (zemi), no cohoba, no areito, no duho (the carved seat), no burial and no ball game. The journal says these existed and were important, and that the game leaves them out on purpose. The White Marl dig at Maima found possible ritual things in a house (Burley 2022); the game does not show them.
+3. **No invented Taino words as fact.** The game uses only Taino words the sources record and that came into English or Jamaican speech: canoe, hammock, cacique, cassava (casabe, "zabi" in Ferdinand), hutia ("huties"), and Xaymaca itself. People are called by family words (Grandmother, Cousin) or by their role (the cacique, the interpreter), so no Taino name is made up. Any name added later must come from the reviewer.
+4. **Columbus has no invented words.** What he says at the eclipse is given only through the interpreter, close to Ferdinand's report, and the journal says it is Ferdinand's account. He is not shown: old and ill with gout, he stayed mostly in his cabin (Ferdinand), and the child only hears of him.
+5. **Diego Mendez and Bartholomew Columbus** (the Admiral's brother, the "lieutenant" or Adelantado) are real. Mendez may say imagined everyday words, through the interpreter, flagged on his journal page (owner's rule, 16 November 2026). Bartholomew does not speak.
+6. **Hard things are told gently** (rule 4): the mutineers' cruelty to their paddlers at sea, the fight at Maima in May 1504 and what Spanish rule did to the Taino after 1509 are told in the journal and on cards, never shown. Nobody is hurt on screen.
+7. **What people wear** (a choice for a children's game, said so in the journal): the record says the Taino men and most women wore little or nothing; married women wore a short cotton skirt (Ferdinand, 1494 and 1502 passages). In the game every Taino person wears more cloth than the record describes: men and boys a short cotton wrap at the hips, women and girls a short cotton skirt and a cotton band round the chest. The journal page "What people wore" says so. The reviewer should judge this.
+8. **No belts, buckles or Spanish fastenings on Taino people** (owner, 25 November 2026: "remember they didnt wear belts with buckles"). Every recipe of 1503 sets `"belt": false`; the cotton wrap and skirt are tied, not buckled. The 2026 guide's belt is modern and stays.
+
+## The record (checked at source, 25 November 2026)
+
+Read at source in `docs/games/xaymaca/sources/`:
+- **Ferdinand Columbus's history of his father**, as printed in Kerr's *General History and Collection of Voyages*, vol. 3 (1824), chapter on the fourth voyage (`kerr-vol3-ferdinand.txt`, lines 8676 to 9195). Ferdinand was on the voyage.
+- **Diego Mendez's account in his will** (1536), English and Spanish, in R. H. Major, *Select Letters of Christopher Columbus*, Hakluyt Society, 2nd edition (1870), pages 223 to 235 (`major-1870-select-letters.txt`, lines 15310 to 15830).
+- **The NASA catalogue of lunar eclipses, 1501 to 1600** (`nasa-le1501.html`): the eclipse of 1504 March 01 (Julian), greatest at 00:44:47 TD, total, umbral magnitude 1.0956, partial phase 339.7 minutes, total phase 47.6 minutes.
+- **David V. Burley, "The Structure and Material Assemblage of a Jamaican Taino Residence at First Spanish Contact"**, *Journal of Caribbean Archaeology* 22 (2022) (`burley2022.pdf` and `.txt`): the dig at Maima.
+
+What they say, in order:
+- **23 June 1503** ("the night before midsummer eve"): the ships reach Puerto Bueno (Ferdinand). Puerto Bueno had no water and no village. **25 or 26 June** (Ferdinand: "the day after the festival of St John, 26th of June" in Kerr's text; Burley gives 25 June): they move east to **Santa Gloria**, St Ann's Bay, "inclosed by rocks".
+- The two ships, worm-eaten, are run ashore "board and board", shored up on both sides, the water nearly up to the decks, "about a bow-shot from the land". Sheds are put up on the decks, poops and forecastles for the men to sleep in (Ferdinand); "two cabins thatched with straw" (Mendez). The ships were **La Capitana** and **Santiago de Palos**, called **Bermuda** (Ferdinand names "the Bermuda"; Burley names both).
+- The Admiral keeps the men on board so they will not take food or upset the villages. **Two men are put in charge of buying.** The Taino come in canoes to trade. Prices (Ferdinand): **two hutias for a piece of tin**; **cakes of their bread, "zabi", for two or three red or yellow glass beads**; a large lot for **a hawk's bell**; to a cacique, **a red cap, a small mirror or a pair of scissors**.
+- The nearest village is **Maima** (Ferdinand: "a town then named Maima, in the neighbourhood of the ships, at which place the Christians afterwards built a town called Seville"). Burley puts Maima on the hill **1.4 km (a quarter league) in a straight line** from the best beaching place, on 1.5 ha of upland overlooking the sea, cut by a deep gully.
+- Mendez walks inland with three men and arranges with the cacique of a village he calls **Aguacadiba** that they will make cassava bread and bring it; then the cacique **Huareo**, thirteen leagues from the ships; then, at the east end, the cacique **Ameyro**, with whom he **exchanges names**, "which amongst these people is regarded as a pledge of brotherly attachment", and from whom he buys **a very good canoe for a brass helmet, a frock and a shirt** (Mendez).
+- **July 1503:** two canoes "hollowed out of one single trunk", "the gunwale not a span above water when they are loaded". Mendez in one with **six Spaniards and ten Indians to paddle**; Bartholomew Fieschi (Fiesco), a Genoese, in the other "with a similar crew". They go along the coast to the east point, **Aoamaquique** (named after its cacique), 33 leagues from Maima; the Adelantado guards them there and watches them go at nightfall. Each paddler takes "his calabash of water and a supply of carrabi" (cassava) (Ferdinand). Mendez's own account differs: a first try with one Spaniard and six Indians, a capture by "Indian pirates", an escape, and a second start with the Adelantado and seventy men (Mendez). The game follows Ferdinand for the numbers and says the two accounts differ.
+- **The crossing** (Ferdinand, from Mendez's letter): fierce heat; the paddlers jump into the sea to cool off; the water is drunk too soon; on the second day their strength is gone; at night **one paddler dies of thirst** and is put into the sea; when the moon rises, Mendez sees it come up behind a small island, **Navassa** ("Nabazza"), "in the nature of an eclipse". On the rock they find rainwater in holes; **some paddlers drink too much and die**, others fall ill. They cook shellfish, cross to **Cape St Michael** (Cape Tiburon) on Hispaniola, and rest two days. **No one will go back to Jamaica with Fiesco.** Mendez: "leaving those that I had brought with me" (he took six new paddlers on Hispaniola). **No paddler is named, and none is recorded coming home.**
+- On Hispaniola the governor, Ovando, keeps Mendez **seven months** (Mendez). Mendez buys a ship at Santo Domingo, sent to Jamaica "at the latter end of May 1504" (Ferdinand).
+- **2 January 1504:** the brothers Porras lead **48 men** in a mutiny ("For Spain! for Spain!"), seize **ten canoes** the Admiral had bought, and go east. Along the way they take food by force. At sea they turn back in rough weather and **kill their Taino paddlers to lighten the canoes: eighteen die** (Ferdinand; told in the game only as "they were cruel to their paddlers, and eighteen paddlers died"). They wander west from village to village.
+- The Taino bring less food. Ferdinand blames the mutineers' talk, and says the strangers ate "in one day as much as would have sufficed an Indian for twenty".
+- **The eclipse.** Knowing an eclipse is three days off "in the early part of the night", the Admiral sends **an Indian of Hispaniola** who is on board to call the leading people. The day before, through him, he says God is angry that they bring too little food, and will show it in the moon that night, "angry and of a bloody hue". The moon **rises already partly dark**; people come "from all parts loaded with provisions, crying and lamenting". He shuts himself in his cabin until the eclipse is about to end, then says God has forgiven them (Ferdinand). Ferdinand adds that **they had seen eclipses before**. Mendez calls it "an almost total eclipse".
+- **The date.** The NASA catalogue's greatest eclipse at 00:44:47 TD on 1 March 1504 (Julian) is about **19:30 local time on 29 February 1504** at St Ann's Bay (77.2 degrees west, so local time is UT minus 5 hours 9 minutes; Delta T about 3 minutes). The partial phase began about 16:40 local, before moonrise (about 18:10), so **the moon rose already darkened**, as Ferdinand wrote. Totality about 19:10 to 19:55. The eclipse ended about 22:20. 1504 was a leap year. (Worked out from the catalogue on 25 November 2026; to check against a planetarium program.)
+- **About March 1504** ("eight months" after Mendez left): a small ship under **Diego de Escobar**, sent by Ovando, anchors by the wrecks, gives the Admiral a cask of wine and two flitches of bacon, and sails away the same night (Ferdinand).
+- **19 May 1504:** the mutineers come to Maima. The Adelantado's 50 men fight them on a hill a bow-shot from the village; Porras is taken; some are killed. The Taino of the area were "all in arms waiting the event without taking either side" (Ferdinand). **20 May:** the rest ask pardon.
+- **Late June 1504:** Mendez's ship arrives. **28 June** (Ferdinand; Burley gives 29 June), everyone sails. They reach Santo Domingo on 13 August.
+- **What came after** (for the 2026 chapter and the journal): the Spanish came back to St Ann's Bay in **1509** and built **Sevilla la Nueva**, Jamaica's first Spanish town, next to Maima; it was abandoned in 1534. Maima was left at about the time the Spanish town began. Disease, forced labour (encomienda) and fighting were devastating for the Taino (Burley 2022, introduction). Within a few lifetimes most Taino people in Jamaica had died. (To check with the reviewer: how to say what survives, and how Taino descendants in Jamaica speak of themselves today.)
+
+### Maima, from the dig (Burley 2022)
+
+- **When:** Burley and Woodward surveyed Maima in **2014** and excavated house terraces in **2015** (Burley 2022, "Site Context").
+- Houses stood on **terraces and built platforms** of marl and limestone, stepping down the hill (six step-like terraces with twelve possible houses in Maima East).
+- **House 10: round, with a centre pole, 4 m across, 12.5 square metres**, a home for one family. Its door was on the west side, away from the wind.
+- **Cooking was done away from the house**: few griddle pieces and no hearth on the house terrace.
+- The **buren**, a thick clay griddle up to half a metre across, for **casabe (bammy)**, "a principal food provided by the people of Maima to Columbus".
+- Coil-built pots (White Marl style), bowls, jars, cups, **boat-shaped bowls** with raised ends; incised lines and notched rims.
+- Chert flakes for cutting, hand stones and mortars, **shell scrapers** (for peeling roots and scaling fish), coral pieces perhaps for grating cassava, a stone axe blade, a **net sinker**. Fish bones far outnumber others; hutia and birds too.
+
+### Cassava
+
+Bitter cassava root was grated, the poisonous juice squeezed out, and the meal baked on the buren as flat cakes (casabe). Source for the squeezing: the Taino Museum page "Food preparation on Buren" (`https://tainomuseum.org/?p=2645`). **To check** at a primary source (Oviedo, *Historia general*, book 7) before release.
+
+## The child and the family (fictional)
+
+- **You**: a child of Maima, about ten, first person, at a child's eye height. Fictional.
+- **Grandmother**: makes casabe at the buren; remembers eclipses before. Fictional.
+- **Cousin**: about seventeen, a strong paddler. He goes with the canoes in July 1503. Fictional. **His fate is left open**: the record names no paddler and records none coming home. The game ends with the family still watching the sea. (Owner to confirm.)
+- **The cacique of Maima**: real (the village had one), but no source names him. He has a few everyday words, flagged.
+- **The interpreter**: real ("an Indian of Hispaniola who was on board"), unnamed. His words are imagined except where they carry Ferdinand's report of what the Admiral said.
+- **Diego Mendez**: real; imagined everyday words through the interpreter, flagged.
+
+## Chapters
+
+1. **Ships on the bay** (late June 1503, Maima and the shore). Grandmother at the buren. Two broken ships limp into the bay and are run aground (camera scene). Go down with Cousin. Look at the ships: men thatching sheds on the decks.
+2. **Bread for bells** (July 1503, the shore). Carry casabe to the trading canoe. The trade (camera scene: out to the ships' side). Look at a hawk's bell. The interpreter; Diego Mendez wants strong paddlers. Cousin says he will go.
+3. **The paddlers** (July 1503, the shore at dawn). Fill Cousin's calabash and bring his cassava. The canoes leave east along the coast (camera scene). Then what Mendez later wrote of the crossing (camera scene at sea: heat, thirst, the moon rising behind Navassa).
+4. **The ten canoes** (January 1504, Maima). Shouting on the ships; men take ten canoes and go east (camera scene, far). Pull the family's canoe up under the trees. Grandmother: the strangers eat so much. A runner brings news from the east (told, not shown).
+5. **The red moon** (29 February 1504, Maima at night). The interpreter calls the leading people. The moon rises dark and turns red (the big camera scene). People run down with food. The moon comes back. Grandmother: "The moon has gone dark before."
+6. **When the ships left** (May to June 1504, Maima and the shore). Grandmother tells of the fight on the hill (not shown). A ship comes. Everyone sails on 28 June (camera scene). Cousin has not come back. The family keeps watching the sea.
+7. **Back in 2026** (Seville Heritage Park). A guide (fictional) shows where Maima was, the round house 4 m across, and the bay. Words that came from Taino: canoe, hammock, hurricane, barbecue; bammy from casabe. The quiz.
+
+## Places (what each is modelled on, and what is still a general picture)
+
+- **Maima**: terraces down a green hillside, round centre-pole houses about 4 m across with conical thatch and the door on the west (Burley 2022), a cooking place apart with a buren on stones over a small fire, pots, a cassava garden in mounds, the bay below. **General picture:** the thatch, the walls (cane or wattle, to check), the hammocks inside, the gardens. No picture of a Jamaican Taino house of 1503 exists.
+- **The shore at Santa Gloria**: a pale beach, the reef line, the two caravels aground side by side with thatched sheds on deck. They are drawn nearer the beach than "a bow-shot", so the player can see them; the journal says so. **General picture:** the caravels (about 50 to 70 tons, no plan of either ship exists): a round stern, a high sterncastle, a low forecastle, square sails on fore and main, a lateen mizzen.
+- **The crossing**: the open sea at night, a dugout canoe, the rock of Navassa against the moon. Seen only in a camera scene.
+- **Maima at night**: the same village by firelight and moonlight.
+- **Seville Heritage Park, 2026**: lawn, trees, the sea below, a heritage sign, and models of round Taino houses. **To check:** the park's real layout and signs (JNHT, photographs) before release; drawn as a general picture.
+
+## People and clothes
+
+Bodies in `tools/xaymaca/people/` (`xa_`), built by the shared `tools/garvey/era.py` with the new keys `"bare"` and `"band"` (added 25 November 2026 for this game, see `docs/PIPELINE.md`). Taino skin inside rule 9's range, long straight black hair. The Taino recipes set `"era": 1900` and `"waistband": false`: the era picks the builder's period keys, not the year of the story (as Morant Bay does); the 1900 skirt stays whole in a stride, where the pre-1800 skirt split up the front of the leading leg (seen in the full sheets, 25 November 2026). `"belt": false` keeps any belt off (owner's rule 8 above).
+
+**Period dress, checked by eye on 25 November 2026 (owner: "ensure the clothing is period appropriate"):**
+- **Taino villagers:** undyed cotton only (a short wrap at the hips for men and boys; a short skirt and a chest band for women and girls, more than the record describes, rule 7), bare feet, long straight hair, no metal, no buttons, no belts or buckles. To do: body paint in red and black for some people (Ferdinand describes it for other islands; to check for Jamaica), shell and stone beads.
+- **The sailors** (`xa_sailor`, `xa_sailor2`): a loose linen shirt with no buttons, loose knee-length slops, bare feet, and a brimless round red wool cap (the *bonete*), as sailors of about 1500 are shown. The cap is the builder's `pillbox`, a little stiffer than a knitted cap: **to do**, a soft knitted cap in the builder. (Their shirts use the 1900 keys with `"buttons": false` and `"pocket": false`, for clean sleeves at the elbow.)
+- **Diego Mendez** (`xa_mendez`): a gentleman's dress of about 1500: a dark, closed, knee-length *sayo* with full sleeves over a linen shirt, dark slops and shoes, bareheaded. Mendez's own will names the *sayo* he traded for the canoe. The builder's 1690 coat with `"coatbuttons": false` and `"coatopen": false` stands in for it: **a general picture**, to check against pictures of Spanish dress of about 1500. His hat was taken off: the round bonnet cut into his hair.
+- **The interpreter:** a Taino man in a sailor's linen shirt and slops, imagined (the record says nothing of his dress), said so in his journal page.
+- **Miss Sharon and the visitor (2026):** everyday clothes of today; her belt is modern and right for 2026.
+
+## Review before it goes live
+
+- A **Taino-heritage reviewer** must see the game before it goes on the menu. In 2024 and 2025 the Jamaican press reported the **Yamaye Guani Council** (Kasike Kalaan, Robert Pairman) and the **Yamaye Council of Indigenous Leaders** (chair Dr Marcus Goffe) speaking for Taino descendants in Jamaica (Jamaica Gleaner, 12 April 2024, "Tainos want indigenous status legitimised"; Gleaner, 14 December 2024). The **Jamaica National Heritage Trust** runs Seville Heritage Park. The owner chooses whom to ask.
+- Questions for the reviewer: the clothes; the family words; whether any Taino name may be used; what to say about descendants today; the house and village; anything sacred that should not be there.
+
+## Checks (25 November 2026)
+
+- `node tools/review/run-test.mjs xaymaca audit,held,layout,cloth`: **audit 0 and faces 0** in all five places, **ambient setup 0**, **held (carry) 0**, **layout 0** at 1280x720, 390x800 and 667x375, **flow 0**.
+- **Autoplayer** `?auto=1`: plays the whole story to **AUTO END 75**.
+- **Skin** (`?test=skin`): every face inside the warm-brown range.
+- **Walkers:** all at 0 except `xa_girl` (feet slide 7.6 cm a loop: the engine's known girl-stride fault, `docs/TODO.md`).
+- **Content lint:** 0 new findings. **Tests:** `node --test tests/regressions.mjs tests/controls.mjs tests/chapter-footer.mjs`, 275 pass.
+- **People (rule 15):** `node tools/review/full-check.mjs xaymaca <all 16> anims=Idle:0.4,Walk:0.3,Talk1:0.4,Point:0.5,PickUp:0.4`; every sheet looked at (each pose from the front, three-quarter, side and back, the clothes and neck close up, the phone and crowd copies). **Faults still visible or reported:** the chest band lets a few points of skin through by the armpit when the arm is raised or the body bends (`xa_girl` 7 lines, `xa_woman` 5, `xa_gran` 1, worst about 2.5 cm, Point and PickUp); a wrap or skirt lifts a little at the front of the leading leg in a stride (all Taino bodies; reads as the wrap's overlap); Mendez's coat neck shows a few millimetres of skin at the collar and his slops touch the coat's skirt when he bends (the shared 1690 coat); the straight hair is a plain shell, blocky from behind (the shared builder's `"straight"` hair); the phone and crowd copies report 1 to 4 points on the hidden measuring copies of skirts and slops (not visible). Grandmother's waist shows a small step where the skin meets the skirt.
+
+## Sources
+
+- Ferdinand Columbus, history of the Admiral (Kerr, vol. 3, 1824): `sources/kerr-vol3-ferdinand.txt`, from https://archive.org/details/ageneralhistorya12325gut
+- Diego Mendez's account, in R. H. Major, *Select Letters of Christopher Columbus*, 1870: `sources/major-1870-select-letters.txt`, from https://archive.org/details/selectlettersofc00colurich
+- NASA, Five Millennium Catalog of Lunar Eclipses, 1501 to 1600: `sources/nasa-le1501.html`, from https://eclipse.gsfc.nasa.gov/LEcat5/LE1501-1600.html
+- David V. Burley, *Journal of Caribbean Archaeology* 22 (2022): `sources/burley2022.pdf`, from https://www.floridamuseum.ufl.edu/wp-content/uploads/sites/44/2022/03/JCA-Burley-2022.pdf
+- Burley and others, "Jamaican Taino settlement configuration at the time of Christopher Columbus", *Latin American Antiquity* (2017): not read (the download failed); cited only through Burley 2022.
+- Seville Heritage Park: Archaeology magazine, January/February 2018, https://archaeology.org/issues/january-february-2018/off-the-grid/trenches-jamaica-seville-heritage-park/ ; JIS, https://jis.gov.jm/restored-seville-heritage-site-reopens/
+- Taino Museum, "Food preparation on Buren": https://tainomuseum.org/?p=2645 (secondary)
+
+## Still to do
+
+- The reviewer (above). The owner decides Cousin's fate and the clothes.
+- Check the cassava squeezing at a primary source; check Seville Heritage Park's real layout.
+- Phone hand-play, a stopwatch time for each chapter.

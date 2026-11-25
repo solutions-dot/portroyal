@@ -82,3 +82,7 @@ games/air-jamaica/site/models/anims.js
 games/air-jamaica/site/title.css
 games/air-jamaica/site/chapters.css
 games/air-jamaica/site/models/tex_1700.js
+
+# Xaymaca: built files are made by tools/build.mjs (and by the Vercel build), so they are not tracked
+games/xaymaca/site/app.js
+games/xaymaca/site/models/anims.js

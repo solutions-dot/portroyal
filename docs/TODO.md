@@ -21,6 +21,14 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 - [ ] **Listen to the sound.** The owner heard a loud rush like a waterfall in ordinary play. The wind is now softer in every Nanny place (`SOUNDSCAPE` in `src/main.js`), and the stream is a quieter, lower brook (`src/sfx.js`) heard only within about 9 to 10 m of the water (the estate stream near z = -13.5, the New Nanny Town river along x = 27). Play each chapter with sound on. Check: no loud rushing noise away from water, and the brook can still be heard beside it. Turn it down further if it still sounds like a waterfall.
   Measured the stream gain in Chromium with audio running. It was 0 away from water in the estate and New Nanny Town, and about 0.08 beside each stream. A listening pass through all six chapters is still open.
 
+## Air Jamaica (games/air-jamaica)
+
+Live on the menu since 25 November 2026. The full list and the faults still visible are in `docs/games/air-jamaica/HANDOFF.md`, "What is left".
+
+- [ ] The owner looks at the DC-8, DC-9 and A320 noses and tails in the game (`?shot=10`, `?shot=40`, `?shot=96`).
+- [ ] A person listens to the sound of every place and the new-colours cheer (levels pass `?test=beds`; nobody has heard them).
+- [ ] Small body faults: `aj_dee04` jeans specks at the belt and the seated hip crease; `aj_dee10` seated back hem.
+
 ## Every game
 
 - [x] **One water tower in the engine.** `engine/water-tower.js` `buildWaterTower()` (straight legs on stone footings); Kendal, Bog Walk, Eventide, Melissa, Selassie and Windrush call it with their own helpers. `tests/shared-props.mjs` keeps copies out (21 Nov 2026).
