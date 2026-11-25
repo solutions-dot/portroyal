@@ -64,7 +64,7 @@ const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
 /* where everything stands (world metres; +z is toward the terminal): the plane's origin and the door it opens */
 export const APRON = {
   plane: { x: 8, z: -8 },
-  stairs: { x: -6.2, z: -4.86 }, // the foot of the platform; the steps run toward +z
+  stairs: { x: -9.0, z: -4.86 },   /* under the forward door (planes.js DC8.doors: 17.0 along the body) */ // the foot of the platform; the steps run toward +z
   line: { z: -3.2 }, // the crew's line along the fuselage
 };
 
@@ -173,17 +173,17 @@ function apron() {
   const Q = base("apron", [-34, -5.5, 36, 27.2], [-3, 24, 0]);
   scene(Q);
   const lineZ = APRON.line.z;
-  person(Q, "marcia", "marcia", -8.0, lineZ, 0, { kind: "idle" });
-  person(Q, "hines", "hines", -4.4, 0.5, face(-4.4, 0.5, -6.2, 0.0), { kind: "idle" }, { held: "clipboard" });
+  person(Q, "marcia", "marcia", -7.4, lineZ, 0, { kind: "idle" });   /* nearest the steps, which stand under the door at x -9 */
+  person(Q, "hines", "hines", -7.4, 0.6, face(-7.4, 0.6, -9.0, 0.0), { kind: "idle" }, { held: "clipboard" });   /* at the foot of the steps */
   person(Q, "ross", "ross", -12.4, 0.0, face(-12.4, 0.0, -2, 6), { kind: "idle" }, { held: "bag" });
   const looks = ["aj_crew1", "aj_crew2", "aj_crew3", "aj_crew4", "aj_crew5"];
-  const left = [-13.6, -12.5, -11.4, -10.3, -9.2], right = [-4.4, -3.3, -2.2, -1.1, 0.0, 1.1, 2.2, 3.3];
+  const left = [-15.8, -14.7, -13.6, -12.5, -11.4], right = [-6.3, -5.2, -4.1, -3.0, -1.9, -0.8, 0.3, 1.4];   /* a gap for the steps at x -9 */
   [...left, ...right].forEach((x, i) =>
     crowd(Q, looks[i % looks.length], x, lineZ + (i % 2) * 0.12, 0, { kind: "watch", at: [0, 14], react: ["Wave"], every: [5, 9] }, { line: true }),
   );
   /* a white flight bag at each crew member's feet, beside her (the 1969 advertisement), Aunt Marcia's too */
-  for (const [i, x] of [...left, -8.0, ...right].entries()) {
-    const z = lineZ + (x === -8.0 ? 0 : ([...left, ...right].indexOf(x) % 2) * 0.12);
+  for (const [i, x] of [...left, -7.4, ...right].entries()) {
+    const z = lineZ + (x === -7.4 ? 0 : ([...left, ...right].indexOf(x) % 2) * 0.12);
     add(Q, P.flightBag(), x + 0.37, z + 0.05, 0, 0);
     wall(Q, x + 0.3, z - 0.14, x + 0.44, z + 0.24);
     void i;

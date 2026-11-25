@@ -39,11 +39,14 @@ const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 export const DC8 = {
   name: "DC-8-50",
   /* fuselage outline [x, radius] from the tail to the nose, and the lift of the tail cone */
-  profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [14.0, 1.85], [17.0, 1.78], [19.4, 1.55], [21.1, 1.18], [22.2, 0.74], [22.8, 0.3], [22.95, 0.06]],
-  droop: { from: 16.0, down: 0.45 },
+  /* the nose measured from manilov.ap's DC-8 model (Sketchfab, CC BY 4.0; a real-scale DC-8, 3.83 m across): at each distance behind the tip, the radius
+     and how far the nose's centre lies below the body's. The flight deck and nose are the same on every DC-8 series. It was 2.8 m too long, with its
+     tip too high (owner, 25 November 2026, who sent the model) */
+  profile: [[-23.0, 0.08], [-22.2, 0.42], [-19.5, 0.95], [-16.0, 1.45], [-12.0, 1.78], [-9.0, 1.85], [16.45, 1.85], [17.95, 1.78], [18.95, 1.68], [19.95, 1.53], [20.95, 1.32], [21.95, 0.95], [22.45, 0.67], [22.8, 0.36], [22.95, 0.05]],
+  noseDrop: [[0, -0.69], [0.5, -0.52], [1, -0.4], [2, -0.26], [3, -0.14], [4, -0.06], [5, -0.02], [6.5, 0], [999, 0]],
   Y0: 3.2, lift: { from: -11, over: 12, up: 0.55 },
-  windows: { from: -17.0, to: 13.4, step: 0.78, dy: 0.7 }, /* the first cabin window is behind the forward door (photograph): ahead of it they showed as black squares under the windscreen */
-  doors: [{ x: 14.2, side: -1, w: 0.86, h: 1.8, sill: 2.4, main: true }, { x: 14.2, side: 1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 2.45 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
+  windows: { from: -17.0, to: 16.0, step: 0.78, dy: 0.7 }, /* the first cabin window is behind the forward door (photograph): ahead of it they showed as black squares under the windscreen */
+  doors: [{ x: 17.0, side: -1, w: 0.86, h: 1.8, sill: 2.4, main: true }, { x: 17.0, side: 1, w: 0.8, h: 1.65, sill: 2.45 }, /* 6 m behind the tip (the model) */ { x: -13.4, side: -1, w: 0.8, h: 1.65, sill: 2.45 }, { x: -13.4, side: 1, w: 0.8, h: 1.65, sill: 2.45 }], /* sill 0.8 m below the centre line: the door spans from under the stripe to over the windows (photograph 6Y-JIJ) */
   overwing: [{ x: -3.2, side: -1 }, { x: -3.2, side: 1 }, { x: -5.4, side: -1 }, { x: -5.4, side: 1 }],
   cargo: [{ x: 9.0, side: 1 }, { x: -9.4, side: -1 }],
   wing: { root: [3.0, -7.5], tip: [-9.0, -11.8], span: 21.2, y: 2.3, tilt: 0.05, thick: 0.34 },
@@ -51,10 +54,10 @@ export const DC8 = {
   tail: { fin: [[-10.5, 1.0], [-13.2, 9.8], [-17.2, 9.8], [-19.8, 1.0]], finTop: 9.8, stab: { y: 0.9, pts: [[-15.5, 0], [-19.2, 7.0], [-22.0, 7.0], [-21.4, 0]] }, tee: false },
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
   band: { roundel: [-13.9, 7.5], r: 1.25, phi: 62, R: 4.0 }, /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
-  stripeEnd: 14.8, roofEnd: 15.5, /* both begin just behind the forward door, the cockpit area all white (photograph of 6Y-JGB, 25 November 2026; they ran on round the windscreen). Earlier: where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
+  stripeEnd: 17.6, roofEnd: 18.3, /* both begin just behind the forward door, the cockpit area all white (photograph of 6Y-JGB, 25 November 2026; they ran on round the windscreen). Earlier: where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
   flag: { x: -5.0 },
-  cockpit: { x: 15.95, front: 17.85, glassEnd: 17.85, painted: true, noStrip: true, lo: [0.3, 0.22], hi: [0.78, 0.3], posts: [16.65, 17.25], frame: 0.065 }, /* as on the DC-9: just ahead of the door, high on the nose */ /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
+  cockpit: { x: 19.45, front: 20.95, painted: true, side: { xb: 19.45, xf: 20.95, lo: 0.57, hi: 1.14, lean: 0.45, posts: [20.35, 19.95] } }, /* the glass 2.0 to 3.5 m behind the tip, 0.57 to 1.14 m above the body's centre line, its front edge leaning back (the model) */ /* as on the DC-9: just ahead of the door, high on the nose */ /* side panes and the windscreen block: high on the nose, above the window line (photograph 6Y-JIJ) */
 };
 export const DC9 = {
   name: "DC-9-30",
@@ -110,7 +113,8 @@ function centreY(S, x) {
   const { from, over, up } = S.lift;
   const t = Math.max(0, Math.min(1, (from - x) / over));
   let y = S.Y0 + up * t * t;
-  if (S.droop && x > S.droop.from) { const P = S.profile, k = Math.min(1, (x - S.droop.from) / (P[P.length - 1][0] - S.droop.from)); y -= S.droop.down * Math.pow(k, 1.7); }
+  if (S.noseDrop) { const P = S.profile, d = P[P.length - 1][0] - x, T = S.noseDrop; for (let j = 1; j < T.length; j++) if (d <= T[j][0]) { y += lerp(T[j - 1][1], T[j][1], (d - T[j - 1][0]) / (T[j][0] - T[j - 1][0])); break; } }
+  else if (S.droop && x > S.droop.from) { const P = S.profile, k = Math.min(1, (x - S.droop.from) / (P[P.length - 1][0] - S.droop.from)); y -= S.droop.down * Math.pow(k, 1.7); }
   return y;
 }
 /* a point on the body's side at height dy above the centre line: its y and z on side s, and the tilt of the surface there */
@@ -172,6 +176,15 @@ function skinTexture(len) {
 function noseWindows(S, x, dy) {
   const C = S.cockpit;
   if (!C.painted) return null;
+  if (C.side) {      /* drawn in side view at fixed heights (h above the body's level centre line), as measured on the DC-8 model */
+    const W = C.side, h = dy + centreY(S, x) - S.Y0, fr = 0.06;
+    if (h < W.lo || h > W.hi) return null;
+    const front = W.xf - (h - W.lo) / (W.hi - W.lo) * W.lean;
+    if (x < W.xb || x > front) return null;
+    if (h < W.lo + fr || h > W.hi - fr || x < W.xb + fr || x > front - fr) return 0xe8e8e2;
+    for (const px of W.posts) if (Math.abs(x - px + (h - W.lo) * 0.35) < fr / 2) return 0xe8e8e2;
+    return 0x16222a;
+  }
   /* Measured from the enlarged photograph (ref-a320-blue-tail.jpg, the nose): no band round the windows. Each pane is dark glass in a broad white
      frame, low on the nose (a fifth to a half of the radius up at the side windows); the white cap comes down to their tops. The windscreen's front
      panes climb over the top of the nose to its centre post. The only black is a strip under the windscreen that runs forward and down to the nose

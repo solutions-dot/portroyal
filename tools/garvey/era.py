@@ -807,6 +807,14 @@ if not OLD:
                 a=_bin(v.co,_cy); k=int(a)%_nb; fr=a-int(a); tr=_br[k]*(1-fr)+_br[(k+1)%_nb]*fr; r=math.hypot(v.co.x,v.co.y-_cy)
                 if r>1e-4 and tr>r: q=tr/r; v.co.x*=q; v.co.y=_cy+(v.co.y-_cy)*q
             _bm.to_mesh(_o.data); _bm.free(); _o.data.update(); _sh=[_tr(_P['shirt'])]
+        if G.get('woman'):      # a woman's loose top: at the side of the bust, by the armpit, the swinging arm drew the skin through it mid-stride (woman2025, rule 15 sheet): there it stands 12 mm off the skin
+            for v in _o.data.vertices:
+                c=v.co
+                if not (0.07<abs(c.x)<0.17 and HIP+0.20<c.z<HIP+0.36): continue
+                for T in _skin:
+                    loc,nrm,_i,_d=T.find_nearest(c,0.03)
+                    if loc is not None and (c-loc).dot(nrm)<0.012: v.co=loc+nrm*0.012
+            _o.data.update(); _sh=[_tr(_P['shirt'])]
     if 'skirt' in _P: clear_layer(_P['skirt'],_skin+_sh,0.004)
     _lay=_sh+([_tr(_P['breeches'])] if 'breeches' in _P else [])
     if 'waistcoat' in _P: clear_layer(_P['waistcoat'],_skin+_lay,0.008)
@@ -1066,7 +1074,7 @@ if G.get('chain') and not OLD:      # a fine gold chain round the neck (1990s on
         for T in _ct:
             hit=T.ray_cast(q,Vector((0,0,-1)))[0]
             if hit is not None and (best is None or hit.z>best.z): best=hit
-        pts.append((best if best is not None else Vector((q.x,q.y,NECK-0.03*s)))+Vector((0,-(0.003+0.05*G['chain']*f),0.0035)))      # lifted off the cloth, more where it hangs low over the chest, which moves most (a long chain sank into aj_pass10's T-shirt)
+        pts.append((best if best is not None else Vector((q.x,q.y,NECK-0.03*s)))+Vector((math.sin(a)*0.006*s,-(0.003+0.05*G['chain']*f),0.0035+0.004*abs(math.sin(a)))))      # and out and up at the sides, where the neckline rides on the shoulders (it dipped under it there mid-stride: aj_dee04, aj_dee10)      # lifted off the cloth, more where it hangs low over the chest, which moves most (a long chain sank into aj_pass10's T-shirt)
     for _ in range(3): pts=[(pts[i-1]+pts[i]*2+pts[(i+1)%48])/4 for i in range(48)]      # one smooth curve, with no kinks where a ray met a fold
     bm=bmesh.new(); R=0.0016*s; rings=[]
     for i,c in enumerate(pts):
@@ -1456,6 +1464,14 @@ if HS in ('puffs','plaits'):      # a girl's hair: two puffs, or two plaits, eac
         rq=root+d*0.004 if HS=='puffs' else root+Vector((sx*0.012*s*1.5,0.02*s,-0.034*s*5))
         bmesh.ops.create_uvsphere(bb,u_segments=8,v_segments=5,radius=0.022*s,matrix=Matrix.Translation(rq)@Matrix.Diagonal((1,1,0.45,1)))
     for v in bm.verts: v.co+=Vector((noise.noise(v.co*60),noise.noise(v.co*60+Vector((5,0,0))),noise.noise(v.co*60+Vector((0,5,0)))))*0.004
+    for _hn in ('Hat','Cap'):      # a hat sits on the head before the plaits are made: any point of them inside its cloth is set 3 mm outside it (woman1988's plaits pressed into her hat's sides)
+        _ho=bpy.data.objects.get(_hn)
+        if not _ho: continue
+        _hb=bmesh.new(); _hb.from_mesh(_ho.data); _hb.transform(_ho.matrix_world); _hb.normal_update(); _ht=BVHTree.FromBMesh(_hb); _hb.free()
+        for _B in (bm,bb):
+            for v in _B.verts:
+                loc,nrm,_i,_d=_ht.find_nearest(v.co,0.03)
+                if loc is not None and (v.co-loc).dot(nrm)<0.003: v.co=loc+nrm*0.003
     rigid('Puffs',bm,'Hair','Head'); rigid('Ribbons',bb,'Ribbon','Head')
 if G.get('bun'):         # hair gathered into a bun at the back of the head
     # Under a hat the bun sits low on the back of the head, clear of the brim. It is half sunk into the skull, so it is part of the head and never floats behind the neck
@@ -2334,6 +2350,10 @@ for m in eyes.data.materials:
     for n in m.node_tree.nodes:
         if n.type=='TEX_IMAGE' and n.image: n.image.filepath=os.path.abspath('shared/rig/eye.png'); n.image.reload()
 # relaxed arms and curled fingers, the same pose Abba uses
+if 'breeches' in PART and PART.get('shirt') and bpy.data.objects.get('Belt') and not OLD and G.get('trousers') and not G.get('untucked') and not G.get('jacket') and not P.get('outfit'):      # jeans with a belt over a tucked shirt end at the belt's top edge, as real ones do: higher, the shirt lay inside them and a band of the jeans showed above the belt at the back (aj_guest94a, rule 15 sheet, 25 November 2026)
+    _jb=bmesh.new(); _jb.from_mesh(PART['breeches'].data); _jt=HIP+0.104      # below the belt's top, so the cut edge is hidden behind it
+    bmesh.ops.delete(_jb,geom=[f for f in _jb.faces if cz(f).z>_jt and side_arm(cz(f)) is None],context='FACES'); bmesh.ops.delete(_jb,geom=[v for v in _jb.verts if not v.link_faces],context='VERTS')
+    _jb.to_mesh(PART['breeches'].data); _jb.free(); PART['breeches'].data.update()
 if 'breeches' in PART and not P.get('outfit'):      # (a fitted garment keeps MakeHuman's own weights) the bottom of a jacket and the tucked part of a shirt move with the trousers under them: on the hips' weights alone, a seated thigh rose through the jacket's hem, and a tucked shirt slid out over the waistband
     from mathutils.kdtree import KDTree
     _br=PART['breeches']; _kd=KDTree(len(_br.data.vertices))
