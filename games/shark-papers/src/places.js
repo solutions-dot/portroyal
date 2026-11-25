@@ -571,7 +571,7 @@ function deck() {
     });
     if (film.clip !== clip) {
       film.clip = clip;
-      hands.forEach((n, i) => (i === 0 || t >= 5.5) && n.ctl.play(i === 0 && t < 5.5 ? "CarryIdle" : clip, true));
+      hands.forEach((n, i) => (i === 0 || t >= 5.5) && n.ctl.play(i === 0 && t < 5.5 ? "FishIdle" : clip, true));   /* Mr Fitton works the line, waiting for the bite (the owner's Mixamo "Fishing Idle") */
     }
     /* the shark: under the stern on the line, then up the side and over the rail, then down on the deck */
     const up = sm((t - 13.5) / 4.5),
@@ -603,14 +603,17 @@ function deck() {
       shark.updateMatrixWorld();
       shark.localToWorld(_nose.set(0, 0.2, -1.6));   /* the hook is in its mouth */
     }
-    const nose = out ? [_nose.x, _nose.y, _nose.z] : [f.x, SEA - 0.1, f.z];
+    /* before it comes up, the hooked shark is out in the water astern, pulling this way and that: the scene places it itself (the place's tickers do not
+       run while a camera scene plays, so the circling fin could sit anywhere, even on the deck, and the line cut across it through Mr Fitton) */
+    const nose = out ? [_nose.x, _nose.y, _nose.z] : [-3.6 + Math.sin(t * 1.3) * 0.5, SEA - 0.1, 12.6 + Math.sin(t * 0.9) * 0.4];
+    line.visible = lead.visible = false;   /* the step's own line is replaced by the scene's */
     /* the hauling part runs along the row of hands at hand height, beside them (it ran across the row through their bodies: owner's screenshot),
        then turns to the lead (the cleat, then the rail as the fish comes up) */
-    const lead = t < 5.5 ? CLEAT : BLOCK;
+    const leadP = t < 5.5 ? CLEAT : BLOCK;
     block.visible = t >= 5.5 && t < 20.5;
     film.rope.visible = t < 19.5;
     film.rope2.visible = film.rope3.visible = t >= 5.5 && t < 20.5;
-    if (film.rope.visible) stretch(film.rope, lead, nose);   /* from the fish up to the block (or, while Mr Fitton waits, to the cleat) */
+    if (film.rope.visible) stretch(film.rope, leadP, nose);   /* from the fish up to the block (or, while Mr Fitton waits, to the cleat) */
     if (film.rope2.visible) { stretch(film.rope2, BLOCK, FALL); stretch(film.rope3, FALL, TAIL); }   /* the fall down through the hands, its end on the deck */
   };
 

@@ -213,7 +213,7 @@ function gallery() {
   /* Mum and the other families stand along the front rail, looking out over the apron */
   person(Q, "mum", "mum", G.x1 - 3.9, G.z0 + 1.0, face(G.x1 - 3.9, G.z0 + 1.0, 8, -8), { kind: "idle" }, { ground: G.top });
   const spots = [[G.x0 + 1.4, G.z0 + 0.9, "wr_bman62"], [G.x0 + 2.8, G.z0 + 0.9, "wr_bwoman62"], [G.x1 - 7.1, G.z0 + 1.6, "wr_bboy62"], [G.x1 - 1.6, G.z0 + 1.0, "wr_lwoman62"]];
-  spots.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 8, -8), { kind: "watch", at: [8, -8], react: ["Wave"], every: [3, 6] }, { ground: G.top }));
+  spots.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 8, -8), { kind: "watch", at: [8, -8], react: ["Wave"], every: [3, 6] }, { ground: G.top }));   /* (the owner's two-arm "Waving" was tried here: on the crowded gallery a rising arm went through the next person) */
   Q.keepOff = [];
   Q.lookViews = {};
   Q.enter = () => {};
