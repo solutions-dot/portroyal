@@ -1043,6 +1043,7 @@ if G.get('buttons',not G.get('woman') and not OLD) and not G.get('coat'):      #
         soft('Buttons',bm,'Buttons',src=ON('shirt'))
 if G.get('chain') and not OLD:      # a fine gold chain round the neck (1990s on; "chain": how far it hangs at the front, in metres at a grown man's size): it lies on whatever is outermost there, the shirt or the skin
     _ct=[tree_of(PART['shirt'])] if PART.get('shirt') else []
+    if bpy.data.objects.get('Collar'): _ct.append(tree_of(bpy.data.objects['Collar']))      # the collar too: laid only on the shirt and skin, the chain ran under a polo's turned-down collar (rule 15 sheet of aj_pass04, 25 November 2026)
     _ct.append(SKIN if 'SKIN' in globals() else tree_of(h)); yc,rx,ry=neck_ring(NECK-0.01*s); pts=[]
     for k in range(48):
         a=2*math.pi*k/48; f=(0.5+0.5*math.cos(a))**2; g=0.012*s+G['chain']*f*0.9
