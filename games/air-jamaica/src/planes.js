@@ -66,22 +66,24 @@ export const DC8 = {
 };
 export const DC9 = {
   name: "DC-9-30",
-  profile: [[-18.2, 0.07], [-17.5, 0.3], [-15.0, 0.8], [-12.0, 1.3], [-9.0, 1.62], [-6.0, 1.67], [10.5, 1.67], [13.0, 1.6], [15.0, 1.38], [16.6, 1.02], [17.6, 0.62], [18.1, 0.26], [18.25, 0.05]],
-  droop: { from: 12.5, down: 0.42 }, /* a blunter nose that droops a little (photograph of 6Y-JGB): it was a sharp bullet */
+  /* the nose: the DC-8 model's nose (same maker, same kind of flight deck), scaled to the DC-9's narrower body (owner, 25 November 2026: head-on the
+     DC-9 showed no windscreen at all; its nose was a long bullet with the glass far back by the door) */
+  profile: [[-18.2, 0.07], [-17.5, 0.3], [-15.0, 0.8], [-12.0, 1.3], [-9.0, 1.62], [-6.0, 1.67], [12.6, 1.67], [13.08, 1.63], [13.94, 1.58], [14.8, 1.45], [15.66, 1.27], [16.52, 0.97], [17.17, 0.75], [17.6, 0.585], [18.03, 0.31], [18.2, 0.04]],
+  noseDrop: [[0, -0.8], [0.17, -0.8], [0.6, -0.74], [1.03, -0.69], [1.68, -0.57], [2.54, -0.33], [3.4, -0.18], [4.26, -0.09], [5.12, -0.03], [5.6, 0], [999, 0]],
   Y0: 2.9, lift: { from: -8, over: 10, up: 0.6 },
-  windows: { from: -12.0, to: 10.6, step: 0.7, dy: 0.62 },
-  doors: [{ x: 11.2, side: -1, w: 0.82, h: 1.7, sill: 2.15, main: true }, { x: 11.2, side: 1, w: 0.75, h: 1.55, sill: 2.2 }, { x: -10.6, side: -1, w: 0.7, h: 1.5, sill: 2.25 }],
+  windows: { from: -12.0, to: 12.2, step: 0.7, dy: 0.62 },
+  doors: [{ x: 13.1, side: -1, w: 0.82, h: 1.7, sill: 2.15, main: true }, { x: 13.1, side: 1, w: 0.75, h: 1.55, sill: 2.2 }, { x: -10.6, side: -1, w: 0.7, h: 1.5, sill: 2.25 }],
   overwing: [{ x: -2.4, side: -1 }, { x: -2.4, side: 1 }],
   cargo: [{ x: 6.2, side: 1 }, { x: -7.0, side: 1 }],
   wing: { root: [2.2, -5.0], tip: [-5.6, -7.6], span: 14.2, y: 2.0, tilt: 0.04, thick: 0.28 },
   engines: { kind: "rear", z: 2.55, y: 0.55, x: -11.6, len: 4.0, r: 0.6 },
   tail: { fin: [[-9.0, 1.0], [-12.0, 6.0], [-16.2, 6.0], [-17.0, 1.0]], finTop: 6.0, stab: { y: 6.0, pts: [[-11.6, 0], [-15.6, 4.4], [-17.8, 4.4], [-16.4, 0]] }, tee: true },
-  gear: { noseX: 13.4, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
+  gear: { noseX: 15.2, mainX: -1.2, mainZ: 2.9, bogie: 2, wheel: 0.55, noseWheel: 0.4 },
   band: { roundel: [-12.3, 4.1], r: 0.95, phi: 50, R: 3.0 }, /* the roundel half way up, close behind the leading edge (ref-dc9-6Y-JGB) */
-  stripeEnd: 11.8, roofEnd: 12.4, /* just behind the forward door (photograph of 6Y-JGB) */
+  stripeEnd: 13.7, roofEnd: 14.3, /* just behind the forward door (photograph of 6Y-JGB) */
   title: { x: 4.9, w: 5.6 },
   flag: { x: -3.0, onEngine: true }, /* the flag is on the engine pod (photograph 6Y-JIJ) */
-  cockpit: { x: 12.85, front: 14.45, glassEnd: 14.45, painted: true, noStrip: true, lo: [0.3, 0.22], hi: [0.78, 0.3], posts: [13.45, 13.95], frame: 0.06 }, /* just ahead of the door and high on the nose, dark panes in white frames (photograph of 6Y-JGB; it sat 2 m too far forward) */
+  cockpit: { x: 15.1, front: 16.4, painted: true, side: { xb: 15.1, xf: 16.4, lo: 0.17, hi: 0.9, lean: 0.33, posts: [15.95, 15.55] } }, /* glass 1.8 to 3.1 m behind the tip, as on the DC-8 model scaled */
 };
 
 /* The Airbus A320, in the airline's later look (the blue tail: ref-a320-blue-tail.jpg, ref-a340-blue-tail.jpg, ref-727-and-a321.jpg). Published
