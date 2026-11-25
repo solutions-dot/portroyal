@@ -55,6 +55,7 @@ for o in objs:
     for v in o.data.vertices: v.co.x = g(v.co.x)
     vs = [v.co for v in o.data.vertices]
     c = sum(vs, mathutils.Vector()) / len(vs)
+    if m.startswith('Object01'): continue           # two small boxes on the lower sides of the nose: no photograph shows them, and they stood out as lumps (owner, 25 November 2026)
     if m.startswith('fuzel'): kind = 'body'
     elif m.startswith('Plane04'): kind = 'glass'
     elif m.startswith('Object03'): kind = 'frame'
@@ -64,6 +65,7 @@ for o in objs:
     elif c.x < -12: kind = 'tailskin'
     else: kind = 'metal'
     cats.setdefault(kind, []).append(o)
+    if c.x > 16 and kind == 'metal' and False: print('NOSEPART', o.name, mat(o), len(o.data.polygons), 'x', round(min(v.x for v in vs), 2), round(max(v.x for v in vs), 2), 'y', round(min(v.y for v in vs), 2), round(max(v.y for v in vs), 2), 'z', round(min(v.z for v in vs), 2), round(max(v.z for v in vs), 2))
 for kind, os_ in cats.items():
     bpy.ops.object.select_all(action='DESELECT')
     for o in os_: o.select_set(True)
@@ -75,5 +77,5 @@ for kind, os_ in cats.items():
     vs = [v.co for v in j.data.vertices]
     print('PART', kind, len(j.data.polygons), 'x', round(min(v.x for v in vs), 2), round(max(v.x for v in vs), 2), 'z', round(min(v.z for v in vs), 2), round(max(v.z for v in vs), 2))
 for o in list(bpy.data.objects):
-    if o.type != 'MESH': bpy.data.objects.remove(o)
+    if o.type != 'MESH' or mat(o).startswith('Object01'): bpy.data.objects.remove(o)
 bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', export_materials='PLACEHOLDER', export_texcoords=False, export_yup=True)

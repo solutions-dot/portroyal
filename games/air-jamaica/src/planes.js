@@ -590,12 +590,31 @@ function jetFromModel(S, opts, MODEL) {
   /* the other parts' materials; the fin carries the livery's climbing stripes and roundel (finPaint), laid on by side-view position */
   const fp = finPaint(S); fp.tex.anisotropy = 8;
   const finMat = new THREE.MeshStandardMaterial({ map: fp.tex, roughness: 0.4, metalness: 0.05 }); finMat.userData.noGrain = true;
-  const glassM = own(0x4a6878, 0.08, 0.55); glassM.polygonOffset = true; glassM.polygonOffsetFactor = -2;   /* blue-grey and glossy, so it catches the sky: near black, the panes and frames ran together into one dark blob (owner, 25 November 2026) */
-  const mats = { glass: glassM, frame: own(0xf1efe8, 0.4, 0.1), tyre: M.tyre, wingskin: own(0xdfe1df, 0.42, 0.25), tailskin: own(0xe6e6e2, 0.45, 0.15), metal: own(0xc4c8c8, 0.38, 0.45), fin: finMat };
+  const glassM = own(0x4a6878, 0.08, 0.55);
+  const frameM = own(0xf1efe8, 0.4, 0.1);   /* no depth offsets: with one on the glass it was drawn over the frame's posts */   /* blue-grey and glossy, so it catches the sky: near black, the panes and frames ran together into one dark blob (owner, 25 November 2026) */
+  const mats = { glass: glassM, frame: frameM, tyre: M.tyre, wingskin: own(0xdfe1df, 0.42, 0.25), tailskin: own(0xe6e6e2, 0.45, 0.15), metal: own(0xc4c8c8, 0.38, 0.45), fin: finMat };
   P.traverse((o) => {
     if (!o.isMesh || body.includes(o)) return;
     const k = Object.keys(mats).find((n) => o.name.startsWith(n) || (o.parent && o.parent.name.startsWith(n))) || "metal";
     o.material = mats[k];
+    if (k === "glass") {
+      /* the model's windscreen is one sheet (its posts were only in its old picture): a picture laid on from above gives it the centre post between the
+         two front panes and the posts between the side panes, pale like the frames, as on a DC-8 */
+      const pos = o.geometry.attributes.position, v = new THREE.Vector3(), q = [];
+      for (let i = 0; i < pos.count; i++) q.push(v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).clone());
+      const gx0 = Math.min(...q.map((p) => p.x)), gx1 = Math.max(...q.map((p) => p.x)), gz = Math.max(...q.map((p) => Math.abs(p.z))) + 0.01;
+      const uv = new Float32Array(pos.count * 2); q.forEach((p, i) => { uv[i * 2] = (p.x - gx0) / (gx1 - gx0); uv[i * 2 + 1] = (p.z + gz) / (2 * gz); });
+      o.geometry = o.geometry.clone(); o.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+      const gt = cv(512, 512, (x, W, H) => {
+        x.fillStyle = "#4a6878"; x.fillRect(0, 0, W, H);
+        const g2 = x.createLinearGradient(0, 0, W, 0); g2.addColorStop(0, "rgba(255,255,255,0.0)"); g2.addColorStop(0.7, "rgba(200,225,240,0.18)"); g2.addColorStop(1, "rgba(255,255,255,0.0)"); x.fillStyle = g2; x.fillRect(0, 0, W, H);   /* a little sky in it */
+        x.fillStyle = "#f1efe8"; const px = (m) => ((m - gx0) / (gx1 - gx0)) * W, pw = (m) => (m / (2 * gz)) * H;
+        x.fillRect(0, H / 2 - pw(0.035), W, pw(0.07));                                   /* the centre post */
+        for (const m of [gx1 - 0.55, gx1 - 1.05]) x.fillRect(px(m) - 5, 0, 10, H);     /* the posts between the side panes */
+        x.fillRect(0, 0, W, 6); x.fillRect(0, H - 6, W, 6); x.fillRect(0, 0, 6, H); x.fillRect(W - 6, 0, 6, H);
+      });
+      o.material = new THREE.MeshStandardMaterial({ map: gt, roughness: 0.1, metalness: 0.45 }); o.material.userData.noGrain = true;
+    }
     if (k === "fin") {
       const pos = o.geometry.attributes.position, uv = new Float32Array(pos.count * 2), v = new THREE.Vector3();
       for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); uv[i * 2] = (v.x - fp.x0) / fp.w; uv[i * 2 + 1] = (v.y - S.Y0 - fp.y0) / fp.h; }
