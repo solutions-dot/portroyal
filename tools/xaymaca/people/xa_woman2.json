@@ -25,11 +25,12 @@
   "skirt": true,
   "band": true,
   "woman": true,
-  "hem": 0.75,
-  "flare": 0.9,
+  "hem": 0.7,
+  "flare": 1.7,
   "sleeve": 0.0,
   "belt": false,
-  "waistband": false
+  "waistband": false,
+  "hairfall": true
  },
  "colors": {
   "Skin": [

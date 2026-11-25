@@ -20,7 +20,7 @@
   "hairvol": 0.0,
   "hat": [
    [
-    "pillbox",
+    "knit",
     "Hat"
    ]
   ],
@@ -28,7 +28,8 @@
   "belt": false,
   "waistband": false,
   "buttons": false,
-  "pocket": false
+  "pocket": false,
+  "wrapoff": 0.6
  },
  "colors": {
   "Skin": [

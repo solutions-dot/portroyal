@@ -20,11 +20,13 @@
   "hairlen": 0.7,
   "hairopen": 1.05,
   "hat": [],
-  "skirt": true,
-  "hem": 1.5,
-  "flare": 0.7,
   "belt": false,
-  "waistband": false
+  "waistband": false,
+  "trousers": true,
+  "shorts": true,
+  "shortslen": -0.16,
+  "legwidth": 0.9,
+  "hairfall": true
  },
  "colors": {
   "Skin": [
@@ -37,15 +39,15 @@
    214,
    186
   ],
-  "Skirt": [
-   210,
-   196,
-   166
-  ],
   "Hair": [
    22,
    18,
    16
+  ],
+  "Breeches": [
+   210,
+   196,
+   166
   ]
  },
  "face": "broad",

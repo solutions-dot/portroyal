@@ -24,7 +24,8 @@
   "coatbuttons": false,
   "coathem": 0.02,
   "necktuck": true,
-  "coatopen": false
+  "coatopen": false,
+  "necktuckdepth": 2.2
  },
  "colors": {
   "Skin": [
