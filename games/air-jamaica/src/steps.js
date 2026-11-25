@@ -12,11 +12,13 @@ const CABIN_ALL = ["dee2", "chef", "clarke"];
 const NEW_ALL = ["marcia94", "hines94"], HOME_ALL = ["marcia10", "dee10"], LAST_ALL = ["dee10s", "grant"];
 export const STEPS = {
   /* 1. A flag in the sky */
+  /* one walk along the line (owner, 25 November 2026: "busy work back and forth"): Aunt Marcia, Mr Hines at the steps, the crew, Captain Ross by the
+     nose, and the bird on the tail last, on the way up to Mum (the tail look used to send you to the far end and straight back) */
   10: t("apron", "Talk to Aunt Marcia in the line of crew.", ["marcia"], 11, { show: ALL, journal: "you" }),
-  11: l("apron", "Look at the bird on the plane's tail.", ["tail"], 12, { show: ALL, journal: "lovebird" }),
-  12: t("apron", "Talk to Mr Hines at the foot of the steps.", ["hines"], 13, { show: ALL, journal: "plane" }),
-  13: l("apron", "Look along the line of crew.", ["crew"], 14, { show: ALL, journal: "uniforms" }),
-  14: t("apron", "Talk to Captain Ross by the nose.", ["ross"], 15, { show: ALL, journal: "captain" }),
+  11: t("apron", "Talk to Mr Hines at the foot of the steps.", ["hines"], 12, { show: ALL, journal: "plane" }),
+  12: l("apron", "Look along the line of crew.", ["crew"], 13, { show: ALL, journal: "uniforms" }),
+  13: t("apron", "Talk to Captain Ross by the nose.", ["ross"], 14, { show: ALL, journal: "captain" }),
+  14: l("apron", "Look at the bird on the plane's tail.", ["tail"], 15, { show: ALL, journal: "lovebird" }),
   15: t("gallery", "Join Mum in the waving gallery.", ["mum"], 16, { show: ["mum"], journal: "gallery" }),
   16: w("gallery", "The first flight leaves.", "film", 17, { film: "takeoff", show: ["mum"] }),
   17: w("gallery", "The first flight leaves.", "playing", 18, { film: "takeoff", show: ["mum"] }),
@@ -31,10 +33,12 @@ export const STEPS = {
   38: w("newlook", "The new colours.", "film", 39, { film: "reveal", show: NEW_ALL }),
   39: w("newlook", "The new colours.", "playing", 40, { film: "reveal", show: NEW_ALL }),
   /* 4. New colours: the apron at Norman Manley Airport, December 1994 */
+  /* one walk (review, 25 November 2026): Aunt Marcia, Mr Hines by the nose, the name beside him, then along the side to the tail (the tail look used
+     to send you 27 m one way and Mr Hines 37 m straight back) */
   40: t("newlook", "Talk to Aunt Marcia by the new plane.", ["marcia94"], 41, { show: NEW_ALL, journal: "dee94" }),
-  41: l("newlook", "Look up at the new tail.", ["tail94"], 42, { show: NEW_ALL, journal: "newlook" }),
-  42: t("newlook", "Talk to Mr Hines by the nose.", ["hines94"], 43, { show: NEW_ALL, journal: "owners" }),
-  43: l("newlook", "Look at the name and the flag.", ["nose"], 44, { show: NEW_ALL, journal: "airbus" }),
+  41: t("newlook", "Talk to Mr Hines by the nose.", ["hines94"], 42, { show: NEW_ALL, journal: "owners" }),
+  42: l("newlook", "Look at the name and the flag.", ["nose"], 43, { show: NEW_ALL, journal: "airbus" }),
+  43: l("newlook", "Look up at the new tail.", ["tail94"], 44, { show: NEW_ALL, journal: "newlook" }),
   44: w("newlook", "The new look takes off.", "film", 45, { film: "newflight", show: NEW_ALL }),
   45: w("newlook", "The new look takes off.", "playing", 46, { film: "newflight", show: NEW_ALL }),
   46: w("newlook", "What did you learn?", "quiz", 50, { quiz: "newlook", show: NEW_ALL }),

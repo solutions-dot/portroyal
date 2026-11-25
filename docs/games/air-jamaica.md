@@ -6,6 +6,13 @@
 
 1. A flag in the sky (1 April 1969), 2. The view from the front (the 1970s), 3. **New colours (December 1994, steps 40 to 46, place `newlook`)**, 4. The flying chef (the 2000s), 5. **The sale (April 2010, steps 70 to 73, place `home`)**, 6. **The last flight home (30 April 2010, steps 90 to 96, places `lastflight` and `arrival`)**. The order is by date: the 1994 chapter comes before the chef. Handoff and checks: `docs/games/air-jamaica/HANDOFF.md`.
 
+**Gameplay review, 25 November 2026** (owner: "Is everything in the gameplay, shadows, music, soundeffects, playability etc in place?"):
+- **One walk, not back and forth.** Chapters 1 and 3 sent the player from the crew to the tail at the far end and straight back to Mr Hines. Now chapter 1 is Aunt Marcia, Mr Hines, the crew line, Captain Ross, then the tail on the way up to Mum; chapter 3 is Aunt Marcia, Mr Hines, the name and flag beside him, then the tail. The lines that send you on were changed to match.
+- **Chapter 3 could not start.** The new-colours scene had no card, so the game stopped with an error at step 38. A short, gentle scene with no card now plays at once (`waits` in `main.js`).
+- **Sound.** Every background bed was under the shared 0.05 floor and the cabins were silent. The levels are now one table, `PLACE_BEDS` in `places.js`, mixed by the engine (`mixBeds`), with the low hum of the engines in the cockpit and cabins; `?test=beds` checks them (0 issues). The scene's "cheer" was silent: the engine now has `crowdCheer()`.
+- **Shadows.** The shadow box was 46 m round the camera, so a parked jet 30 to 50 m away threw none. It is 96 m (3072 texels) in this game.
+- Checked: audit 0 in all eight places, held 0, ambient 0, layout 0, controls pass, content lint 0, the autoplayer from chapter 1 to the end with no errors.
+
 **What the new chapters show, and what is a stand-in (say so to the owner):**
 - **The Airbus A320 in the blue-tail look** (`planes.js`, `A320`): published sizes; the colours from the owner's photographs (`ref-a320-blue-tail.jpg`, `ref-a340-blue-tail.jpg`, `ref-727-and-a321.jpg`). The Observer (July 2011) shows "the new-look Air Jamaica aircraft ... before its inaugural flight in December 1994", but that the December 1994 look was this blue-tail look is a **lean, not a date** (see "What this tells us about the dates"), and which plane wore it first is not known (an A300 wore it by February 1996). The journal says both. No registration is drawn.
 - **The later airport** (`airport.js`, `later`): the 1969 terminal and its waving gallery are left out; a **general hangar** stands on the player's side. It is a stand-in and carries no name. To do: a dated photograph of Norman Manley's hangars and terminal of 1994 and 2010.

@@ -170,6 +170,7 @@ There are no audio files. Everything is Web Audio noise and oscillators.
 | `cue(kind)` | Short music phrases: `'begin'`, `'sad'`, `'end'`. |
 | `gullCry()`, `chirp()`, `crackle()`, `shipCreak()`, `hammer()`, `clink()` | One-shot ambience. |
 | `tone(f0, f1, dur, type, vol, pan, delay)`, `noiseHit(freq, q, dur, vol, pan, delay)`, `out(pan)` | Building blocks for new sounds. |
+| `crowdCheer(vol, pan, delay)` | A crowd's soft hurrah and clapping, for a film's "cheer" sound or a look (Air Jamaica, 25 November 2026: the scene asked for a cheer no game could play). |
 
 ### One ambient level (22 November 2026)
 

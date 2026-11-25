@@ -70,7 +70,7 @@ export const APRON = {
 
 /* what both places share: the airport, the DC-8 at the steps, the DC-9 behind it, the ground gear. Returns the parts the first-flight scene moves. */
 function scene(Q, { deck = false, later = false } = {}) {
-  Q.beds = { wind: 0.04, crowd: 0.03 };
+  Q.beds = { ...PLACE_BEDS[Q.id] || PLACE_BEDS.apron };
   Q.light = { top: 0x4f9ed6, hor: 0xe6eee4, fog: [0xd8e6e6, 260, 1400], sun: [0xfff2d0, 2.8, -40, 60, 40], hemi: [0xffffff, 0x8aa0a0, 2.6] };
   /* the concrete apron: a large pale slab, with the grass and sea set round it by airport() */
   const ap = plane(150, 130, std(T.concrete([60, 52], [168, 165, 154])), 0, 0.001, 8, Q.group);
@@ -216,6 +216,7 @@ function gallery() {
   spots.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 8, -8), { kind: "watch", at: [8, -8], react: ["Wave"], every: [3, 6] }, { ground: G.top }));   /* (the owner's two-arm "Waving" was tried here: on the crowded gallery a rising arm went through the next person) */
   Q.keepOff = [];
   Q.lookViews = {};
+  Q.view = { pos: [G.x1 - 2.2, G.top + 1.6, G.z1 - 0.6], look: [G.x1 - 5, G.top + 0.9, G.z0 - 4] };   /* the test picture from the deck, not from the ground floor inside the building under it */
   Q.enter = () => {};
   return Q;
 }
@@ -225,7 +226,7 @@ function gallery() {
 function cockpit() {
   const Q = base("cockpit", [-1.15, 0.6, 0.95, 2.05], [-0.1, 1.55, 0]);   /* the room runs 0.9 m further back so you can step away from the seats and see all three crew (owner, 25 November 2026) */
   Q.light = { top: 0x6fa8dc, hor: 0xe3eef2, fog: [0xdce8ee, 900, 9000], sun: [0xfff2d0, 2.6, -30, 60, 40], hemi: [0xffffff, 0x9aa8a8, 2.5], fill: 1.35 };
-  Q.beds = { wind: 0.02 };
+  Q.beds = { ...PLACE_BEDS.cockpit };
   const room = buildCockpit();
   P.dynamic(room);
   Q.group.add(room);
@@ -306,7 +307,7 @@ function cabin() {
   const Q = base("cabin", [-1.85, -4.24, 1.85, 3.6], [0.35, 3.0, 0]);
   Q.light = { top: 0x8fbce6, hor: 0xeef2f4, fog: [0xe6edf2, 40, 400], sun: [0xfff4e0, 1.4, -20, 40, 30], hemi: [0xffffff, 0xb8b4a8, 2.6], fill: 1.4 };
   Q.indoor = true;
-  Q.beds = { wind: 0.0 };
+  Q.beds = { ...PLACE_BEDS.cabin };
   const room = buildCabin();
   P.dynamic(room);
   Q.group.add(room);
@@ -377,7 +378,7 @@ function home() {
   const R = ROOM, Q = base("home", [R.x0 + 0.1, R.z0 + 0.1, R.x1 - 0.1, R.z1 - 0.1], [0.4, 1.9, 0.4]); /* clear of Mum by the door (the audit had her on the start) */
   Q.indoor = true;
   Q.light = { top: 0x2a3550, hor: 0x7a6a7a, stars: 0, fog: [0x2a2a30, 30, 120], sun: [0xffd8a8, 0.6, -10, 20, 10], hemi: [0xfff0dc, 0x8a7a6a, 2.2], fill: 1.2 };
-  Q.beds = { room: 0.03 };
+  Q.beds = { ...PLACE_BEDS.home };
   const g = Q.group, W = R.x1 - R.x0, D = R.z1 - R.z0, cx = (R.x0 + R.x1) / 2, cz = (R.z0 + R.z1) / 2;
   const tiles = new THREE.MeshStandardMaterial({ color: 0xd8d0c0, roughness: 0.5 });
   box(W, 0.04, D, tiles, cx, -0.02, cz, g);
@@ -448,7 +449,7 @@ function lastflight() {
   const Q = base("lastflight", [-1.85, -2.9, 1.85, 3.6], [0.0, 1.0, 0]);
   Q.light = { top: 0x34406a, hor: 0xe0a080, fog: [0x3a3a4a, 40, 400], sun: [0xffb070, 1.0, -20, 10, 30], hemi: [0xffe8d8, 0x8a7a70, 2.4], fill: 1.4 };
   Q.indoor = true;
-  Q.beds = { wind: 0.0, room: 0.02 };
+  Q.beds = { ...PLACE_BEDS.lastflight };
   const room = buildCabin({ dusk: true, trolley: false });
   P.dynamic(room);
   Q.group.add(room);
@@ -474,7 +475,7 @@ function arrival() {
   const Q = base("arrival", [-34, -5.5, 36, 33.4], [-3, 24, 0]);
   scene(Q, { later: true });
   Q.light = { top: 0x2e3f6e, hor: 0xf0a070, fog: [0xd09078, 300, 1600], sun: [0xffa860, 1.6, 80, 14, -60], hemi: [0x9aa0c8, 0x5a4a44, 1.8], fill: 0.5 };
-  Q.beds = { wind: 0.04 };
+  Q.beds = { ...PLACE_BEDS.arrival };
   const pose = Q.jetKeys([
     [0, 760, -83, Math.PI, 46, -0.05], [10, 420, -83, Math.PI, 18, -0.05], [16, 230, -83, Math.PI, 2.2, 0.04], [17.5, 195, -83, Math.PI, 0, 0.05],
     [19, 160, -83, Math.PI, 0, 0], [27, -30, -83, Math.PI, 0, 0], [30, -44, -79, Math.PI * 1.25, 0, 0], [33, -46, -62, Math.PI * 1.5, 0, 0],
@@ -486,6 +487,19 @@ function arrival() {
   Q.enter = () => {};
   return Q;
 }
+/* the background sound of each place, inside the shared range (engine/audio.js BED_RANGE, 0.05 to 0.35; ?test=beds checks it). The beds were all
+   under 0.05 and the cabin was silent (review, 25 November 2026): now a breeze and the crowd outside, the low hum of the engines in the cockpit and
+   the cabins, and the quiet of a house */
+export const PLACE_BEDS = {
+  apron: { wind: 0.08, crowd: 0.07 },
+  gallery: { wind: 0.09, crowd: 0.08 },
+  newlook: { wind: 0.08, crowd: 0.06 },
+  cockpit: { room: 0.12, wind: 0.06 },
+  cabin: { room: 0.14, wind: 0.03 },
+  home: { room: 0.06 },
+  lastflight: { room: 0.14, wind: 0.03 },
+  arrival: { wind: 0.08, crowd: 0.05 },
+};
 const builders = { apron, gallery, cockpit, cabin, newlook, home, lastflight, arrival };
 export const PLACE_IDS = Object.keys(builders);
 export function buildPlace(id, opts = {}) {

@@ -58,10 +58,10 @@ export const TALK = {
       L("You", "Is that the new plane?"),
       L("Aunt Marcia", "Yes. It is a Douglas DC-8. A big jet."),
       L("Aunt Marcia", "Air Jamaica is a Jamaican airline for Jamaican people."),
-      L("Aunt Marcia", "Go and look at the bird on its tail."),
+      L("Aunt Marcia", "Mr Hines is by the steps. Say hello."),
     ],
   },
-  12: {
+  11: {
     hines: [
       L("Mr Hines", "Mind the steps, young lady. They are new."),
       L("You", "Why are they blue and white?"),
@@ -72,7 +72,7 @@ export const TALK = {
       L("Mr Hines", "Now look along the line of crew. What a sight!"),
     ],
   },
-  14: {
+  13: {
     ross: [
       L("Captain Ross", "Good morning, young lady. Come to see us off?"),
       L("You", "Are you the pilot, sir?"),
@@ -81,8 +81,8 @@ export const TALK = {
       L("Captain Ross", "Jamaican pilots fly with us too."),
       L("You", "Where is the plane going?"),
       L("Captain Ross", "Up over the sea, and then north."),
-      L("Captain Ross", "Your Mum is up in the waving gallery."),
-      L("Captain Ross", "Go and wave. We leave very soon."),
+      L("Captain Ross", "Look at the bird on our tail on your way."),
+      L("Captain Ross", "Then go up to your Mum in the waving gallery."),
     ],
   },
 };
@@ -132,10 +132,10 @@ TALK[40] = {
     L("Aunt Marcia", "New owners took over the airline this year."),
     L("Aunt Marcia", "They gave the planes a whole new look."),
     L("You", "Is the bird still on the tail?"),
-    L("Aunt Marcia", "Go and look up at the tail."),
+    L("Aunt Marcia", "You will see. Say hello to Mr Hines first."),
   ],
 };
-TALK[42] = {
+TALK[41] = {
   hines94: [
     L("Mr Hines", "Dee! You were nine when the first jet flew."),
     L("You", "Mr Hines! You still work here?"),
