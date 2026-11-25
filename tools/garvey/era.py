@@ -2254,8 +2254,8 @@ if G.get('untucked') and PART.get('shirt'):      # a loose hem hangs from the wa
                     try: g.remove([i])
                     except RuntimeError: pass
     _so.data.update()
-if G.get('untucked') and G.get('trousers') and not G.get('shorts') and PART.get('breeches') and PART.get('shirt'):      # long trousers under a loose shirt end 3 cm above its hem: nothing higher is ever seen, and the later steps had pushed the front of the waist back out through the hem
-    _b=bmesh.new(); _b.from_mesh(PART['breeches'].data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if f.calc_center_median().z>HIP-0.005],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(PART['breeches'].data); _b.free(); PART['breeches'].data.update()
+if G.get('untucked') and G.get('trousers') and PART.get('breeches') and PART.get('shirt'):      # (shorts too, with their own cut below: in the light crowd copy the shorts' waist came out through the simplified shirt, Tivoli's man2010) long trousers under a loose shirt end 3 cm above its hem: nothing higher is ever seen, and the later steps had pushed the front of the waist back out through the hem
+    _b=bmesh.new(); _b.from_mesh(PART['breeches'].data); bmesh.ops.delete(_b,geom=[f for f in _b.faces if f.calc_center_median().z>(HIP-0.045 if G.get('shorts') else HIP-0.005)],context='FACES'); bmesh.ops.delete(_b,geom=[v for v in _b.verts if not v.link_faces],context='VERTS'); _b.to_mesh(PART['breeches'].data); _b.free(); PART['breeches'].data.update()
 # Colours. The layer below is a float layer, so the linear colours made by srgb() above are exported as they are, and the scene is marked
 # vertexColorSpace: linear (engine/colours.js repairs older bodies without the mark). So a recipe colour means the same colour in every game (docs/PIPELINE.md, "Skin").
 def paint(o):
