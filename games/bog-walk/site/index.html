@@ -194,8 +194,8 @@
 <link rel="stylesheet" href="title.css">
 <link rel="stylesheet" href="chapters.css">
 <style>
-  #title .intro-with-audio{display:flex;align-items:center;justify-content:center;gap:.65rem;margin:.65rem auto;max-width:42rem}
-  #title .intro-with-audio .intro{margin:0;min-width:0}
+  #title .title-with-audio{display:flex;align-items:center;justify-content:center;gap:.65rem;margin-inline:auto;max-width:100%}
+  #title .title-with-audio h1{min-width:0;overflow-wrap:anywhere}
   #intro-audio-toggle{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid var(--brass);border-radius:50%;background:#211e19;color:var(--brass);box-shadow:0 0 9px currentColor;cursor:pointer;animation:intro-glow 2.2s ease-in-out 3}
   #intro-audio-toggle[hidden],#intro-audio-toggle .intro-pause,#intro-audio-toggle.is-playing .intro-speaker{display:none}
   #intro-audio-toggle.is-playing{animation:none;box-shadow:none}
@@ -215,10 +215,8 @@
 <div id="stick" hidden><i></i></div>
 <div id="nudge" hidden aria-hidden="true"><svg viewBox="0 0 48 48" width="56" height="56"><path d="M24 4 L42 30 L30 30 L30 44 L18 44 L18 30 L6 30 Z" fill="#e8b84a" stroke="#3a2614" stroke-width="3" stroke-linejoin="round"/></svg><span>This way</span></div>
 <section id="title">
-  <h1>Bog Walk Tube Flood</h1>
-  <p><small>1904</small></p>
-  <div class="intro-with-audio">
-    <p class="intro">It’s a Sunday night in 1904, and you’re a young labourer at Bog Walk. Follow your crew into an iron pipe big enough to walk through. You’re there to clean it when water comes rushing in.</p>
+  <div class="title-with-audio">
+    <h1>Bog Walk Tube Flood</h1>
     <button id="intro-audio-toggle" type="button" aria-label="Listen to intro" hidden>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path class="intro-speaker" d="M11 5 6 9H3v6h3l5 4V5Zm4 4a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/>
@@ -226,6 +224,8 @@
       </svg>
     </button>
   </div>
+  <p><small>1904</small></p>
+  <p class="intro">It’s a Sunday night in 1904, and you’re a young labourer at Bog Walk. Follow your crew into an iron pipe big enough to walk through. You’re there to clean it when water comes rushing in.</p>
   <div class="row title-actions">
     <button id="start" class="btn" disabled>Loading</button>
     <button id="tchap" class="btn ghost" hidden>Chapters</button>
