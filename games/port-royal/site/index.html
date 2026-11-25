@@ -252,38 +252,8 @@ body.flash #c,body.flash canvas{filter:sepia(.55) saturate(.8) contrast(1.04) br
     <footer class="chfoot"><button id="chteacher" aria-pressed="false" class="btn ghost">Unlock All</button><button id="chreset" class="btn ghost">Restart</button><button id="chcred" class="btn ghost">Credits</button></footer>
   </div>
 </section>
-<audio id="intro-audio" src="port-royal-intro.mp3" preload="auto" autoplay></audio>
-    <script>
-      (() => {
-        const audio = document.getElementById('intro-audio');
-        const toggle = document.getElementById('intro-audio-toggle');
-        const updateLabel = () => {
-          toggle.setAttribute('aria-label', audio.paused ? 'Listen to intro' : 'Pause intro');
-          toggle.classList.toggle('is-playing', !audio.paused);
-        };
-
-        toggle.hidden = false;
-        for (const event of ['play', 'pause', 'ended']) {
-          audio.addEventListener(event, updateLabel);
-        }
-        updateLabel();
-        toggle.addEventListener('click', () => {
-          if (audio.paused) audio.play().catch(updateLabel);
-          else audio.pause();
-        });
-        audio.addEventListener('error', () => { toggle.hidden = true; });
-
-        const stopIntro = () => {
-          audio.autoplay = false;
-          audio.pause();
-          audio.currentTime = 0;
-        };
-        for (const id of ['start', 'tchap', 'allgames']) {
-          document.getElementById(id).addEventListener('click', stopIntro, { capture: true });
-        }
-        window.addEventListener('pagehide', stopIntro);
-      })();
-    </script>
+<audio id="intro-audio" src="port-royal-intro.mp3" preload="metadata"></audio>
+    <script src="intro-audio.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

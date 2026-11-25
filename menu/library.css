@@ -1,6 +1,6 @@
 /* The library on the menu: the bar (kinds of story, who is travelling), the "For you" strip, the round "i" button and the small
    lines library.js adds to each card, and its three dialogs. The behaviour is in library.js, the markup is in index.html
-   (#library, #profilepanel, #gamesheet, #agecard). The colours and the font are the variables at the top of index.html.
+   (#library, #profilepanel, #gamesheet). The colours and the font are the variables at the top of index.html.
    Without JavaScript none of this shows and the cards are plain links. See docs/PLATFORM.md, "The library". */
 
 /* A Mature 13+ card is out of sight unless the profile is Teens and adults (library.js sets .lib-teen). This holds before the script runs and without JavaScript. */
@@ -109,12 +109,9 @@ html:not(.lib-teen) .game[data-age="13"]{display:none}
 .lib-morelist{display:grid;gap:.5rem;margin:0;padding:.6rem 0 0;list-style:none}
 .lib-morelist .lib-tile{min-height:64px}
 .lib-morelist .lib-thumb{width:56px;height:56px}
-.lib-warnnote,#agenote{padding:.1rem 0 .1rem .9rem;border-left:4px solid var(--mango)}
+.lib-warnnote{padding:.1rem 0 .1rem .9rem;border-left:4px solid var(--mango)}
 
 /* the Mature 13+ warning card */
-.lib-warn{width:min(28rem,calc(100% - 1.5rem))}
-.lib-warn h2{margin-right:0;color:var(--mango)}
-.lib-warn .lib-kicker{margin-right:0!important;font-size:1.05rem;letter-spacing:0;text-transform:none;color:var(--paper)}
 
 /* after the intro the menu rises in (intro.css): the library fades in with it, and each "i" button rises with its card */
 .menu-in .lib-top,.menu-in .lib-kidsnote{animation:libIn .7s ease .1s backwards}
