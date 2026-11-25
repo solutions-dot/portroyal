@@ -57,7 +57,7 @@ export const DC8 = {
   engines: { kind: "wing", z: [7.4, 13.2], y: 1.1, len: 4.0, r: 0.62 },
   tail: { fin: [[-13.0, 1.85], [-13.0, 8.55], [-23.3, 8.55], [-23.3, 1.85]], finTop: 8.55, stab: { y: 1.8, pts: [[-18.5, 0], [-22.0, 7.4], [-24.0, 7.4], [-24.0, 0]] }, tee: false }, /* the model's fin and tailplane (their extent: the painted picture is laid over the fin by it) */
   gear: { noseX: 17.0, mainX: -3.0, mainZ: 3.6, bogie: 4, wheel: 0.62, noseWheel: 0.46 },
-  band: { roundel: [-19.8, 6.0], r: 1.05, phi: 40, R: 3.0 }, /* on the model's fin: near the top of its front, the stripes climbing the leading edge to it */
+  band: { roundel: [-19.9, 6.0], r: 1.3, phi: 40, R: 3.0 }, /* on the model's fin: near the top of its front, the stripes climbing the leading edge to it */
   finBox: [-23.3, 1.85, -13.0, 8.55], /* the model fin's extent in side view (x0, H0, x1, H1 above Y0), for its painted picture */ /* where the stripes climb the fin and end in the roundel, near the top of the fin's front (ref-1969-crew-and-dc8) */
   stripeEnd: 17.6, roofEnd: 18.3, /* both begin just behind the forward door, the cockpit area all white (photograph of 6Y-JGB, 25 November 2026; they ran on round the windscreen). Earlier: where the orange stripe and the yellow roof band stop; the nose beyond is white (photograph 6Y-JIJ, Airliners Gallery image 102905) */
   title: { x: 8.4, w: 6.2 },
@@ -359,7 +359,7 @@ function roundRect(w, h, r) {
    DC-9 in ref-727-and-a321.jpg and ref-dc9-6Y-JGB.jpg, the A321 in the blue tail): a fine upright body with a long thin beak and a leaf-shaped
    wing swept back, and two tail ribbons that loop round below it, one inside the other. It faces right in its picture, so on a tail it faces the nose.
    Coordinates are those of the enlarged photograph (the bird fits x 140 to 580, y 130 to 600), scaled into the square the caller gives. */
-export function drawBird(x, size, colour, eyeColour = "#1b1b1b") {
+export function drawBird(x, size, colour, eyeColour = "#1b1b1b", line = 11) {
   x.save();
   const k = size / 470;
   x.translate(size * 0.5, size * 0.5);
@@ -369,7 +369,7 @@ export function drawBird(x, size, colour, eyeColour = "#1b1b1b") {
   x.lineJoin = "round";
   x.strokeStyle = colour;
   x.fillStyle = colour;
-  x.lineWidth = 11;
+  x.lineWidth = line;
   /* the two tail ribbons, looping round and under the body */
   x.beginPath(); x.moveTo(350, 185); x.bezierCurveTo(300, 150, 165, 175, 158, 290); x.bezierCurveTo(150, 400, 260, 470, 330, 468); x.bezierCurveTo(400, 466, 440, 420, 458, 385); x.stroke();
   x.beginPath(); x.moveTo(352, 350); x.bezierCurveTo(300, 325, 210, 340, 195, 395); x.bezierCurveTo(170, 480, 230, 580, 320, 582); x.bezierCurveTo(420, 580, 470, 480, 470, 395); x.stroke();
@@ -388,14 +388,16 @@ export function drawBird(x, size, colour, eyeColour = "#1b1b1b") {
 }
 /* the roundel on the first look's tail: a white ring, a red-orange disc, the bird in amber (the colours of the 727 and DC-9 photographs) */
 export function roundelTexture() {
-  return cv(256, 256, (x, W) => {
+  /* the bird pale cream and bold, so it reads on the tail from across the apron (owner, 25 November 2026: "hummingbird can't be seen"; the DC-9 and 727
+     photographs show a pale bird on the orange disc) */
+  return cv(512, 512, (x, W) => {
     x.clearRect(0, 0, W, W);
     const c = W / 2;
-    x.fillStyle = "#f6f1e6"; x.beginPath(); x.arc(c, c, 126, 0, 7); x.fill();
-    x.fillStyle = "#d8361c"; x.beginPath(); x.arc(c, c, 108, 0, 7); x.fill();
-    x.save(); x.beginPath(); x.arc(c, c, 108, 0, 7); x.clip();
-    x.translate(c - 82 - 6, c - 82 + 4);
-    drawBird(x, 164, "#f2992e", "#8a2410");
+    x.fillStyle = "#f6f1e6"; x.beginPath(); x.arc(c, c, 252, 0, 7); x.fill();
+    x.fillStyle = "#e0501e"; x.beginPath(); x.arc(c, c, 220, 0, 7); x.fill();
+    x.save(); x.beginPath(); x.arc(c, c, 220, 0, 7); x.clip();
+    x.translate(c - 190, c - 186);
+    drawBird(x, 380, "#fbf3dc", "#8a2410", 24);
     x.restore();
   });
 }
@@ -449,7 +451,7 @@ function finPaint(S) {
   }
   /* the first look: the stripes' ribbon, painted pixel by pixel from the same rule as the body (ribbonColour), so the bands run on from the body
      without a seam, and the roundel where the ribbon ends */
-  const tex = cv(512, Math.round(512 * (h / w)), (x, W, H) => {
+  const tex = cv(1024, Math.round(1024 * (h / w)), (x, W, H) => {   /* sharp enough for the bird in the roundel */
     const img = x.createImageData(W, H), d = img.data;
     for (let j = 0; j < H; j++)
       for (let i = 0; i < W; i++) {
@@ -572,7 +574,8 @@ function jetFromModel(S, opts, MODEL) {
   /* the other parts' materials; the fin carries the livery's climbing stripes and roundel (finPaint), laid on by side-view position */
   const fp = finPaint(S); fp.tex.anisotropy = 8;
   const finMat = new THREE.MeshStandardMaterial({ map: fp.tex, roughness: 0.4, metalness: 0.05 }); finMat.userData.noGrain = true;
-  const mats = { glass: M.glass, frame: own(0xd6d8d4, 0.45, 0.2), tyre: M.tyre, wingskin: own(0xdfe1df, 0.42, 0.25), tailskin: own(0xe6e6e2, 0.45, 0.15), metal: own(0xc4c8c8, 0.38, 0.45), fin: finMat };
+  const glassM = own(0x4a6878, 0.08, 0.55); glassM.polygonOffset = true; glassM.polygonOffsetFactor = -2;   /* blue-grey and glossy, so it catches the sky: near black, the panes and frames ran together into one dark blob (owner, 25 November 2026) */
+  const mats = { glass: glassM, frame: own(0xf1efe8, 0.4, 0.1), tyre: M.tyre, wingskin: own(0xdfe1df, 0.42, 0.25), tailskin: own(0xe6e6e2, 0.45, 0.15), metal: own(0xc4c8c8, 0.38, 0.45), fin: finMat };
   P.traverse((o) => {
     if (!o.isMesh || body.includes(o)) return;
     const k = Object.keys(mats).find((n) => o.name.startsWith(n) || (o.parent && o.parent.name.startsWith(n))) || "metal";
