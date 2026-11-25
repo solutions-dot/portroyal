@@ -101,42 +101,112 @@ function ranges(Q, { centre, spread, layers, y, green, haze, seed }) {
   Q.group.add(R.group);
   return R;
 }
-/* a far figure in a canoe: a seated body and a paddle, plain shapes, seen only from afar in the camera scenes */
-const FIG = { skin: solid(0x8a5a3c, 0.9), cloth: solid(0xd8ccae, 1), paddle: solid(0x7a5c3c, 0.9), shirt: solid(0xd0c8b4, 1) };
-function paddler(spaniard = false) {
-  const g = grp();
-  cyl(0.15, 0.17, 0.5, spaniard ? FIG.shirt : FIG.skin, 0, 0.35, 0, g, 8);
-  mesh(new THREE.SphereGeometry(0.11, 8, 6), FIG.skin, 0, 0.72, 0, g);
-  const pd = grp(g, 0.24, 0.5, 0);
-  cyl(0.02, 0.02, 1.3, FIG.paddle, 0, 0, 0, pd, 5);
-  box(0.12, 0.3, 0.02, FIG.paddle, 0, -0.75, 0, pd);
-  g.userData.paddle = pd;
+/* a big dugout for the crossing, with the floor its crew kneel on (engine/boats.js) */
+function bigCanoe(L = 9, beam = 1.6) {   /* broad enough for two rows (Ferdinand: a Jamaican canoe Columbus measured in 1494 was 96 feet long and 8 broad) */
+  const g = grp(), c = X.canoe(L, { beam, depth: 0.55, gear: false });
+  g.add(c);
+  g.userData.floor = (c.userData.floor || 0.08) + 0.16;   /* the crew kneel this much higher: lower, their heels came out under the hull */
+  g.userData.L = L;
   return dyn(g);
 }
-/* a big canoe for the crossing: a dugout with its crew of paddlers and Spaniards (Ferdinand: six Spaniards and ten paddlers) */
-function crewedCanoe(L = 9, nPad = 10, nSp = 6, seed = 1) {
-  const g = grp(),
-    c = X.canoe(L, { beam: 1.1, depth: 0.5, gear: false });
-  g.add(c);
-  const crew = [],
-    n = nPad + nSp;
-  for (let i = 0; i < n; i++) {
-    const sp = i % 3 === 1 && crew.filter((f) => f.userData.sp).length < nSp,
-      f = paddler(sp);
-    f.userData.sp = sp;
-    const x = -L * 0.38 + (L * 0.76 * i) / (n - 1);
-    f.position.set(x, 0.05, (i % 2 ? 0.22 : -0.22) * 0.9);
-    f.rotation.y = -Math.PI / 2;
-    f.scale.setScalar(0.92 + (((i * 7 + seed) % 5) * 0.02));
-    g.add(f);
-    crew.push(f);
-  }
-  g.userData.crew = crew;
-  g.userData.stroke = (t) => crew.forEach((f, i) => {
-    if (f.userData.sp && i % 2) return;
-    f.userData.paddle.rotation.z = Math.sin(t * 3 + i * 0.4) * 0.6;
-  });
+/* People in a canoe: real bodies (background people, tools/xaymaca/people) that ride with it. Each is a background person whose standing spot is out of the
+   way and who is hidden until the canoe is manned (canoe.userData.manned, set by a camera scene); then the place's ticker kneels them in their place in the
+   canoe, facing the way it goes, a paddle in the hand, leaning into each stroke. (Kneel stands in for a paddling clip: owner, 25 November 2026, to come.)
+   slots: [[x along the canoe, z across, spaniard]]; looks: a Taino look and a Spanish look to take in turn; spots: [[x, z]] their standing spots, one each. */
+const PADDLE_M = solid(0x7a5c3c, 0.9), PADDLE_DROP = 0.52;
+function paddle() {
+  const g = grp();
+  cyl(0.018, 0.018, 1.05, PADDLE_M, 0, -0.52, 0, g, 6);   /* from the top grip (at the origin) down the shaft */
+  const b = mesh(new THREE.SphereGeometry(1, 10, 6), PADDLE_M, 0, -1.25, 0, g);
+  b.scale.set(0.09, 0.26, 0.016);
   return dyn(g);
+}
+function crew(Q, canoe, slots, { taino = ["xa_man", "xa_man2", "xa_runner"], spanish = ["xa_sailor", "xa_sailor2"] } = {}) {
+  const R = { canoe, list: [] };
+  slots.forEach(([x, z, sp], i) => {
+    const look = sp ? spanish[i % spanish.length] : taino[i % taino.length], sx = 0, sz = 0;   /* their standing spot is chosen at the end (placeCrews) */
+    R.list.push({ idx: Q.ambient.length, x, z, sp, i });
+    crowd(Q, look, sx, sz, 0, { kind: "watch", at: [sx, sz - 5], react: ["HeadTurn"], every: [8, 12] });
+  });
+  (Q.crews || (Q.crews = [])).push(R);
+  return R;
+}
+const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0);
+function crewTicker(Q) {
+  Q.tickers.push((t) => {
+    for (const R of Q.crews || []) {
+      const on = R.canoe.visible && R.canoe.userData.manned && R.canoe.parent;
+      for (const r of R.list) {
+        const n = Q.extras?.[r.idx];
+        if (!n || !n.m) continue;
+        if (!on) {
+          if (r.paddle) r.paddle.visible = false;
+          if (r.aboard) { r.aboard = false; const a = Q.ambient[r.idx]; n.x = a.x; n.z = a.z; n.ground = 0; n.m.userData.ground = 0; n.m.userData.noGround = false; Q.life.hold(n, false); n.m.position.set(n.x, 0, n.z); n.m.quaternion.identity(); }
+          n.m.visible = false;
+          continue;
+        }
+        if (!r.aboard) {
+          r.aboard = true; Q.life.hold(n, true); n.ctl.play(r.sp ? "Kneel" : "Paddle");   /* on a loop (a second argument would play it once, then stand) */
+          if (!r.paddle && !r.sp) { r.paddle = paddle(); Q.group.add(r.paddle); r.hands = [n.m.getObjectByName("mixamorigLeftHand"), n.m.getObjectByName("mixamorigRightHand")]; }
+        }
+        n.m.visible = true;
+        R.canoe.updateMatrixWorld();
+        _cp.set(r.x, (R.canoe.userData.floor || 0.1) - (r.sp ? 0.16 : PADDLE_DROP), r.z).applyMatrix4(R.canoe.matrixWorld);   /* a paddler sits low on the bottom of the dugout (the Paddle clip is posed on a seat: lowered by PADDLE_DROP) */   /* kneeling, the shins lie along the bottom of the dugout, below its floor line */
+        n.m.parent.worldToLocal(_cp);
+        n.m.position.copy(_cp);
+        n.x = _cp.x; n.z = _cp.z; n.ground = _cp.y; n.m.userData.ground = _cp.y; n.m.userData.noGround = true;   /* the crowd's own record too, so its tick keeps them here (and does not drop them to the ground) */
+        R.canoe.getWorldQuaternion(_cq);
+        _lq.setFromAxisAngle(_up, Math.PI / 2);   /* facing along the canoe, the way it goes (+x) */
+        _lean.setFromAxisAngle(_ax, 0);   /* the stroke and its lean come from the Paddle clip itself */   /* leaning into the stroke and back */
+        n.m.quaternion.copy(_cq).multiply(_lq).multiply(_lean);
+        if (r.paddle) {   /* the paddle runs through both hands, as the clip holds it: the shaft from the upper hand down through the lower, the blade beyond it */
+          r.paddle.visible = true;
+          n.m.updateMatrixWorld(true);
+          r.hands[0].getWorldPosition(_h0); r.hands[1].getWorldPosition(_h1);
+          if (_h0.y < _h1.y) { const tmp = _h0.clone(); _h0.copy(_h1); _h1.copy(tmp); }
+          _dir.subVectors(_h1, _h0); if (_dir.lengthSq() < 1e-6) _dir.set(0, -1, 0); _dir.normalize();
+          if (_dir.y > -0.57) {   /* never flat across the canoe (through the next man): at least 35 degrees down, toward the water on his own side */
+            _side.set(r.z >= 0 ? 1 : -1, 0, 0).transformDirection(R.canoe.matrixWorld); _side.y = 0; _side.normalize();
+            const hz = Math.hypot(_dir.x, _dir.z) || 1; _dir.x = _dir.x / hz * 0.4 + _side.x * 0.42; _dir.z = _dir.z / hz * 0.4 + _side.z * 0.42; _dir.y = -0.82; _dir.normalize();
+          }
+          Q.group.worldToLocal(_h0.addScaledVector(_dir, -0.12));
+          r.paddle.position.copy(_h0);
+          r.paddle.quaternion.setFromUnitVectors(_down, _dir);
+        }
+      }
+    }
+  });
+}
+/* free standing spots for the crews while they are not aboard (they are hidden then): clear of walls, keep-off rings, the story people and each other */
+function placeCrews(Q) {
+  const taken = [...Q.specs.map((s) => [s.x, s.z]), ...Q.ambient.filter((a) => !(Q.crews || []).some((R) => R.list.some((r) => Q.ambient[r.idx] === a))).map((a) => [a.x, a.z])], B = Q.bounds;
+  const free = (x, z) => !Q.walls.some((w) => x > w[0] - 0.5 && x < w[2] + 0.5 && z > w[1] - 0.5 && z < w[3] + 0.5) && !Q.keepOff.some((k) => k.at && Math.hypot(x - k.at[0], z - k.at[1]) < (k.r || 0.8) + 0.4) && !taken.some(([a, b]) => Math.hypot(x - a, z - b) < 1.0);
+  for (const R of Q.crews || []) for (const r of R.list) {
+    let done = false;
+    for (let z = B.z1 - 0.8; z > B.z0 + 0.6 && !done; z -= 1.0) for (let x = B.x0 + 0.8; x < B.x1 - 0.6 && !done; x += 1.0) if (free(x, z)) { const a = Q.ambient[r.idx]; a.x = x; a.z = z; a.behaviour.at = [x, z - 5]; taken.push([x, z]); done = true; }
+  }
+}
+/* the places in a canoe: rows of two along its length, the Spaniards in the middle (Ferdinand: six Spaniards and ten paddlers in each) */
+function canoeSlots(L, n = 16, nSp = 6) {
+  const rows = Math.ceil(n / 2), out = [];
+  for (let k = 0; k < n; k++) {
+    const row = Math.floor(k / 2), x = -L * 0.24 + (L * 0.48 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) < nSp / 4;
+    out.push([x, (k % 2 ? 0.2 : -0.2), mid && out.filter((s) => s[2]).length < nSp]);   /* close to the middle line: nearer the sides, knees and feet came through the hull */
+  }
+  return out;
+}
+/* The two wrecks, board and board (Ferdinand), as two different ships: La Capitana, the flagship, the larger and darker, a torn sail left on her yard;
+   the Santiago ("Bermuda") smaller, with a pale ochre band, lying at a slight angle to her and listing a little (no plan or picture of either exists).
+   at: where the pair lies; turn: the pair's heading (bows toward the beach, turned so the hill above sees them three-quarter on, not bow-on). */
+function wrecks(Q, at, y, turn) {
+  const big = X.caravel({ aground: true, shores: [1], L: 22, B: 6.7 }),
+    small = X.caravel({ aground: true, shores: [-1], L: 18.5, B: 5.7, band: 0xb08a4a, torn: false });
+  const c = Math.cos(turn), s = Math.sin(turn), off = (d) => [at[0] + c * d, at[1] - s * d];
+  const [x1, z1] = off(-3.4), [x2, z2] = off(3.0);
+  add(Q, far(big), x1, z1, y, turn);
+  add(Q, far(small), x2, z2 + 0.6, y + 0.15, turn + 0.21);
+  small.rotation.z = -0.05;   /* listing a little toward her neighbour */
+  return [big, small];
 }
 /* trees and palms round a place, kept out of the walking area */
 function woods(Q, pts, seed = 1) {
@@ -152,7 +222,7 @@ const SEA_GREEN = 0x3f6a3a;
 /* ---------- 1. Maima, on its hill above the bay (by day; night: the eclipse) ---------- */
 /* The walking area is the top terrace of the village. Below it the terraces step down the hill (Burley 2022), then the green hillside falls
    to the beach of the bay, about 180 m off (in truth about 1.4 km: drawn nearer, said so in the journal). The two caravels lie aground there. */
-export const BAY = { y: -38, shipZ: -178, ships: [[-9.5, -178], [-2.9, -178]] };
+export const BAY = { y: -38, shipZ: -192, ships: [[-9.5, -192], [-2.9, -192]] };   /* the wrecks lie in the water off the beach ("about a bow-shot from the land", Ferdinand) */
 function maima({ night = false } = {}) {
   const id = night ? "night" : "maima";
   const Q = base(id, [-13, -10.2, 13, 12], night ? [3.5, 2.5, -0.5] : [4.5, 7.5, 0.45]);
@@ -192,12 +262,12 @@ function maima({ night = false } = {}) {
   }
   /* the hillside: one sloping sheet from the lowest terrace down to the sand */
   {
-    const W = 600, Ls = 150, seg = 40, geo = new THREE.PlaneGeometry(W, Ls, seg, seg);
+    const W = 600, Ls = 140, seg = 40, geo = new THREE.PlaneGeometry(W, Ls, seg, seg);   /* from the lowest terrace (z -28) down to the beach (z -168) */
     geo.rotateX(-Math.PI / 2);
     const p = geo.attributes.position, r = rng(4);
     for (let i = 0; i < p.count; i++) {
       const z = p.getZ(i), k = (z + Ls / 2) / Ls;   /* 0 at the beach, 1 at the terrace */
-      p.setY(i, BAY.y + 1.2 + (-5 - BAY.y - 1.2) * Math.pow(k, 0.8) + (r() - 0.5) * 1.6 * k * (1 - k) * 4);
+      p.setY(i, BAY.y + 1.2 + (-5 - BAY.y - 1.2) * Math.pow(k, 1.6) + (r() - 0.5) * 1.6 * k * (1 - k) * 4);
     }
     geo.computeVertexNormals();
     const hill = mesh(geo, std(T.grass([60, 18], [74, 108, 50]), 1), 0, 0, -28 - Ls / 2, Q.group);
@@ -205,7 +275,7 @@ function maima({ night = false } = {}) {
     far(hill);
   }
   /* the beach and the bay */
-  const sand = plane(600, 14, std(T.sand([60, 3]), 1), 0, BAY.y + 0.3, -171, Q.group);
+  const sand = plane(600, 14, std(T.sand([60, 3]), 1), 0, BAY.y + 0.25, -174, Q.group);   /* the beach, from the foot of the hill to the water */
   sand.rotation.x = -Math.PI / 2;
   far(sand);
   const sea = createSea(Q.group, { kind: "caribbean", y: BAY.y, at: [0, -260], size: 220, swell: 0.4 });
@@ -214,10 +284,10 @@ function maima({ night = false } = {}) {
   {
     const r = rng(9);
     for (let i = 0; i < 70; i++) {
-      const z = -32 - r() * 130, x = (r() - 0.5) * 260, k = (-z - 28) / 150;
-      if (Math.abs(x + 6) < 14 && z < -150) continue;   /* keep the view to the ships open */
+      const z = -32 - r() * 128, x = (r() - 0.5) * 260, k = (-z - 28) / 140;
+      if ((Math.abs(x + 6) < 14 && z < -150) || (x > -30 && x < 150 && z < -40)) continue;   /* keep the view open to the ships and to where the canoes cross the bay (the camera scenes look down past the lower slope) */
       const o = r() < 0.3 ? palm(6 + r() * 3, i) : tree(5 + r() * 3, i, r() * 0.4);
-      add(Q, far(o), x, z, BAY.y + 1.2 + (-5 - BAY.y - 1.2) * Math.pow(1 - k, 0.8), r() * 6);
+      add(Q, far(o), x, z, BAY.y + 1.2 + (-5 - BAY.y - 1.2) * Math.pow(1 - k, 1.6), r() * 6);
     }
   }
   /* the headlands either side of the bay, and the hills behind the village */
@@ -225,16 +295,18 @@ function maima({ night = false } = {}) {
   ranges(Q, { centre: -Math.PI / 2 + 0.95, spread: 0.7, y: BAY.y, seed: 5, green: SEA_GREEN, haze: 0xcfd8d0, layers: [{ r: 360, base: 6, amp: 30, k: 0.35 }] });
   ranges(Q, { centre: Math.PI / 2, spread: 2.6, y: -6, seed: 7, green: 0x4f7a40, haze: 0xc8d4cc, layers: [{ r: 80, base: 8, amp: 18, k: 0.2 }, { r: 160, base: 30, amp: 50, k: 0.5 }, { r: 300, base: 70, amp: 110, k: 0.8 }] });
   /* the two caravels aground, side by side, bows to the beach */
-  const ships = BAY.ships.map(([x, z], i) => add(Q, far(X.caravel({ aground: true, shores: [i ? -1 : 1] })), x, z, BAY.y + 0.5, Math.PI));   /* turned bow to the beach, local +x is west: each ship is propped on its outer side only, the two lean on each other */
+  const ships = wrecks(Q, [(BAY.ships[0][0] + BAY.ships[1][0]) / 2, BAY.shipZ], BAY.y + 0.5, Math.PI - 0.55);   /* three-quarter on from the hill */
+  const shipHome = ships.map((s) => [s.position.clone(), s.rotation.y]);   /* turned bow to the beach, local +x is west: each ship is propped on its outer side only, the two lean on each other */
   /* the rescue ship of June 1504, anchored off the wrecks (shown in chapter 6) */
   const rescue = add(Q, dyn(far(X.caravel({ aground: false, sails: true }))), 14, -230, BAY.y + 1.3, Math.PI * 0.55);
   rescue.visible = false;
   /* the ten canoes of the mutiny, far off on the bay (chapter 4's camera scene) */
   const flotilla = [];
   for (let i = 0; i < 10; i++) {
-    const c = add(Q, far(crewedCanoe(6, 4, 4, i)), 8 + (i % 5) * 3, -186 - Math.floor(i / 5) * 3, BAY.y + 0.05, Math.PI / 2);
+    const c = add(Q, far(bigCanoe(6, 1.2)), 8 + (i % 5) * 3, -188 - Math.floor(i / 5) * 3, BAY.y + 0.05, Math.PI / 2);
     c.visible = false;
     flotilla.push(c);
+    if (!night) crew(Q, c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]], { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
   }
   /* ---- the village ---- */
   const houses = [
@@ -339,23 +411,24 @@ function maima({ night = false } = {}) {
   /* the arrival: the two ships sail slowly in round the point and are run aground side by side */
   Q.films.arrival = (t) => {
     if (t < 0) {
-      ships.forEach((s, i) => s.position.set(BAY.ships[i][0], BAY.y + 0.5, BAY.ships[i][1]));
+      ships.forEach((s, i) => { s.position.copy(shipHome[i][0]); s.rotation.y = shipHome[i][1]; });
       return;
     }
     ships.forEach((s, i) => {
       const k = sm((t - 4) / 22), from = [-150 + i * 8, -260 + i * 6];
-      s.position.set(from[0] + (BAY.ships[i][0] - from[0]) * k, BAY.y + 1.6 - 1.1 * sm((t - 22) / 6), from[1] + (BAY.ships[i][1] - from[1]) * k);
-      s.rotation.y = Math.PI + (1 - k) * 0.9;
+      const h = shipHome[i][0];
+      s.position.set(from[0] + (h.x - from[0]) * k, h.y + 1.1 - 1.1 * sm((t - 22) / 6), from[1] + (h.z - from[1]) * k);
+      s.rotation.y = shipHome[i][1] + (1 - k) * 0.9;
     });
   };
   /* the mutiny: the ten canoes move off east across the bay */
   Q.films.mutiny = (t) => {
     flotilla.forEach((c, i) => {
       c.visible = t >= 0 && t > 5;
+      c.userData.manned = c.visible;
       const k = sm((t - 6 - i * 0.3) / 16);
       c.position.x = 8 + (i % 5) * 3 + k * 170;
-      c.position.z = -186 - Math.floor(i / 5) * 3 - k * 25;
-      c.userData.stroke(t);
+      c.position.z = -188 - Math.floor(i / 5) * 3 - k * 25;
     });
   };
   /* the red moon: it rises already bitten, the shadow covers it, turns it red, and slides away */
@@ -394,7 +467,7 @@ function maima({ night = false } = {}) {
     crowd(Q, "xa_man", -9.0, 3.3, face(-9.0, 3.3, -10.4, 2.0), { kind: "work", clips: ["PickUp", "WipeSweat", "IdleM"], work: [5, 9], face: [-10.4, 2.0] });
     crowd(Q, "xa_woman2", -4.0, 5.0, 0, { kind: "chat", group: "w", at: [-3.6, 5.2], ring: 0.6 });
     crowd(Q, "xa_man2", -3.0, 5.6, 0, { kind: "chat", group: "w" });
-    crowd(Q, "xa_girl", 3.0, 6.0, 0, { kind: "play", area: [0, 4, 6, 9], chase: 1 });
+    crowd(Q, "xa_girl", 6.7, 2.0, face(6.7, 2.0, 6.0, 1.4), { kind: "watch", at: [6.0, 1.4], react: ["HeadTurn", "Nod", "Point"], every: [4, 8] });   /* she watches her mother at work (she does not run about: the engine's girl-stride fault, docs/TODO.md) */
     crowd(Q, "xa_boy", 4.0, 7.0, 0, { kind: "play", area: [0, 4, 6, 9] });
   } else {
     crowd(Q, "xa_woman", -3.4, 4.4, face(-3.4, 4.4, -2.5, 3.5), { kind: "watch", at: [-2.5, 3.5], react: ["HeadTurn"], every: [6, 10] });
@@ -403,6 +476,8 @@ function maima({ night = false } = {}) {
     crowd(Q, "xa_man2", -4.2, -8.9, face(-4.2, -8.9, 30, -60), { kind: "watch", at: [260, -400], react: ["Point"], every: [5, 9] });
   }
   Q.keepOff.push({ at: [2.0, -1.0], r: 1.2 }, { at: [1.0, -0.4], r: 0.9 }, { at: [-3.6, -7.9], r: 0.8 }, { at: [1.2, -10.0], r: 1.2 }, { at: [0, -9.4], r: 0.9 }, { at: [-8.6, -3.0], r: 0.9 });
+  placeCrews(Q);
+  crewTicker(Q);
   return Q;
 }
 
@@ -442,12 +517,14 @@ function shore() {
   woods(Q, [[-13, 11, "palm"], [-8, 12.5, "palm"], [-3, 11.5, "tree"], [2, 12.6, "palm"], [7, 11.4, "palm"], [11, 12.2, "tree"], [15, 10.5, "palm"], [-15.5, 6, "palm"], [16.5, 4, "tree"], [-11, 10.2, "bush"], [5, 10.4, "bush"], [14, 8.6, "bush"]], 6);
   Q.walls.push([-40, 9.6, 40, 40]);
   /* the two caravels aground, bows to the beach, side by side; the water nearly to their decks */
-  const ships = SHIPS.map(([x, z], i) => add(Q, far(X.caravel({ aground: true, shores: [i ? -1 : 1] })), x, z, SEA + 0.45, Math.PI));
+  const ships = wrecks(Q, [(SHIPS[0][0] + SHIPS[1][0]) / 2, SHIPS[0][1]], SEA + 0.45, Math.PI - 0.35);
   /* the trading canoe at the water's edge (chapter 2), and the two big canoes (chapter 3) */
-  const tradeCanoe = add(Q, dyn(X.canoe(5.2)), 3.2, -3.3, -0.1, Math.PI / 2 + 0.05);
-  const bigA = add(Q, crewedCanoe(9, 10, 6, 1), -1.0, -4.6, -0.12, Math.PI / 2 - 0.04),
-    bigB = add(Q, crewedCanoe(9, 10, 6, 2), 3.6, -5.0, -0.12, Math.PI / 2 + 0.03);
-  for (const c of [bigA, bigB]) c.userData.crew.forEach((f) => (f.visible = false));
+  const tradeCanoe = add(Q, dyn(X.canoe(5.2, { beam: 1.0, depth: 0.5 })), 3.2, -3.3, -0.1, Math.PI / 2 + 0.05);
+  crew(Q, tradeCanoe, [[-1.2, 0, false]], { taino: ["xa_cousin"] });   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
+  tradeCanoe.userData.floor = 0.2;   /* this smaller dugout is shallower: kneeling lower, his shins came through its bottom */
+  const bigA = add(Q, bigCanoe(9), -1.0, -4.6, -0.12, Math.PI / 2 - 0.04),
+    bigB = add(Q, bigCanoe(9), 3.6, -5.0, -0.12, Math.PI / 2 + 0.03);
+  for (const c of [bigA, bigB]) crew(Q, c, canoeSlots(9));   /* six Spaniards and ten paddlers in each (Ferdinand) */
   Q.walls.push([0.5, -3.9, 5.9, -2.75]);
   /* the ship's boat that brought Mendez and the interpreter ashore */
   const boat = rowBoat({ L: 4.6, beam: 1.5, depth: 0.6, wood: std(T.plank([118, 96, 72], 6, [1, 1])), timber: std(T.plank([92, 72, 52], 1, [1, 1])), oars: "shipped", rudder: false });
@@ -471,10 +548,11 @@ function shore() {
   Q.lookViews = {};
   Q.enter = (stage) => {
     gift.visible = stage >= 24 && stage < 30;
+    if (Q.items.basket && Q.items.basket.parent === Q.group) Q.items.basket.visible = stage < 30;   /* the bread went out to the ships in chapter 2 */
     tradeCanoe.visible = stage < 30;
     bigA.visible = bigB.visible = stage >= 30;
     tradeCanoe.position.set(3.2, -0.1, -3.3);
-    for (const c of [bigA, bigB]) c.userData.crew.forEach((f) => (f.visible = false));
+    for (const c of [bigA, bigB]) c.userData.manned = false;
     if (stage < 30) {
       stand(Q, "cousin", stage >= 24 ? 1.8 : 1.4, stage >= 24 ? -1.2 : -2.0, 3.2, -3.2);
       stand(Q, "interp", -4.2, 0.4, 2, -1);
@@ -486,10 +564,11 @@ function shore() {
   };
   /* the trade: Cousin paddles the canoe out to the ships' side and back */
   const tradeHold = filmHold(Q, ["cousin"], (t, [cousin]) => {
-    const out = sm((t - 3) / 9), back = sm((t - 19) / 7), k = out - back;
-    tradeCanoe.position.set(3.2 + (SHIPS[1][0] + 4.2 - 3.2) * k, -0.1, -3.3 + (SHIPS[1][1] + 1.5 + 3.3) * k);
-    tradeCanoe.rotation.y = Math.PI / 2 + 0.05 + (t > 3 && t < 26 ? (t < 15 ? 1.1 : -1.1) * Math.min(1, Math.min(t - 3, 26 - t) / 2) : 0);
-    if (cousin) cousin.m.visible = t < 3 || t > 26;
+    const out = sm((t - 3) / 9), back = sm((t - 23) / 4.5), k = out - back;
+    tradeCanoe.userData.manned = t >= 3 && t <= 27;
+    tradeCanoe.position.set(3.2 + (SHIPS[1][0] + 6.5 - 3.2) * k, -0.1, -3.3 + (SHIPS[1][1] + 4.5 + 3.3) * k);   /* to the smaller ship's side, where the sailors lean over */
+    tradeCanoe.rotation.y = Math.PI / 2 + 0.05 + (t > 3 && t < 27.5 ? (t < 15 ? 1.1 : -1.1) * Math.min(1, Math.min(t - 3, 27.5 - t) / 2) : 0);
+    if (cousin) cousin.m.visible = t < 3 || t > 27.5;
   });
   /* the sailor from the beach stands at the ship's rail for the trade (only while the scene runs: nobody stands inside a ship in play) */
   let sailorHome = null;
@@ -503,7 +582,7 @@ function shore() {
       return;
     }
     if (!sailorHome) { sailorHome = [s.m.position.toArray(), s.m.rotation.y]; Q.life.hold(s, true); s.ctl.play("IdleM", true); }
-    s.m.position.set(SHIPS[1][0] + 2.2, SEA + 0.5, SHIPS[1][1] + 2.0);
+    s.m.position.set(SHIPS[1][0] + 4.2, SEA + 0.5, SHIPS[1][1] + 3.2);
     s.m.rotation.y = Math.PI / 2;
     if (t > 15 && t < 16) s.ctl.play("Point", true);
   };
@@ -515,15 +594,14 @@ function shore() {
     if (t < 0) {
       bigA.position.set(-1.0, -0.12, -4.6);
       bigB.position.set(3.6, -0.12, -5.0);
-      for (const c of [bigA, bigB]) c.userData.crew.forEach((f) => (f.visible = false));
+      for (const c of [bigA, bigB]) c.userData.manned = false;
       return;
     }
     if (cousin) cousin.m.visible = t < 4;
     for (const [i, c] of [bigA, bigB].entries()) {
-      c.userData.crew.forEach((f) => (f.visible = t >= 4));
+      c.userData.manned = t >= 4;
       const k = sm((t - 8 - i * 1.2) / 20);
       c.position.set((i ? 3.6 : -1.0) + k * 150, -0.12, (i ? -5.0 : -4.6) - sm((t - 8) / 6) * 6 - k * 10);
-      c.userData.stroke(t);
     }
   };
   /* ---- people ---- */
@@ -536,6 +614,8 @@ function shore() {
   crowd(Q, "xa_woman", 9.2, 1.4, 0, { kind: "chat", group: "b" });
   crowd(Q, "xa_boy", 6.0, 3.0, 0, { kind: "play", area: [4, 2, 10, 7] });
   Q.keepOff.push({ at: [3.2, -1.6], r: 0.9 }, { at: [7.2, 3.0], r: 0.8 }, { at: [11.6, 2.6], r: 0.8 }, { at: [-0.4, -1.4], r: 0.8 }, { at: [3.4, -0.4], r: 0.8 });
+  placeCrews(Q);
+  crewTicker(Q);
   return Q;
 }
 
@@ -548,9 +628,10 @@ function crossing() {
   Q.view = { pos: [6, 2, 8], look: [0, 0, -40] };
   const sea = createSea(Q.group, { kind: "caribbean", y: -0.3, at: [0, -60], size: 260, swell: 0.6 });
   Q.tickers.push((t) => sea.tick && sea.tick(t));
-  const c = add(Q, crewedCanoe(9, 10, 6, 3), 0, 4, -0.2, Math.PI / 2 + 0.1);
+  const c = add(Q, bigCanoe(9), 0, 4, -0.2, Math.PI / 2 + 0.1);
+  c.userData.manned = true;
+  crew(Q, c, canoeSlots(9));
   Q.tickers.push((t) => {
-    c.userData.stroke(t * 0.6);
     c.position.y = -0.2 + Math.sin(t * 0.9) * 0.05;
     c.rotation.z = Math.sin(t * 0.7) * 0.03;
   });
@@ -569,6 +650,8 @@ function crossing() {
     moon.position.set(0, -6 + k * 40, -900);
   };
   void isle;
+  placeCrews(Q);
+  crewTicker(Q);
   return Q;
 }
 
@@ -620,7 +703,7 @@ function today() {
   Q.enter = () => {};
   person(Q, "guide", "guide", 0.6, 1.6, face(0.6, 1.6, 3.5, 6), { kind: "watch", at: [3.5, 6], idles: ["Idle"], react: ["Point", "Talk1"], every: [6, 10] });
   crowd(Q, "xa_visitor", -2.6, -1.6, face(-2.6, -1.6, -6, -4), { kind: "watch", at: [-6, -4], react: ["Point", "HeadTurn"], every: [5, 9] });
-  crowd(Q, "xa_girl", -1.4, -2.6, 0, { kind: "play", area: [-3, -3, 2, 3] });
+  crowd(Q, "xa_girl", -1.6, -2.4, face(-1.6, -2.4, -6, -4), { kind: "watch", at: [-6, -4], react: ["Point", "HeadTurn"], every: [5, 9] });   /* beside the visitor, looking at the house (not running about: the girl-stride fault, docs/TODO.md) */
   Q.keepOff.push({ at: [-3.6, -2.4], r: 0.9 }, { at: [3.6, -4.2], r: 0.9 });
   return Q;
 }

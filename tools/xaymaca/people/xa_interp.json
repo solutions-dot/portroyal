@@ -25,7 +25,8 @@
   "belt": false,
   "waistband": false,
   "buttons": false,
-  "pocket": false
+  "pocket": false,
+  "hairfall": true
  },
  "colors": {
   "Skin": [

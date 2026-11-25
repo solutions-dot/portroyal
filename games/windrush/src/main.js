@@ -9,7 +9,7 @@ import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js
 import { placeActionButton } from "../../../engine/action-button.js";
 import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { offerNextChapter } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { offerNextChapter, nextLines, goingStraight, startCard, titleFade } from "../../../engine/chapter-end.js";   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
@@ -541,6 +541,7 @@ function light(Q) {
   hemi.color.set(late ? 0xffe2c0 : 0xfff1d4);
 }
 async function go(stage, { restore = null, keep = false } = {}) {
+  const straightFrom = !startCard();   /* came straight on from the last chapter's end card: its own start card is skipped (engine/chapter-end.js) */
   const generation = ++epoch;
   LS.cancel();
   busy = true;
@@ -652,8 +653,10 @@ async function go(stage, { restore = null, keep = false } = {}) {
   busy = false;
   save();
   const c = CHAPTERS[chapterOf(stage)];
-  if (stage === c.first && stage !== 10 && !restore && !skipIntro) {
+  if (stage === c.first && stage !== 10 && !restore && !skipIntro && straightFrom !== true) {
     card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
+  } else if (stage === c.first && straightFrom === true && !restore) {
+    titleFade($("fade"), c.name, c.intro, () => waits(stage), QUICK);   /* came straight on: the chapter's title and introduction fade in and out, no click (engine/chapter-end.js) */
   } else await waits(stage);
   callBackReturn(stage);
 }
@@ -694,12 +697,13 @@ function nextCard() {
   uiSound("goal");
   card(
     "Chapter " + (i + 1) + " is finished!",
-    ["Well done. Next is " + nx.name + " (" + nx.year + ")."],
+    nextLines(nx),
     [
       [
         "Next chapter",
         () => {
           nextPending = null;
+          goingStraight();
           go(next);
         },
       ],

@@ -3,7 +3,7 @@ import { draw } from '../../../engine/look.js';   /* light from the sky and soft
 import { addRecap } from '../../../engine/recap.js';
 import { produceBasket } from '../../../engine/produce.js';   /* market baskets heaped with produce (moved to the engine, 23 November 2026) */   /* three things you learned, on the last card */
 import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
-import { offerNextChapter } from '../../../engine/chapter-end.js';
+import { offerNextChapter, goingStraight, startCard, titleFade } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
 import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
@@ -799,7 +799,7 @@ function renderChapters() { const ul = $('chlist'); ul.replaceChildren();
   $('chteacher').setAttribute('aria-pressed',String(!!state.ch.all));$('chteacher').textContent='Unlock All';$('chteachernote').hidden=!state.ch.all; $('chreset').textContent = 'Restart'; $('chreset').dataset.armed = ''; }
 function openChapters() { closeJournal(); busy = true; keys.clear(); renderChapters(); $('chapters').hidden = false; const f = $('chlist').querySelector('button:not(:disabled)'); (f || $('chclose')).focus(); }
 function closeChapters() { if ($('chapters').hidden) return; $('chapters').hidden = true; busy = !$('card').hidden; if (state.started) canvas.focus(); }
-function playChapter(c) { navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); c.go(); }
+function playChapter(c) { const keepStraight = !startCard(); navGen++; $('chapters').hidden = true; busy = false; fbReset(); if (!state.started) startGame(); if (keepStraight) goingStraight(); c.go(); startCard(); }
 $('chclose').onclick = closeChapters; $('tchap').onclick = openChapters; $('jchap').onclick = openChapters;
 $('chteacher').onclick = () => { state.ch.all = !state.ch.all; saveGame(); renderChapters();$('chteacher').focus(); };
 $('chreset').onclick = () => { if (!confirm('Restart and erase all saved progress?')) return; try { localStorage.removeItem(SAVE_KEY); sessionStorage.setItem('pr-fresh', '1'); } catch (e) { /* ignore */ } location.reload(); };
@@ -955,7 +955,7 @@ function nextChapterCard(i, _tries = 0, gen = navGen) {
   offerNextChapter({
     still: () => gen === navGen && state.started && !Q.on && !FB.on,   /* the player has not gone somewhere else, or to another chapter */
     clear: () => !(busy || fading || !$('card').hidden || !$('dialogue').hidden || !$('journal').hidden || !$('chapters').hidden),
-    show: () => { uiSound('goal'); card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done. Next is \u201c' + nx.name + '\u201d (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); playChapter(nx); } }]); },
+    show: () => { uiSound('goal'); card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done. Next is \u201c' + nx.name + '\u201d (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); goingStraight(); playChapter(nx); } }]); },
   });
 }
 /* falling bricks and dust as the houses break up */
@@ -1203,6 +1203,7 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   for (const k in WGOODS) { const r = mk(new THREE.RingGeometry(0.75, 0.86, 36), new THREE.MeshBasicMaterial({ color: 0xd9a441, side: THREE.DoubleSide }), WGOODS[k][0], 0.02, WGOODS[k][1] + 0.9); r.rotation.x = -Math.PI / 2; wareMark[k] = r; if (state.unlocked.includes(k)) r.visible = false; }
   cur = scene; }
 function wareIntro() { cue('begin'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('dialogue').hidden = true; $('goal').hidden = false;
+  if (!startCard()) { titleFade($('fade'), '1691', 'One year later. Lewis has his own warehouse by the wharf.', beginWare); return; }   /* came straight on: the title fades, no click */
   card('1691', ['One year later. Lewis has his own warehouse by the wharf.', 'Ships bring goods. He sells them. That is how merchants get rich.'], [{ t: 'Begin', go: beginWare }, { t: 'Not now', go: hideCard }]); }
 function beginWare() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } buildWare(); W.coins = W.talked = false; setPlace('ware'); state.x = -249.0; state.z = -0.4; state.yaw = Math.PI / 2 - 0.12; state.pitch = 0; wareGoal(); }
 function readLetter() { card('The letter', ['“Mr Galdy, let us sell enslaved people to Spanish buyers. We will both get rich.”', 'It is from the captain of a slave ship.'],
@@ -1822,7 +1823,8 @@ const FBG = { group: null, cast: [] };
 JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
   simple: ['In 1670 Morgan gathered many ships and over a thousand men.', 'In 1671 they walked across the land to Panama and took the city. It burned.'],
   deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is fictional. The raid was real.', 'Tom and Dick, the two men at the sword drill, are fictional too.'] });
-function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
+function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); if (!startCard()) { titleFade($('fade'), '1670', 'Old Ned’s story, from 20 years ago. In it, you are young Ned, a ship’s boy.', fbStart); return; }   /* came straight on from the last chapter: the title fades in and out, no click (engine/chapter-end.js) */
+  card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
 function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 function drillClip() {   /* the drill partner's clip: Sword2 cut before its last part, where the swordsman falls (owner rule 4: nobody falls down), joined into a loop */
   if (!CL.Sword2Drill && CL.Sword2) { const c = CL.Sword2.clone(); c.duration *= 0.58; c.trim(); c.name = 'Sword2Drill'; CL.Sword2Drill = seamLoop(c); } return CL.Sword2Drill ? 'Sword2Drill' : 'Sword1'; }

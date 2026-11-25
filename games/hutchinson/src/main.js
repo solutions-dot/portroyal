@@ -9,7 +9,7 @@ import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js
 import { placeActionButton } from "../../../engine/action-button.js";
 import { returningTalker, callBack, comeOver } from "../../../engine/return-talk.js";
 placeActionButton();   /* the button for a thing to do sits mid-screen (engine/action-button.js) */
-import { offerNextChapter } from "../../../engine/chapter-end.js";
+import { offerNextChapter, nextLines, goingStraight, startCard, titleFade } from "../../../engine/chapter-end.js";
 import { matureGate } from "../../../engine/mature.js";   /* the Mature 13+ card over the title screen */
 import { runQuiz } from "../../../engine/quiz.js";
 import * as THREE from "three";
@@ -401,6 +401,7 @@ function cast(Q, row) {
   }
 }
 async function go(stage, { restore = null, keep = false } = {}) {
+  const straightFrom = !startCard();   /* came straight on from the last chapter's end card: its own start card is skipped (engine/chapter-end.js) */
   const generation = ++epoch;
   LS.cancel();
   busy = true;
@@ -468,9 +469,11 @@ async function go(stage, { restore = null, keep = false } = {}) {
   busy = false;
   save();
   const c = CHAPTERS[chapterOf(stage)];
-  if (stage === c.first && !restore && !skipIntro) {
+  if (stage === c.first && !restore && !skipIntro && straightFrom !== true) {
     /* a chapter opens with its card (the first also says who you are), then its step: often a camera scene */
     card(c.name, stage === FIRST ? [c.intro, GAME.fiction] : [c.intro], [["Begin", () => waits(stage)]]);
+  } else if (stage === c.first && straightFrom === true && !restore) {
+    titleFade($("fade"), c.name, c.intro, () => waits(stage), QUICK);   /* came straight on: the chapter's title and introduction fade in and out, no click (engine/chapter-end.js) */
   } else await waits(stage);
   /* a save made after a chapter's last step was done, before Next chapter was pressed: offer the next chapter again */
   if (restore && needList(row).length && needList(row).every((n) => !story.needs(n.id))) advance(row.next);
@@ -511,7 +514,7 @@ function nextCard() {
     i = chapterOf(S.stage),
     nx = CHAPTERS[chapterOf(next)];
   uiSound("goal");
-  card("Chapter " + (i + 1) + " is finished!", ["Next is " + nx.name + " (" + nx.year + ")."], [["Next chapter", () => { nextPending = null; chapterState(next); go(next); }]]);
+  card("Chapter " + (i + 1) + " is finished!", nextLines(nx), [["Next chapter", () => { nextPending = null; chapterState(next); goingStraight(); go(next); }]]);
 }
 function filmEnd(key) {
   const F = FILMS[key];

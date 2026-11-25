@@ -196,6 +196,7 @@ G=P['garments']; parts=[]; OLD=P.get('era',1915)<1800
 # taken away before the body is written out. The skin it would have hidden stays. "band": true keeps a strip of the shirt round the chest only, a cotton band
 # (a choice made for a children's game, said so in the game). With "bare", a cotton wrap at the hips is "trousers" + "shorts" with a negative "shortslen".
 BARE=bool(G.get('bare')); BAND=BARE and bool(G.get('band')); BAND_Z=(SH.z-G.get('bandlow',0.24)*s,SH.z-G.get('bandtop',0.045)*s)      # the band: from under the bust up to just below the armpit
+BAND_TOP=lambda a:BAND_Z[1]-G.get('banddip',0.035)*s*abs(math.sin(a))**1.5      # its top edge dips under each arm, as a strapless band does (a: the angle round the body, 0 at the front)
 LATE=OLD and P.get('era',1690)>=1770      # coats of 1773 and 1799 (Hutchinson, Shark Papers; owner 23 November 2026, "collars and sleeves look awful on these"): a slim sleeve to the wrist with a close cuff, and a neckcloth that sits close round the throat, not the 1690 wide sleeve and broad cravat
 if LATE and G.get('coat') and G.get('coatsleeves',True): G['coatsleeve']=max(G.get('coatsleeve',0.82),0.92)
 if G.get('skirt') and not OLD and not G.get('belt') and G.get('waistband',True):      # a later skirt without a belt gets its own waistband, in the skirt's cloth: it covers the join of blouse and skirt, which otherwise flickered and showed ragged when seated
@@ -885,6 +886,7 @@ for k,o in parts:            # coat skirts follow both legs as one cloth, like A
         if k=='coatskirt' and G.get('coatopen',True): left=sstep(-0.004,0.004,v.co.x)      # an open coat's panels (two in front, two either side of the back vent) are separate cloths: each follows its own leg only      # an open coat's two front panels are separate cloths: each follows its own leg only (blended across the middle, the striding thigh came through the other panel's edge)   # the front panels ride on their own thigh (the knee carries them forward), the back hangs from the hips and opens at the vent
         if k=='skirt' and not OLD and SKB>KNEE-0.02:      # a short skirt (its hem above the knee, 24 November 2026, Air Jamaica's 1969 minis): wholly on the thighs, each half on its own, so a striding thigh carries its half of the hem with it instead of pushing out through the middle of the front
             leg=sstep(0.0,0.75,t); left=sstep(-1.0,1.0,v.co.x/0.11)
+            if G.get('legshare') is not None: leg=G['legshare']*sstep(0.0,0.75,t); left=sstep(-1.0,1.0,v.co.x/G.get('legblend',0.11))      # (Xaymaca, 25 November 2026) a cotton wrap: part of it hangs from the hips and the two halves blend widely across the front, so a striding thigh stretches the hem a little instead of parting it
         shin=0.0
         if k=='skirt' and not OLD:      # below the knee a later skirt passes in part to the shins, all round: seated, it falls over the knees and down instead of standing out from the thighs like a tray
             shin=0.7*sstep(KNEE+0.07,KNEE-0.08,v.co.z)*(1-0.35*sstep(J('Hips').y-0.02,J('Hips').y+0.08,v.co.y))      # a little less at the back (owner, 23 November 2026: running, the back leg kicks up and the hem tied to the shin was flung up and torn); seated and kneeling she wears the seated skirt
@@ -1456,6 +1458,8 @@ def build_hat(HK,HM):
         bmesh.ops.create_uvsphere(bm,u_segments=16,v_segments=10,radius=0.025*s,matrix=Matrix.Translation(p+d*0.001)@R@Matrix.Diagonal((1.5,0.85,0.55,1)))
         rigid(HM+'Knot',bm,HM,'Head')
 
+KNIT=[_m for _k,_m in HATS if _k=='knit']      # (Xaymaca, 25 November 2026) "knit": a soft knitted wool cap with a rolled edge (a sailor's bonete of about 1500): the head wrap's close shell with no knot, and a roll round its edge
+HATS=[('wrap' if _k=='knit' else _k,_m) for _k,_m in HATS]
 for _k,_m in HATS:
     if _k!='cap': build_hat(_k,_m)
 HS=G.get('hair')
@@ -1526,6 +1530,30 @@ def smooth_wrap():
             bk.to_mesh(k.data); bk.free(); kg=k.vertex_groups.get('mixamorig:Head') or k.vertex_groups.new(name='mixamorig:Head'); kg.add(list(range(len(k.data.vertices))),1.0,'REPLACE')      # new points need their weight again, or they are left behind when the head moves
     print('SMOOTH WRAP')      # (painted with every other piece further on)
 if any(k=='wrap' for k,_m in HATS) and G.get('wrapstyle','smooth')=='smooth': smooth_wrap()
+for _m in KNIT:
+    _kn=bpy.data.objects.get(_m+'Knot')
+    if _kn is not None:
+        if _kn in clothes: clothes.remove(_kn)
+        bpy.data.objects.remove(_kn,do_unlink=True)
+    _w=bpy.data.objects.get(_m+'Wrap')
+    if _w is None or not len(_w.data.polygons): continue
+    _b=bmesh.new(); _b.from_mesh(_w.data); _hy=J('Head').y
+    _rim=sorted([v.co.copy() for v in _b.verts if v.is_boundary],key=lambda c:math.atan2(c.x,-(c.y-_hy))); _b.free()
+    if len(_rim)<8: continue
+    _N=40; _pts=[]
+    for i in range(_N):      # the rim, evened to forty points round the head, each pushed out a little from the head's middle
+        c=_rim[int(i*len(_rim)/_N)]; d=Vector((c.x,c.y-_hy,0)); d.normalize(); _pts.append(c+d*0.006*s)
+    for _ in range(4): _pts=[(_pts[i-1]+_pts[i]*2+_pts[(i+1)%_N])/4 for i in range(_N)]
+    _rb=bmesh.new(); _rings=[]; _R=0.009*s
+    for i in range(_N):
+        c=_pts[i]; d=Vector((c.x,c.y-_hy,0)); d.normalize(); ring=[]
+        for j in range(8):
+            a_=2*math.pi*j/8; ring.append(_rb.verts.new(c+d*(_R*math.cos(a_))+Vector((0,0,_R*math.sin(a_)))))
+        _rings.append(ring)
+    for i in range(_N):
+        for j in range(8): _rb.faces.new((_rings[i][j],_rings[(i+1)%_N][j],_rings[(i+1)%_N][(j+1)%8],_rings[i][(j+1)%8]))
+    rigid(_m+'Roll',_rb,_m,'Head')      # (painted with every other piece further on)
+    print('KNIT CAP',_m)
 if G.get('scarf'):          # the knot at the throat
     z=NECK-0.05*s; hit=tree.ray_cast(Vector((0,-1,z)),Vector((0,1,0)))[0]; y=(hit.y if hit else -0.07)-0.03; bm=bmesh.new()
     k=[bm.verts.new((dx,y,z+dz)) for dx,dz in ((-0.02,0.0),(0.02,0.0),(0.012,-0.06),(-0.014,-0.056))]; bm.faces.new(k)
@@ -1894,20 +1922,19 @@ if G.get('coat') and OLD:      # under a coat only the shirt's cuffs can be seen
         smooth_edge(bm,14)      # and its cut edges (seen through the coat's open sides) run clean, not in steps
         bm.to_mesh(o.data); bm.free(); o.data.update()
 if BAND:      # the chest band: one smooth tube of cotton round the body, from under the bust to below the armpits. Worked out like the straight hair: at each angle and
-    # height the body's widest point (arms left out), 6 mm further out, evened round, so the cloth bridges the hollows as cloth does and never dips into them
-    _cy=J('Spine2').y; _NA,_NZ=56,7; _bins={}
+    # height (1 cm steps) the body's widest point (arms left out) is measured before the skin is trimmed; the band is laid 6 mm (more at the sides) outside it
+    _cy=J('Spine2').y; _NA=56; _bins={}
     for v in h.data.vertices:
         c=v.co
         if not BAND_Z[0]-0.03<c.z<BAND_Z[1]+0.03 or (side_arm(c) is not None and abs(c.x)>SX*0.9) or abs(c.x)>SX*0.95: continue      # the torso only: never the upper arm beside it
-        a_=math.atan2(c.x,-(c.y-_cy)); i=int((a_+math.pi)/(2*math.pi)*_NA)%_NA; k=int((c.z-BAND_Z[0])/((BAND_Z[1]-BAND_Z[0])/_NZ))
-        r=math.hypot(c.x,c.y-_cy)
-        for kk in (k-1,k,k+1): _bins[(i,kk)]=max(_bins.get((i,kk),0),r)
+        i=int((math.atan2(c.x,-(c.y-_cy))+math.pi)/(2*math.pi)*_NA)%_NA; k=int(round(c.z/0.01)); r=math.hypot(c.x,c.y-_cy)
+        _bins[(i,k)]=max(_bins.get((i,k),0),r)
     BAND_BINS=_bins
 # body: remove what the clothes fully hide, so nothing pokes through
 bm=bmesh.new(); bm.from_mesh(h.data); dl=bm.verts.layers.deform.verify(); gi=GI['body']
 cov_arm=max(sleeve, G.get('coatsleeve',0) if G.get('coat') and G.get('coatsleeves',True) else 0, G.get('jacketsleeve',0.9) if G.get('jacket') else 0)
 def hidden(c):
-    if BAND and BAND_Z[0]+0.03<c.z<BAND_Z[1]-0.03 and abs(c.x)<SX*0.62 and side_arm(c) is None: return True      # under a chest band, only the skin well inside it goes (near its edges the skin stays, so no gap opens)
+    if BAND and BAND_Z[0]+0.025<c.z<BAND_TOP(math.atan2(c.x,-(c.y-J('Spine2').y)))-0.016 and abs(c.x)<SX*0.85 and side_arm(c) is None: return True      # under a chest band, only the skin well inside it goes (near its edges the skin stays, so no gap opens)
     if BARE and c.z>HIP+0.05: return False      # bare: the torso and arms are skin, down to where the wrap or skirt begins
     if CK=='camp' and c.y<0 and c.z>VZ-0.03*s+VK*0.55*abs(c.x): return False      # the neck and a little chest show inside the V of a camp collar
     if NW_SEAMLESS and HIP+0.05<c.z<SEAM_Z(nw_ang(c))-0.010 and abs(c.x)<SX*0.8: return True      # a collar sewn to the shirt (neckwear.py): the skin goes up to 1 cm under the seam, wherever the seam runs
@@ -2122,7 +2149,7 @@ def tuck_under_piece(name,z0=None,z1=None,ztop=None):
         for g in list(v.groups):
             if tg.vertex_groups[g.group].name.startswith('mixamorig:'): tg.vertex_groups[g.group].remove([v.index])
         for nm,w in bw.items(): (tg.vertex_groups.get(nm) or tg.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
-        v.co=c-v.normal*(0.0015+0.0065*feather); n+=1
+        v.co=c-v.normal*(0.0015+0.0065*feather)*(G.get('necktuckdepth',1.0) if name=='CoatNeck' else 1.0); n+=1      # necktuckdepth (Xaymaca, 25 November 2026): a deeper tuck under the neck of a coat worn over a bare-necked shirt
     print('TUCKED UNDER',name,tg.name,n)
 if G.get('necktuck') and OLD:
     tuck_under_piece('CoatNeck')
@@ -2330,8 +2357,64 @@ for o in clothes+[h]: paint(o)
 # Straight hair that hangs (recipe "hair": "straight", 24 November 2026, for Air Jamaica's 1969 crew): a smooth curtain that falls straight down from the widest part of the
 # head, open in front of the face, its length set by "hairlen" (0 to the chin, 1 to the shoulders). It is a shell made two-sided, tied to the head bone so it turns with the
 # head, painted the Hair colour. The close cap over the scalp is kept under it. Only a recipe that asks for it gets it, so no other person changes.
-if G.get('hair')=='straight':
-    _hd=J('Head'); _cz=EYE[1].z-0.105*s; _bot=_cz+(NECK-0.03*s-_cz)*G.get('hairlen',0.35); _top=EYE[1].z+0.03*s
+if G.get('hair')=='straight' and G.get('hairfall'):
+    # (Xaymaca, 25 November 2026; owner: "the long hair seems detached.. smooth it out.. add more detail") one continuous fall of hair from the crown to the tips:
+    # it hugs the skull over the top and closes in above the hairline (no separate sheet with an edge at the temple), opens round the face below the hairline,
+    # lies close to the head's own shape at each height and falls a little fuller toward the ends; evened round the head and down its length, then given
+    # soft ridges of locks that deepen toward the ends, uneven tips, and colour that runs in streaks like strands.
+    _hd=J('Head'); _cz=EYE[1].z-0.105*s; _bot=_cz+(NECK-0.03*s-_cz)*G.get('hairlen',0.35); _top=TOP-0.004*s; _zh=EYE[1].z+0.075*s
+    _open=G.get('hairopen',1.2); _NA,_NZ=96,28
+    _ang=lambda x,y: math.atan2(x,-(y-_hd.y)); _bins={}
+    for v in h.data.vertices:      # the body's outline round the head and neck, by angle and height (1 cm)
+        c=v.co
+        if c.z<_bot-0.02*s: continue
+        k=(int((_ang(c.x,c.y)+math.pi)/(2*math.pi)*_NA)%_NA,int(round(c.z/0.01))); _bins[k]=max(_bins.get(k,0),math.hypot(c.x,c.y-_hd.y))
+    own=lambda ai,z,w=2:max([_bins.get(((ai+da)%_NA,q),0) for da in (-2,-1,0,1,2) for q in range(int(round(z/0.01))-w,int(round(z/0.01))+w+1)]+[0.0])      # two slices either side too: behind the neck the body has too few points to fill every slice, and an empty one let the hair dip into a slit
+    rows=[]
+    for i in range(_NZ+1):
+        z=_top-(_top-_bot)*(i/_NZ)**1.15; up=max(0.0,min(1.0,(z-_zh)/max(1e-4,_top-_zh)))      # 0 below the hairline, 1 at the crown (rows a little closer together over the top)
+        op=_open*(1-up)**1.6      # the opening round the face closes over the top of the head
+        k=max(0.0,(_zh-z)/max(1e-4,_zh-_bot))      # 0 at the hairline, 1 at the tips
+        row=[]
+        for j in range(_NA+1):
+            a=op+(2*math.pi-2*op)*j/_NA; ai=int(((a+math.pi)%(2*math.pi))/(2*math.pi)*_NA)%_NA
+            th=(0.004+0.007*k)*s; o=max(own(ai,z,2 if up<0.05 else 0),0.006*s)      # near the crown the head is measured at its exact height, so the hair closes over it in a dome
+            above=max([own(ai,zz/100.0,0) for zz in range(int(round(z*100)),int(round(_top*100))+1)]+[o])      # the widest point at or above
+            back=max(0.0,-math.cos(a))      # 1 straight behind the head
+            r=o+th+(0.45+0.5*back)*max(0.0,above-o)*k+0.006*s*k*k      # close to the head, a little of the straight fall (more behind: there it falls from the back of the skull past the hollow of the nape), fuller toward the ends
+            if up<=0: r=max(r,own(ai,z-0.025,2)+th)      # and, below the hairline, clear of the body just below (the top of the back rose through the tips)
+            e=min(j,_NA-j)/6.0
+            if e<1 and up<1: r=o+th*0.6+(r-o-th*0.6)*(e*e*(3-2*e))      # the front edges are drawn in onto the head, so the locks curve round the cheeks
+            row.append([a,r])
+        rows.append(row)
+    for _ in range(3):      # evened round the head and down the length, so nothing steps or bulges (the ears)
+        rows=[[[rows[i][j][0],(rows[i][max(0,j-1)][1]+2*rows[i][j][1]+rows[i][min(_NA,j+1)][1])/4] for j in range(_NA+1)] for i in range(_NZ+1)]
+        rows=[[[rows[i][j][0],(rows[max(0,i-1)][j][1]+2*rows[i][j][1]+rows[min(_NZ,i+1)][j][1])/4] for j in range(_NA+1)] for i in range(_NZ+1)]
+    _bm=bmesh.new(); _grid=[]
+    for i,row in enumerate(rows):
+        z=_top-(_top-_bot)*(i/_NZ)**1.15; k=max(0.0,(_zh-z)/max(1e-4,_zh-_bot)); out=[]
+        for j,(a,r) in enumerate(row):
+            r+=0.0022*s*(0.25+0.75*k)*(0.5+0.5*math.sin(a*26+1.7*math.sin(a*7)+i*0.05))      # soft ridges of locks, deeper toward the ends
+            tip=k**3*0.032*s*(0.55+0.3*math.sin(j*1.3+0.4)+0.25*math.sin(j*3.7))*(i/_NZ)      # each lock ends at its own length
+            out.append(_bm.verts.new((math.sin(a)*r,_hd.y-math.cos(a)*r,z-tip)))
+        _grid.append(out)
+    for i in range(_NZ):
+        for j in range(_NA): _bm.faces.new((_grid[i][j],_grid[i][j+1],_grid[i+1][j+1],_grid[i+1][j]))
+    _cap=_bm.verts.new((0,_hd.y+0.004*s,_top+0.006*s))      # the crown closed in a low point, so no rim shows on top of the head
+    for j in range(_NA): _bm.faces.new((_cap,_grid[0][j+1],_grid[0][j]))
+    bmesh.ops.recalc_face_normals(_bm,faces=_bm.faces[:]); bmesh.ops.solidify(_bm,geom=_bm.faces[:],thickness=0.004*s)
+    _me=bpy.data.meshes.new('HairLong'); _bm.to_mesh(_me); _bm.free()
+    _ho=bpy.data.objects.new('HairLong',_me); bpy.context.scene.collection.objects.link(_ho); _me.materials.append(colmat('Hair'))
+    _ca=_me.color_attributes.new('Col','FLOAT_COLOR','CORNER')
+    for _l in _me.loops:
+        _c=_me.vertices[_l.vertex_index].co; _k=(0.88+noise.noise(Vector((_c.x*150,_c.y*150,_c.z*6)))*0.16) if G.get('hairfall') else 0.9+noise.noise(_c*60)*0.12      # with hairfall, the colour runs in fine streaks down the length, like strands
+        _ca.data[_l.index].color=(COL['Hair'].x*_k,COL['Hair'].y*_k,COL['Hair'].z*_k,1)
+    _me.color_attributes.active_color=_ca
+    for _p in _me.polygons: _p.use_smooth=True
+    _ho.parent=rig; _ho.vertex_groups.new(name='mixamorig:Head').add(list(range(len(_me.vertices))),1.0,'REPLACE'); _ho.modifiers.new('Armature','ARMATURE').object=rig
+    print('STRAIGHT HAIR',len(_me.vertices),'points, from',round(_top,3),'to',round(_bot,3))
+elif G.get('hair')=='straight':
+    _hd=J('Head'); _cz=EYE[1].z-0.105*s; _bot=_cz+(NECK-0.03*s-_cz)*G.get('hairlen',0.35); _top=EYE[1].z+0.03*s+(0.035*s if G.get('hairfall') else 0)      # with hairfall it starts higher, under the crown's hair, so no edge shows at the temple
     _open=G.get('hairopen',1.2); _NA,_NZ=64,16; _th=0.012*s
     _ang=lambda x,y: math.atan2(x,-(y-_hd.y))
     _bins={}
@@ -2347,18 +2430,24 @@ if G.get('hair')=='straight':
             a=_open+(2*math.pi-2*_open)*j/_NA; ai=int(((a+math.pi)%(2*math.pi))/(2*math.pi)*_NA)%_NA
             r=max([_bins.get((ai,zz),0) for zz in range(int((z-_bot)/0.012),int((_top+0.04*s-_bot)/0.012)+1)]+[0.07*s])      # the widest point at or above: the hair falls straight from it
             r+=_th+0.006*s*(i/_NZ)**2      # a little fuller toward the ends
+            if G.get('hairfall'):      # (Xaymaca, 25 November 2026) hair that falls naturally: drawn in a little toward the ends (never into the body at that height), and the tips uneven
+                _k=i/_NZ; _own=max([_bins.get((ai,zz),0) for zz in range(int((z-_bot)/0.012)-2,int((z-_bot)/0.012)+3)]+[0.0])+_th
+                r=max(_own,_own+0.45*(r*(1-0.08*_k*_k)-_own))      # it lies close to the head's own shape at each height (falling straight from the widest point left a flat sheet standing off the side of the head)
+                _e=min(j,_NA-j)/4.0      # the front edges of the fall (beside the face) are drawn in onto the head over four columns, so the locks curve round the cheeks instead of standing off as flat slabs
+                if _e<1: r=_own+(r-_own)*(_e*_e*(3-2*_e))*0.85+0.15*(r-_own)*_e
             row.append([a,r])
         for _ in range(3): row=[[row[j][0],(row[max(0,j-1)][1]+2*row[j][1]+row[min(len(row)-1,j+1)][1])/4] for j in range(len(row))]      # smoothed round the head, so the fall has no steps
-        row=[_bm.verts.new((math.sin(a)*r,_hd.y-math.cos(a)*r,z)) for a,r in row]
+        _tip=(lambda j:(i/_NZ)**3*0.03*s*(0.55+0.3*math.sin(j*1.9+0.4)+0.25*math.sin(j*4.7))) if G.get('hairfall') else (lambda j:0.0)      # uneven tips: each lock ends at its own length
+        row=[_bm.verts.new((math.sin(a)*r,_hd.y-math.cos(a)*r,z-_tip(j))) for j,(a,r) in enumerate(row)]
         _grid.append(row)
     for i in range(_NZ):
         for j in range(_NA): _bm.faces.new((_grid[i][j],_grid[i][j+1],_grid[i+1][j+1],_grid[i+1][j]))
-    bmesh.ops.recalc_face_normals(_bm,faces=_bm.faces[:]); bmesh.ops.solidify(_bm,geom=_bm.faces[:],thickness=0.008*s)
+    bmesh.ops.recalc_face_normals(_bm,faces=_bm.faces[:]); bmesh.ops.solidify(_bm,geom=_bm.faces[:],thickness=(0.005 if G.get('hairfall') else 0.008)*s)
     _me=bpy.data.meshes.new('HairLong'); _bm.to_mesh(_me); _bm.free()
     _ho=bpy.data.objects.new('HairLong',_me); bpy.context.scene.collection.objects.link(_ho); _me.materials.append(colmat('Hair'))
     _ca=_me.color_attributes.new('Col','FLOAT_COLOR','CORNER')
     for _l in _me.loops:
-        _c=_me.vertices[_l.vertex_index].co; _k=0.9+noise.noise(_c*60)*0.12
+        _c=_me.vertices[_l.vertex_index].co; _k=(0.88+noise.noise(Vector((_c.x*150,_c.y*150,_c.z*6)))*0.16) if G.get('hairfall') else 0.9+noise.noise(_c*60)*0.12      # with hairfall, the colour runs in fine streaks down the length, like strands
         _ca.data[_l.index].color=(COL['Hair'].x*_k,COL['Hair'].y*_k,COL['Hair'].z*_k,1)
     _me.color_attributes.active_color=_ca
     for _p in _me.polygons: _p.use_smooth=True
@@ -2576,16 +2665,20 @@ if BARE:      # the shirt goes (and anything made of its cloth at the neck, its 
 if BARE and PART.get('skirt') is not None and len(PART['skirt'].data.polygons):      # a bare body shows the top of its wrap or skirt (no blouse or belt over it): its cut edge is evened out, not left in teeth
     _b=bmesh.new(); _b.from_mesh(PART['skirt'].data); smooth_edge(_b,12,lambda c:c.z>HIP-0.02); _b.to_mesh(PART['skirt'].data); _b.free(); PART['skirt'].data.update()
 if BAND:      # the chest band itself, from the measure taken before the body was trimmed (BAND_BINS)
-    _bins=BAND_BINS; _cy=J('Spine2').y; _NA,_NZ=56,7; _rows=[]
+    _bins=BAND_BINS; _cy=J('Spine2').y; _NA,_NZ=56,8; _rows=[]
     for k in range(_NZ+1):
-        z=BAND_Z[0]+(BAND_Z[1]-BAND_Z[0])*k/_NZ
-        rr=[max(_bins.get((i,k),0),_bins.get((i,k-1),0),0.05*s)+0.006+0.008*abs(math.sin(2*math.pi*(i+0.5)/_NA)) for i in range(_NA)]      # more room at the sides, where the chest moves with the arms
-        for _ in range(6): rr=[(rr[(i-1)%_NA]+2*rr[i]+rr[(i+1)%_NA])/4 for i in range(_NA)]
-        _rows.append([(math.sin(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],_cy-math.cos(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],z) for i in range(_NA)])
+        rr=[]; zs=[]
+        for i in range(_NA):
+            a=-math.pi+2*math.pi*(i+0.5)/_NA; z=BAND_Z[0]+(BAND_TOP(a)-BAND_Z[0])*k/_NZ; kz=int(round(z/0.01))
+            rr.append(max([_bins.get((i,q),0) for q in range(kz-2,kz+3)]+[0.05*s])+0.006+0.008*abs(math.sin(a))+0.007*(k/_NZ)**2); zs.append(z)      # more room at the sides, where the chest moves with the arms
+        if _rows: rr=[max(rr[i],0.985*_prev[i]) for i in range(_NA)]      # a row never dips inside the one below (on a slight chest the top edge stood in teeth)
+        for _ in range(6 if k<_NZ-1 else 14): rr=[(rr[(i-1)%_NA]+2*rr[i]+rr[(i+1)%_NA])/4 for i in range(_NA)]
+        _prev=rr
+        _rows.append([(math.sin(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],_cy-math.cos(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],zs[i]) for i in range(_NA)])
     _bb=bmesh.new(); _vv=[[_bb.verts.new(p) for p in row] for row in _rows]
     for k in range(_NZ):
         for i in range(_NA): _bb.faces.new((_vv[k][i],_vv[k][(i+1)%_NA],_vv[k+1][(i+1)%_NA],_vv[k+1][i]))
-    _bo=soft('Band',_bb,'Shirt',only=('Hips','Spine','Spine1','Spine2')); paint(_bo); print('BARE: chest band',len(_bo.data.polygons))
+    _bo=soft('Band',_bb,'Shirt',only=('Hips','Spine','Spine1','Spine2')); paint(_bo)      # the band follows the spine only: with the shoulders' share, the two shoulders swinging opposite ways in a stride pulled the middle of its top edge down in a V. Under the arms it dips clear instead (BAND_TOP), so its sides move with the chest when an arm is raised; print('BARE: chest band',len(_bo.data.polygons))
 _fa=h.data.attributes.new('_FACE','FLOAT','POINT')
 for v in h.data.vertices:
     c=v.co; _fa.data[v.index].value=1.0 if (c.y<EYE[1].y+ER*2.4 and EYE[1].z-ER*4.4<c.z<EYE[1].z+ER*1.7 and abs(c.x)<EYE[1].x+ER*2.3) else 0.0

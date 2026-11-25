@@ -1,5 +1,14 @@
 # To do: checks still open (19 November 2026)
 
+**Next LLM, start here (25 November 2026, branch `story-card-copy-and-title-typography`, PR #163; the owner stacks PRs: commit to the open PR, do not open a new one).**
+- [ ] **Narration starts before the story loads.** Each game's `<audio id="intro-audio" ... autoplay>` (PR #163) plays as the page opens, and browsers often block it without a tap. Start it when the title screen is ready (`#start` enabled) or on the first tap; check on a phone.
+- [ ] **Autoplayer after the new chapter flow** (`engine/chapter-end.js`: `goingStraight`, `startCard`, `titleFade`): Xaymaca (AUTO END 75), the Shark Papers (48) and the Mad Master (68) passed on 25 November; **not yet confirmed:** Rose Hall, Morant Bay, Windrush, Air Jamaica, Port Royal (`?auto=1`; Port Royal from a dev build, then restore the public `app.js`). Then play one chapter change by hand: the end card's Next chapter, then the title fade, no Begin card.
+- [ ] **Xaymaca audit not at 0** after the canoe crews (25 November, late): faces 22 in Maima, 9 on the shore and the crossing (the crew bodies, hidden until manned, likely counted), audit 1 to 6 per place. Run `node tools/review/run-test.mjs xaymaca audit,cloth` and fix every line (rule 8).
+- [ ] **Xaymaca cloth** reports 1 to 9 lines on most bodies after the hair and breechcloth rebuild; run `full-check.mjs` for all 16 and look at every sheet (rule 15). The girl's walk still slides 7.6 cm a loop (engine girl-stride fault, below); she only stands in this game.
+- [ ] **Paddle clip for Port Royal's rescue boat** (owner): try `Paddle` (`shared/anim-sources/Paddling.fbx`, Xaymaca's own clip, `tools/xaymaca/pack_clips.mjs`); if used, move it into the shared library (`tools/anims/clips.json`).
+- [ ] **Xaymaca, still open:** a Taino-heritage reviewer before it is treated as finished; Mendez's coat neck (a few mm of skin); the cassava squeezing to check at a primary source; Seville Heritage Park's real layout. All in `docs/games/xaymaca.md`.
+- [ ] **Selassie** has no start card between chapters, so no change was made; if the owner wants the same title fade there, call `titleFade` in its `go` for a chapter's first step.
+
 Work from PR #129 (merged to `main`) that was not checked before the merge. Each item says what changed, what to check, and how. Tick an item off (`[x]`) when it is done, and add a line saying what you found. Read `CLAUDE.md` first; its rules apply (no em dashes, check on phones, audits at 0).
 
 Build a game with test views first: `node tools/build.mjs <game> --dev`, then serve the repo root (`python3 -m http.server 8765`). Never commit a dev build of `games/port-royal/site/app.js`: run `node tools/build.mjs port-royal` (public) before any commit.

@@ -269,9 +269,11 @@ export function hungNet() {
    main masts and a lateen yard on the mizzen. aground: run ashore, low in the water, with straw roofs over the waist and castles and the
    sails gone (Ferdinand: "sheds were erected on the decks and the poops and forecastles"; Mendez: "two cabins thatched with straw").
    Without aground she is a ship under sail (the rescue ship of June 1504, also a general picture). */
-export function caravel({ aground = true, sails = !aground, seed = 1, shores = [-1, 1] } = {}) {
-  const F = lines({ L: 21, B: 6.4, fb: 1.8, bul: 0.75, sheerF: 1.0, sheerA: 1.6, stern: 0.86, bowAt: 0.62, bluff: 2.2 });
-  const g = hull(F, { stripe: 0, N: 26, deck: M.shipDeck(), inner: 0x4c3a28, bands: [[-0.5, 0.12, 0x3a2a1c], [-1.2, 0.1, 0x3a2a1c]] });
+export function caravel({ aground = true, sails = !aground, seed = 1, shores = [-1, 1], L = 21, B = 6.4, band = null, torn = true } = {}) {
+  /* L, B: length and beam (La Capitana the larger, the Santiago smaller: no plan of either exists); band: a colour for a painted band below the rail (the two
+     ships told apart at a glance); torn: a strip of old sail left on the main yard */
+  const F = lines({ L, B, fb: 1.8 * L / 21, bul: 0.75, sheerF: 1.0 * L / 21, sheerA: 1.6 * L / 21, stern: 0.86, bowAt: 0.62, bluff: 2.2 });
+  const g = hull(F, { stripe: band ? 0.28 : 0, stripeColor: band || undefined, N: 26, deck: M.shipDeck(), inner: 0x4c3a28, bands: [[-0.5 - (band ? 0.3 : 0), 0.12, 0x3a2a1c], [-1.2, 0.1, 0x3a2a1c]] });
   const deckY = (s) => F.sheer(s);
   /* the sterncastle and forecastle: decks raised over the stern and the bow, with rails */
   const sc0 = F.z(0.0), sc1 = F.z(0.28), fc0 = F.z(0.84), fc1 = F.z(1.0);
@@ -312,7 +314,7 @@ export function caravel({ aground = true, sails = !aground, seed = 1, shores = [
     sail([[-5.0, mainTop - 2.1, mz - 0.1], [5.0, mainTop - 2.1, mz - 0.1], [5.6, deckY(0.52) + 2.4, mz - 0.6], [-5.6, deckY(0.52) + 2.4, mz - 0.6]], 0.45, g, 6);
     sail([[-3.6, foreTop - 1.7, fz - 0.1], [3.6, foreTop - 1.7, fz - 0.1], [4.0, deckY(0.8) + 2.2, fz - 0.5], [-4.0, deckY(0.8) + 2.2, fz - 0.5]], 0.4, g, 6);
     sail([[0, mizTop + 1.3, zz - 3.7], [0, mizTop - 4.6, zz + 3.1], [0, deckY(0.2) + 2.6, zz - 0.4], [0, deckY(0.2) + 2.6, zz - 0.4]], 0.3, g, 5);
-  } else {
+  } else if (torn) {
     /* sails gone; a strip of old canvas still bent to the main yard, torn */
     const t = mesh(new THREE.PlaneGeometry(3.2, 1.2, 6, 2), M.sailOld(), -1.2, mainTop - 2.7, mz + 0.05, g);
     t.rotation.z = 0.08;
@@ -335,11 +337,7 @@ export function caravel({ aground = true, sails = !aground, seed = 1, shores = [
     shed(F.z(0.56), F.z(0.78), F.half(0.66) * 1.6, deckY(0.66), 1.6);
     shed(sc0 + 0.6, sc1 - 1.0, F.half(0.12) * 1.5, scTop, 1.4);
     shed(fc0 - 0.4, fc1 + 1.4, F.half(0.9) * 1.2, fcTop, 1.2);
-    /* the shores: poles from the sand to her sides, so she cannot fall over */
-    for (const sd of shores) for (const s of [0.25, 0.5, 0.75]) {   /* on the outer side only, when two lie board and board */
-      const z = F.z(s), x = sd * (F.half(s) + 0.1);
-      spar([x, -0.3, z], [x + sd * 2.6, -F.fb - 0.6, z + 0.2], 0.09, 0.08, M.pole(), g);
-    }
+    /* (Ferdinand: shored up on both sides. The shores are under the water here, so they are not drawn: drawn, their tips stood out of the sea as stubs along her side.) */
   }
   /* the stern: a round stern with a rudder */
   box(0.18, F.fb + 1.2, 1.0, M.shipWood(), 0, -F.fb / 2 + 0.3, F.z(0) + 0.45, g);
