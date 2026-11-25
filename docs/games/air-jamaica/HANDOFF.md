@@ -1,12 +1,30 @@
-# Air Jamaica: handoff for the next session (updated 25 November 2026)
+# Air Jamaica: handoff for the next session (updated 25 November 2026, evening)
 
 Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research, sources, what is general), this file.
 
 ## Where things are
 - Game: `games/air-jamaica/`, live on the menu since 25 November 2026 at the owner's request, to test; still being polished.
-- Chapter 1 "A flag in the sky" (apron + waving gallery, 1 April 1969) and chapter 2 "The view from the front" (DC-8 flight deck, landing) play end to end.
+- All six chapters play end to end: 1 "A flag in the sky" (apron and waving gallery, 1 April 1969), 2 "The view from the front" (DC-8 flight deck, landing), 3 "New colours" (December 1994), 4 "The flying chef" (the 2000s), 5 "The sale" (April 2010), 6 "The last flight home" (30 April 2010). Merged to `main` on 25 November 2026 (solutions-dot/portroyal#160).
 - Code: `src/planes.js` (jet kit: DC-8, DC-9, livery painted as a texture, open door with reveal), `src/airport.js` (Palisadoes terminal from NLJ photos, waving gallery, runway 12/30 laid flat, taxiway), `src/places.js` (apron, gallery, cockpit), `src/cockpit.js` (flight deck rebuilt from the 1969 Finnair DC-8 photo), `src/props.js` (boarding steps), `src/content.js` / `src/steps.js` (words, steps, films, quiz), `src/cast.js`.
 - People: recipes in `tools/air-jamaica/people/`, built by `tools/air-jamaica/build-people.mjs` (shared builder `tools/garvey/era.py`). Builder options added this session: `hair:"straight"` (+`hairlen`), colours `Lipstick`, `Eyeshadow`, `Gloves`; armpit fix; short skirts follow each thigh (see `docs/PIPELINE.md`).
+
+## Status, 25 November 2026, 17:30 UTC: the open list is done
+Every item on the old open list has been done and checked:
+- **A320 nose and cockpit windows** (owner flagged): rebuilt from `ref-a320-blue-tail.jpg` and looked at again from the side, three-quarter, front and close (framed dark panes low on the nose, white cap, black strip to the tip, stripes and flag as the photograph). **Owner to judge.**
+- **Forward door outline** "floats as a thin box": the doors are now painted outlines on the skin (body texture), no box; looked at close on the A320 and the DC-8.
+- **Tail bird**: the A320's bird and its two loops sit whole in the middle of the blue fin; the DC-8's Love Bird is centred on the roundel (fin edges measured). Looked at from the side and from behind.
+- **Audit**: `?test=audit` 0 in all eight places; `held`, `ambient`, `layout` and `beds` 0.
+- **Autoplayer**: `?auto=1` plays the whole story to `AUTO END 96` with no errors; `?auto=3&one` ends at 50. (It had found chapter 3 stopping at step 38: fixed, see the game doc, "Gameplay review".)
+- **Phone screenshots** (414x706, touch): title, chapters, play, journal and every place looked at after the evening's changes. No layout faults.
+- **Full checks on the bodies** (rule 15): all 13 Air Jamaica 1994 to 2010 bodies, the chef and the 7 Melissa bodies were looked at in the morning; the 5 rebuilt after that (`aj_dee04`, `aj_dee10`, `aj_guest94a`, Melissa's `woman1988` and `woman2025`) were looked at again in the evening, every cell: poses Idle or IdleM, Talk1 or TalkM1, Walk 0.2 and 0.6, and for the two Mums SitIdle and SitTalk, from the front, three-quarter, side and back; clothes and neck close up; phone and light copies.
+  **Still visible on those five:** `aj_dee04`, a few specks of the jeans through the belt at the right hip, and seated, the body about 6 mm through the jeans at the hip crease; `aj_dee10`, seated, the loose top's back hem juts out behind her with a ragged edge (a seat back hides it in the game); `aj_guest94a`, none (the jeans patch above the belt is gone); `woman1988`, none seen (the plaits now hang clear of the hat); `woman2025`, a small dark notch on the left front of the top and the known 5.6 mm point under the arm mid-stride. The two hats on the Melissa women show together only on the sheet: the game shows one (`games/melissa/src/cast.js`). The phone and crowd copies show the same trouser outlines as before.
+
+## What is left (none of it blocks play)
+1. **Owner to judge** the DC-8, DC-9 and A320 noses and tails in the game.
+2. The small body faults above; the seated blouse through the skirt (about 1.5 cm, crew never sit); the suited men's trousers through the jacket seated (about 2 cm, shared with Windrush).
+3. Not made: the printed scarf over the crew's arm (1969 ad).
+4. Waiting on sources: the year of the later purple uniform (then Aunt Marcia comes back in uniform), which plane first wore the blue tail in December 1994, a dated photograph of Norman Manley's hangars and terminal of 1994 and 2010 (the hangar is a stand-in), the standup bar and the fashion show.
+5. Sound: levels are measured, not heard. A person should listen to the beds and the cheer.
 
 ## State at 25 November 2026, 12:30 UTC
 - The DC-8 is the owner's model (CC BY 4.0, credited in the game's credits), shortened to a DC-8-50, with the 1969 livery painted onto its own body and fin: the windscreen, nose and tail now sit as on the real aircraft. Looked at from eight angles. Audit and layout 0 in all eight places.
@@ -18,7 +36,7 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 - Audits: Air Jamaica 0 in all eight places; Shark Papers 0 (after the Sparrow rebuild); Morant Bay 0. Phone screenshots of both games looked at (title, chapters, play, every place): no layout faults; the home room's view moved to the doorway.
 - Rule 15 full sheets looked at for all 13 Air Jamaica 1994 to 2010 bodies, the chef, and all 7 Melissa bodies. Fixed in the builder (`docs/PIPELINE.md`, "Untucked shirts and chains"): the chain under a polo collar, the torn and jagged untucked hems, the chef's hem pushed out to his hands. **Still visible:** `aj_guest94a` (tucked polo) shows a patch of the jeans' waist through the shirt above the belt from the back mid-stride; `aj_dee04` and `aj_dee10` show the chain dipping under the neckline at the side mid-stride (1.4 cm); `woman1988`'s hair puffs press about 3 mm into her hat's sides; `woman2025` a few points of body through the shirt mid-stride (6 mm); a short dark seam at the nape where each chain closes; the phone and crowd copies' trouser outlines (as before). Tivoli's `man2010` and `youth2010` were not rebuilt (its doc's rule).
 
-## Next session: start here (25 November 2026, late)
+## Next session list of the morning (25 November 2026; all done by 17:30, kept for the record)
 1. Read the result of the last `?test=audit` for air-jamaica and shark-papers (`build/logs/test-<game>-audit.txt`; read the whole log, the title shows only `FLOW 0`). The fixes before it: the closed-door DC-8 out of the place until it moves, the galley screens clear of the front row, the box lid on a hinge strip. Every place must be 0.
 2. **The Shark Papers' cutter Sparrow** (owner: "the boat we see through the looking glass could be better"): rebuild `cutter()` in `games/shark-papers/src/ships.js` from Royal Navy cutter draughts and paintings of the 1790s (National Maritime Museum): sheer, a long running bowsprit, the boom well past the stern, a square topsail, seams in the sails, and an ensign and a long masthead pennant for 1799. List anything no source shows as a stand-in in `docs/games/shark-papers.md`.
 3. **Rule 15 full sheets** for the 13 Air Jamaica and 7 Melissa bodies (`node tools/review/full-check.mjs <game> <ids> anims=<their clips>`), and look at every cell.
@@ -69,7 +87,7 @@ Read first: `CLAUDE.md` (owner rules), `docs/games/air-jamaica.md` (all research
 
 ## Checks (all must pass before done)
 - `python3 -m http.server 8765` at repo root, `node tools/build.mjs air-jamaica --dev`
-- Audit: open `games/air-jamaica/site/?test=audit` (title `AUDIT n`); last result 0 issues in apron, gallery, cockpit.
+- Audit: `node tools/review/run-test.mjs air-jamaica audit,held,ambient,layout,beds`, then read `build/logs/test-air-jamaica-<test>.txt` (the title shows only `FLOW 0`); last result 0 issues in all eight places.
 - Autoplayer: `?auto=N&one` for each chapter N = 1 to 6, and `?auto=1` for the whole story (reaches `AUTO END 96`).
 - People: `node tools/review/full-check.mjs air-jamaica <ids> anims=Idle:0.4,Walk:0.3,Wave:0.5` and LOOK at every sheet (rule 15).
 - Screenshots: `node tools/review/look-shot.mjs air-jamaica out.png "shot=10"`; phone size `414x706`.
@@ -91,4 +109,4 @@ A 1969 Air Jamaica advertisement, "They put a little bit of Jamaica in a whole l
    - Hurricane Gilbert (1988) and the 2011 swoosh look are optional extras; check sources first.
    - **Waiting on sources:** the year of the later purple uniform (then Aunt Marcia comes back), the year of the older white SkyWritings cover, the standup bar and the fashion show.
 5. Known open faults: seated, women's blouse shows through the seated skirt (~1.5 cm; crew never sit); suited men's trousers through the jacket seated (~2 cm, shared with Windrush); printed scarf not made.
-6. Before going live: menu card (`docs/NEW_GAME.md`), rename folder, `npm test`, PR to main when the owner asks.
+6. Done (25 November 2026): menu card (the DC-8 flight deck), on the menu in date order, `npm test` 273 of 273, merged to `main` (solutions-dot/portroyal#160).

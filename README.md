@@ -7,15 +7,22 @@ Educational 3D history games for the web, for children aged 6 and up and for adu
 | Game | Folder | Status | Read first |
 |---|---|---|---|
 | **Port Royal 1690**: Lewis Galdy, from 1690 to the 1692 earthquake and after | `games/port-royal/` | finished and live | `docs/games/port-royal.md` |
-| **Nanny Town 1734: The Narrow Path**: Nanny of the Windward Maroons, about 1730 to 1740, six chapters | `games/nanny/` | new, stand-in bodies, not yet reviewed by the Moore Town Maroons | `docs/games/nanny.md` |
-| **Bog Walk 1904: The Tube**: the night water came into the pipe that fed Kingston's tram power station, six chapters | `games/bog-walk/` | all chapters playable | `docs/games/bog-walk.md` |
-| **Marcus Garvey**: a Kingston print shop about 1908 to National Heroes Park today, eight chapters | `games/garvey/` | all chapters playable, being polished | `docs/games/garvey.md` |
-| **Windrush: Two Places Called Home**: a fictional family between Jamaica and England, 1948 to 2018, eight chapters | `games/windrush/` | new, awaits independent review | `docs/games/windrush.md` |
-| **Kendal 1957**: Jamaica's railway and the Kendal train crash, seven chapters | `games/kendal/` | new, being polished | `docs/games/kendal.md` |
-| **The Emperor's Arrival, 1966**: Ruth, a fictional Kingston girl, at Haile Selassie I's arrival, six chapters | `games/selassie/` | new, not yet reviewed | `docs/games/selassie.md` |
-| **Eventide Home, 1980**: the Eventide Home in Kingston and the fire | `games/eventide/` | early | `docs/games/eventide.md` |
-| **Tivoli**: Tivoli Gardens, West Kingston, from the 1960s to today, with May 2010 at the centre | `games/tivoli/` | early, some stand-in poses; the hardest subject here | `docs/games/tivoli.md` |
-| **Hurricane Melissa**: a fictional family through Charlie (1951), Gilbert (1988) and Melissa (2025), seven chapters | `games/melissa/` | new, stand-in bodies | `docs/games/melissa.md` |
+| **Nanny Town 1734: The Narrow Path**: Nanny of the Windward Maroons, about 1730 to 1740, six chapters | `games/nanny/` | live; stand-in bodies; not yet reviewed by the Moore Town Maroons | `docs/games/nanny.md` |
+| **The Mad Master of Edinburgh Castle, 1773** (Mature 13+): Lewis Hutchinson of St Ann, told through a fictional enslaved boy, six chapters | `games/hutchinson/` | live; not yet reviewed outside | `docs/games/hutchinson.md` |
+| **The Shark Papers, 1799**: the papers of the brig Nancy, found inside a shark, four chapters | `games/shark-papers/` | live; basic first version, enriched; Thompson's 1970 study not yet read | `docs/games/shark-papers.md` |
+| **The White Witch of Rose Hall** (Mature 13+): the legend of Annie Palmer, then the papers, six chapters | `games/rose-hall/` | live; basic first version, enriched | `docs/games/rose-hall.md` |
+| **Morant Bay, 1865** (Mature 13+): the rebellion, through a fictional girl of Stony Gut, six chapters | `games/morant-bay/` | live since 23 November 2026; first playable build, being polished | `docs/games/morant-bay.md` |
+| **Bog Walk 1904: The Tube**: the night water came into the pipe that fed Kingston's tram power station, six chapters | `games/bog-walk/` | live; all chapters playable | `docs/games/bog-walk.md` |
+| **Marcus Garvey**: a Kingston print shop about 1908 to National Heroes Park today, eight chapters | `games/garvey/` | live; being polished | `docs/games/garvey.md` |
+| **Windrush: Two Places Called Home**: a fictional family between Jamaica and England, 1948 to 2018, eight chapters | `games/windrush/` | live; awaits independent review | `docs/games/windrush.md` |
+| **Kendal 1957**: Jamaica's railway and the Kendal train crash, seven chapters | `games/kendal/` | live; being polished | `docs/games/kendal.md` |
+| **The Emperor's Arrival, 1966**: Ruth, a fictional Kingston girl, at Haile Selassie I's arrival, six chapters | `games/selassie/` | live; not yet reviewed | `docs/games/selassie.md` |
+| **Air Jamaica**: a fictional family and the national airline, from the first flight (1 April 1969) to the last (30 April 2010), six chapters | `games/air-jamaica/` | live since 25 November 2026; all chapters playable, checks pass; the owner still to judge the planes' noses | `docs/games/air-jamaica.md` |
+| **Eventide Home, 1980**: the Eventide Home in Kingston and the fire | `games/eventide/` | live; early | `docs/games/eventide.md` |
+| **Tivoli** (Mature 13+): Tivoli Gardens, West Kingston, from the 1960s to today, with May 2010 at the centre | `games/tivoli/` | live; early, some stand-in poses; the hardest subject here | `docs/games/tivoli.md` |
+| **Hurricane Melissa**: a fictional family through Charlie (1951), Gilbert (1988) and Melissa (2025), seven chapters | `games/melissa/` | live; stand-in bodies | `docs/games/melissa.md` |
+
+All fifteen games are on the menu, in date order (status at 25 November 2026). The Mature 13+ games are hidden in the Kids profile. Ideas with no game yet (Xaymaca 1503, the 1655 capture, Tacky's Rebellion 1760, Sam Sharpe 1831, Frome 1938, Independence night 1962) are in `docs/plans/next_games.md`.
 
 A new game starts from `games/_template/` (`docs/NEW_GAME.md`).
 
