@@ -1,0 +1,83 @@
+{
+ "name": "aj_guest94b",
+ "era": 1994,
+ "body": {
+  "gender": 0,
+  "age": 0.3,
+  "muscle": 0.4,
+  "weight": 0.45,
+  "height": 0.49,
+  "proportions": 0.56,
+  "african": 1.0,
+  "caucasian": 0.0,
+  "asian": 0.0,
+  "cupsize": 0.4,
+  "firmness": 0.55
+ },
+ "targets": {
+  "head-oval": 0.3,
+  "chin-width-decr": 0.2,
+  "nose-width2-incr": 0.15
+ },
+ "garments": {
+  "trousers": true,
+  "shoes": true,
+  "woman": true,
+  "hat": [],
+  "hairvol": 0.4,
+  "legwidth": 0.9,
+  "collar": false,
+  "sleeve": 0.28,
+  "untucked": false,
+  "belt": true,
+  "denim": 1,
+  "sneakers": true
+ },
+ "colors": {
+  "Skin": [
+   151,
+   104,
+   76
+  ],
+  "Hair": [
+   32,
+   27,
+   23
+  ],
+  "Sole": [
+   244,
+   244,
+   240
+  ],
+  "Lipstick": [
+   150,
+   58,
+   62
+  ],
+  "Belt": [
+   60,
+   44,
+   30
+  ],
+  "Buckle": [
+   180,
+   160,
+   100
+  ],
+  "Shirt": [
+   40,
+   150,
+   140
+  ],
+  "Breeches": [
+   74,
+   98,
+   142
+  ],
+  "Shoes": [
+   244,
+   244,
+   240
+  ]
+ }
+}

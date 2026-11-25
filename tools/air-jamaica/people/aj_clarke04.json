@@ -1,0 +1,84 @@
+{
+ "name": "aj_clarke04",
+ "era": 2004,
+ "body": {
+  "muscle": 0.4,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "gender": 1,
+  "age": 0.85,
+  "weight": 0.55,
+  "height": 0.55
+ },
+ "targets": {
+  "head-oval": 0.4,
+  "nose-width2-incr": 0.3
+ },
+ "garments": {
+  "trousers": true,
+  "shoes": true,
+  "hat": [],
+  "hairvol": 0.1,
+  "fade": 0.6,
+  "legwidth": 0.95,
+  "sleeve": 0.3,
+  "collar": "turn",
+  "polo": 3,
+  "untucked": false,
+  "belt": true
+ },
+ "colors": {
+  "Skin": [
+   146,
+   99,
+   72
+  ],
+  "Hair": [
+   180,
+   178,
+   172
+  ],
+  "Buttons": [
+   230,
+   228,
+   220
+  ],
+  "Sole": [
+   40,
+   34,
+   30
+  ],
+  "Belt": [
+   40,
+   30,
+   24
+  ],
+  "Buckle": [
+   170,
+   150,
+   90
+  ],
+  "Shirt": [
+   236,
+   232,
+   214
+  ],
+  "Collar": [
+   236,
+   232,
+   214
+  ],
+  "Breeches": [
+   70,
+   72,
+   80
+  ],
+  "Shoes": [
+   40,
+   30,
+   24
+  ]
+ }
+}

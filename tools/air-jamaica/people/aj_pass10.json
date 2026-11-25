@@ -1,0 +1,91 @@
+{
+ "name": "aj_pass10",
+ "era": 2010,
+ "body": {
+  "muscle": 0.4,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "gender": 1,
+  "age": 0.28,
+  "weight": 0.45,
+  "height": 0.55
+ },
+ "targets": {
+  "head-oval": 0.4,
+  "nose-width2-incr": 0.3
+ },
+ "garments": {
+  "trousers": true,
+  "shoes": true,
+  "hat": [
+   [
+    "baseball",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.1,
+  "fade": 0.6,
+  "legwidth": 0.95,
+  "sleeve": 0.3,
+  "collar": false,
+  "untucked": true,
+  "denim": 1,
+  "sneakers": true,
+  "chain": 0.05
+ },
+ "colors": {
+  "Skin": [
+   148,
+   100,
+   72
+  ],
+  "Hair": [
+   22,
+   19,
+   16
+  ],
+  "Buttons": [
+   230,
+   228,
+   220
+  ],
+  "Sole": [
+   244,
+   244,
+   240
+  ],
+  "Belt": [
+   40,
+   30,
+   24
+  ],
+  "Buckle": [
+   170,
+   150,
+   90
+  ],
+  "Shirt": [
+   40,
+   40,
+   44
+  ],
+  "Breeches": [
+   74,
+   98,
+   142
+  ],
+  "Shoes": [
+   244,
+   244,
+   240
+  ],
+  "Hat": [
+   232,
+   186,
+   40
+  ]
+ },
+ "crowd": true
+}

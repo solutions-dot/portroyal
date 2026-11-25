@@ -1,0 +1,103 @@
+{
+ "name": "aj_pass04",
+ "era": 2004,
+ "body": {
+  "muscle": 0.4,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "gender": 1,
+  "age": 0.32,
+  "weight": 0.45,
+  "height": 0.55
+ },
+ "targets": {
+  "head-oval": 0.4,
+  "nose-width2-incr": 0.3
+ },
+ "garments": {
+  "trousers": true,
+  "shoes": true,
+  "hat": [
+   [
+    "baseball",
+    "Hat"
+   ]
+  ],
+  "hairvol": 0.1,
+  "fade": 0.6,
+  "legwidth": 0.95,
+  "sleeve": 0.3,
+  "collar": "turn",
+  "polo": 2,
+  "untucked": true,
+  "stripes": 0.022,
+  "denim": 1,
+  "sneakers": true,
+  "chain": 0.04
+ },
+ "colors": {
+  "Skin": [
+   148,
+   100,
+   72
+  ],
+  "Hair": [
+   22,
+   19,
+   16
+  ],
+  "Buttons": [
+   230,
+   228,
+   220
+  ],
+  "Sole": [
+   244,
+   244,
+   240
+  ],
+  "Belt": [
+   40,
+   30,
+   24
+  ],
+  "Buckle": [
+   170,
+   150,
+   90
+  ],
+  "Shirt": [
+   34,
+   64,
+   132
+  ],
+  "Stripe": [
+   240,
+   238,
+   230
+  ],
+  "Collar": [
+   34,
+   64,
+   132
+  ],
+  "Breeches": [
+   54,
+   74,
+   116
+  ],
+  "Shoes": [
+   244,
+   244,
+   240
+  ],
+  "Hat": [
+   180,
+   40,
+   40
+  ]
+ },
+ "crowd": true
+}
