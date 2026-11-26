@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { catalogPath, isWriteConflict, read, records, saveProgress, storageReady, write } from '../server/pastport-store.mjs';
 
 const DAY = 86_400_000;
@@ -9,23 +9,15 @@ const DEFAULTS = { defaultProfile: 'teen', games: {} };
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => Response.json(body, { status, headers });
 const ownerSecret = () => process.env.PASTPORT_ADMIN_PASSWORD || '';
-const inviteSecret = () => process.env.PASTPORT_INVITE_SECRET || ownerSecret();
 const text = (value, limit) => typeof value === 'string' ? value.trim().slice(0, limit) : '';
 const integer = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
 const hash = (value) => createHash('sha256').update(value).digest();
 const equal = (a, b) => timingSafeEqual(hash(a), hash(b));
 const isoDay = (ms) => new Date(ms - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-const signed = (code) => createHmac('sha256', inviteSecret()).update(code).digest('base64url').slice(0, 22);
 const publicSettings = async () => {
   if (!storageReady()) return { ...DEFAULTS, playtest: false };
-  return { ...((await read(catalogPath, true))?.value || DEFAULTS), playtest: Boolean(inviteSecret()) };
+  return { ...((await read(catalogPath, true))?.value || DEFAULTS), playtest: true };
 };
-
-function testerFor(token) {
-  if (typeof token !== 'string' || !/^[a-f0-9]{16}\.[\w-]{22}$/.test(token)) return '';
-  const [code, signature] = token.split('.');
-  return equal(signature, signed(code)) ? code : '';
-}
 
 function geo(request) {
   const country = request.headers.get('x-vercel-ip-country') || '';
@@ -55,8 +47,7 @@ async function payload(request, max) {
 async function progress(request, body) {
   const now = Date.now();
   const { page, visitor, game, startedAt, sequence, seconds, played, chapter, step, exit, screen } = body;
-  const tester = testerFor(body.invite);
-  if (!inviteSecret() || (body.invite && !tester) || !uuid(page) || !uuid(visitor) ||
+  if (!uuid(page) || !uuid(visitor) ||
       typeof game !== 'string' || (game !== '' && !GAME.test(game)) ||
       !integer(startedAt, now - DAY, now + 60_000) || !integer(sequence, 1, 20_000) ||
       !integer(seconds, 0, Math.min(86_400, Math.ceil((now - startedAt) / 1000) + 60)) ||
@@ -68,9 +59,9 @@ async function progress(request, body) {
   }
   const path = `pastport/visits/${isoDay(startedAt)}/${page}.json`;
   await saveProgress(path, {
-    page, visitor, tester, game, startedAt, updatedAt: now, sequence, seconds, played,
+    page, visitor, tester: '', game, startedAt, updatedAt: now, sequence, seconds, played,
     chapter, step, exit, screen, ...geo(request)
-  }, tester);
+  }, '');
   return new Response(null, { status: 204, headers });
 }
 
@@ -112,7 +103,7 @@ function validateSettings(body) {
   return { defaultProfile: body.defaultProfile, games };
 }
 
-async function admin(request, url, action) {
+async function admin(request, url) {
   const password = ownerSecret();
   if (!password) return json({ error: 'The dashboard password has not been configured.' }, 503);
   if (!equal(request.headers.get('authorization') || '', `Bearer ${password}`)) {
@@ -128,21 +119,7 @@ async function admin(request, url, action) {
     if (kind === 'visits' && !/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: 'Invalid date.' }, 400);
     const prefix = kind === 'visits' ? `pastport/visits/${day}/` : `pastport/${kind}/`;
     const page = await records(prefix, url.searchParams.get('cursor') || undefined, kind === 'visits');
-    if (kind === 'visits') {
-      const codes = [...new Set(page.rows.map((entry) => entry.tester).filter(Boolean))];
-      const labels = new Map(await Promise.all(codes.map(async (code) =>
-        [code, (await read(`pastport/invites/${code}.json`))?.value.label || ''])));
-      for (const entry of page.rows) entry.testerLabel = labels.get(entry.tester) || '';
-    }
     return json(page);
-  }
-  if (request.method === 'POST' && action === 'invite') {
-    const body = await payload(request, 1024);
-    if (!body || typeof body.label !== 'string' || body.label.length > 80) return json({ error: 'Invalid tester label.' }, 400);
-    const code = randomBytes(8).toString('hex');
-    const label = text(body.label, 80);
-    if (label) await write(`pastport/invites/${code}.json`, { label });
-    return json({ code, url: `${url.origin}/menu/#playtest=${code}.${signed(code)}` });
   }
   if (request.method === 'POST' && kind === 'catalog') {
     const body = await payload(request, 16_384);
@@ -169,7 +146,7 @@ export default {
       if (request.method === 'POST' && (request.headers.get('origin') !== url.origin ||
           request.headers.get('sec-fetch-site') === 'cross-site')) return json({ error: 'This form must be sent from PastPort.' }, 403);
       if (!storageReady()) return json({ error: 'This service is not available yet.' }, 503);
-      if (['admin', 'invite'].includes(action)) return await admin(request, url, action);
+      if (action === 'admin') return await admin(request, url);
       if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
       const body = await payload(request, action === 'progress' ? 1600 : 20_000);
       if (!body) return json({ error: 'Invalid submission.' }, 400);

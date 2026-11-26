@@ -11,6 +11,9 @@
   const exits = { 'left-page': 'Left page', 'game-exit': 'Exit button', 'menu-link': 'Returned to menu' };
   const screens = { menu: 'Menu', title: 'Title', journal: 'Journal', chapters: 'Chapters', dialogue: 'Dialogue', card: 'Story card', chcard: 'Chapter card', fade: 'Chapter transition', game: 'In game' };
   const countries = new Intl.DisplayNames(['en'], { type: 'region' });
+  const placeOf = (entry) => [entry.city, entry.country && countries.of(entry.country)].filter(Boolean).join(', ') || 'Unavailable';
+  const sessionName = (id) => 'Session ' + id.slice(0, 8);
+  let reportDays = [], generation = 0;
   const tabs = [...document.querySelectorAll('[data-tab]')];
   const loaded = new Map();
   let password = '', catalog = [], revision = null;
@@ -74,29 +77,124 @@
     }
   }
 
+  function rankings(id, counts, limit) {
+    const panel = $(id);
+    panel.replaceChildren();
+    const entries = [...counts];
+    if (limit) entries.sort((a,b) => b[1] - a[1]);
+    const maximum = Math.max(1, ...entries.map(([,count]) => count));
+    for (const [label, count] of entries.slice(0, limit || entries.length)) {
+      const line = document.createElement('div');
+      line.className = 'rank';
+      const name = document.createElement('span'), value = document.createElement('strong');
+      name.textContent = label;
+      value.textContent = count.toLocaleString();
+      const bar = document.createElement('i');
+      bar.style.width = (100 * count / maximum) + '%';
+      line.append(name, value, bar);
+      panel.append(line);
+    }
+    if (!entries.length) panel.textContent = 'No activity in this period.';
+  }
+
+  function summary(rows) {
+    const sessions = new Map(), games = new Map(), places = new Map();
+    const daily = new Map(reportDays.map(day => [day, 0]));
+    let starts = 0, seconds = 0;
+    for (const r of rows) {
+      let session = sessions.get(r.visitor);
+      if (!session) {
+        session = {opens:0, starts:0, seconds:0, latest:r};
+        sessions.set(r.visitor, session);
+      }
+      session.opens++;
+      if (r.updatedAt > session.latest.updatedAt) session.latest = r;
+      if (!r.played) continue;
+      starts++; seconds += r.seconds;
+      session.starts++; session.seconds += r.seconds;
+      games.set(title(r.game), (games.get(title(r.game)) || 0) + 1);
+      const day = new Date(r.startedAt - 18000000).toISOString().slice(0,10);
+      daily.set(day, (daily.get(day) || 0) + 1);
+    }
+    const filter = $('visitor-filter'), old = filter.value;
+    filter.replaceChildren(new Option('All sessions',''));
+    $('sessions').replaceChildren();
+    for (const [id, item] of [...sessions].sort((a,b) => b[1].latest.updatedAt - a[1].latest.updatedAt)) {
+      const location = placeOf(item.latest);
+      places.set(location,(places.get(location) || 0) + 1);
+      filter.add(new Option(sessionName(id),id));
+      row($('sessions'), [sessionName(id),location,item.opens,item.starts,durations(item.seconds),date(item.latest.updatedAt)]);
+    }
+    if (sessions.has(old)) filter.value = old;
+    if (!sessions.size) row($('sessions'), ['No sessions in this period']);
+    $('totals').replaceChildren();
+    for (const [label, value] of [['Visitor sessions',sessions.size],['Page opens',rows.length],['Game starts',starts],['Active play',durations(seconds)],['Average per start',durations(starts ? Math.round(seconds/starts) : 0)]]) {
+      const card = document.createElement('div'), number = document.createElement('strong');
+      number.textContent = value;
+      card.append(label,number);
+      $('totals').append(card);
+    }
+    rankings('trend',daily);
+    rankings('popular',games,8);
+    rankings('locations',places,8);
+  }
+
+  async function usage() {
+    const request = ++generation;
+    const end = Date.parse($('day').value + 'T12:00:00Z');
+    if (!Number.isFinite(end)) throw new Error('Choose an ending date.');
+    const days = Array.from({length:Number($('period').value)}, (_,i) =>
+      new Date(end - (Number($('period').value)-1-i)*86400000).toISOString().slice(0,10));
+    const rows = [];
+    $('visits').setAttribute('aria-busy','true');
+    $('export-usage').disabled = true;
+    try {
+      for (const day of days) {
+        let cursor;
+        do {
+          if (request !== generation) return;
+          const result = await api({kind:'visits',day,...(cursor ? {cursor} : {})});
+          rows.push(...result.rows);
+          cursor = result.cursor;
+        } while (cursor);
+      }
+      if (request !== generation) return;
+      rows.sort((a,b) => b.startedAt - a.startedAt);
+      loaded.set('visits',{rows});
+      reportDays = days;
+      summary(rows);
+      draw('visits');
+      $('export-usage').disabled = false;
+    } catch (error) {
+      if (request === generation) {
+        loaded.set('visits',{rows:[]});
+        reportDays = [];
+        summary([]); draw('visits');
+        throw error;
+      }
+    } finally {
+      if (request === generation) $('visits').removeAttribute('aria-busy');
+    }
+  }
+
   function draw(kind) {
     const { rows, cursor } = loaded.get(kind);
     const table = $(kind === 'visits' ? 'visit-rows' : kind + '-rows');
     table.replaceChildren();
-    for (const entry of rows) {
+    const visible = kind === 'visits' && $('visitor-filter').value ? rows.filter(r => r.visitor === $('visitor-filter').value) : rows;
+    for (const entry of visible) {
       if (kind === 'newsletter') row(table, [entry.email, date(entry.receivedAt)]);
       else if (kind === 'contact') row(table, [date(entry.receivedAt), entry.name, entry.email, entry.role, entry.enquiry, entry.message], true);
       else {
-        const place = [entry.city, entry.country && countries.of(entry.country)].filter(Boolean).join(', ') || 'Unavailable';
-        const tester = entry.tester ? (entry.testerLabel || 'Tester ' + entry.tester) : 'Guest ' + entry.visitor.slice(0, 8);
+        const place = placeOf(entry);
+        const tester = sessionName(entry.visitor);
         const progress = entry.chapter ? 'Chapter ' + entry.chapter + (entry.step === null ? '' : ' · Step ' + entry.step) : '—';
         const exit = screens[entry.screen] + ' · ' + (exits[entry.exit] || 'Last seen ' + date(entry.updatedAt));
         row(table, [date(entry.startedAt), tester, place, title(entry.game) || 'Menu', entry.played ? durations(entry.seconds) : '—', progress, exit]);
       }
     }
-    if (!rows.length) row(table, ['No records yet']);
-    if (kind === 'visits') {
-      const players = new Set(rows.map((item) => item.tester || item.visitor)).size;
-      const plays = rows.filter((item) => item.played);
-      const average = plays.length ? Math.round(plays.reduce((sum, play) => sum + play.seconds, 0) / plays.length) : 0;
-      $('totals').textContent = `${players} visitors · ${plays.length} game starts · ${durations(average)} average active play${cursor ? ' (rows loaded)' : ''}`;
-    }
-    document.querySelector(`[data-more="${kind}"]`).hidden = !cursor;
+    if (!visible.length) row(table, ['No records in this period']);
+    if (kind !== 'visits') document.querySelector(`[data-more="${kind}"]`).hidden = !cursor;
   }
 
   async function next(kind, reset = false) {
@@ -131,7 +229,7 @@
       ]);
       catalog = gameList;
       showSettings(saved);
-      await next('visits', true);
+      await usage();
       login.reset();
       login.hidden = true;
       $('signout').hidden = false;
@@ -145,8 +243,9 @@
     if (tab !== 'catalog' && !loaded.has(tab)) await next(tab);
     showTab(tab);
   });
-  $('refresh').onclick = () => run($('refresh'), () => next('visits', true));
-  $('day').onchange = () => $('refresh').click();
+  $('refresh').onclick = () => run($('refresh'), usage);
+  $('day').onchange = $('period').onchange = () => usage().catch(error => say(error.message));
+  $('visitor-filter').onchange = () => draw('visits');
   for (const button of document.querySelectorAll('[data-more]')) button.onclick = () => run(button, () => next(button.dataset.more));
   settingsForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -161,17 +260,6 @@
       say('Saved. New page loads will use these settings.');
     });
   });
-  $('invite').onclick = () => run($('invite'), async () => {
-    const invite = await api({ action: 'invite' }, { label: $('invite-name').value });
-    $('invite-link').value = invite.url;
-    $('tester-code').textContent = invite.code;
-    $('invite-result').hidden = false;
-  });
-  $('copy').onclick = () => run($('copy'), async () => {
-    await navigator.clipboard.writeText($('invite-link').value);
-    say('Tester link copied.');
-  });
-
   function csvCell(value) {
     let text = String(value ?? '');
     if (/^\s*[=+\-@＝＋－＠]|^[\t\r\n]/u.test(text)) text = "'" + text;
@@ -179,7 +267,9 @@
   }
 
   function downloadCsv(kind, entries) {
-    const rows = kind === 'contact'
+    const rows = kind === 'usage'
+      ? [['Session','Opened (UTC)','Game','City','Country','Started','Active seconds','Chapter','Step','Last screen','Exit','Last seen (UTC)'], ...entries.map(r => [r.visitor,new Date(r.startedAt).toISOString(),title(r.game)||'Menu',r.city,r.country,r.played,r.seconds,r.chapter,r.step,r.screen,r.exit,new Date(r.updatedAt).toISOString()])]
+      : kind === 'contact' 
       ? [['Received (ISO UTC)', 'Name', 'Email', 'Role', 'Enquiry', 'Message'], ...entries.map((x) => [new Date(x.receivedAt).toISOString(), x.name, x.email, x.role, x.enquiry, x.message])]
       : kind === 'newsletter'
         ? [['Email', 'Signed up (ISO UTC)'], ...entries.map((x) => [x.email, new Date(x.receivedAt).toISOString()])]
@@ -193,6 +283,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
+  $('export-usage').onclick = () => downloadCsv('usage',loaded.get('visits').rows);
   for (const button of document.querySelectorAll('[data-export]')) button.onclick = () => run(button, async () => {
     const kind = button.dataset.export;
     const entries = [];

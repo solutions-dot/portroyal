@@ -35,14 +35,6 @@
   });
   config.catch(() => {});
 
-  const requested = new URLSearchParams(location.hash.slice(1)).get('playtest');
-  const invite = /^[a-f0-9]{16}\.[\w-]{22}$/.test(requested || '')
-    ? requested : session('pastport-playtest-invite');
-  if (invite && invite === requested) {
-    session('pastport-playtest-invite', invite);
-    history.replaceState(history.state, '', location.pathname + location.search);
-  }
-
   function panel(title, message) {
     const box = document.createElement('section');
     box.className = 'pp-panel';
@@ -164,7 +156,7 @@
         ['journal', 'chapters', 'dialogue', 'card', 'chcard', 'fade']
           .find((id) => { const element = document.getElementById(id); return element && !element.hidden && element.getClientRects().length; }) || 'game';
       const body = JSON.stringify({
-        page, visitor: id, invite, game, startedAt, sequence: ++sequence,
+        page, visitor: id, game, startedAt, sequence: ++sequence,
         seconds, played, chapter: progress.chapter ?? null, step: progress.step ?? null,
         exit: exit || reason, screen
       });
