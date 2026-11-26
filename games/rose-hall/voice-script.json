@@ -49,7 +49,7 @@
  },
  "arrive-13": {
   "text": "A double flight of stone steps leads to an open portico.",
-  "caption": "“A double flight of stone steps leads to an open portico.”",
+  "caption": "\u201cA double flight of stone steps leads to an open portico.\u201d",
   "film": "arrive",
   "t": 13
  },
@@ -103,19 +103,19 @@
  },
  "aisle-25_5": {
   "text": "Near this place are deposited the Remains of Missus Rosa Palmer,",
-  "caption": "“Near this place are deposited the Remains of Mrs Rosa Palmer,”",
+  "caption": "\u201cNear this place are deposited the Remains of Mrs Rosa Palmer,\u201d",
   "film": "aisle",
   "t": 25.5
  },
  "aisle-31_5": {
-  "text": "Who died on the first day of May seventeen ninety.",
-  "caption": "“who died on the first day of May 1790.”",
+  "text": "who died on the first day of May seventeen ninety.",
+  "caption": "\u201cwho died on the first day of May 1790.\u201d",
   "film": "aisle",
   "t": 31.5
  },
  "aisle-36_5": {
   "text": "Her manners were open, cheerful and agreeable.",
-  "caption": "“Her manners were open, cheerful and agreeable.”",
+  "caption": "\u201cHer manners were open, cheerful and agreeable.\u201d",
   "film": "aisle",
   "t": 36.5
  },
@@ -126,7 +126,7 @@
   "t": 41.5
  },
  "pages-0": {
-  "text": "RECORD. The Rose Hall Journal: the estate's own book.",
+  "text": "Record. The Rose Hall Journal: the estate's own book.",
   "caption": "RECORD. The Rose Hall Journal: the estate's own book.",
   "film": "pages",
   "t": 0
@@ -139,31 +139,31 @@
  },
  "pages-11": {
   "text": "Celia: Grasscutter. The book says weakly.",
-  "caption": "Celia: “Grasscutter”. The book says “weakly”.",
+  "caption": "Celia: \u201cGrasscutter\u201d. The book says \u201cweakly\u201d.",
   "film": "pages",
   "t": 11
  },
  "pages-16": {
   "text": "Dorinda: Hospital Attendant and Midwife.",
-  "caption": "Dorinda: “Hospital Attendant and Midwife”.",
+  "caption": "Dorinda: \u201cHospital Attendant and Midwife\u201d.",
   "film": "pages",
   "t": 16
  },
  "pages-21": {
   "text": "George Stennet: Head Driver. Aaron: Head Penkeeper.",
-  "caption": "George Stennet: “Head Driver”. Aaron: “Head Penkeeper”.",
+  "caption": "George Stennet: \u201cHead Driver\u201d. Aaron: \u201cHead Penkeeper\u201d.",
   "film": "pages",
   "t": 21
  },
  "pages-26_5": {
   "text": "The twenty-first of April eighteen thirty. Dorinda thought proper to abscond. She ran.",
-  "caption": "21 April 1830. Dorinda “thot proper to abscond”. She ran.",
+  "caption": "21 April 1830. Dorinda \u201cthot proper to abscond\u201d. She ran.",
   "film": "pages",
   "t": 26.5
  },
  "pages-32": {
   "text": "Archey: sent to Falmouth Workhouse for punishment, eighteen twenty-three.",
-  "caption": "Archey: “sent to Falmouth Workhouse for punishment”, 1823.",
+  "caption": "Archey: \u201csent to Falmouth Workhouse for punishment\u201d, 1823.",
   "film": "pages",
   "t": 32
  },
