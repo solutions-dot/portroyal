@@ -31,7 +31,7 @@ import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
-import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, openPanel, dialogue, stopDialogueVoice, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
@@ -726,6 +726,7 @@ function soundButton() {
 }
 $("snd").onclick = () => {
   setSound(!AU.on);
+  if (!AU.on) stopDialogueVoice();
   soundButton();
 };
 $("cineSound").onclick = () => $("snd").click();

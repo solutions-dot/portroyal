@@ -26,7 +26,7 @@ export const CHAPTERS = [
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
 export const PEOPLE = { gran: "Grandmother", cousin: "Cousin", cacique: "The cacique", interp: "The interpreter", mendez: "Diego Mendez", runner: "A runner", guide: "Miss Sharon" };
-const L = (who, text) => ({ who, text });
+const L = (who, text, voice) => voice ? { who, text, voice } : { who, text };
 const G = "Grandmother",
   C = "Cousin",
   K = "The cacique",
@@ -35,7 +35,7 @@ const G = "Grandmother",
   Y = "You";
 export const TALK = {
   /* 1. Ships on the bay */
-  10: { gran: [L(G, "Did you see them? Two great canoes, with cloth wings."), L(Y, "Are they canoes, Grandmother?"), L(G, "Bigger than any canoe. And full of water, I think."), L(G, "They will need food. Everyone needs food."), L(G, "Come. Turn the bread for me first.")] },
+  10: { gran: [L(G, "Did you see them? Two great canoes, with cloth wings.", "grandmother-01.mp3"), L(Y, "Are they canoes, Grandmother?"), L(G, "Bigger than any canoe. And full of water, I think.", "grandmother-02.mp3"), L(G, "They will need food. Everyone needs food.", "grandmother-03.mp3"), L(G, "Come. Turn the bread for me first.", "grandmother-04.mp3")] },
   12: { cousin: [L(C, "There you are! Have you seen the strangers?"), L(Y, "From up here. They look tired, like their ships."), L(C, "They ran the ships onto the sand. On purpose."), L(C, "Go and look from the rock. You can see them working.")] },
   15: { cousin: [L(C, "They are building roofs on their ships. Like houses!"), L(Y, "So they are staying."), L(C, "For a while. And they have nothing to eat."), L(C, "Tomorrow we take bread down to them. You can help.")] },
   /* 2. Bread for bells */
@@ -48,7 +48,7 @@ export const TALK = {
   33: { cousin: [L(C, "Water and cassava. Now I have all I need."), L(Y, "Come back soon."), L(C, "Watch the sea for me. I will watch the moon."), L(C, "When the moon is round, think of me paddling.")] },
   /* 4. The ten canoes */
   42: { gran: [L(G, "Did you hear the shouting? Half of them have gone."), L(G, "They took ten canoes. Canoes our people made."), L(Y, "Where are they going?"), L(G, "East, where Cousin went. To cross the sea."), L(G, "Pull our canoe up under the trees. Hide it well.")] },
-  44: { cacique: [L(K, "The strangers eat and eat. Their bellies have no bottom."), L(K, "One of them eats as much as twenty of us."), L(Y, "Our gardens are getting empty."), L(K, "Yes. So we will bring them less from now on."), L(K, "We have children to feed too.")] },
+  44: { cacique: [L(K, "The strangers eat and eat. Their bellies have no bottom.", "cacique-01.mp3"), L(K, "One of them eats as much as twenty of us.", "cacique-02.mp3"), L(Y, "Our gardens are getting empty."), L(K, "Yes. So we will bring them less from now on.", "cacique-03.mp3"), L(K, "We have children to feed too.", "cacique-04.mp3")] },
   45: { runner: [L("A runner", "I ran from the east. Two days without stopping."), L("A runner", "The men who left are taking food by force."), L(Y, "Did they cross the sea?"), L("A runner", "No. The waves sent them back."), L("A runner", "They were cruel to the paddlers out there."), L(Y, "And Cousin? Was he with them?"), L("A runner", "No. Your cousin went long before. With the first canoes.")] },
   /* 5. The red moon */
   50: { interp: [L(I, "The Admiral called your leaders today. I spoke his words."), L(I, "He said his God is angry with you."), L(I, "Because you bring less food."), L(I, "He said tonight the moon will show that anger."), L(Y, "How can he know what the moon will do?"), L(I, "He reads it in his books. That is all I know.")] },

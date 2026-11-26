@@ -4,7 +4,7 @@ import { liveHint } from '../../../engine/device.js';
    pages, the gold talk mark over the step's story people and the talk button with the name of the nearest person, the dialogue box, cards,
    the journal with its tabs, the chapter list and the credits. */
 import * as THREE from "three";
-import { uiSound } from "../../../engine/audio.js";
+import { AU, uiSound } from "../../../engine/audio.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
 import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
@@ -41,6 +41,7 @@ export function hide(id = active) {
     else $("stage").focus();
   }
   if (id === "dialogue") {
+    stopDialogueVoice();
     doneTalk = null;
     onClose?.();
     onClose = null;
@@ -267,8 +268,23 @@ export function dialogue(who, L, done, cancel) {
   onClose = cancel;
   drawLine();
 }
+let dialogueVoice = null;
+
+export function stopDialogueVoice() {
+  dialogueVoice?.pause();
+  dialogueVoice = null;
+}
+
+window.addEventListener("pagehide", stopDialogueVoice);
+
 function drawLine() {
   const l = lines[li];
+  stopDialogueVoice();
+  if (l.voice && AU.on) {
+    dialogueVoice = new Audio("./voices/" + l.voice);
+    // A blocked or missing clip must leave the caption and Next button usable.
+    dialogueVoice.play().catch(() => {});
+  }
   $("who").textContent = l.who;
   $("line").textContent = l.text;
   $("dialogue").classList.toggle("me", ME.includes(l.who));
