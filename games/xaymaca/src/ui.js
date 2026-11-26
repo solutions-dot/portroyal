@@ -5,6 +5,7 @@ import { liveHint } from '../../../engine/device.js';
    the journal with its tabs, the chapter list and the credits. */
 import * as THREE from "three";
 import { AU, uiSound } from "../../../engine/audio.js";
+import { stopNarration } from "./narration.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
 import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
@@ -32,6 +33,7 @@ function show(id) {
 }
 export function hide(id = active) {
   if (!id) return;
+  if (id === "card" && active === id) stopNarration();
   $(id).hidden = true;
   if (active === id) {
     active = null;

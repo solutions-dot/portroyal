@@ -33,6 +33,7 @@ import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
 import { $, openPanel, dialogue, stopDialogueVoice, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
+import { playNarration, preloadNarration, stopNarration } from "./narration.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
@@ -527,10 +528,12 @@ async function waits(st) {
     const data = CARDS[row.note];
     card(data.title, data.lines, [[data.button || "Go on", () => advance(row.next)]]);
   } else if (kind === "quiz") {
+    if (!QUICK) preloadNarration("ending");
     runQuiz({ title: QUIZ.title, items: QUIZ.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
   } else if (kind === "end") {
     card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters], ["Exit", () => askExit()]]);
     cue("end");
+    if (!QUICK) playNarration("ending");
   }
 }
 function talk(n) {
@@ -726,7 +729,10 @@ function soundButton() {
 }
 $("snd").onclick = () => {
   setSound(!AU.on);
-  if (!AU.on) stopDialogueVoice();
+  if (!AU.on) {
+    stopDialogueVoice();
+    stopNarration();
+  }
   soundButton();
 };
 $("cineSound").onclick = () => $("snd").click();

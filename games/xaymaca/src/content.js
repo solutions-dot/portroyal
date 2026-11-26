@@ -108,7 +108,7 @@ export const CARDS = {
   mutiny: { title: "Shouting on the ships", lines: ["Far below, men shout on the ships.", "They take ten canoes and paddle away east.", "Nobody is hurt in this scene."], scary: false },
   moon: { title: "The red moon", lines: ["The full moon rises dark, and turns deep red.", "People are frightened. Nobody is hurt."], scary: false },
   leave: { title: "The ships sail", lines: ["The new ship sails away with all the strangers.", "The old wrecks stay on the sand."], scary: false },
-  end: { title: "Xaymaca", lines: ["For a year, Maima fed the strangers on the ships.", "Taino paddlers crossed the sea to fetch help.", "A man who could read the moon frightened a whole island.", "We know their story only from the strangers' side."] },
+  end: { title: "Xaymaca", lines: ["For a year, the people of Maima fed the strangers on those ships.","The written accounts we have come from the Spanish.","Here in Jamaica, part of the story is still with us.","Every time we eat bammy, we taste something the Taíno passed down."] },
 };
 export const FILMS = {
   /* Ferdinand: 25 or 26 June 1503, from Puerto Bueno to Santa Gloria; the ships run ashore "board and board", shored up on both sides,
@@ -116,7 +116,7 @@ export const FILMS = {
   arrival: {
     place: "maima", next: 10, journal: "ships", title: "Two ships",
     read: ["In June 1503 two worm-eaten ships came slowly into the bay below Maima. They were sinking.", "Their crews ran them onto the sand, side by side, and propped them up so they could not fall over."],
-    captions: [[0, "Maima, on the hill above the bay. June 1503."], [6, "Something is coming round the point."], [11, "Two ships. Their sails are torn."], [17, "They sit low in the water. They are sinking."], [23, "The crews run them onto the sand."], [29, "Side by side, and propped up with poles."]],
+    captions: [[0,"Maima, on the hill above the bay. June 1503."],[6,"Something is coming around the point.","arrival-01"],[11,"Two ships. Their sails are torn, and they’re riding low in the water.","arrival-02"],[17,"They sit low in the water. They are sinking."],[23,"Watch. The sailors are steering them straight onto the sand.","arrival-03"],[29,"Side by side, and propped up with poles."]],
     shots: [{ t: 0, p: [3, 2.2, -8], look: [-60, -30, -250] }, { t: 10, p: [1, 1.8, -9.3], look: [-50, -36, -232] }, { t: 20, p: [0.5, 1.7, -9.6], look: [-14, -37, -198] }, { t: 28, p: [0.3, 1.6, -9.6], look: [-6, -36, -192] }, { t: 35, p: [-1.5, 2.2, -6], look: [-6, -34, -192] }],
     fov: [[0, 40], [10, 22], [20, 12], [28, 9], [33, 30]],
     acts: [],
@@ -149,7 +149,7 @@ export const FILMS = {
   crossing: {
     place: "crossing", next: 40, journal: "navassa", title: "What Mendez wrote",
     read: ["Out on the open sea it was very hot. The paddlers jumped in the water to cool off. Soon the drinking water was gone.", "On the second night the moon rose behind a tiny island. It was Navassa. There they found rainwater in the rocks."],
-    captions: [[0, "This is what Diego Mendez later wrote."], [5, "The open sea. No land anywhere."], [10, "So hot. The water is gone too soon."], [16, "The second night. Everyone is weak."], [22, "The moon rises. Something covers it."], [28, "A little island! Navassa."], [34, "Did Cousin reach it? Nobody wrote it down."]],
+    captions: [[0,"This is what Diego Mendez later wrote."],[5,"Diego Méndez later wrote that their drinking water ran out.","crossing-01"],[10,"So hot. The water is gone too soon."],[16,"The second night. Everyone is weak."],[22,"On the second night, the moon rose behind a little island.","crossing-02"],[28,"Navassa.","crossing-03"],[34,"Did Cousin reach it? Nobody wrote it down.","crossing-04"]],
     shots: [{ t: 0, p: [5, 1.4, 9], look: [0, 0.2, 4] }, { t: 8, p: [-4, 1, 8], look: [0, 0.2, 4] }, { t: 15, p: [3.4, 1.0, 10.2], look: [0, 0.3, 3] }, { t: 20, p: [1, 1.2, 10], look: [0, 4, -600] }, { t: 30, p: [1, 1.2, 10], look: [0, 12, -800] }, { t: 36, p: [3, 1.6, 9], look: [0, 10, -800] }, { t: 40, p: [6, 2, 12], look: [0, 3, -300] }],
     fov: [[0, 46], [8, 46], [15, 40], [20, 22], [30, 16], [36, 26], [40, 40]],
     acts: [],
@@ -172,7 +172,7 @@ export const FILMS = {
   moon: {
     place: "night", next: 55, journal: "eclipse", title: "The red moon",
     read: ["That evening the full moon rose already darkened. As it climbed, the shadow grew, until the moon was a dull red.", "People hurried down to the ships with food. Later the shadow slid away, and the moon was white again."],
-    captions: [[0, "The night of 29 February 1504."], [5, "The moon is rising. Something is wrong with it."], [11, "A bite is gone from its edge."], [17, "The shadow grows."], [23, "Now it is red. Red as a coal."], [29, "People run down the path with food."], [36, "And slowly, slowly, the shadow slides away."]],
+    captions: [[0,"The night of 29 February 1504."],[5,"The moon is rising. Something is wrong with it."],[11,"Look at the edge of the moon. The shadow is growing.","red-moon-01"],[17,"The shadow grows."],[23,"Now it’s red. Red as a coal.","red-moon-02"],[29,"People run down the path with food."],[36,"And slowly, slowly, the shadow slides away."]],
     shots: [{ t: 0, p: [1.6, 1.5, -7.5], look: [260, -25, -420] }, { t: 8, p: [1.6, 1.5, -7.6], look: [255, 0, -418] }, { t: 16, p: [1.6, 1.5, -7.8], look: [248, 40, -412] }, { t: 23, p: [1.6, 1.5, -7.8], look: [238, 120, -404] }, { t: 29, p: [0, 1.6, -4], look: [-5, 0.8, -9] }, { t: 36, p: [1.6, 1.5, -8], look: [232, 155, -400] }, { t: 44, p: [2, 1.7, -6], look: [230, 160, -400] }],
     fov: [[0, 30], [8, 16], [16, 10], [23, 9], [29, 50], [36, 10], [44, 18]],
     acts: [[12, "gran", "Point"], [16, "gran", "Idle"]],
