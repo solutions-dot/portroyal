@@ -15,6 +15,14 @@
   "emotion": "content",
   "speed": 1
  },
+ "arrival-10": {
+  "text": "The aircraft reaches the airport.",
+  "caption": "The aircraft reaches the airport.",
+  "film": "arrival",
+  "t": 10,
+  "emotion": "content",
+  "speed": 1
+ },
  "arrival-24": {
   "text": "A great welcome gathers around it.",
   "caption": "A great welcome gathers around it.",
