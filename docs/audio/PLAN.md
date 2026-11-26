@@ -95,3 +95,11 @@ Rule (owner, 26 November 2026): **every light-skinned character gets a pre-built
 | Marcus Garvey | `98b523a0-0957-49a4-a1a8-ff3e9205ef59` | a voice named for a real person. Marcus Garvey says only his real, sourced words (rule 3); do not use it until the owner says where, and keep to sourced words |
 
 Audition each one saying one line before casting (the descriptions are empty). Use them for Black characters, as with the older saved voices; light-skinned characters keep the library voices.
+
+## More casting rules from the owner (26 November 2026)
+
+- **The Mad Master of Edinburgh Castle (Hutchinson):** light-skinned characters use the British library voices, the generic ones from the Cartesia platform, one different voice each. Black characters use the account's saved voices.
+- **Shark Papers:** English-accented or Spanish-accented library voices as each scene needs (the French and Spanish ships, the court in Kingston). One different voice each.
+- **Windrush:** the family and others in the UK need **UK-accent voices for Black British characters**. The library does not label race, so audition British voices, and try `localize_voice` on a saved voice to give it a British accent; the owner chooses by ear.
+- **Port Royal:** as above, English library voices for the light-skinned characters (the first batch is recorded).
+- **All games:** light-skinned characters, library voices; Black characters, saved voices (generic ones the owner added are free for any game); never two characters in one game on the same voice.

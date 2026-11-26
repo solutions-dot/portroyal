@@ -124,3 +124,7 @@ export function bedTest(table, { scale = 1, extra = null, lo, hi } = {}) {
   try { console.table(Object.fromEntries(rows.map((r) => [r.place, Object.fromEntries(Object.entries(r.beds).filter(([, v]) => v > 0).map(([k, v]) => [k, +v.toFixed(3)]))]))); console.log(rep.text); } catch (e) { /* no console */ }
   return rep;
 }
+
+/* A soft chime for a chapter title card and another for a chapter closer (owner, 26 November 2026: title cards and closers had no sound of their own). */
+export function chapterChime(kind) { if (!AU.ctx || !AU.on || AU.ctx.state !== 'running') return; const notes = kind === 'close' ? [[392, 0], [293.66, 0.45]] : [[293.66, 0], [440, 0.4]];
+  for (const [f, d] of notes) tone(f, f, 1.6, 'sine', 0.035, 0, d); }

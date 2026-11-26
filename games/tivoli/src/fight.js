@@ -115,7 +115,7 @@ export async function begin() {
   const fade = $('fade'); fade.style.transition = 'none'; fade.style.opacity = 1; fade.hidden = false;
   fade.getBoundingClientRect();
   requestAnimationFrame(() => { if (FIGHT.on && !FIGHT.ended) { fade.style.transition = 'opacity 1.5s'; fade.style.opacity = 0; } });
-  $('fighttitle').hidden = false; hideSkip = showCinematicSkip(complete); $('hud').hidden = true;
+  $('fighttitle').hidden = false; hideSkip = showCinematicSkip(complete, { bed: 'event' }); $('hud').hidden = true;
   clearTimeout(titleTimer); titleTimer = setTimeout(() => { $('fighttitle').hidden = true; }, 4200);
   FIGHT.cleanup = () => { hideSkip?.(); scene.remove(st.group, FX.group); for (const b of FIGHT.bodies) { disarm(b); scene.remove(b); } FIGHT.hidden.forEach((c) => (c.visible = true)); FIGHT.lights.forEach(([l, v]) => (l.intensity = v)); renderer.shadowMap.enabled = FIGHT.shadowWas; scene.fog = FIGHT.fog; scene.background = FIGHT.bg; camera.fov = previousFov; camera.updateProjectionMatrix(); FX.items.length = 0; FX.group.clear(); };
 }
