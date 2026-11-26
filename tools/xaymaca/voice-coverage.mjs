@@ -17,7 +17,7 @@ for (const [id, L] of Object.entries(FLAVOUR)) flav("flavour " + id, L);
 for (const [st, s] of Object.entries(STEPS)) for (const k of ["flavour", "after"]) for (const [id, L] of Object.entries(s[k] || {})) flav(`step ${st} ${k} ${id}`, typeof L === "function" ? [] : L);
 for (const [f, film] of Object.entries(FILMS)) film.captions.forEach(([t, text, clip]) => {
   if (!clip) bad.push(`film ${f} @${t}: no clip for "${text}"`); else has("voices/narrator-" + clip + ".mp3", `film ${f} @${t}`);
-  if (/\d/.test(text)) bad.push(`film ${f} @${t}: caption has a numeral, voiced captions write numbers as words`);
+  if (/\b(fifteen|sixteen|seventeen|eighteen|nineteen) (oh|hundred)\b|\bthe (twenty|thirty)[- ]\w+ of\b/i.test(text)) bad.push(`film ${f} @${t}: a date is spelled the way it sounds; on screen it shows as digits (owner, 26 November 2026)`);
 });
 for (const f of Object.keys(FILMS)) if (!existsSync(site + "scores/score-" + f + ".mp3")) bad.push("film " + f + ": score missing");
 has("voices/narrator-ending.mp3", "ending");
