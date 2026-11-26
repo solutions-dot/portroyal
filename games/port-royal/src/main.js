@@ -700,7 +700,7 @@ function setGoal() {
 }
 let convo = TALK, convoEnd = null;
 function showStep() {
-  const s = convo[state.step], me = s.who === 'You' || s.who === 'Lewis'; if (!me) setSpeaker(s.who, s.anim); $('who').textContent = me ? 'You' : s.who; $('dialogue').classList.toggle('me', me);   /* your own lines look different from theirs */ $('line').textContent = s.text; const ch = $('choices'); ch.replaceChildren();
+  const s = convo[state.step], me = s.who === 'You' || s.who === 'Lewis'; if (!me) setSpeaker(s.who, s.anim); if (!me) NARR.speak(s.who + '|' + String(s.text).replace(/\s+/g, ' ').trim()); else NARR.stop();   /* a character's recorded line, one voice at a time (owner rule 17) */ $('who').textContent = me ? 'You' : s.who; $('dialogue').classList.toggle('me', me);   /* your own lines look different from theirs */ $('line').textContent = s.text; const ch = $('choices'); ch.replaceChildren();
   if (s.choices) { $('next').hidden = true; for (const c of s.choices) { const o = typeof c === 'string' ? { t: c, ok: true } : c; const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = o.t;
       b.onclick = () => { if (showingRight()) return; if (o.ok) { advance(); return; }
         const opts = s.choices.map((c) => (typeof c === 'string' ? { t: c, ok: true } : c)), ri = opts.findIndex((c) => c.ok), right = ch.children[ri];
@@ -708,9 +708,9 @@ function showStep() {
   else { $('next').hidden = false; $('next').textContent = state.step === convo.length - 1 ? (convo === TALK ? 'Goodbye for now' : 'Thank you') : 'Next'; $('next').focus(); }
   if (s.unlock) unlock(s.unlock);
 }
-function leaveTalk() { if ($('dialogue').hidden) return; uiSound('tap'); endTalk(false); $('dialogue').hidden = true; $('goal').hidden = false; busy = false; state.step = 0; convoEnd = null; setGoal(); canvas.focus(); }   /* walk away mid-talk: nothing is lost, talk again any time */
+function leaveTalk() { if ($('dialogue').hidden) return; uiSound('tap'); NARR.stop(); endTalk(false); $('dialogue').hidden = true; $('goal').hidden = false; busy = false; state.step = 0; convoEnd = null; setGoal(); canvas.focus(); }   /* walk away mid-talk: nothing is lost, talk again any time */
 $('dclose').onclick = leaveTalk; canvas.addEventListener('pointerdown', () => { if (!$('dialogue').hidden) leaveTalk(); });   /* tapping the world outside the box also ends the talk */
-function advance() { state.step++; if (state.step >= convo.length) { endTalk(convo !== WARE1); $('dialogue').hidden = true; $('goal').hidden = false; busy = false; state.step = 0; const e = convoEnd; convoEnd = null; if (e) e(); setGoal(); canvas.focus(); return; } showStep(); }
+function advance() { NARR.stop(); state.step++; if (state.step >= convo.length) { endTalk(convo !== WARE1); $('dialogue').hidden = true; $('goal').hidden = false; busy = false; state.step = 0; const e = convoEnd; convoEnd = null; if (e) e(); setGoal(); canvas.focus(); return; } showStep(); }
 /* later visits: each person has a few more things to say, and they notice what you have done */
 const heardNed = () => state.unlocked.includes('panama'), sawFort = () => state.unlocked.includes('forts');
 const MORE = {
