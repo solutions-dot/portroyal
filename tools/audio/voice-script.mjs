@@ -12,7 +12,7 @@ const year = (n) => { if (n >= 2000 && n < 2010) return "two thousand" + (n > 20
 const ORD = { 1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 6: "sixth", 7: "seventh", 8: "eighth", 9: "ninth", 10: "tenth", 11: "eleventh", 12: "twelfth", 13: "thirteenth", 14: "fourteenth", 15: "fifteenth", 16: "sixteenth", 17: "seventeenth", 18: "eighteenth", 19: "nineteenth", 20: "twentieth", 30: "thirtieth" };
 const ordinal = (n) => ORD[n] || (n < 100 ? TENS[Math.floor(n / 10)] + "-" + ORD[n % 10] : String(n));
 const MONTH = "January|February|March|April|May|June|July|August|September|October|November|December";
-const RESPELL = [[/Palisadoes/g, "Pali-say-doze"], [/\bthot\b/g, "thought"]];
+const RESPELL = [[/Palisadoes/g, "Palisaydoze"], [/\bthot\b/g, "thought"]];
 export function speak(s) {
   let t = s.replace(/[“”"]/g, "").replace(/’/g, "'").replace(/…/g, "...").replace(/\.\.\./g, ", ").replace(/ — | – /g, ", ").replace(/\bLEGEND\.\s*/g, "Legend. ").replace(/\bMr\b\.?/g, "Mister").replace(/\bMrs\b\.?/g, "Missus").replace(/\bDr\b\.?/g, "Doctor").replace(/\bSt\b\.?(?=\s)/g, "Saint").replace(/\bCapt\b\.?/g, "Captain").replace(/\bLieut\b\.?/g, "Lieutenant").replace(/ \/ /g, " ");
   t = t.replace(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)? (${MONTH})\\b`, "g"), (_, d, m) => "the " + ordinal(+d) + " of " + m);
