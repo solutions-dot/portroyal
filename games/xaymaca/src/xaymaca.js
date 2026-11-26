@@ -395,3 +395,96 @@ export function navassa() {
   m.scale.set(60, 18, 34);
   return g;
 }
+
+/* ---------- Seville Heritage Park, 2026 ----------
+   Modelled on photographs of the park the owner supplied (26 November 2026) and the park's descriptions (jamaicagreathouses.com/seville; Jamaica
+   Observer, 18 July 2010): the Great House on its rise above the lawn, cream walls, a grey shingle hipped roof, a verandah all round with teal posts and
+   white rails, a projecting entrance portico, wide stone steps down to the lawn and a flagpole with the Jamaican flag; the entrance sign on stone piers
+   with ball tops, cream with dark red letters, over a red-mulched planter. Sizes are read off the photographs, not measured. */
+const PARK = {
+  wall: () => keep("m-park-wall", () => solid(0xe9e2cf, 0.9)),
+  roof: () => keep("m-park-roof", () => solid(0x8c877c, 0.95)),
+  teal: () => keep("m-park-teal", () => solid(0x3f8b8a, 0.7)),
+  white: () => keep("m-park-white", () => solid(0xf2f0e8, 0.8)),
+  step: () => keep("m-park-step", () => solid(0x8f8a7e, 1, 0, { flatShading: true })),
+  pier: () => keep("m-park-pier", () => solid(0xcdbf9e, 1, 0, { flatShading: true })),
+  louvre: () => keep("m-park-louvre", () => solid(0xd8d4c4, 0.8)),
+};
+/* a hipped roof over a W by D plan: a four-sided pyramid stretched along x, which reads as a hip roof with a short ridge */
+function hipRoof(W, D, h, m, y, g) {
+  const geo = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);   /* a unit square pyramid, edges along x and z */
+  const r = mesh(geo, m, 0, y + h / 2, 0, g);
+  r.scale.set(W, h, D);
+  return r;
+}
+export function greatHouse() {
+  const g = grp(), W = 20, D = 12, base = 1.2, wallH = 3.0, ver = 2.2;
+  box(W + 2 * ver + 1, base, D + 2 * ver + 1, PARK.step(), 0, base / 2, 0, g);   /* the stone base it stands on */
+  box(W + 2 * ver, 0.12, D + 2 * ver, PARK.white(), 0, base + 0.06, 0, g);   /* the verandah floor */
+  box(W, wallH, D, PARK.wall(), 0, base + wallH / 2, 0, g);
+  for (let i = 0; i < 7; i++) box(1.1, 1.9, 0.06, PARK.louvre(), -W / 2 + 1.6 + i * (W - 3.2) / 6, base + 1.2, D / 2 + 0.03, g);   /* louvred doors along the front */
+  /* verandah posts and rails, all round */
+  const Wv = W + 2 * ver - 0.2, Dv = D + 2 * ver - 0.2, top = base + wallH;
+  for (const [sx, sz, n, len, along] of [[0, Dv / 2, 11, Wv, "x"], [0, -Dv / 2, 11, Wv, "x"], [Wv / 2, 0, 7, Dv, "z"], [-Wv / 2, 0, 7, Dv, "z"]]) {
+    for (let i = 0; i < n; i++) {
+      const k = -len / 2 + (i * len) / (n - 1), x = along === "x" ? k : sx, z = along === "x" ? sz : k;
+      box(0.16, wallH, 0.16, PARK.teal(), x, base + wallH / 2, z, g);
+    }
+    for (const y of [base + 0.9, base + 0.15]) box(along === "x" ? len : 0.08, 0.08, along === "x" ? 0.08 : len, PARK.white(), sx, y, sz, g);
+  }
+  hipRoof(W + 2 * ver + 1.0, D + 2 * ver + 1.0, 7.2, PARK.roof(), top, g);   /* steep and broad, as in the photographs */
+  /* the entrance portico, out from the verandah, with its own roof and white louvred front */
+  const pz = D / 2 + ver + 1.6;
+  box(5.0, 0.12, 3.4, PARK.white(), 0, base + 0.06, pz, g);
+  for (const x of [-2.3, 2.3]) box(0.2, wallH, 0.2, PARK.teal(), x, base + wallH / 2, pz + 1.5, g);
+  box(5.0, 0.9, 0.06, PARK.louvre(), 0, base + wallH - 0.5, pz + 1.65, g);
+  hipRoof(5.8, 4.0, 2.4, PARK.roof(), top, g).position.z = pz;
+  /* wide stone steps down to the lawn */
+  for (let i = 0; i < 5; i++) box(7.0 + i * 0.6, base / 5, 0.55, PARK.step(), 0, base - (i + 0.5) * (base / 5), pz + 1.9 + i * 0.55, g);
+  g.userData.front = pz + 1.9 + 5 * 0.55;   /* how far the steps reach out in front (+z) */
+  return g;
+}
+/* the flagpole with the Jamaican flag: a gold saltire on black and green */
+export function flagpole(h = 9) {
+  const g = grp();
+  cyl(0.06, 0.08, h, PARK.white(), 0, h / 2, 0, g, 8);
+  const tex = cv(256, 128, (x, w, hh) => {
+    x.fillStyle = "#009b3a"; x.fillRect(0, 0, w, hh);
+    x.fillStyle = "#000000";
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(w / 2, hh / 2); x.lineTo(0, hh); x.fill();
+    x.beginPath(); x.moveTo(w, 0); x.lineTo(w / 2, hh / 2); x.lineTo(w, hh); x.fill();
+    x.strokeStyle = "#fed100"; x.lineWidth = hh * 0.17;
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(w, hh); x.moveTo(w, 0); x.lineTo(0, hh); x.stroke();
+  });
+  const f = plane(1.8, 0.9, new THREE.MeshStandardMaterial({ map: tex, side: THREE.DoubleSide, roughness: 0.9 }), 0.92, h - 0.55, 0, g);
+  f.userData.flag = true;
+  return g;
+}
+/* the entrance sign, with its real wording (owner's photograph, 26 November 2026) */
+export function parkSign() {
+  const g = grp();
+  for (const x of [-2.1, 2.1]) {
+    box(0.7, 2.2, 0.7, PARK.pier(), x, 1.1, 0, g);
+    box(0.85, 0.12, 0.85, PARK.white(), x, 2.26, 0, g);
+    mesh(new THREE.SphereGeometry(0.24, 12, 8), PARK.white(), x, 2.56, 0, g);
+  }
+  /* the panel: one painted face each side, cream with dark red letters, the wording as on the real sign */
+  const face = cv(1024, 500, (x, w, h) => {
+    x.fillStyle = "#f2ecd9"; x.fillRect(0, 0, w, h);
+    x.fillStyle = "#8a1f1a"; x.textAlign = "center"; x.textBaseline = "middle";
+    for (const [t, size, y, weight] of [["Welcome to", 40, 0.12, "normal"], ["SEVILLE HERITAGE", 92, 0.33, "bold"], ["PARK", 92, 0.53, "bold"], ["Museum  Entertainment & Cultural Experience", 36, 0.75, "bold"], ["Celebrating Jamaica's History & Culture", 36, 0.88, "bold"]]) {
+      x.font = weight + " " + size + "px Georgia, serif";
+      x.fillText(t, w / 2, y * h, w * 0.94);
+    }
+  });
+  const panelM = new THREE.MeshStandardMaterial({ map: face, roughness: 0.85 }), edge = solid(0xf2ecd9, 0.85);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.7, 0.18), [edge, edge, edge, edge, panelM, panelM]);
+  panel.position.set(0, 1.35, 0);
+  g.add(panel);
+  /* the planter in front: a white kerb round red mulch, a half round */
+  const kerb = mesh(new THREE.CylinderGeometry(1.75, 1.75, 0.35, 24, 1, false, -Math.PI / 2, Math.PI), PARK.white(), 0, 0.175, 0.12, g);
+  kerb.scale.z = 0.6;
+  const mulch = mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.36, 24, 1, false, -Math.PI / 2, Math.PI), solid(0x7a1f16, 1), 0, 0.18, 0.12, g);
+  mulch.scale.z = 0.52;
+  return g;
+}

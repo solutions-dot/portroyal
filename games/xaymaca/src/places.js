@@ -102,11 +102,13 @@ function ranges(Q, { centre, spread, layers, y, green, haze, seed }) {
   return R;
 }
 /* a big dugout for the crossing, with the floor its crew kneel on (engine/boats.js) */
-function bigCanoe(L = 9, beam = 1.6) {   /* broad enough for two rows (Ferdinand: a Jamaican canoe Columbus measured in 1494 was 96 feet long and 8 broad) */
+function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of two, a metre apart (owner, 26 November 2026: "a little wider so the men aren't on top of each other"); still well inside the record (Ferdinand: a Jamaican canoe Columbus measured in 1494 was 96 feet long and 8 broad) */
   const g = grp(), c = X.canoe(L, { beam, depth: 0.55, gear: false });
   g.add(c);
   g.userData.floor = (c.userData.floor || 0.08) + 0.16;   /* the crew kneel this much higher: lower, their heels came out under the hull */
   g.userData.L = L;
+  g.userData.beam = beam;
+  g.userData.depth = 0.55;
   return dyn(g);
 }
 /* People in a canoe: real bodies (background people, tools/xaymaca/people) that ride with it. Each is a background person whose standing spot is out of the
@@ -167,18 +169,38 @@ function crewTicker(Q) {
         _lq.setFromAxisAngle(_up, Math.PI / 2);   /* facing along the canoe, the way it goes (+x) */
         _lean.setFromAxisAngle(_ax, 0);   /* the stroke and its lean come from the Paddle clip itself */   /* leaning into the stroke and back */
         n.m.quaternion.copy(_cq).multiply(_lq).multiply(_lean);
-        if (r.paddle) {   /* the paddle runs through both hands, as the clip holds it: the shaft from the upper hand down through the lower, the blade beyond it */
+        if (r.paddle) {
+          /* The paddle. A Taino dugout has no oar holes: the paddle goes over the side. The Paddle clip holds both hands at about one height, so a shaft run
+             from hand to hand lay flat and, forced down, went through the hull wall or hung behind the body (owner, 26 November 2026). Now, in the canoe's own
+             frame: the shaft is aimed from between the hands to the water beside the paddler's own side, a little ahead or behind as the hands move, and the
+             water point is pushed out until the shaft clears the gunwale. Ashore (canoe.userData.ashore) the paddler holds still, paddle upright, blade up. */
           r.paddle.visible = true;
           n.m.updateMatrixWorld(true);
           r.hands[0].getWorldPosition(_h0); r.hands[1].getWorldPosition(_h1);
-          if (_h0.y < _h1.y) { const tmp = _h0.clone(); _h0.copy(_h1); _h1.copy(tmp); }
-          _dir.subVectors(_h1, _h0); if (_dir.lengthSq() < 1e-6) _dir.set(0, -1, 0); _dir.normalize();
-          if (_dir.y > -0.57) {   /* never flat across the canoe (through the next man): at least 35 degrees down, toward the water on his own side */
-            _side.set(r.z >= 0 ? 1 : -1, 0, 0).transformDirection(R.canoe.matrixWorld); _side.y = 0; _side.normalize();
-            const hz = Math.hypot(_dir.x, _dir.z) || 1; _dir.x = _dir.x / hz * 0.4 + _side.x * 0.42; _dir.z = _dir.z / hz * 0.4 + _side.z * 0.42; _dir.y = -0.82; _dir.normalize();
+          const mid = R.canoe.worldToLocal(_h0.add(_h1).multiplyScalar(0.5)), half = (R.canoe.userData.beam || 1.0) / 2, rail = (R.canoe.userData.depth || 0.55) + 0.08, side = r.z >= 0 ? 1 : -1;
+          const act = n.ctl.cur;
+          if (R.canoe.userData.ashore) {
+            if (act && act.timeScale) { r.pace = act.timeScale; act.timeScale = 0; }
+            _side.set(mid.x, mid.y + 1, mid.z + side * 0.12).applyMatrix4(R.canoe.matrixWorld);   /* blade up, leaning a little outboard */
+            mid.y -= 0.35;   /* the grip end rests below the hands */
+          } else {
+            if (act && !act.timeScale) act.timeScale = r.pace || 1;
+            if (mid.y < rail + 0.12) mid.y = rail + 0.12;   /* hands low in the stroke: the shaft still starts above the rail */
+            const zg = side * (half + 0.04), yw = -0.15, tmax = (mid.y - rail) / (mid.y - yw);
+            let zw = side * (half + 0.3);
+            const t = (zg - mid.z) / (zw - mid.z);
+            if (t > tmax) zw = mid.z + (zg - mid.z) / tmax;   /* reach further out so the shaft passes over the gunwale */
+            zw = side * Math.min(Math.abs(zw), half + 1.1);
+            const reach = Math.max(-0.6, Math.min(0.6, (mid.x - r.x) * 1.4));
+            _side.set(r.x + reach, yw, zw).applyMatrix4(R.canoe.matrixWorld);
           }
-          Q.group.worldToLocal(_h0.addScaledVector(_dir, -0.12));
-          r.paddle.position.copy(_h0);
+          R.canoe.localToWorld(mid);
+          _dir.subVectors(_side, mid);
+          if (_dir.lengthSq() < 1e-6) _dir.set(0, -1, 0);
+          _dir.normalize();
+          if (!R.canoe.userData.ashore) mid.addScaledVector(_dir, -0.28);   /* the top of the shaft a hand's breadth above the grip */
+          Q.group.worldToLocal(mid);
+          r.paddle.position.copy(mid);
           r.paddle.quaternion.setFromUnitVectors(_down, _dir);
         }
       }
@@ -203,8 +225,8 @@ function placeCrews(Q) {
 function canoeSlots(L, n = 16, nSp = 6) {
   const rows = Math.ceil(n / 2), out = [];
   for (let k = 0; k < n; k++) {
-    const row = Math.floor(k / 2), x = -L * 0.24 + (L * 0.48 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) < nSp / 4;
-    out.push([x, (k % 2 ? 0.2 : -0.2), mid && out.filter((s) => s[2]).length < nSp]);   /* close to the middle line: nearer the sides, knees and feet came through the hull */
+    const row = Math.floor(k / 2), x = -L * 0.3 + (L * 0.6 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
+    out.push([x, (k % 2 ? 0.36 : -0.36), mid && out.filter((s) => s[2]).length < nSp]);   /* two abreast, shoulders clear of each other and knees clear of the 2 m hull */
   }
   return out;
 }
@@ -535,9 +557,9 @@ function shore() {
   const tradeCanoe = add(Q, dyn(X.canoe(5.2, { beam: 1.0, depth: 0.5 })), 3.2, -3.3, -0.1, Math.PI / 2 + 0.05);
   crew(Q, tradeCanoe, [[-1.2, 0, false]], { taino: ["xa_cousin"], who: "Cousin" });   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
   tradeCanoe.userData.floor = 0.2;   /* this smaller dugout is shallower: kneeling lower, his shins came through its bottom */
-  const bigA = add(Q, bigCanoe(9), -1.0, -4.6, -0.12, Math.PI / 2 - 0.04),
-    bigB = add(Q, bigCanoe(9), 3.6, -5.0, -0.12, Math.PI / 2 + 0.03);
-  for (const c of [bigA, bigB]) crew(Q, c, canoeSlots(9));   /* six Spaniards and ten paddlers in each (Ferdinand) */
+  const bigA = add(Q, bigCanoe(), -1.4, -6.1, -0.12, Math.PI / 2 - 0.04),
+    bigB = add(Q, bigCanoe(), 4.0, -6.5, -0.12, Math.PI / 2 + 0.03);   /* the longer canoes lie further down the beach, so their sterns stay where the old ones' did */
+  for (const c of [bigA, bigB]) crew(Q, c, canoeSlots(12));   /* six Spaniards and ten paddlers in each (Ferdinand) */
   Q.walls.push([0.5, -3.9, 5.9, -2.75]);
   /* the ship's boat that brought Mendez and the interpreter ashore */
   const boat = rowBoat({ L: 4.6, beam: 1.5, depth: 0.6, wood: std(T.plank([118, 96, 72], 6, [1, 1])), timber: std(T.plank([92, 72, 52], 1, [1, 1])), oars: "shipped", rudder: false });
@@ -606,16 +628,17 @@ function shore() {
     departHold(t);
     const cousin = Q.people.find((n) => n.id === "cousin");
     if (t < 0) {
-      bigA.position.set(-1.0, -0.12, -4.6);
-      bigB.position.set(3.6, -0.12, -5.0);
+      bigA.position.set(-1.4, -0.12, -6.1);
+      bigB.position.set(4.0, -0.12, -6.5);
       for (const c of [bigA, bigB]) c.userData.manned = false;
       return;
     }
     if (cousin) cousin.m.visible = t < 4;
     for (const [i, c] of [bigA, bigB].entries()) {
       c.userData.manned = t >= 4;
+      c.userData.ashore = t < 8.2;   /* still on the sand: the paddlers hold their paddles up until she is pushed off */
       const k = sm((t - 8 - i * 1.2) / 20);
-      c.position.set((i ? 3.6 : -1.0) + k * 150, -0.12, (i ? -5.0 : -4.6) - sm((t - 8) / 6) * 6 - k * 10);
+      c.position.set((i ? 4.0 : -1.4) + k * 150, -0.12, (i ? -6.5 : -6.1) - sm((t - 8) / 6) * 6 - k * 10);
     }
   };
   /* ---- people ---- */
@@ -642,9 +665,9 @@ function crossing() {
   Q.view = { pos: [6, 2, 8], look: [0, 0, -40] };
   const sea = createSea(Q.group, { kind: "caribbean", y: -0.3, at: [0, -60], size: 260, swell: 0.6 });
   Q.tickers.push((t) => sea.tick && sea.tick(t));
-  const c = add(Q, bigCanoe(9), 0, 4, -0.2, Math.PI / 2 + 0.1);
+  const c = add(Q, bigCanoe(), 0, 3.5, -0.2, Math.PI / 2 + 0.1);   /* her stern stays just clear of the camera that looks along her from behind (content.js, crossing) */
   c.userData.manned = true;
-  crew(Q, c, canoeSlots(9));
+  crew(Q, c, canoeSlots(12));
   Q.tickers.push((t) => {
     c.position.y = -0.2 + Math.sin(t * 0.9) * 0.05;
     c.rotation.z = Math.sin(t * 0.7) * 0.03;
@@ -683,9 +706,30 @@ function today() {
   const path = plane(2.2, 20, std(X.earthTex([2, 12], [196, 184, 158]), 1), 1.5, 0.006, 0, Q.group);
   path.rotation.x = -Math.PI / 2;
   path.name = "terrain";
-  /* the model house, the sign, the stone footings */
+  /* the replica Taino houses: three round houses with cone roofs among the trees, a little sign on a post in front (owner's photographs of the park,
+     26 November 2026; the Jamaica Observer, 18 July 2010, describes huts for a family and a kitchen) */
   add(Q, X.roundHouse(2.2, { seed: 9 }), -6.0, -4.0, 0, 0);
   wall(Q, -6.0, -4.0, 3.6, 3.6);
+  add(Q, X.roundHouse(1.5, { seed: 10, hammock: false }), -9.6, -1.2, 0, 0.4);
+  wall(Q, -9.6, -1.2, 2.4, 2.4);
+  add(Q, X.roundHouse(1.4, { seed: 11, hammock: false }), -9.4, -6.4, 0, -0.3);
+  wall(Q, -9.4, -6.4, 2.2, 2.2);
+  {
+    const post = grp();
+    box(0.06, 1.0, 0.06, solid(0x4a3020, 0.9), 0, 0.5, 0, post);
+    box(0.5, 0.34, 0.04, solid(0x5a3a22, 0.8), 0, 1.05, 0, post);
+    const t = P.label("Taino house", 0.46, 0.12, "#f0e8d0", "#3a2a1a");
+    t.position.set(0, 1.07, 0.022);
+    post.add(t);
+    add(Q, post, -4.2, -1.9, 0, 0.9);
+    wall(Q, -4.2, -1.9, 0.3, 0.3);
+  }
+  /* the Great House on its rise behind the lawn, the flag before it, and the entrance sign by the path */
+  const gh = add(Q, X.greatHouse(), 1.5, 30, 0.6, Math.PI);
+  wall(Q, 1.5, 30, 26, 18);
+  add(Q, X.flagpole(), 7.5, 19.5, 0, 0);
+  add(Q, X.parkSign(), -2.8, 10.8, 0, Math.PI);
+  wall(Q, -2.8, 10.8, 5, 1.2);
   const sign = grp();
   box(1.5, 0.95, 0.06, solid(0x5a3a22, 0.8), 0, 1.25, 0, sign);
   const head = P.label("THE TAINO OF MAIMA", 1.36, 0.16, "#f0e8d0", "#3a2a1a");
