@@ -31,8 +31,9 @@ import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
-import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, openPanel, dialogue, stopDialogueVoice, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
+import { playNarration, preloadNarration, stopNarration, preloadScore, stopScore } from "./narration.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
@@ -521,16 +522,22 @@ async function waits(st) {
   if (kind === "film") {
     /* one card before a scene (engine/scene-warning.js): what happens, the standard lines if it may be frightening, Watch scene or Read instead */
     const data = CARDS[row.film];
+    if (!QUICK) {
+      preloadScore(row.film);
+      for (const [, , clip] of FILMS[row.film].captions) if (clip) preloadNarration(clip);
+    }
     sceneWarning(card, { title: data.title, what: data.lines, scary: data.scary !== false, watch: () => go(st + 1, { keep: true }), read: () => filmRead(row.film), pairs: true });
   } else if (kind === "playing") DIR.start(row.film);
   else if (kind === "note") {
     const data = CARDS[row.note];
     card(data.title, data.lines, [[data.button || "Go on", () => advance(row.next)]]);
   } else if (kind === "quiz") {
+    if (!QUICK) preloadNarration("ending");
     runQuiz({ title: QUIZ.title, items: QUIZ.items, sound: uiSound, fast: QUICK, done: () => advance(row.next) });
   } else if (kind === "end") {
     card(CARDS.end.title, CARDS.end.lines, [["Read the journal", showJournal], ["Chapters", showChapters], ["Exit", () => askExit()]]);
     cue("end");
+    if (!QUICK) playNarration("ending");
   }
 }
 function talk(n) {
@@ -726,6 +733,11 @@ function soundButton() {
 }
 $("snd").onclick = () => {
   setSound(!AU.on);
+  if (!AU.on) {
+    stopDialogueVoice();
+    stopNarration();
+    stopScore();
+  }
   soundButton();
 };
 $("cineSound").onclick = () => $("snd").click();

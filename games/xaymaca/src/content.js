@@ -26,7 +26,7 @@ export const CHAPTERS = [
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
 export const PEOPLE = { gran: "Grandmother", cousin: "Cousin", cacique: "The cacique", interp: "The interpreter", mendez: "Diego Mendez", runner: "A runner", guide: "Miss Sharon" };
-const L = (who, text) => ({ who, text });
+const L = (who, text, voice) => voice ? { who, text, voice } : { who, text };
 const G = "Grandmother",
   C = "Cousin",
   K = "The cacique",
@@ -35,20 +35,20 @@ const G = "Grandmother",
   Y = "You";
 export const TALK = {
   /* 1. Ships on the bay */
-  10: { gran: [L(G, "Did you see them? Two great canoes, with cloth wings."), L(Y, "Are they canoes, Grandmother?"), L(G, "Bigger than any canoe. And full of water, I think."), L(G, "They will need food. Everyone needs food."), L(G, "Come. Turn the bread for me first.")] },
+  10: { gran: [L(G, "Did you see them? Two great canoes, with cloth wings.", "voices/grandmother-01.mp3"), L(Y, "Are they canoes, Grandmother?"), L(G, "Bigger than any canoe. And full of water, I think.", "voices/grandmother-02.mp3"), L(G, "They will need food. Everyone needs food.", "voices/grandmother-03.mp3"), L(G, "Come. Turn the bread for me first.", "voices/grandmother-04.mp3")] },
   12: { cousin: [L(C, "There you are! Have you seen the strangers?"), L(Y, "From up here. They look tired, like their ships."), L(C, "They ran the ships onto the sand. On purpose."), L(C, "Go and look from the rock. You can see them working.")] },
   15: { cousin: [L(C, "They are building roofs on their ships. Like houses!"), L(Y, "So they are staying."), L(C, "For a while. And they have nothing to eat."), L(C, "Tomorrow we take bread down to them. You can help.")] },
   /* 2. Bread for bells */
   20: { cousin: [L(C, "The strangers stay on their ships. They do not come ashore."), L(C, "So we go out to them, in the canoe."), L(Y, "What will they give us for bread?"), L(C, "Beads. Bells. Strange shining things."), L(C, "Bring the basket of bread to the canoe.")] },
   25: { interp: [L(I, "Do not be afraid. I speak your words."), L(Y, "You look like us. But you came on their ship."), L(I, "I come from the big island to the east."), L(I, "The Spanish call it Hispaniola. I sail with them."), L(I, "Their leader is the Admiral. He is old, and sick."), L(I, "Come. Diego Mendez wants to speak with your cousin.")] },
   26: { mendez: [L(I, "This is Diego Mendez. He is brave, they say."), L(M, "I must cross the sea to Hispaniola. In a canoe."), L(I, "He needs strong paddlers. Ten for each canoe."), L(Y, "That sea is wide. People die out there."), L(M, "I know. That is why I need the best."), L(I, "He says he will pay the paddlers well.")] },
-  27: { cousin: [L(C, "I am the best paddler in Maima. Everyone knows it."), L(Y, "You are going with them?"), L(C, "Someone must. Or the strangers stay here for ever."), L(Y, "Grandmother will be angry."), L(C, "Grandmother will be proud. In the end.")] },
+  27: { cousin: [L(C, "I am the best paddler in Maima. Everyone knows it.", "voices/cousin-01.mp3"), L(Y, "You are going with them?"), L(C, "Someone must. Or the strangers stay here for ever.", "voices/cousin-02.mp3"), L(Y, "Grandmother will be angry."), L(C, "Grandmother will be proud. In the end.", "voices/cousin-03.mp3")] },
   /* 3. The paddlers */
   30: { gran: [L(G, "Look at him. So sure of himself."), L(G, "His grandfather was the same."), L(Y, "Will he come back, Grandmother?"), L(G, "The sea decides that. Not us."), L(G, "Take him his calabash of water. Fill it at the stream.")] },
-  33: { cousin: [L(C, "Water and cassava. Now I have all I need."), L(Y, "Come back soon."), L(C, "Watch the sea for me. I will watch the moon."), L(C, "When the moon is round, think of me paddling.")] },
+  33: { cousin: [L(C, "Water and cassava. Now I have all I need.", "voices/cousin-04.mp3"), L(Y, "Come back soon."), L(C, "Watch the sea for me. I will watch the moon.", "voices/cousin-05.mp3"), L(C, "When the moon is round, think of me paddling.", "voices/cousin-06.mp3")] },
   /* 4. The ten canoes */
   42: { gran: [L(G, "Did you hear the shouting? Half of them have gone."), L(G, "They took ten canoes. Canoes our people made."), L(Y, "Where are they going?"), L(G, "East, where Cousin went. To cross the sea."), L(G, "Pull our canoe up under the trees. Hide it well.")] },
-  44: { cacique: [L(K, "The strangers eat and eat. Their bellies have no bottom."), L(K, "One of them eats as much as twenty of us."), L(Y, "Our gardens are getting empty."), L(K, "Yes. So we will bring them less from now on."), L(K, "We have children to feed too.")] },
+  44: { cacique: [L(K, "The strangers eat and eat. Their bellies have no bottom.", "voices/cacique-01.mp3"), L(K, "One of them eats as much as twenty of us.", "voices/cacique-02.mp3"), L(Y, "Our gardens are getting empty."), L(K, "Yes. So we will bring them less from now on.", "voices/cacique-03.mp3"), L(K, "We have children to feed too.", "voices/cacique-04.mp3")] },
   45: { runner: [L("A runner", "I ran from the east. Two days without stopping."), L("A runner", "The men who left are taking food by force."), L(Y, "Did they cross the sea?"), L("A runner", "No. The waves sent them back."), L("A runner", "They were cruel to the paddlers out there."), L(Y, "And Cousin? Was he with them?"), L("A runner", "No. Your cousin went long before. With the first canoes.")] },
   /* 5. The red moon */
   50: { interp: [L(I, "The Admiral called your leaders today. I spoke his words."), L(I, "He said his God is angry with you."), L(I, "Because you bring less food."), L(I, "He said tonight the moon will show that anger."), L(Y, "How can he know what the moon will do?"), L(I, "He reads it in his books. That is all I know.")] },
@@ -57,7 +57,7 @@ export const TALK = {
   55: { gran: [L(G, "You see? It came back, as I said."), L(Y, "Everyone ran down with food."), L(G, "Yes. They were frightened. I was too, a little."), L(G, "Not of the moon. Of a man who knows it so well."), L(G, "Now. Bed.")] },
   /* 6. When the ships left */
   60: { gran: [L(G, "The strangers fought each other on the hill. Here, by Maima."), L(Y, "Did our people fight too?"), L(G, "No. We stood with our spears and watched."), L(G, "We did not take a side. It was their quarrel."), L(G, "Now look. Another ship has come into the bay.")] },
-  64: { gran: [L(G, "They are gone. All of them."), L(Y, "Cousin did not come back."), L(G, "No. Not yet."), L(G, "Maybe he stayed on the big island."), L(G, "Maybe he is paddling home right now."), L(G, "We will keep watching the sea. Both of us.")] },
+  64: { gran: [L(G, "They are gone. All of them.", "voices/grandmother-farewell-01.mp3"), L(Y, "Cousin did not come back."), L(G, "No. Not yet.", "voices/grandmother-farewell-02.mp3"), L(G, "Maybe he stayed on the big island.", "voices/grandmother-farewell-03.mp3"), L(G, "Maybe he is paddling home right now.", "voices/grandmother-farewell-04.mp3"), L(G, "We will keep watching the sea. Both of us.", "voices/grandmother-farewell-05.mp3")] },
   /* 7. Back in 2026 */
   70: { guide: [L("Miss Sharon", "Welcome to Seville Heritage Park, St Ann's Bay."), L("Miss Sharon", "Before the Spanish town, there was a Taino village here."), L("Miss Sharon", "Archaeologists think it was Maima."), L(Y, "The village that fed Columbus's men?"), L("Miss Sharon", "For a whole year. Go and see the round house.")] },
   73: { guide: [L("Miss Sharon", "The Spanish came back in 1509 and built Sevilla la Nueva."), L("Miss Sharon", "It was hard for the Taino. Sickness, forced work and fighting."), L("Miss Sharon", "Within a few lifetimes, most of them had died."), L(Y, "So nobody remembers them?"), L("Miss Sharon", "We remember them. Some Jamaicans are proud of Taino roots."), L("Miss Sharon", "And every time you eat bammy, you eat their bread.")] },
@@ -108,7 +108,7 @@ export const CARDS = {
   mutiny: { title: "Shouting on the ships", lines: ["Far below, men shout on the ships.", "They take ten canoes and paddle away east.", "Nobody is hurt in this scene."], scary: false },
   moon: { title: "The red moon", lines: ["The full moon rises dark, and turns deep red.", "People are frightened. Nobody is hurt."], scary: false },
   leave: { title: "The ships sail", lines: ["The new ship sails away with all the strangers.", "The old wrecks stay on the sand."], scary: false },
-  end: { title: "Xaymaca", lines: ["For a year, Maima fed the strangers on the ships.", "Taino paddlers crossed the sea to fetch help.", "A man who could read the moon frightened a whole island.", "We know their story only from the strangers' side."] },
+  end: { title: "Xaymaca", lines: ["For a year, the people of Maima fed the strangers on those ships.","The written accounts we have come from the Spanish.","Here in Jamaica, part of the story is still with us.","Every time we eat bammy, we taste something the Taíno passed down."] },
 };
 export const FILMS = {
   /* Ferdinand: 25 or 26 June 1503, from Puerto Bueno to Santa Gloria; the ships run ashore "board and board", shored up on both sides,
@@ -116,7 +116,7 @@ export const FILMS = {
   arrival: {
     place: "maima", next: 10, journal: "ships", title: "Two ships",
     read: ["In June 1503 two worm-eaten ships came slowly into the bay below Maima. They were sinking.", "Their crews ran them onto the sand, side by side, and propped them up so they could not fall over."],
-    captions: [[0, "Maima, on the hill above the bay. June 1503."], [6, "Something is coming round the point."], [11, "Two ships. Their sails are torn."], [17, "They sit low in the water. They are sinking."], [23, "The crews run them onto the sand."], [29, "Side by side, and propped up with poles."]],
+    captions: [[0,"Maima, on the hill above the bay. June 1503."],[6,"Something is coming around the point.","arrival-01"],[11,"Two ships. Their sails are torn, and they’re riding low in the water.","arrival-02"],[17,"They sit low in the water. They are sinking."],[23,"Watch. The sailors are steering them straight onto the sand.","arrival-03"],[29,"Side by side, and propped up with poles."]],
     shots: [{ t: 0, p: [3, 2.2, -8], look: [-60, -30, -250] }, { t: 10, p: [1, 1.8, -9.3], look: [-50, -36, -232] }, { t: 20, p: [0.5, 1.7, -9.6], look: [-14, -37, -198] }, { t: 28, p: [0.3, 1.6, -9.6], look: [-6, -36, -192] }, { t: 35, p: [-1.5, 2.2, -6], look: [-6, -34, -192] }],
     fov: [[0, 40], [10, 22], [20, 12], [28, 9], [33, 30]],
     acts: [],
@@ -127,7 +127,7 @@ export const FILMS = {
   trade: {
     place: "shore", next: 24, journal: "trade", title: "Out to the ships",
     read: ["The Taino paddled out to the ships with food. Two men on the ships did all the buying.", "Two hutias bought a piece of tin. Cassava bread bought two or three glass beads. A big load earned a hawk's bell."],
-    captions: [[0, "Cousin pushes the canoe out."], [5, "Out to the ships, with the bread."], [11, "Sailors lean over the side."], [16, "Bread for beads. Red and yellow glass."], [22, "And for a big basket, a little bell."]],
+    captions: [[0,"Cousin pushes the canoe out."],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side."],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
     shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [9, 2.4, -16], look: [4, 1, -30] }, { t: 16, p: [10, 2.0, -21], look: [5, 1.0, -30] }, { t: 22, p: [10.5, 1.6, -22], look: [5.5, 0.3, -29.5] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
     fov: [[0, 50], [11, 44], [16, 36], [22, 40], [28, 48]],
     acts: [],
@@ -138,7 +138,7 @@ export const FILMS = {
   depart: {
     place: "shore", next: 36, journal: "paddlers", title: "The canoes set off",
     read: ["In July 1503 two canoes left St Ann's Bay. Each had six Spaniards and ten Taino paddlers.", "They went east along the coast to the end of the island, to wait for a calm sea."],
-    captions: [[0, "Dawn. The two canoes are ready."], [5, "Six Spaniards and ten paddlers in each."], [11, "They push off from the sand."], [17, "East along the coast, to the end of the island."], [23, "Cousin does not look back."]],
+    captions: [[0,"Dawn. The two canoes are ready."],[5,"Six Spaniards and ten paddlers in each.","depart-05"],[11,"They push off from the sand.","depart-11"],[17,"East along the coast, to the end of the island."],[23,"Cousin does not look back.","depart-23"]],
     shots: [{ t: 0, p: [2, 1.6, 3], look: [1, 0.3, -4.5] }, { t: 6, p: [-3, 1.8, 1], look: [2, 0, -5] }, { t: 12, p: [8, 2, -1], look: [12, 0, -12] }, { t: 18, p: [12, 2.5, 0], look: [60, 0, -16] }, { t: 24, p: [13, 2.4, 1], look: [110, 1, -20] }, { t: 29, p: [13, 2.4, 1], look: [140, 1, -21] }],
     fov: [[0, 46], [6, 46], [12, 40], [18, 30], [24, 24]],
     acts: [],
@@ -149,7 +149,7 @@ export const FILMS = {
   crossing: {
     place: "crossing", next: 40, journal: "navassa", title: "What Mendez wrote",
     read: ["Out on the open sea it was very hot. The paddlers jumped in the water to cool off. Soon the drinking water was gone.", "On the second night the moon rose behind a tiny island. It was Navassa. There they found rainwater in the rocks."],
-    captions: [[0, "This is what Diego Mendez later wrote."], [5, "The open sea. No land anywhere."], [10, "So hot. The water is gone too soon."], [16, "The second night. Everyone is weak."], [22, "The moon rises. Something covers it."], [28, "A little island! Navassa."], [34, "Did Cousin reach it? Nobody wrote it down."]],
+    captions: [[0,"This is what Diego Mendez later wrote."],[5,"Diego Méndez later wrote that their drinking water ran out.","crossing-01"],[10,"So hot. The water is gone too soon."],[16,"The second night. Everyone is weak."],[22,"On the second night, the moon rose behind a little island.","crossing-02"],[28,"Navassa.","crossing-03"],[34,"Did Cousin reach it? Nobody wrote it down.","crossing-04"]],
     shots: [{ t: 0, p: [5, 1.4, 9], look: [0, 0.2, 4] }, { t: 8, p: [-4, 1, 8], look: [0, 0.2, 4] }, { t: 15, p: [3.4, 1.0, 10.2], look: [0, 0.3, 3] }, { t: 20, p: [1, 1.2, 10], look: [0, 4, -600] }, { t: 30, p: [1, 1.2, 10], look: [0, 12, -800] }, { t: 36, p: [3, 1.6, 9], look: [0, 10, -800] }, { t: 40, p: [6, 2, 12], look: [0, 3, -300] }],
     fov: [[0, 46], [8, 46], [15, 40], [20, 22], [30, 16], [36, 26], [40, 40]],
     acts: [],
@@ -160,7 +160,7 @@ export const FILMS = {
   mutiny: {
     place: "maima", next: 42, journal: "mutiny", title: "Shouting on the ships",
     read: ["On 2 January 1504 a crowd of Spaniards shouted against their leader. Forty-eight of them took ten canoes and paddled away east.", "Nobody was hurt that day."],
-    captions: [[0, "January 1504. Shouting down on the ships."], [6, "Men climb down into the canoes."], [12, "Ten canoes. Our people made them."], [18, "They paddle away east."]],
+    captions: [[0,"January 1504. Shouting down on the ships.","mutiny-00"],[6,"Men climb down into the canoes."],[12,"Ten canoes. Our people made them.","mutiny-12"],[18,"They paddle away east.","mutiny-18"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 6, p: [0.5, 1.7, -9.4], look: [14, -37, -190] }, { t: 12, p: [0.6, 1.7, -9.3], look: [68, -37, -198] }, { t: 18, p: [1, 1.8, -9], look: [150, -37, -210] }, { t: 24, p: [2, 2.2, -7], look: [180, -36, -214] }],
     fov: [[0, 10], [6, 9], [12, 14], [18, 18], [24, 28]],
     acts: [[2, "gran", "HeadTurn"]],
@@ -172,7 +172,7 @@ export const FILMS = {
   moon: {
     place: "night", next: 55, journal: "eclipse", title: "The red moon",
     read: ["That evening the full moon rose already darkened. As it climbed, the shadow grew, until the moon was a dull red.", "People hurried down to the ships with food. Later the shadow slid away, and the moon was white again."],
-    captions: [[0, "The night of 29 February 1504."], [5, "The moon is rising. Something is wrong with it."], [11, "A bite is gone from its edge."], [17, "The shadow grows."], [23, "Now it is red. Red as a coal."], [29, "People run down the path with food."], [36, "And slowly, slowly, the shadow slides away."]],
+    captions: [[0,"The night of 29 February 1504."],[5,"The moon is rising. Something is wrong with it."],[11,"Look at the edge of the moon. The shadow is growing.","red-moon-01"],[17,"The shadow grows."],[23,"Now it’s red. Red as a coal.","red-moon-02"],[29,"People run down the path with food."],[36,"And slowly, slowly, the shadow slides away."]],
     shots: [{ t: 0, p: [1.6, 1.5, -7.5], look: [260, -25, -420] }, { t: 8, p: [1.6, 1.5, -7.6], look: [255, 0, -418] }, { t: 16, p: [1.6, 1.5, -7.8], look: [248, 40, -412] }, { t: 23, p: [1.6, 1.5, -7.8], look: [238, 120, -404] }, { t: 29, p: [0, 1.6, -4], look: [-5, 0.8, -9] }, { t: 36, p: [1.6, 1.5, -8], look: [232, 155, -400] }, { t: 44, p: [2, 1.7, -6], look: [230, 160, -400] }],
     fov: [[0, 30], [8, 16], [16, 10], [23, 9], [29, 50], [36, 10], [44, 18]],
     acts: [[12, "gran", "Point"], [16, "gran", "Idle"]],
@@ -183,7 +183,7 @@ export const FILMS = {
   leave: {
     place: "maima", next: 64, journal: "rescue", title: "The ships sail",
     read: ["On 28 June 1504 the new ship sailed away, with every one of the strangers on board.", "The two old ships stayed on the sand, where they had been for a year."],
-    captions: [[0, "28 June 1504."], [5, "The new ship lifts its sails."], [11, "Every stranger is on board."], [17, "The old ships stay on the sand."], [23, "The bay is quiet again."]],
+    captions: [[0,"28 June 1504."],[5,"The new ship lifts its sails.","leave-05"],[11,"Every stranger is on board."],[17,"The old ships stay on the sand.","leave-17"],[23,"The bay is quiet again.","leave-23"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [14, -33, -230] }, { t: 10, p: [0.5, 1.7, -9.4], look: [40, -33, -262] }, { t: 18, p: [0.6, 1.7, -9.3], look: [90, -33, -320] }, { t: 23, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 29, p: [0, 2.5, -5], look: [0, -36, -192] }],
     fov: [[0, 9], [10, 10], [18, 12], [23, 9], [29, 30]],
     acts: [],

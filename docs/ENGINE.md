@@ -605,6 +605,8 @@ An errand can take `via: [x, z]`, a point to walk round by on both legs, so the 
 
 ## Opening narration
 
+See [the audio production pipeline](AUDIO.md) for per-story casting, recording, mixing, and playback checks.
+
 `shared/intro-audio.js` is copied into each game by the build. It tries to play when Start becomes enabled. If playback is blocked, the first tap on the title background or description can start it. The speaker control plays and pauses, and Start, Chapters, and Exit stop the clip. The Mature 13+ profile filter is handled in the menu.
 
 ## engine/lookshot.js: looking at something is a close-up action (22 November 2026)
