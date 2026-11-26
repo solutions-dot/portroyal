@@ -30,6 +30,7 @@ import { makeSky, G, cv } from "./gfx.js";
 import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
+import { LINE_VOICES } from "./line-voices.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
 import { $, openPanel, dialogue, stopDialogueVoice, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
@@ -543,7 +544,7 @@ async function waits(st) {
 function talk(n) {
   if (busy || openPanel() || DIR.on) return;
   const response = story.talk(n.id),
-    L = response?.kind === "story" ? TALK[S.stage]?.[n.id] : [response?.line || "I have no more to say."];
+    L = response?.kind === "story" ? TALK[S.stage]?.[n.id] : [{ who: n.who, text: response?.line || "I have no more to say.", voice: LINE_VOICES[response?.line] }];
   if (!L?.length) return;
   talking = n;
   S.yaw = Math.atan2(S.x - n.x, S.z - n.z);

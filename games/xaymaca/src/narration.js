@@ -42,9 +42,10 @@ function play(channel, path, elapsed) {
   const request = { source: null, gain: null };
   playing[channel] = request;
   preload(path).then((buffer) => {
-    if (playing[channel] !== request || !buffer || !AU.on) return;
+    if (playing[channel] !== request) return;
+    if (!buffer || !AU.on) { stop(channel); return; }
     const offset = elapsed();
-    if (offset >= buffer.duration) return;
+    if (offset >= buffer.duration) { stop(channel); return; }
     const source = AU.ctx.createBufferSource();
     source.buffer = buffer;
     request.source = source;
@@ -66,6 +67,10 @@ function play(channel, path, elapsed) {
     if (channel === "narration") balanceScore();
   });
 }
+
+export const narrationActive = () => !!playing.narration;
+export const preloadDialogue = (path) => preload("./" + path);
+export const playDialogue = (path) => play("narration", "./" + path, () => 0);
 
 export const stopNarration = () => stop("narration");
 export const stopScore = () => stop("score");

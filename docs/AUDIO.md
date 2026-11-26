@@ -4,7 +4,7 @@ Use this workflow for opening narration, in-game dialogue, cinematics, music, an
 
 ## 1. Make a cue sheet and cast the story
 
-Read the current game script and source before recording. Map each spoken moment to its chapter, dialogue step, film time, or ending card. Include the exact words, speaker, delivery, and any moment to leave quiet. Start with the narrator and characters who carry the story.
+Read the current game script and source before recording. Voice every non-player dialogue line, including early conversations and repeat-talk lines, and every cinematic caption. Track coverage by speaker and cue. The player's own replies stay text-only. Map each spoken moment to its chapter, dialogue step, film time, or ending card. Include the exact words, speaker, delivery, and any moment to leave quiet. Start with the narrator and characters who carry the story.
 
 **Cast each game independently.** Different stories can have different narrators and character voices. Keep a cast list with the game notes. For each role, record the approved provider, voice name or ID, accent and delivery, pronunciation notes, and which scenes have been recorded. Carry an approved voice through its role within that game. Casting choices from another story are useful references when the owner requests them.
 
@@ -40,3 +40,17 @@ Deliver a dry voice preview for casting and a scene mix preview when reviewing m
 2. Play through the scenes in a browser. Check timing, volume, pronunciation, fades, and transitions at phone and desktop sizes. Test sound off, pause and resume, Read instead, skipping, and fast advancement between dialogue lines.
 3. Check there is no audio overlap when a player advances a caption, leaves a scene, or moves from the ending to another panel. Check blocked or missing audio still allows play.
 4. Provide the owner with the preview and PR. Log which scenes are voiced, the cast used, and any playback or device checks still pending.
+
+## Casting background and number pronunciation
+
+Cast foreign characters with a suitable accent for their background. Diego Méndez in Xaymaca uses Marcos, a Spain-based library voice, for his English dialogue. The interpreter uses Daniel's neutral English delivery. His historical Taíno accent is unknown, so the voice is an English storytelling performance. Record the choice per game and review a sample in context.
+
+Write all numbers as words in voice scripts and voiced captions. In Xaymaca, 1503 is “fifteen oh three”, and 29 February 1504 is “the twenty-ninth of February, fifteen oh four”. Check the actual spoken result.
+
+The Xaymaca player uses the shared Web Audio master for dialogue and cinematic narration. Conversation clips preload as the dialogue opens. A cinematic holds its current caption when needed until the active spoken line finishes. Test these paths with normal play and muted play.
+
+## Xaymaca full voice coverage
+
+All non-player story dialogue, character repeat lines, and cinematic captions have assigned recordings. Faye voices Grandmother, the approved Bob Marley voice voices Cousin, Winston voices the cacique, Sizzla voices the runner, Rosie voices Miss Sharon, Daniel voices the interpreter in neutral English, and Marcos voices Diego Méndez in English with a Spanish delivery. The player speaks through captions only. The production voice list is stored in Cartesia and the game's line-to-file map is in `src/line-voices.js`.
+
+Verify early scenes as well as dramatic later scenes before declaring a character voiced. A returning character must have coverage in every conversation. Cinematic narration waits for a spoken cue to finish before its caption changes. Missing audio must leave controls and text usable.
