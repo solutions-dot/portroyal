@@ -4,7 +4,9 @@ import { liveHint } from '../../../engine/device.js';
    pages, the gold talk mark over the step's story people and the talk button with the name of the nearest person, the dialogue box, cards,
    the journal with its tabs, the chapter list and the credits. */
 import * as THREE from "three";
-import { uiSound } from "../../../engine/audio.js";
+import { AU, uiSound } from "../../../engine/audio.js";
+import { stopNarration, preloadDialogue, playDialogue } from "./narration.js";
+import { LINE_VOICES } from "./line-voices.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
 import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
@@ -32,6 +34,7 @@ function show(id) {
 }
 export function hide(id = active) {
   if (!id) return;
+  if (id === "card" && active === id) stopNarration();
   $(id).hidden = true;
   if (active === id) {
     active = null;
@@ -41,6 +44,7 @@ export function hide(id = active) {
     else $("stage").focus();
   }
   if (id === "dialogue") {
+    stopDialogueVoice();
     doneTalk = null;
     onClose?.();
     onClose = null;
@@ -260,6 +264,10 @@ export function createMarks({ scene, camera, canvas, onTap }) {
 /* ---------- talking: one line at a time; the player's own lines get their own colour; the x or Escape ends it ---------- */
 export function dialogue(who, L, done, cancel) {
   lines = L.map((l) => (typeof l === "string" ? { who, text: l } : l));
+  for (const l of lines) {
+    if (l.who !== "You") l.voice ||= LINE_VOICES[l.text];
+    if (l.voice) preloadDialogue(l.voice);
+  }
   li = 0;
   uiSound("tap");
   show("dialogue");
@@ -267,8 +275,21 @@ export function dialogue(who, L, done, cancel) {
   onClose = cancel;
   drawLine();
 }
+let dialogueVoice = null;
+
+export function stopDialogueVoice() {
+  stopNarration();
+  dialogueVoice = null;
+}
+
+window.addEventListener("pagehide", stopDialogueVoice);
+
 function drawLine() {
   const l = lines[li];
+  stopDialogueVoice();
+  if (l.voice && AU.on) {
+    playDialogue(l.voice);
+  }
   $("who").textContent = l.who;
   $("line").textContent = l.text;
   $("dialogue").classList.toggle("me", ME.includes(l.who));

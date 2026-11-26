@@ -1,0 +1,44 @@
+[
+ {
+  "key": "The station. Bog Walk, Sunday evening, 26 June 1904",
+  "stem": "n-8c46b9ec",
+  "text": "The station. Bog Walk, Sunday evening, the twenty-sixth of June nineteen oh four",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Zeke's story. Kingston, Friday 31 March 1899",
+  "stem": "n-bde6a75b",
+  "text": "Zeke's story. Kingston, Friday the thirty-first of March eighteen ninety-nine",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Inside the Tube. Monday, about 1 a.m.",
+  "stem": "n-f68d72d4",
+  "text": "Inside the Tube. Monday, about one a.m.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The water. About 4 a.m.",
+  "stem": "n-1cbd4790",
+  "text": "The water. About four a.m.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The morning after. Monday 27 June 1904",
+  "stem": "n-c5875872",
+  "text": "The morning after. Monday the twenty-seventh of June nineteen oh four",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The ruins today. Bog Walk, today",
+  "stem": "n-a28e979f",
+  "text": "The ruins today. Bog Walk, today",
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+]

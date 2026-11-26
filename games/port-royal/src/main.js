@@ -2,7 +2,8 @@ import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '..
 import { draw } from '../../../engine/look.js';   /* light from the sky and soft shading in corners */
 import { addRecap } from '../../../engine/recap.js';
 import { produceBasket } from '../../../engine/produce.js';   /* market baskets heaped with produce (moved to the engine, 23 November 2026) */   /* three things you learned, on the last card */
-import { playChapterFade, showCinematicSkip } from '../../../engine/cine.js';
+import { playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';
+import { createNarrator } from '../../../engine/narrator.js';
 import { offerNextChapter, goingStraight, startCard, titleFade } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
@@ -40,6 +41,10 @@ import { setQuiet } from '../../../engine/preload.js';
 import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */   /* tells the engine when the player is reading, not moving */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+const NARR = createNarrator();   /* reads the chapter title cards (engine/narrator.js, owner rule 17) */
+NARR.preload();
+configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
+const titleFadeN = (f, a, b, done, q) => { if (!q) NARR.speak(a + '. ' + b); return titleFade(f, a, b, done, q); };
 soundPref('portroyal-sound');
 onLoadFail((n) => { $('loadnote').hidden = false; $('loadnote').textContent = 'Part of the game did not load (' + n + '). Reload the page to try again.'; });
 
@@ -1007,7 +1012,7 @@ function rescueCam(t) {
 function quakeIntro() { cue('sad'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('card').hidden = true; $('dialogue').hidden = true; $('goal').hidden = false;
   sceneWarning(card, { title: '7 June 1692', what: ['Two years later. Lewis is now a merchant.', 'Next comes the great earthquake. It is loud.'], watch: beginQuake, read: () => finishQuake(true) }); }
 let hideQuakeSkip;
-function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(true); hideQuakeSkip = showCinematicSkip(() => finishQuake(true)); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
+function beginQuake() { hideCard(); rumble(); if (state.place !== 'out') setPlace('out'); resetWorld(true); nextCinematicBed('event'); hideQuakeSkip = showCinematicSkip(() => finishQuake(true)); Q.on = true; setPhase('calm'); state.place = 'out'; state.x = 1; state.z = 0.6; state.yaw = -Math.PI / 2; state.pitch = 0; if (ring) ring.visible = false;
   npcShow(false); goalText = 'On a hot morning, walk to the harbour.'; showGoal(); toast('7 June 1692, late morning'); }
 function resetWorld(keepCalm = false) { if (!keepCalm) endSceneWarning(); hideQuakeSkip?.(); Q.abbaHit = Q.abbaTrip = false; if (abba) { delete abba.userData.seatAnchor; delete abba.userData.sits; } clearDebris(); if (abba && abba.userData.anim) { const st = abba.userData.anim.get('Scared'); if (st) st.stop(); } if (Q.abbaRun || (runA && runA.isRunning()) || (abba && abba.userData.anim && abba.userData.anim.cur !== idle)) { Q.abbaRun = false; if (runA) runA.stop(); const ac = abba.userData.anim; if (ac && ac.cur !== idle) { ac.cur.stop(); ac.cur = idle; ac.timer = 0; } idle.reset().setEffectiveWeight(1).play(); } Q.ruin = false; Q.shake = 0; Q.T = 0; sinkTown(0, 0); seaLevel = -0.35; moveSpeed = 2.7; eyeY = 1.62; scene.fog.color.copy(HAZE); scene.fog.near = 70; scene.fog.far = 900; sky.material.color.set(0xffffff); $('vig').style.opacity = 0;
   const m = shipsM.merchant, sl = shipsM.sloop; m.position.set(SHORE + 17.5, -0.35, -5.9); m.rotation.set(0, 0, 0); sl.position.set(SHORE + 17.5, -0.35, 4.9); sl.rotation.set(0, Math.PI, 0);
@@ -1203,7 +1208,7 @@ function buildWare() { if (wareG) return; wareG = new THREE.Group(); wareG.visib
   for (const k in WGOODS) { const r = mk(new THREE.RingGeometry(0.75, 0.86, 36), new THREE.MeshBasicMaterial({ color: 0xd9a441, side: THREE.DoubleSide }), WGOODS[k][0], 0.02, WGOODS[k][1] + 0.9); r.rotation.x = -Math.PI / 2; wareMark[k] = r; if (state.unlocked.includes(k)) r.visible = false; }
   cur = scene; }
 function wareIntro() { cue('begin'); if (!townReady || !tavernReady) { toast('The town is still loading.'); return; } closeJournal(); $('dialogue').hidden = true; $('goal').hidden = false;
-  if (!startCard()) { titleFade($('fade'), '1691', 'One year later. Lewis has his own warehouse by the wharf.', beginWare); return; }   /* came straight on: the title fades, no click */
+  if (!startCard()) { titleFadeN($('fade'), '1691', 'One year later. Lewis has his own warehouse by the wharf.', beginWare); return; }   /* came straight on: the title fades, no click */
   card('1691', ['One year later. Lewis has his own warehouse by the wharf.', 'Ships bring goods. He sells them. That is how merchants get rich.'], [{ t: 'Begin', go: beginWare }, { t: 'Not now', go: hideCard }]); }
 function beginWare() { hideCard(); if (Q.on) { resetWorld(); Q.on = false; } buildWare(); W.coins = W.talked = false; setPlace('ware'); state.x = -249.0; state.z = -0.4; state.yaw = Math.PI / 2 - 0.12; state.pitch = 0; wareGoal(); }
 function readLetter() { card('The letter', ['“Mr Galdy, let us sell enslaved people to Spanish buyers. We will both get rich.”', 'It is from the captain of a slave ship.'],
@@ -1823,7 +1828,7 @@ const FBG = { group: null, cast: [] };
 JOURNAL.push({ id: 'panama', title: 'The raid on Panama',
   simple: ['In 1670 Morgan gathered many ships and over a thousand men.', 'In 1671 they walked across the land to Panama and took the city. It burned.'],
   deeper: ['Morgan’s men were paid with a share of what they captured. Most got far less than they hoped.', 'The young Ned in this story is fictional. The raid was real.', 'Tom and Dick, the two men at the sword drill, are fictional too.'] });
-function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); if (!startCard()) { titleFade($('fade'), '1670', 'Old Ned’s story, from 20 years ago. In it, you are young Ned, a ship’s boy.', fbStart); return; }   /* came straight on from the last chapter: the title fades in and out, no click (engine/chapter-end.js) */
+function fbIntro() { if (!townReady || !tavernReady || !people.morgan) { toast('The town is still loading.'); return; } closeJournal(); if (!startCard()) { titleFadeN($('fade'), '1670', 'Old Ned’s story, from 20 years ago. In it, you are young Ned, a ship’s boy.', fbStart); return; }   /* came straight on from the last chapter: the title fades in and out, no click (engine/chapter-end.js) */
   card('1670', ['This is old Ned’s story, from 20 years ago.', 'In it, you are young Ned, a ship’s boy.'], [{ t: 'Begin', go: () => { hideCard(); fbStart(); } }, { t: 'Not now', go: hideCard }]); }
 function clone(id, tint) { const keep = people[id].userData.anim, sw = people[id].userData.sword; delete people[id].userData.anim; delete people[id].userData.sword; const m = skClone(people[id]); people[id].userData.anim = keep; if (sw) people[id].userData.sword = sw; if (tint) m.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.setRGB(...tint); } }); return m; }
 function drillClip() {   /* the drill partner's clip: Sword2 cut before its last part, where the swordsman falls (owner rule 4: nobody falls down), joined into a loop */

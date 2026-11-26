@@ -1,4 +1,5 @@
 import { playChapterFade } from '../../../engine/cine.js';
+import { createNarrator } from '../../../engine/narrator.js';
 import { draw } from '../../../engine/look.js';   /* light from the sky and soft shading in corners */
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -43,6 +44,8 @@ import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
 import { createLookShot, frameOf, cineLayer, lookFrom } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
 import { lookSound } from '../../../engine/look-sounds.js';
+const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
+NARR.preload();
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -501,7 +504,7 @@ function card(title, paras, btns) {
 }
 function hideCard() { $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
-function chapterFade(title, sub, fn) {
+function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   if (QUICK) { fn(); return; } if (fading) return; stopIntro(); fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   playChapterFade(f, fn, () => { fading = false; }, [750, 2500, 2900, 3800]);
 }

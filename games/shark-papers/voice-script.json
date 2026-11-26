@@ -1,0 +1,218 @@
+{
+ "dawn-0": {
+  "text": "Dawn, off Jacmel, August seventeen ninety-nine.",
+  "caption": "Dawn, off Jacmel, August 1799.",
+  "film": "dawn",
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "dawn-6": {
+  "text": "The schooner Ferret lies still. Her sails hang empty.",
+  "caption": "The schooner Ferret lies still. Her sails hang empty.",
+  "film": "dawn",
+  "t": 6,
+  "emotion": "content",
+  "speed": 0.92
+ },
+ "dawn-12_5": {
+  "text": "Far off, something floats on the sea.",
+  "caption": "Far off, something floats on the sea.",
+  "film": "dawn",
+  "t": 12.5,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "dawn-17": {
+  "text": "A dead bullock. Sharks are feeding on it.",
+  "caption": "A dead bullock. Sharks are feeding on it.",
+  "film": "dawn",
+  "t": 17,
+  "emotion": "content",
+  "speed": 0.92
+ },
+ "dawn-23": {
+  "text": "About six miles in shore lies the cutter Sparrow.",
+  "caption": "About six miles in shore lies the cutter Sparrow.",
+  "film": "dawn",
+  "t": 23,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "dawn-29": {
+  "text": "Mister Fitton signals to her: come to breakfast!",
+  "caption": "Mr Fitton signals to her: come to breakfast!",
+  "film": "dawn",
+  "t": 29,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-0": {
+  "text": "Mister Fitton waits at the stern. The pork is on the hook.",
+  "caption": "Mr Fitton waits at the stern. The pork is on the hook.",
+  "film": "catch",
+  "t": 0,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-5": {
+  "text": "The line goes tight!",
+  "caption": "The line goes tight!",
+  "film": "catch",
+  "t": 5,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-7_5": {
+  "text": "He lets the shark run. Sixty fathoms of line!",
+  "caption": "He lets the shark run. Sixty fathoms of line!",
+  "film": "catch",
+  "t": 7.5,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-11": {
+  "text": "All hands! Everybody hauls together.",
+  "caption": "“All hands!” Everybody hauls together.",
+  "film": "catch",
+  "t": 11,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-14_5": {
+  "text": "Up it comes, over the side.",
+  "caption": "Up it comes, over the side.",
+  "film": "catch",
+  "t": 14.5,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "catch-20_5": {
+  "text": "There it lies: the biggest shark of all.",
+  "caption": "There it lies: the biggest shark of all.",
+  "film": "catch",
+  "t": 20.5,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "alongside-0": {
+  "text": "The papers lie drying on the hatch, one by one.",
+  "caption": "The papers lie drying on the hatch, one by one.",
+  "film": "alongside",
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-5": {
+  "text": "Not a breath of wind. The sea is flat.",
+  "caption": "Not a breath of wind. The sea is flat.",
+  "film": "alongside",
+  "t": 5,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-9_5": {
+  "text": "The lookout at the masthead calls down.",
+  "caption": "The lookout at the masthead calls down.",
+  "film": "alongside",
+  "t": 9.5,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-12_5": {
+  "text": "The Sparrow cutter in shore, and her boat pulling on board.",
+  "caption": "“...the Sparrow cutter in shore, and her boat pulling on board.”",
+  "film": "alongside",
+  "t": 12.5,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-18": {
+  "text": "Mister Wylie's men row on and on.",
+  "caption": "Mr Wylie's men row on and on.",
+  "film": "alongside",
+  "t": 18,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-24": {
+  "text": "Breakfast waits below. The papers dry in the sun.",
+  "caption": "Breakfast waits below. The papers dry in the sun.",
+  "film": "alongside",
+  "t": 24,
+  "emotion": "content",
+  "speed": 0.98
+ },
+ "alongside-29": {
+  "text": "The boat is alongside. What a long pull!",
+  "caption": "The boat is alongside. What a long pull!",
+  "film": "alongside",
+  "t": 29,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "verdict-0": {
+  "text": "The Court of Vice-Admiralty, Kingston. November seventeen ninety-nine.",
+  "caption": "The Court of Vice-Admiralty, Kingston. November 1799.",
+  "film": "verdict",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-5_5": {
+  "text": "Both sets of papers lie on the green table.",
+  "caption": "Both sets of papers lie on the green table.",
+  "film": "verdict",
+  "t": 5.5,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-10_5": {
+  "text": "The papers from the shark tell the truth.",
+  "caption": "The papers from the shark tell the truth.",
+  "film": "verdict",
+  "t": 10.5,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-16": {
+  "text": "The clerk reads out what the court has decided.",
+  "caption": "The clerk reads out what the court has decided.",
+  "film": "verdict",
+  "t": 16,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-21": {
+  "text": "The Nancy and her cargo are a lawful prize.",
+  "caption": "The Nancy and her cargo are a lawful prize.",
+  "film": "verdict",
+  "t": 21,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-26": {
+  "text": "The judge sits over the court. His name is not known.",
+  "caption": "The judge sits over the court. His name is not known.",
+  "film": "verdict",
+  "t": 26,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-30": {
+  "text": "Mister Fitton's shark jaws stand by the wall.",
+  "caption": "Mr Fitton's shark jaws stand by the wall.",
+  "film": "verdict",
+  "t": 30,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "verdict-34": {
+  "text": "Lieutenant Fitton recommends these jaws for a collar for neutrals to swear through.",
+  "caption": "“Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”",
+  "film": "verdict",
+  "t": 34,
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+}
