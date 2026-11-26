@@ -1083,3 +1083,5 @@ onLoadFail(() => {
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: GAME.recap, open: () => { closeAll(); showJournal(); }, title: CARDS.end.title, unlocked: null });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => save() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: chapterOf(S.stage) + 1, step: S.stage });

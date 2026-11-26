@@ -943,3 +943,5 @@ function devViews() {
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83C\uDFE0', label: 'The Eventide Home', page: 'home', img: 'recap/home.jpg' }, { icon: '\uD83E\uDD1D', label: 'The helpers', page: 'helpers', img: 'recap/helpers.jpg' }, { icon: '\uD83D\uDD6F\uFE0F', label: 'The monument', page: 'remember', img: 'recap/remember.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: chapterOf(stage) + 1, step: stage });

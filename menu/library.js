@@ -26,7 +26,7 @@ const PastPortLibrary = (() => {
   /* profiles: anything that is not "teen" is Kids */
   const cleanProfile = (v) => (v === 'teen' ? 'teen' : 'kids');
   const isMature = (game) => +game.age >= 13;
-  const canSee = (game, profile) => !isMature(game) || cleanProfile(profile) === 'teen';
+  const canSee = (game, profile) => !game.disabled && (!isMature(game) || cleanProfile(profile) === 'teen');
   const visibleGames = (catalog, profile) => catalog.filter((g) => canSee(g, profile));
   /* The year you were born, asked once when Kids changes to Teens and adults. Answers "teen", "kids", or "unclear" for anything that is not a likely year.
      This is a soft gate. It only knows the year, so a child who turns 13 later this year passes, and so does a child who types another year. */
@@ -115,14 +115,16 @@ if (typeof document !== 'undefined') (() => {
   const show = (d) => { if (d.open) return; if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
   const shut = (d) => { if (!d.open) return; if (d.close) d.close(); else d.removeAttribute('open'); };
 
-  function start() {
+  async function start() {
+    let settings = {};
+    try { settings = await window.PastPortSettings || {}; } catch { /* the game page checks access again */ }
     const list = document.querySelector('.games'), top = $('library');
     if (!list || !top) return;
     const chipsEl = top.querySelector('.lib-chips'), profileBtn = $('profileopen'), forYou = top.querySelector('.lib-foryou'), tilesEl = top.querySelector('.lib-tiles'), statusEl = $('libstatus'), kidsNote = $('kidsnote');
     const profilePanel = $('profilepanel'), sheet = $('gamesheet');
 
     let profile = 'kids', ratings = {}, visits = {}, genre = 'all', shared = {};
-    const sync = () => { profile = L.cleanProfile(read(PROFILE_KEY)); ratings = L.cleanRatings(readObject(RATINGS_KEY)); visits = L.cleanVisits(readObject(VISITS_KEY)); };
+    const sync = () => { profile = L.cleanProfile(read(PROFILE_KEY) || settings.defaultProfile); ratings = L.cleanRatings(readObject(RATINGS_KEY)); visits = L.cleanVisits(readObject(VISITS_KEY)); };
     sync();
 
     /* ----- the games, read from the cards. Each card is wrapped in a slot, so its round "i" button can sit beside the link and not inside it. ----- */
@@ -130,6 +132,12 @@ if (typeof document !== 'undefined') (() => {
       const h = card.querySelector('h2'), p = card.querySelector('p:not(.tag)'), tag = card.querySelector('.tag');
       const g = { id: card.dataset.game, card, title: (h ? h.textContent : card.dataset.game).trim(), text: p ? p.textContent.trim() : '', year: +card.dataset.year || 0,
         genres: L.words(card.dataset.genres).filter((id) => L.genreName(id)), tags: L.words(card.dataset.tags), age: +card.dataset.age >= 13 ? 13 : 6, warn: (card.dataset.warn || '').trim(), isNew: !!tag && /^\s*new\s*$/i.test(tag.textContent) };
+      const setting = settings.games?.[g.id];
+      if (setting) {
+        g.disabled = !setting.enabled;
+        g.age = setting.category === 'teen' ? 13 : 6;
+        card.dataset.age = String(g.age);
+      }
       const slot = g.slot = el('div', 'slot'); slot.style.setProperty('--i', Math.min(i, 5));   /* --i: the same order the cards rise in after the intro (intro.js) */
       list.insertBefore(slot, card); slot.appendChild(card);
       const info = g.info = el('button', 'lib-info'); info.type = 'button'; info.setAttribute('aria-label', 'About ' + g.title); info.setAttribute('aria-haspopup', 'dialog'); info.appendChild(el('span', '', 'i')).setAttribute('aria-hidden', 'true');
@@ -164,7 +172,7 @@ if (typeof document !== 'undefined') (() => {
     function drawCards() {
       let hiddenByAge = 0;
       for (const g of catalog) {
-        const ok = L.canSee(g, profile); if (!ok) hiddenByAge++;
+        const ok = L.canSee(g, profile); if (!ok && !g.disabled) hiddenByAge++;
         g.slot.hidden = !(ok && (genre === 'all' || g.genres.includes(genre)));
         const mine = ratings[g.id] || 0, avg = average(g); g.meta.textContent = '';
         if (mine) { const you = el('span', 'lib-you'); you.append(el('span', '', 'You'), smallStars(mine), el('span', 'lib-sr', ': ' + L.starWords(mine) + '.')); g.meta.appendChild(you); }
@@ -302,7 +310,7 @@ if (typeof document !== 'undefined') (() => {
     } catch (e) { /* nothing to do */ }
 
     /* ----- go ----- */
-    root.classList.add('lib-on'); top.hidden = false;
+    root.classList.add('lib-on'); root.classList.remove('pp-menu-loading'); top.hidden = false;
     drawAll();
     /* coming back from a game with the Back button, or a change made in another tab: read what is saved again */
     addEventListener('pageshow', (e) => { if (e.persisted) { sync(); drawAll(); } });

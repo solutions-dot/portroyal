@@ -1,0 +1,22 @@
+.pp-panel {
+  position: fixed;
+  z-index: 9500;
+  padding: 1rem;
+  border-radius: .75rem;
+  border: 1px solid #d0b766;
+  background: #102731;
+  color: #fff7e7;
+  font: normal 1rem/1.45 system-ui, sans-serif;
+  box-shadow: 0 8px 32px #0007;
+}
+.pp-panel h2 { margin: 0 0 .35rem; font: 700 1.15rem/1.3 system-ui, sans-serif; }
+.pp-panel p { margin: 0 0 .65rem; }
+.pp-panel a { color: #ffda83; margin: .25rem; }
+.pp-panel button { margin: .25rem; padding: .3rem .65rem; min-height: 44px; border: 1px solid #ffda83; border-radius: .4rem; background: #102731; color: #fff7e7; font: inherit; cursor: pointer; }
+.pp-panel input { width: 6rem; font: inherit; }
+#pp-access { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(26rem, calc(100vw - 2rem)); box-sizing: border-box; }
+#pp-access form { margin-top: .8rem; }
+#pp-playtest { bottom: max(.75rem, env(safe-area-inset-bottom)); right: .75rem; max-width: min(25rem, calc(100vw - 1.5rem)); box-sizing: border-box; }
+body:has(#pp-access) #title, html.intro-on #pp-playtest, #pp-access ~ #pp-playtest { visibility: hidden; }
+
+.pp-menu-loading .games { visibility: hidden; }

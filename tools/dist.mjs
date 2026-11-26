@@ -21,3 +21,28 @@ if(testing)for(const file of [`${out}/index.html`,`${out}/menu/index.html`])writ
   for(const file of pages){if(!existsSync(file))continue;let h=readFileSync(file,'utf8');h=h.replace('</head>',head+(file.includes('/games/')?`<script>${rate}</script>`:'')+'</head>')   /* every game page also gets "Rate this story" on its title screen (engine/rate.js) */.replace(/<script src="app\.js"><\/script>/,`<script src="app.js?v=${id}"></script>`);writeFileSync(file,h);n++;}
   writeFileSync(`${out}/version.json`,JSON.stringify({id})+'\n');console.log('build id '+id+' in '+n+' pages');}
 console.log(out+'/ ready: '+readdirSync(`${out}/games`).join(', '));
+
+/* The HTML still runs on a static server. Only hosted builds use the private dashboard and live access settings. */
+if (!testing && process.env.VERCEL === '1') {
+  cpSync('admin', `${out}/admin`, { recursive: true });
+  for (const f of ['playtest.js', 'playtest.css']) cpSync(`engine/${f}`, `${out}/${f}`);
+  const menu = readFileSync(`${out}/index.html`, 'utf8');
+  const catalog = [...menu.matchAll(/<a\b[^>]*\bdata-game="([a-z0-9-]+)"[^>]*>[\s\S]*?<\/a>/g)].map(([card, id]) => ({
+    id,
+    title: (card.match(/<h2\b[^>]*>([\s\S]*?)<\/h2>/)?.[1] || id).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+    category: /\bdata-age="13"/.test(card) ? 'teen' : 'kids'
+  }));
+  writeFileSync(`${out}/playtest-catalog.json`, JSON.stringify(catalog));
+  const gamePages = readdirSync(`${out}/games`).map((game) => ({
+    path: `${out}/games/${game}/site/index.html`, game,
+    age: catalog.find((entry) => entry.id === game)?.category === 'teen' ? 13 : 6
+  }));
+  for (const { path, game = '', age = 6 } of [{ path: `${out}/index.html` }, { path: `${out}/menu/index.html` }, ...gamePages]) {
+    if (!existsSync(path)) continue;
+    let html = readFileSync(path, 'utf8');
+    const feature = `<link rel="stylesheet" href="/playtest.css"><script src="/playtest.js" data-game="${game}" data-age="${age}"></script>`;
+    html = html.replace('</head>', feature + '</head>');
+    if (game) html = html.replace(/<script src="(app\.js[^"]*)"><\/script>/, '<script type="application/json" data-pastport-app="$1"></script>');
+    writeFileSync(path, html);
+  }
+}

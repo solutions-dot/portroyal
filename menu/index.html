@@ -435,8 +435,8 @@
     <h2 id="subtitle">Subscribe for updates on new history games</h2>
     <p>Get a short email when a new game or chapter is ready. For parents, carers, teachers and other adults.</p>
     <form class="subscribe">
-      <label>Your email address <input type="email" required autocomplete="email" placeholder="name@example.com"></label>
-      <label class="check"><input type="checkbox" required> <span>I am a parent, carer, teacher or other adult.</span></label>
+      <label>Your email address <input type="email" name="email" maxlength="254" required autocomplete="email" placeholder="name@example.com"></label>
+      <label class="check"><input type="checkbox" name="adult" required> <span>I am a parent, carer, teacher or other adult.</span></label>
       <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
       <button type="submit">Subscribe</button>
       <p class="sub-msg" role="status"></p>
@@ -456,8 +456,11 @@
       <label>Enquiry type<select name="enquiry" required><option value="">Choose an enquiry</option><option>General question</option><option>School or classroom use</option><option>Partnership or collaboration</option><option>Press or media</option><option>Feedback or suggestion</option><option>Historical correction</option><option>Technical issue</option><option>Other</option></select></label>
     </div>
     <label>Your message<textarea name="message" rows="4" maxlength="4000" placeholder="Tell me a little about your enquiry…" required></textarea></label>
-    <p class="contact-note">This opens your email app with your enquiry ready to send to miramoraiinteractive@gmail.com. Please press Send there. Don’t include sensitive information.</p>
-    <button class="contact-send" type="submit">Continue to email ↗</button>
+    <label class="contact-adult"><input type="checkbox" name="adult" required> I am an adult.</label>
+    <div class="contact-trap" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label></div>
+    <p class="contact-note">Children can ask an adult to send a message. Please leave out sensitive information. <a href="about.html#privacy">Privacy</a></p>
+    <button class="contact-send" type="submit">Send message</button>
+    <a class="contact-note" href="mailto:miramoraiinteractive@gmail.com">Email us directly</a>
     <p class="contact-note" id="contactstatus" role="status"></p>
   </form>
 </dialog>

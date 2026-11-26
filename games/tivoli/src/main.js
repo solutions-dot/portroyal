@@ -526,3 +526,5 @@ if (__DEV__) window.__T = { state, Talk, CH, talkStart, talkNext, camera, startC
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83C\uDFDA\uFE0F', label: 'Back-o-Wall', page: 'backowall', img: 'recap/backowall.jpg' }, { icon: '\uD83C\uDFD8\uFE0F', label: 'Tivoli Gardens is built', page: 'newtivoli', img: 'recap/newtivoli.jpg' }, { icon: '\uD83C\uDFA8', label: 'Tivoli Gardens today', page: 'today', img: 'recap/today.jpg' }], open: () => { hideCard(); openJournal(); }, title: 'Today', unlocked: null, card: 'chcard', titleEl: 'chcardt', body: 'chcardl' });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/' });
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: stepNow_() === 50 ? 5 : CH.on ? CH.id : null, step: stepNow_() });

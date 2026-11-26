@@ -16,3 +16,9 @@
   .contact-note{margin:0;color:rgba(255,247,232,.75);font-size:.85rem}
   @media(max-width:480px){.contact-fields{grid-template-columns:1fr}#contactpanel{padding:1.1rem}.links .contact-pill{font-size:clamp(.72rem,3.5vw,.85rem);padding:0 .7rem;white-space:nowrap;min-height:44px}}
   @media(max-width:370px){.links .contact-pill{padding:0 .5rem;font-size:.72rem}.links .contact-pill span[aria-hidden]{display:none}}
+
+.contact-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.contact-form .contact-adult { display: flex; align-items: center; gap: .6rem; }
+.contact-adult input { width: 1.3rem; min-height: 1.3rem; height: 1.3rem; margin: 0; padding: 0; }
+.contact-note a, a.contact-note { color: var(--sea); }

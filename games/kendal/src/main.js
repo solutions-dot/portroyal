@@ -1250,3 +1250,5 @@ function devViews() {
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83D\uDE82', label: '21 November 1845', page: 'first-train', img: 'recap/first-train.jpg' }, { icon: '\uD83D\uDED1', label: 'Why brakes matter', page: 'brakes', img: 'recap/brakes.jpg' }, { icon: '\uD83E\uDD1D', label: 'The helpers of Kendal', page: 'helpers', img: 'recap/helpers.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: chapterOf(stage) + 1, step: stage });

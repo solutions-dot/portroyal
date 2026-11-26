@@ -1,26 +1,36 @@
-/* Small shared script for the menu and the About page.
-   Two things the owner can switch on, both empty on purpose until they are chosen:
-     SUBSCRIBE_URL  where the sign-up form sends the email. Any service that accepts a plain form post works
-                    (Buttondown, Mailchimp, Formspree, a Google Form...). SUBSCRIBE_FIELD is the name of its email field.
-     CONTACT_EMAIL  where "tell us about a mistake" goes. Shown as a mailto link on the About page.
-   While SUBSCRIBE_URL is empty the form says sign-ups are not open yet and sends nothing anywhere. */
-const SUBSCRIBE_URL = '';
-const SUBSCRIBE_FIELD = 'email';
+/* Forms on the menu and About page submit to the same private inbox. */
 const CONTACT_EMAIL = 'miramoraiinteractive@gmail.com';
 
-for (const f of document.querySelectorAll('form.subscribe')) {
-  const msg = f.querySelector('.sub-msg'), email = f.querySelector('input[type=email]'), btn = f.querySelector('button[type=submit]');
-  email.name = SUBSCRIBE_FIELD;
-  const say = (t, ok) => { msg.textContent = t; msg.dataset.ok = ok ? '1' : ''; };
-  if (SUBSCRIBE_URL) { f.action = SUBSCRIBE_URL; f.method = 'post'; f.target = '_blank'; f.rel = 'noopener'; }
-  else say('Sign-ups are not open yet. Please check back soon.', false);
-  f.addEventListener('submit', (e) => {
-    const trap = f.querySelector('input[name=website]');   /* a hidden box that only spam robots fill in */
-    if (!SUBSCRIBE_URL || trap.value) { e.preventDefault(); if (!SUBSCRIBE_URL) say('Sign-ups are not open yet. Please check back soon.', false); return; }
-    trap.disabled = true;   /* so the empty trap box is not sent to the sign-up service */
-    say('Thank you! A new tab opened to finish signing up. If your service sends a confirmation email, please open it.', true); setTimeout(() => { f.reset(); trap.disabled = false; }, 800);
+async function submitPastPort(action, form, fields = {}) {
+  const data = Object.fromEntries(new FormData(form));
+  const response = await fetch('/api/pastport?action=' + action, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...data, ...fields, adult: form.elements.adult.checked })
   });
-  if (!SUBSCRIBE_URL) { email.disabled = true; btn.disabled = true; }
+  const result = await response.json();
+  if (!response.ok || !result.saved) throw new Error(result.error || 'Please try again.');
+}
+
+for (const form of document.querySelectorAll('form.subscribe')) {
+  const msg = form.querySelector('.sub-msg');
+  const button = form.querySelector('button[type=submit]');
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    msg.dataset.ok = '';
+    msg.textContent = 'Saving your sign-up…';
+    try {
+      await submitPastPort('newsletter', form);
+      form.reset();
+      msg.dataset.ok = '1';
+      msg.textContent = 'You are on the list. Thank you!';
+    } catch {
+      msg.textContent = 'We could not save your sign-up. Please try again.';
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 for (const el of document.querySelectorAll('[data-contact]')) {
@@ -53,14 +63,25 @@ if (contactPanel && contactOpen) {
     if (event.target === contactPanel && (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom)) contactPanel.close();
   });
   contactPanel.addEventListener('close', () => contactOpen.focus());
-  form.addEventListener('submit', (event) => {
+  let submissionId;
+  const button = form.querySelector('button[type=submit]');
+  form.addEventListener('input', () => { if (!button.disabled) submissionId = undefined; });
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
-    const data = new FormData(form);
-    const subject = `[History Games] ${data.get('enquiry')}`;
-    const body = `Name: ${data.get('name')}\nEmail: ${data.get('email')}\nUser type: ${data.get('role')}\nEnquiry: ${data.get('enquiry')}\n\n${data.get('message')}`;
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    status.textContent = 'Your enquiry is ready in your email app. Press Send there to contact me. If nothing opened, email ' + CONTACT_EMAIL + ' directly. Your message is still here.';
+    submissionId ||= crypto.randomUUID();
+    button.disabled = true;
+    status.textContent = 'Sending your message…';
+    try {
+      await submitPastPort('contact', form, { id: submissionId });
+      form.reset();
+      submissionId = undefined;
+      status.textContent = 'Your message was sent. Thank you!';
+    } catch {
+      status.textContent = 'We could not confirm your message was sent. Please try again or email ' + CONTACT_EMAIL + '.';
+    } finally {
+      button.disabled = false;
+    }
   });
 }
 
