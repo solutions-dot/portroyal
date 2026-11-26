@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { AU, chan, setG, tone, cue, noiseHit, crackle, shipCreak, gullCry, uiSound } from "../../../engine/audio.js";
 import { $ } from "./ui.js";
 import { FILMS } from "./content.js";
-import { playNarration, preloadNarration, stopNarration, playScore, stopScore } from "./narration.js";
+import { playNarration, preloadNarration, stopNarration, playScore, stopScore, narrationActive } from "./narration.js";
 const ease = (k) => k * k * (3 - 2 * k);
 function sampleKeys(keys, t) {
   // keys: [[t, ...values]]: smooth interpolation between neighbours, held at the ends
@@ -150,7 +150,12 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     if (!D.on || D.paused) return;
     const F = FILMS[D.key],
       before = D.time;
-    D.time += dt * (D.fast ? 30 : 1);
+    let nextTime = D.time + dt * (D.fast ? 30 : 1);
+    if (!D.fast && AU.on && narrationActive()) {
+      const boundary = F.captions.find(([at]) => at > D.time)?.[0] ?? F.duration;
+      nextTime = Math.min(nextTime, boundary - 0.0001);
+    }
+    D.time = nextTime;
     const t = D.time;
     D.apply(Math.min(t, F.duration));
     if (AU.ctx && AU.on && AU.ctx.state === "running") {

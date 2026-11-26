@@ -5,7 +5,8 @@ import { liveHint } from '../../../engine/device.js';
    the journal with its tabs, the chapter list and the credits. */
 import * as THREE from "three";
 import { AU, uiSound } from "../../../engine/audio.js";
-import { stopNarration } from "./narration.js";
+import { stopNarration, preloadDialogue, playDialogue } from "./narration.js";
+import { LINE_VOICES } from "./line-voices.js";
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from "../../../engine/marks.js"; /* the talk mark sits the same gap over the real head or hat in every game */
 import { CHAPTERS, JOURNAL, SOURCES } from "./content.js";
 import { pickPerson } from "../../../engine/tap.js"; /* tap a person to talk to them */
@@ -263,6 +264,10 @@ export function createMarks({ scene, camera, canvas, onTap }) {
 /* ---------- talking: one line at a time; the player's own lines get their own colour; the x or Escape ends it ---------- */
 export function dialogue(who, L, done, cancel) {
   lines = L.map((l) => (typeof l === "string" ? { who, text: l } : l));
+  for (const l of lines) {
+    if (l.who !== "You") l.voice ||= LINE_VOICES[l.text];
+    if (l.voice) preloadDialogue(l.voice);
+  }
   li = 0;
   uiSound("tap");
   show("dialogue");
@@ -273,7 +278,7 @@ export function dialogue(who, L, done, cancel) {
 let dialogueVoice = null;
 
 export function stopDialogueVoice() {
-  dialogueVoice?.pause();
+  stopNarration();
   dialogueVoice = null;
 }
 
@@ -283,9 +288,7 @@ function drawLine() {
   const l = lines[li];
   stopDialogueVoice();
   if (l.voice && AU.on) {
-    dialogueVoice = new Audio("./" + l.voice);
-    // A blocked or missing clip must leave the caption and Next button usable.
-    dialogueVoice.play().catch(() => {});
+    playDialogue(l.voice);
   }
   $("who").textContent = l.who;
   $("line").textContent = l.text;

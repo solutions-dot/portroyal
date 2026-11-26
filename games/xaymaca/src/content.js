@@ -116,7 +116,7 @@ export const FILMS = {
   arrival: {
     place: "maima", next: 10, journal: "ships", title: "Two ships",
     read: ["In June 1503 two worm-eaten ships came slowly into the bay below Maima. They were sinking.", "Their crews ran them onto the sand, side by side, and propped them up so they could not fall over."],
-    captions: [[0,"Maima, on the hill above the bay. June 1503."],[6,"Something is coming around the point.","arrival-01"],[11,"Two ships. Their sails are torn, and they’re riding low in the water.","arrival-02"],[17,"They sit low in the water. They are sinking."],[23,"Watch. The sailors are steering them straight onto the sand.","arrival-03"],[29,"Side by side, and propped up with poles."]],
+    captions: [[0,"Maima, on the hill above the bay. June, fifteen oh three.","full-arrival-0"],[6,"Something is coming around the point.","arrival-01"],[11,"Two ships. Their sails are torn, and they’re riding low in the water.","arrival-02"],[17,"They sit low in the water. They are sinking.","full-arrival-17"],[23,"Watch. The sailors are steering them straight onto the sand.","arrival-03"],[29,"Side by side, and propped up with poles.","full-arrival-29"]],
     shots: [{ t: 0, p: [3, 2.2, -8], look: [-60, -30, -250] }, { t: 10, p: [1, 1.8, -9.3], look: [-50, -36, -232] }, { t: 20, p: [0.5, 1.7, -9.6], look: [-14, -37, -198] }, { t: 28, p: [0.3, 1.6, -9.6], look: [-6, -36, -192] }, { t: 35, p: [-1.5, 2.2, -6], look: [-6, -34, -192] }],
     fov: [[0, 40], [10, 22], [20, 12], [28, 9], [33, 30]],
     acts: [],
@@ -127,7 +127,7 @@ export const FILMS = {
   trade: {
     place: "shore", next: 24, journal: "trade", title: "Out to the ships",
     read: ["The Taino paddled out to the ships with food. Two men on the ships did all the buying.", "Two hutias bought a piece of tin. Cassava bread bought two or three glass beads. A big load earned a hawk's bell."],
-    captions: [[0,"Cousin pushes the canoe out."],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side."],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
+    captions: [[0,"Cousin pushes the canoe out.","full-trade-0"],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side.","full-trade-11"],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
     shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [9, 2.4, -16], look: [4, 1, -30] }, { t: 16, p: [10, 2.0, -21], look: [5, 1.0, -30] }, { t: 22, p: [10.5, 1.6, -22], look: [5.5, 0.3, -29.5] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
     fov: [[0, 50], [11, 44], [16, 36], [22, 40], [28, 48]],
     acts: [],
@@ -138,7 +138,7 @@ export const FILMS = {
   depart: {
     place: "shore", next: 36, journal: "paddlers", title: "The canoes set off",
     read: ["In July 1503 two canoes left St Ann's Bay. Each had six Spaniards and ten Taino paddlers.", "They went east along the coast to the end of the island, to wait for a calm sea."],
-    captions: [[0,"Dawn. The two canoes are ready."],[5,"Six Spaniards and ten paddlers in each.","depart-05"],[11,"They push off from the sand.","depart-11"],[17,"East along the coast, to the end of the island."],[23,"Cousin does not look back.","depart-23"]],
+    captions: [[0,"Dawn. The two canoes are ready.","full-depart-0"],[5,"Six Spaniards and ten paddlers in each.","depart-05"],[11,"They push off from the sand.","depart-11"],[17,"East along the coast, to the end of the island.","full-depart-17"],[23,"Cousin does not look back.","depart-23"]],
     shots: [{ t: 0, p: [2, 1.6, 3], look: [1, 0.3, -4.5] }, { t: 6, p: [-3, 1.8, 1], look: [2, 0, -5] }, { t: 12, p: [8, 2, -1], look: [12, 0, -12] }, { t: 18, p: [12, 2.5, 0], look: [60, 0, -16] }, { t: 24, p: [13, 2.4, 1], look: [110, 1, -20] }, { t: 29, p: [13, 2.4, 1], look: [140, 1, -21] }],
     fov: [[0, 46], [6, 46], [12, 40], [18, 30], [24, 24]],
     acts: [],
@@ -149,7 +149,7 @@ export const FILMS = {
   crossing: {
     place: "crossing", next: 40, journal: "navassa", title: "What Mendez wrote",
     read: ["Out on the open sea it was very hot. The paddlers jumped in the water to cool off. Soon the drinking water was gone.", "On the second night the moon rose behind a tiny island. It was Navassa. There they found rainwater in the rocks."],
-    captions: [[0,"This is what Diego Mendez later wrote."],[5,"Diego Méndez later wrote that their drinking water ran out.","crossing-01"],[10,"So hot. The water is gone too soon."],[16,"The second night. Everyone is weak."],[22,"On the second night, the moon rose behind a little island.","crossing-02"],[28,"Navassa.","crossing-03"],[34,"Did Cousin reach it? Nobody wrote it down.","crossing-04"]],
+    captions: [[0,"This is what Diego Mendez later wrote.","full-crossing-0"],[5,"Diego Méndez later wrote that their drinking water ran out.","crossing-01"],[10,"So hot. The water is gone too soon.","full-crossing-10"],[16,"The second night. Everyone is weak.","full-crossing-16"],[22,"On the second night, the moon rose behind a little island.","crossing-02"],[28,"Navassa.","crossing-03"],[34,"Did Cousin reach it? Nobody wrote it down.","crossing-04"]],
     shots: [{ t: 0, p: [5, 1.4, 9], look: [0, 0.2, 4] }, { t: 8, p: [-4, 1, 8], look: [0, 0.2, 4] }, { t: 15, p: [3.4, 1.0, 10.2], look: [0, 0.3, 3] }, { t: 20, p: [1, 1.2, 10], look: [0, 4, -600] }, { t: 30, p: [1, 1.2, 10], look: [0, 12, -800] }, { t: 36, p: [3, 1.6, 9], look: [0, 10, -800] }, { t: 40, p: [6, 2, 12], look: [0, 3, -300] }],
     fov: [[0, 46], [8, 46], [15, 40], [20, 22], [30, 16], [36, 26], [40, 40]],
     acts: [],
@@ -160,7 +160,7 @@ export const FILMS = {
   mutiny: {
     place: "maima", next: 42, journal: "mutiny", title: "Shouting on the ships",
     read: ["On 2 January 1504 a crowd of Spaniards shouted against their leader. Forty-eight of them took ten canoes and paddled away east.", "Nobody was hurt that day."],
-    captions: [[0,"January 1504. Shouting down on the ships.","mutiny-00"],[6,"Men climb down into the canoes."],[12,"Ten canoes. Our people made them.","mutiny-12"],[18,"They paddle away east.","mutiny-18"]],
+    captions: [[0,"January, fifteen oh four. Shouting down on the ships.","mutiny-00"],[6,"Men climb down into the canoes.","full-mutiny-6"],[12,"Ten canoes. Our people made them.","mutiny-12"],[18,"They paddle away east.","mutiny-18"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 6, p: [0.5, 1.7, -9.4], look: [14, -37, -190] }, { t: 12, p: [0.6, 1.7, -9.3], look: [68, -37, -198] }, { t: 18, p: [1, 1.8, -9], look: [150, -37, -210] }, { t: 24, p: [2, 2.2, -7], look: [180, -36, -214] }],
     fov: [[0, 10], [6, 9], [12, 14], [18, 18], [24, 28]],
     acts: [[2, "gran", "HeadTurn"]],
@@ -172,7 +172,7 @@ export const FILMS = {
   moon: {
     place: "night", next: 55, journal: "eclipse", title: "The red moon",
     read: ["That evening the full moon rose already darkened. As it climbed, the shadow grew, until the moon was a dull red.", "People hurried down to the ships with food. Later the shadow slid away, and the moon was white again."],
-    captions: [[0,"The night of 29 February 1504."],[5,"The moon is rising. Something is wrong with it."],[11,"Look at the edge of the moon. The shadow is growing.","red-moon-01"],[17,"The shadow grows."],[23,"Now it’s red. Red as a coal.","red-moon-02"],[29,"People run down the path with food."],[36,"And slowly, slowly, the shadow slides away."]],
+    captions: [[0,"The night of the twenty-ninth of February, fifteen oh four.","full-moon-0"],[5,"The moon is rising. Something is wrong with it.","full-moon-5"],[11,"Look at the edge of the moon. The shadow is growing.","red-moon-01"],[17,"The shadow grows.","full-moon-17"],[23,"Now it’s red. Red as a coal.","red-moon-02"],[29,"People run down the path with food.","full-moon-29"],[36,"And slowly, slowly, the shadow slides away.","full-moon-36"]],
     shots: [{ t: 0, p: [1.6, 1.5, -7.5], look: [260, -25, -420] }, { t: 8, p: [1.6, 1.5, -7.6], look: [255, 0, -418] }, { t: 16, p: [1.6, 1.5, -7.8], look: [248, 40, -412] }, { t: 23, p: [1.6, 1.5, -7.8], look: [238, 120, -404] }, { t: 29, p: [0, 1.6, -4], look: [-5, 0.8, -9] }, { t: 36, p: [1.6, 1.5, -8], look: [232, 155, -400] }, { t: 44, p: [2, 1.7, -6], look: [230, 160, -400] }],
     fov: [[0, 30], [8, 16], [16, 10], [23, 9], [29, 50], [36, 10], [44, 18]],
     acts: [[12, "gran", "Point"], [16, "gran", "Idle"]],
@@ -183,7 +183,7 @@ export const FILMS = {
   leave: {
     place: "maima", next: 64, journal: "rescue", title: "The ships sail",
     read: ["On 28 June 1504 the new ship sailed away, with every one of the strangers on board.", "The two old ships stayed on the sand, where they had been for a year."],
-    captions: [[0,"28 June 1504."],[5,"The new ship lifts its sails.","leave-05"],[11,"Every stranger is on board."],[17,"The old ships stay on the sand.","leave-17"],[23,"The bay is quiet again.","leave-23"]],
+    captions: [[0,"The twenty-eighth of June, fifteen oh four.","full-leave-0"],[5,"The new ship lifts its sails.","leave-05"],[11,"Every stranger is on board.","full-leave-11"],[17,"The old ships stay on the sand.","leave-17"],[23,"The bay is quiet again.","leave-23"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [14, -33, -230] }, { t: 10, p: [0.5, 1.7, -9.4], look: [40, -33, -262] }, { t: 18, p: [0.6, 1.7, -9.3], look: [90, -33, -320] }, { t: 23, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 29, p: [0, 2.5, -5], look: [0, -36, -192] }],
     fov: [[0, 9], [10, 10], [18, 12], [23, 9], [29, 30]],
     acts: [],
