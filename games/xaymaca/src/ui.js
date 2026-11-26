@@ -283,7 +283,7 @@ function drawLine() {
   const l = lines[li];
   stopDialogueVoice();
   if (l.voice && AU.on) {
-    dialogueVoice = new Audio("./voices/" + l.voice);
+    dialogueVoice = new Audio("./" + l.voice);
     // A blocked or missing clip must leave the caption and Next button usable.
     dialogueVoice.play().catch(() => {});
   }
