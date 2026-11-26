@@ -57,6 +57,8 @@ All game opening screens have a Main Menu button linking to `../../../menu/`. It
 
 The standard order is Start (or Continue when a saved game is available), Chapters, Main Menu, then the loading bar while the game loads. The bar hides automatically as soon as Start or Continue is enabled. Tivoli uses the same three opening actions; its journal opens in game. Games without chapter support omit Chapters. The saved-progress note appears only when saving is supported. Creator credits are removed from the opening screens; existing Credits panels remain available through Chapters.
 
+The sound and star buttons use matching boxes. On desktop they follow Exit, with sound first. On phones and tablets the two buttons sit together in the upper-right header.
+
 `shared/title.css` owns the shared control styles and is copied to each game's `site/title.css` by `tools/build.mjs`. The template uses it too. Keep every opening screen usable on narrow phones and short landscape screens.
 
 ## The New badge

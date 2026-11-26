@@ -4,7 +4,17 @@
   const start = document.getElementById('start');
   const audio = document.getElementById('intro-audio');
   const toggle = document.getElementById('intro-audio-toggle');
-  if (!title || !start || !audio || !toggle) return;
+  const exit = document.getElementById('allgames');
+  if (!title || !start || !audio || !toggle || !exit) return;
+
+  let utilities = document.getElementById('title-utilities');
+  if (!utilities) {
+    utilities = document.createElement('span');
+    utilities.id = 'title-utilities';
+    exit.after(utilities);
+  }
+  toggle.className = exit.className;
+  utilities.prepend(toggle);
 
   const exits = '#start, #tchap, #chbtn, #allgames';
   let tryOnTap = true;
