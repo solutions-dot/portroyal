@@ -63,3 +63,9 @@ Other games' characters (Air Jamaica, The Mad Master, Morant Bay, Rose Hall, Sel
 3. Tivoli and Garvey beds; Xaymaca's two clips to re-listen ("Navassa", "Ten canoes. Our people made them.").
 4. Whether a cheaper model may do the recording calls (it is mechanical; the risk is copying link ids, mitigated by the repair tool and the transcription check).
 5. A listening pass on phone and desktop for every game (nothing here has been heard by a person except samples).
+
+## Owner instructions added later on 26 November 2026
+
+- **Direct every clip** (emotion and pace per line), not only some. Until the table above reaches zero stale clips, the games play a mix of directed and flat takes.
+- **Add sounds and music where needed.** Gaps found so far: Tivoli and Garvey have no cinematic bed (Tivoli's May 2010 scenes need the owner's say first; Garvey has no `showCinematicSkip` scenes, so the chapter-7 record scene and the ship scenes could take a bed or a gramophone crackle); the title cards and chapter closers of the eight no-caption games have no sound of their own; Port Royal's character lines are not wired. Audit each game once by playing it with sound on and note silent stretches.
+- **Done on 26 November 2026 after the handoff was first written:** Xaymaca's guide Miss Sharon (the 2026 chapter, 11 clips) now uses the saved voice "Woman generic" instead of Rosie; Garvey's three sourced record lines play in the recreated "Marcus Garvey" voice (see `docs/games/garvey.md`, "His voice").
