@@ -2,71 +2,99 @@
  {
   "key": "Friday 17 August 1951. The day Hurricane Charlie came.",
   "stem": "n-939d2735",
-  "text": "Friday the seventeenth of August nineteen fifty-one. The day Hurricane Charlie came."
+  "text": "Friday the seventeenth of August nineteen fifty-one. The day Hurricane Charlie came.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Sunday 11 September 1988. The day before Hurricane Gilbert.",
   "stem": "n-b55aaac4",
-  "text": "Sunday the eleventh of September nineteen eighty-eight. The day before Hurricane Gilbert."
+  "text": "Sunday the eleventh of September nineteen eighty-eight. The day before Hurricane Gilbert.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Saturday 25 October 2025. A big storm is out at sea.",
   "stem": "n-0b96c1b5",
-  "text": "Saturday the twenty-fifth of October twenty twenty-five. A big storm is out at sea."
+  "text": "Saturday the twenty-fifth of October twenty twenty-five. A big storm is out at sea.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Monday 27 October 2025. Night in the church hall.",
   "stem": "n-ca1706a2",
-  "text": "Monday the twenty-seventh of October twenty twenty-five. Night in the church hall."
+  "text": "Monday the twenty-seventh of October twenty twenty-five. Night in the church hall.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Tuesday 28 October 2025. The wind has gone. What is left?",
   "stem": "n-316fb140",
-  "text": "Tuesday the twenty-eighth of October twenty twenty-five. The wind has gone. What is left?"
+  "text": "Tuesday the twenty-eighth of October twenty twenty-five. The wind has gone. What is left?",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "The days after. Everyone has work to do.",
   "stem": "n-4f546605",
-  "text": "The days after. Everyone has work to do."
+  "text": "The days after. Everyone has work to do.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Today. Breadnut Corner gets ready.",
   "stem": "n-f111145e",
-  "text": "Today. Breadnut Corner gets ready."
+  "text": "Today. Breadnut Corner gets ready.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "The evening goes by. People talk softly. The wind grows.",
   "stem": "n-a797cb42",
-  "text": "The evening goes by. People talk softly. The wind grows."
+  "text": "The evening goes by. People talk softly. The wind grows.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Night. The hall is full of sleeping people, and a baby cries.",
   "stem": "n-f6416758",
-  "text": "Night. The hall is full of sleeping people, and a baby cries."
+  "text": "Night. The hall is full of sleeping people, and a baby cries.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "A helicopter flies over, low and loud.",
   "stem": "n-09446aff",
-  "text": "A helicopter flies over, low and loud."
+  "text": "A helicopter flies over, low and loud.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "It is carrying food and water.",
   "stem": "n-47425bca",
-  "text": "It is carrying food and water."
+  "text": "It is carrying food and water.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "The soldiers and the volunteers come from many places.",
   "stem": "n-fcbf6f54",
-  "text": "The soldiers and the volunteers come from many places."
+  "text": "The soldiers and the volunteers come from many places.",
+  "emotion": "content",
+  "speed": 0.97
  },
  {
   "key": "Click. The light comes on. Everyone cheers!",
   "stem": "n-5202a675",
-  "text": "Click. The light comes on. Everyone cheers!"
+  "text": "Click. The light comes on. Everyone cheers!",
+  "emotion": "excited",
+  "speed": 1.03
  },
  {
   "key": "Night. The hall is full of sleeping people, and the wind grows louder and louder outside.",
   "stem": "n-f8edd5c8",
-  "text": "Night. The hall is full of sleeping people, and the wind grows louder and louder outside."
+  "text": "Night. The hall is full of sleeping people, and the wind grows louder and louder outside.",
+  "emotion": "content",
+  "speed": 0.97
  }
 ]

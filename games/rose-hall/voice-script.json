@@ -3,186 +3,248 @@
   "text": "Legend. They say a young bride came to this house.",
   "caption": "LEGEND. They say a young bride came to this house.",
   "film": "legend",
-  "t": 0
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "legend-8": {
   "text": "Legend. They say the first husband drank his coffee, and died.",
   "caption": "LEGEND. They say the first husband drank his coffee, and died.",
   "film": "legend",
-  "t": 8
+  "t": 8,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "legend-16": {
   "text": "Legend. They say the second husband never woke.",
   "caption": "LEGEND. They say the second husband never woke.",
   "film": "legend",
-  "t": 16
+  "t": 16,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "legend-24": {
   "text": "Legend. They say the third was the last.",
   "caption": "LEGEND. They say the third was the last.",
   "film": "legend",
-  "t": 24
+  "t": 24,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "legend-32_5": {
   "text": "Legend. They say she walks these rooms at night.",
   "caption": "LEGEND. They say she walks these rooms at night.",
   "film": "legend",
-  "t": 32.5
+  "t": 32.5,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "legend-41": {
   "text": "Legend. Who says? Nobody wrote it down at the time.",
   "caption": "LEGEND. Who says? Nobody wrote it down at the time.",
   "film": "legend",
-  "t": 41
+  "t": 41,
+  "emotion": "neutral",
+  "speed": 0.9
  },
  "arrive-0": {
   "text": "Rose Hall, near Montego Bay. A night tour, today.",
   "caption": "Rose Hall, near Montego Bay. A night tour, today.",
   "film": "arrive",
-  "t": 0
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.97
  },
  "arrive-6_5": {
   "text": "A book of eighteen twenty-five shows this gate, and the house on its hill.",
   "caption": "A book of 1825 shows this gate, and the house on its hill.",
   "film": "arrive",
-  "t": 6.5
+  "t": 6.5,
+  "emotion": "content",
+  "speed": 0.97
  },
  "arrive-13": {
   "text": "A double flight of stone steps leads to an open portico.",
-  "caption": "\u201cA double flight of stone steps leads to an open portico.\u201d",
+  "caption": "“A double flight of stone steps leads to an open portico.”",
   "film": "arrive",
-  "t": 13
+  "t": 13,
+  "emotion": "content",
+  "speed": 0.97
  },
  "arrive-20": {
   "text": "The house looks north, over the sea.",
   "caption": "The house looks north, over the sea.",
   "film": "arrive",
-  "t": 20
+  "t": 20,
+  "emotion": "content",
+  "speed": 0.97
  },
  "arrive-26_5": {
   "text": "By eighteen thirty it stood empty. By nineteen fifteen it was a ruin.",
   "caption": "By 1830 it stood empty. By 1915 it was a ruin.",
   "film": "arrive",
-  "t": 26.5
+  "t": 26.5,
+  "emotion": "content",
+  "speed": 0.92
  },
  "arrive-33_5": {
   "text": "It was restored, and finished in nineteen seventy-one.",
   "caption": "It was restored, and finished in 1971.",
   "film": "arrive",
-  "t": 33.5
+  "t": 33.5,
+  "emotion": "content",
+  "speed": 0.97
  },
  "arrive-40": {
   "text": "Tonight the guide tells the ghost story. Then you check it.",
   "caption": "Tonight the guide tells the ghost story. Then you check it.",
   "film": "arrive",
-  "t": 40
+  "t": 40,
+  "emotion": "content",
+  "speed": 0.97
  },
  "aisle-0": {
   "text": "Saint James Parish Church, Montego Bay. Begun in seventeen seventy-four.",
   "caption": "St James Parish Church, Montego Bay. Begun in 1774.",
   "film": "aisle",
-  "t": 0
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-6_5": {
   "text": "White limestone, cut in neat blocks.",
   "caption": "White limestone, cut in neat blocks.",
   "film": "aisle",
-  "t": 6.5
+  "t": 6.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-12_5": {
   "text": "The eighteen sixty-eight pamphlet points to a white monument here.",
   "caption": "The 1868 pamphlet points to a white monument here.",
   "film": "aisle",
-  "t": 12.5
+  "t": 12.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-19": {
   "text": "By the altar: white marble, by John Bacon, seventeen ninety-four.",
   "caption": "By the altar: white marble, by John Bacon, 1794.",
   "film": "aisle",
-  "t": 19
+  "t": 19,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-25_5": {
   "text": "Near this place are deposited the Remains of Missus Rosa Palmer,",
-  "caption": "\u201cNear this place are deposited the Remains of Mrs Rosa Palmer,\u201d",
+  "caption": "“Near this place are deposited the Remains of Mrs Rosa Palmer,”",
   "film": "aisle",
-  "t": 25.5
+  "t": 25.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-31_5": {
   "text": "who died on the first day of May seventeen ninety.",
-  "caption": "\u201cwho died on the first day of May 1790.\u201d",
+  "caption": "“who died on the first day of May 1790.”",
   "film": "aisle",
-  "t": 31.5
+  "t": 31.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-36_5": {
   "text": "Her manners were open, cheerful and agreeable.",
-  "caption": "\u201cHer manners were open, cheerful and agreeable.\u201d",
+  "caption": "“Her manners were open, cheerful and agreeable.”",
   "film": "aisle",
-  "t": 36.5
+  "t": 36.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "aisle-41_5": {
   "text": "Rosa Palmer. Not Annie. Who was she?",
   "caption": "Rosa Palmer. Not Annie. Who was she?",
   "film": "aisle",
-  "t": 41.5
+  "t": 41.5,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "pages-0": {
   "text": "Record. The Rose Hall Journal: the estate's own book.",
   "caption": "RECORD. The Rose Hall Journal: the estate's own book.",
   "film": "pages",
-  "t": 0
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-5_5": {
   "text": "It runs from eighteen seventeen to eighteen thirty-two. It names two hundred and eight people.",
   "caption": "It runs from 1817 to 1832. It names 208 people.",
   "film": "pages",
-  "t": 5.5
+  "t": 5.5,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-11": {
   "text": "Celia: Grasscutter. The book says weakly.",
-  "caption": "Celia: \u201cGrasscutter\u201d. The book says \u201cweakly\u201d.",
+  "caption": "Celia: “Grasscutter”. The book says “weakly”.",
   "film": "pages",
-  "t": 11
+  "t": 11,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-16": {
   "text": "Dorinda: Hospital Attendant and Midwife.",
-  "caption": "Dorinda: \u201cHospital Attendant and Midwife\u201d.",
+  "caption": "Dorinda: “Hospital Attendant and Midwife”.",
   "film": "pages",
-  "t": 16
+  "t": 16,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-21": {
   "text": "George Stennet: Head Driver. Aaron: Head Penkeeper.",
-  "caption": "George Stennet: \u201cHead Driver\u201d. Aaron: \u201cHead Penkeeper\u201d.",
+  "caption": "George Stennet: “Head Driver”. Aaron: “Head Penkeeper”.",
   "film": "pages",
-  "t": 21
+  "t": 21,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-26_5": {
   "text": "The twenty-first of April eighteen thirty. Dorinda thought proper to abscond. She ran.",
-  "caption": "21 April 1830. Dorinda \u201cthot proper to abscond\u201d. She ran.",
+  "caption": "21 April 1830. Dorinda “thot proper to abscond”. She ran.",
   "film": "pages",
-  "t": 26.5
+  "t": 26.5,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-32": {
   "text": "Archey: sent to Falmouth Workhouse for punishment, eighteen twenty-three.",
-  "caption": "Archey: \u201csent to Falmouth Workhouse for punishment\u201d, 1823.",
+  "caption": "Archey: “sent to Falmouth Workhouse for punishment”, 1823.",
   "film": "pages",
-  "t": 32
+  "t": 32,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-37": {
   "text": "Hercules ran away at least twenty-six times. Doshy, sixteen.",
   "caption": "Hercules ran away at least 26 times. Doshy, 16.",
   "film": "pages",
-  "t": 37
+  "t": 37,
+  "emotion": "neutral",
+  "speed": 0.95
  },
  "pages-42": {
   "text": "Over ninety people died here in fourteen years.",
   "caption": "Over 90 people died here in fourteen years.",
   "film": "pages",
-  "t": 42
+  "t": 42,
+  "emotion": "neutral",
+  "speed": 0.92
  },
  "pages-46_5": {
   "text": "No Takoo. No Millicent. The book names all two hundred and eight.",
   "caption": "No Takoo. No Millicent. The book names all 208.",
   "film": "pages",
-  "t": 46.5
+  "t": 46.5,
+  "emotion": "neutral",
+  "speed": 0.95
  }
 }

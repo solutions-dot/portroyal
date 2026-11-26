@@ -3,54 +3,72 @@
   "text": "A sound reaches you before the aircraft appears.",
   "caption": "A sound reaches you before the aircraft appears.",
   "film": "arrival",
-  "t": 0
+  "t": 0,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-5": {
   "text": "People turn toward the same patch of sky.",
   "caption": "People turn toward the same patch of sky.",
   "film": "arrival",
-  "t": 5
+  "t": 5,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-10": {
   "text": "The aircraft reaches Palisaydoze.",
   "caption": "The aircraft reaches Palisadoes.",
   "film": "arrival",
-  "t": 10
+  "t": 10,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-24": {
   "text": "A great welcome gathers around it.",
   "caption": "A great welcome gathers around it.",
   "film": "arrival",
-  "t": 24
+  "t": 24,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-40": {
   "text": "Steps are rolled up to the door.",
   "caption": "Steps are rolled up to the door.",
   "film": "arrival",
-  "t": 40
+  "t": 40,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-48": {
   "text": "Mortimo Planno helps the arrival proceed.",
   "caption": "Mortimo Planno helps the arrival proceed.",
   "film": "arrival",
-  "t": 48
+  "t": 48,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-60": {
   "text": "The Emperor appears at the aircraft steps.",
   "caption": "The Emperor appears at the aircraft steps.",
   "film": "arrival",
-  "t": 60
+  "t": 60,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-73": {
   "text": "He comes down the steps.",
   "caption": "He comes down the steps.",
   "film": "arrival",
-  "t": 73
+  "t": 73,
+  "emotion": "content",
+  "speed": 1
  },
  "arrival-88": {
   "text": "Grandma tightens her hand around yours.",
   "caption": "Grandma tightens her hand around yours.",
   "film": "arrival",
-  "t": 88
+  "t": 88,
+  "emotion": "content",
+  "speed": 1
  }
 }

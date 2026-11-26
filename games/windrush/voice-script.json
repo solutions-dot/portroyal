@@ -3,48 +3,64 @@
   "text": "Kingston, Jamaica. A family says goodbye.",
   "caption": "Kingston, Jamaica. A family says goodbye.",
   "film": "departure",
-  "t": 0
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "departure-9": {
   "text": "Pearl waves from the quay.",
   "caption": "Pearl waves from the quay.",
   "film": "departure",
-  "t": 9
+  "t": 9,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "departure-19": {
   "text": "There are people, hopes and stories on this ship.",
   "caption": "There are people, hopes and stories on this ship.",
   "film": "departure",
-  "t": 19
+  "t": 19,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "departure-29": {
   "text": "The Atlantic lies ahead.",
   "caption": "The Atlantic lies ahead.",
   "film": "departure",
-  "t": 29
+  "t": 29,
+  "emotion": "sad",
+  "speed": 0.93
  },
  "arrival-0": {
   "text": "Tilbury, Essex. The twenty-second of June nineteen forty-eight.",
   "caption": "Tilbury, Essex. 22 June 1948.",
   "film": "arrival",
-  "t": 0
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.98
  },
  "arrival-10": {
   "text": "Passengers come ashore from Empire Windrush.",
   "caption": "Passengers come ashore from Empire Windrush.",
   "film": "arrival",
-  "t": 10
+  "t": 10,
+  "emotion": "content",
+  "speed": 0.98
  },
  "arrival-20": {
   "text": "A new place, with unfamiliar sounds and streets.",
   "caption": "A new place, with unfamiliar sounds and streets.",
   "film": "arrival",
-  "t": 20
+  "t": 20,
+  "emotion": "content",
+  "speed": 0.98
  },
  "arrival-30": {
   "text": "The family's journey does not end at the dock.",
   "caption": "The family’s journey does not end at the dock.",
   "film": "arrival",
-  "t": 30
+  "t": 30,
+  "emotion": "content",
+  "speed": 0.98
  }
 }
