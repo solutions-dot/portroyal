@@ -2,7 +2,7 @@
    and it opens the pop up from there, and not have the 'i' on the main screen"). tools/dist.mjs puts this script into every published game
    page, as it does engine/freshen.js, so no game's own files change.
 
-   The star shares the title's boxed controls with the sound button, after Exit on desktop
+   The star shares the title's boxed controls with the sound button, before Exit on desktop
    and in the upper-right header on mobile. It opens the menu's own pop-up for this game (the kind
    of story, the age, the stars and More like this) over the title screen: the menu page with ?embed=1&rate=<game id>, in a see-through
    frame (menu/library.js, "embed"). Closing the pop-up, Escape, or a press outside it closes the frame. Stars given here are the same stars
@@ -23,7 +23,7 @@
     if (!utilities) {
       utilities = document.createElement('span');
       utilities.id = 'title-utilities';
-      exit.after(utilities);
+      exit.before(utilities);
     }
     utilities.append(btn);
     var frame = null;

@@ -11,9 +11,15 @@
   if (!utilities) {
     utilities = document.createElement('span');
     utilities.id = 'title-utilities';
-    exit.after(utilities);
+    exit.before(utilities);
   }
   toggle.className = exit.className;
+  toggle.innerHTML = `<svg width="28" height="24" viewBox="0 0 28 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path class="intro-speaker" d="M11 5 6 9H2v6h4l5 4V5Z"/>
+    <path class="intro-speaker" d="m17 6 9 6-9 6Z" fill="currentColor" stroke="none"/>
+    <path class="intro-pause" d="M11 5v14m6-14v14"/>
+  </svg>`;
   utilities.prepend(toggle);
 
   const exits = '#start, #tchap, #chbtn, #allgames';
