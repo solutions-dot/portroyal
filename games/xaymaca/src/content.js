@@ -127,7 +127,7 @@ export const FILMS = {
   trade: {
     place: "shore", next: 24, journal: "trade", title: "Out to the ships",
     read: ["The Taino paddled out to the ships with food. Two men on the ships did all the buying.", "Two hutias bought a piece of tin. Cassava bread bought two or three glass beads. A big load earned a hawk's bell."],
-    captions: [[0, "Cousin pushes the canoe out."], [5, "Out to the ships, with the bread."], [11, "Sailors lean over the side."], [16, "Bread for beads. Red and yellow glass."], [22, "And for a big basket, a little bell."]],
+    captions: [[0,"Cousin pushes the canoe out."],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side."],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
     shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [9, 2.4, -16], look: [4, 1, -30] }, { t: 16, p: [10, 2.0, -21], look: [5, 1.0, -30] }, { t: 22, p: [10.5, 1.6, -22], look: [5.5, 0.3, -29.5] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
     fov: [[0, 50], [11, 44], [16, 36], [22, 40], [28, 48]],
     acts: [],
@@ -138,7 +138,7 @@ export const FILMS = {
   depart: {
     place: "shore", next: 36, journal: "paddlers", title: "The canoes set off",
     read: ["In July 1503 two canoes left St Ann's Bay. Each had six Spaniards and ten Taino paddlers.", "They went east along the coast to the end of the island, to wait for a calm sea."],
-    captions: [[0, "Dawn. The two canoes are ready."], [5, "Six Spaniards and ten paddlers in each."], [11, "They push off from the sand."], [17, "East along the coast, to the end of the island."], [23, "Cousin does not look back."]],
+    captions: [[0,"Dawn. The two canoes are ready."],[5,"Six Spaniards and ten paddlers in each.","depart-05"],[11,"They push off from the sand.","depart-11"],[17,"East along the coast, to the end of the island."],[23,"Cousin does not look back.","depart-23"]],
     shots: [{ t: 0, p: [2, 1.6, 3], look: [1, 0.3, -4.5] }, { t: 6, p: [-3, 1.8, 1], look: [2, 0, -5] }, { t: 12, p: [8, 2, -1], look: [12, 0, -12] }, { t: 18, p: [12, 2.5, 0], look: [60, 0, -16] }, { t: 24, p: [13, 2.4, 1], look: [110, 1, -20] }, { t: 29, p: [13, 2.4, 1], look: [140, 1, -21] }],
     fov: [[0, 46], [6, 46], [12, 40], [18, 30], [24, 24]],
     acts: [],
@@ -160,7 +160,7 @@ export const FILMS = {
   mutiny: {
     place: "maima", next: 42, journal: "mutiny", title: "Shouting on the ships",
     read: ["On 2 January 1504 a crowd of Spaniards shouted against their leader. Forty-eight of them took ten canoes and paddled away east.", "Nobody was hurt that day."],
-    captions: [[0, "January 1504. Shouting down on the ships."], [6, "Men climb down into the canoes."], [12, "Ten canoes. Our people made them."], [18, "They paddle away east."]],
+    captions: [[0,"January 1504. Shouting down on the ships.","mutiny-00"],[6,"Men climb down into the canoes."],[12,"Ten canoes. Our people made them.","mutiny-12"],[18,"They paddle away east.","mutiny-18"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 6, p: [0.5, 1.7, -9.4], look: [14, -37, -190] }, { t: 12, p: [0.6, 1.7, -9.3], look: [68, -37, -198] }, { t: 18, p: [1, 1.8, -9], look: [150, -37, -210] }, { t: 24, p: [2, 2.2, -7], look: [180, -36, -214] }],
     fov: [[0, 10], [6, 9], [12, 14], [18, 18], [24, 28]],
     acts: [[2, "gran", "HeadTurn"]],
@@ -183,7 +183,7 @@ export const FILMS = {
   leave: {
     place: "maima", next: 64, journal: "rescue", title: "The ships sail",
     read: ["On 28 June 1504 the new ship sailed away, with every one of the strangers on board.", "The two old ships stayed on the sand, where they had been for a year."],
-    captions: [[0, "28 June 1504."], [5, "The new ship lifts its sails."], [11, "Every stranger is on board."], [17, "The old ships stay on the sand."], [23, "The bay is quiet again."]],
+    captions: [[0,"28 June 1504."],[5,"The new ship lifts its sails.","leave-05"],[11,"Every stranger is on board."],[17,"The old ships stay on the sand.","leave-17"],[23,"The bay is quiet again.","leave-23"]],
     shots: [{ t: 0, p: [0.5, 1.7, -9.4], look: [14, -33, -230] }, { t: 10, p: [0.5, 1.7, -9.4], look: [40, -33, -262] }, { t: 18, p: [0.6, 1.7, -9.3], look: [90, -33, -320] }, { t: 23, p: [0.5, 1.7, -9.4], look: [-6, -36, -192] }, { t: 29, p: [0, 2.5, -5], look: [0, -36, -192] }],
     fov: [[0, 9], [10, 10], [18, 12], [23, 9], [29, 30]],
     acts: [],

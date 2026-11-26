@@ -8,7 +8,7 @@ import * as THREE from "three";
 import { AU, chan, setG, tone, cue, noiseHit, crackle, shipCreak, gullCry, uiSound } from "../../../engine/audio.js";
 import { $ } from "./ui.js";
 import { FILMS } from "./content.js";
-import { playNarration, preloadNarration, stopNarration } from "./narration.js";
+import { playNarration, preloadNarration, stopNarration, playScore, stopScore } from "./narration.js";
 const ease = (k) => k * k * (3 - 2 * k);
 function sampleKeys(keys, t) {
   // keys: [[t, ...values]]: smooth interpolation between neighbours, held at the ends
@@ -29,7 +29,8 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     curve = null,
     lookCurve = null,
     fired = new Set(),
-    narrationCue = null;
+    narrationCue = null,
+    scorePlaying = false;
   const build = (F) => {
     const P = F.shots.map((s) => new THREE.Vector3(...s.p)),
       L = F.shots.map((s) => new THREE.Vector3(...s.look));
@@ -70,8 +71,13 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     if (narrationCue) stopNarration();
     narrationCue = null;
   }
-  D.stop = () => {
+  function stopFilmAudio() {
     stopFilmNarration();
+    stopScore();
+    scorePlaying = false;
+  }
+  D.stop = () => {
+    stopFilmAudio();
     D.hideSkip();
     const Q = world && world();
     if (D.on && Q) Q.films?.[D.key]?.(-1, Q);   // put the place back as play expects it
@@ -90,7 +96,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     $("pauseCine").textContent = D.paused ? "Continue" : "Pause";
     $("pauseCine").setAttribute("aria-pressed", D.paused);
     if (D.paused) {
-      stopFilmNarration();
+      stopFilmAudio();
       if (rumble) setG(rumble, 0, 0.1);
     }
   };
@@ -124,7 +130,14 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
       }
     const caption = [...F.captions].reverse().find(([at]) => t >= at);
     $("sub").textContent = caption?.[1] || "";
-    const clip = !D.fast && AU.on ? caption?.[2] : null;
+    const audioOn = !D.fast && AU.on;
+    if (audioOn && !scorePlaying) {
+      scorePlaying = true;
+      playScore(D.key, () => D.time);
+    } else if (!audioOn && scorePlaying) {
+      stopFilmAudio();
+    }
+    const clip = audioOn ? caption?.[2] : null;
     if (clip !== narrationCue) {
       stopFilmNarration();
       if (clip) {
