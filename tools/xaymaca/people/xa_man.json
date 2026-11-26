@@ -52,5 +52,10 @@
  },
  "face": "broad",
  "smile": 0.15,
- "crowd": true
+ "crowd": true,
+ "variants": [
+  "lean",
+  "strong",
+  "round"
+ ]
 }

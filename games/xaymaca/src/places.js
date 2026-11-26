@@ -121,12 +121,20 @@ function paddle() {
   b.scale.set(0.09, 0.26, 0.016);
   return dyn(g);
 }
-function crew(Q, canoe, slots, { taino = ["xa_man", "xa_man2", "xa_runner"], spanish = ["xa_sailor", "xa_sailor2"] } = {}) {
+/* Every face a crew can take: three Taino men and two sailors, each built in four (or three) faces (the recipes' "variants": xa_man, xa_man_b ...),
+   interleaved so that neighbours in a canoe never share a body. Twelve paddlers and four Spaniards fill one big canoe with no face twice
+   (engine/faces.js; the audit found ten paddlers on three faces, 26 November 2026). */
+export const TAINO_CREW = ["", "_b", "_c", "_d"].flatMap((v) => ["xa_man", "xa_man2", "xa_runner"].map((b) => b + v));
+export const SPANISH_CREW = ["", "_b", "_c"].flatMap((v) => ["xa_sailor", "xa_sailor2"].map((b) => b + v));
+function crew(Q, canoe, slots, { taino = TAINO_CREW, spanish = SPANISH_CREW, who } = {}) {
   const R = { canoe, list: [] };
+  let nt = 0, ns = 0;
   slots.forEach(([x, z, sp], i) => {
-    const look = sp ? spanish[i % spanish.length] : taino[i % taino.length], sx = 0, sz = 0;   /* their standing spot is chosen at the end (placeCrews) */
+    const look = sp ? spanish[ns++ % spanish.length] : taino[nt++ % taino.length], sx = 0, sz = 0;   /* their standing spot is chosen at the end (placeCrews) */
     R.list.push({ idx: Q.ambient.length, x, z, sp, i });
-    crowd(Q, look, sx, sz, 0, { kind: "watch", at: [sx, sz - 5], react: ["HeadTurn"], every: [8, 12] });
+    /* seat(): where this person is seen, in the canoe as it lies at rest (the face check measures crews there, not at their hidden standing spots) */
+    const seat = () => { canoe.updateMatrixWorld(true); const p = new THREE.Vector3(x, 0, z).applyMatrix4(canoe.matrixWorld); return [p.x, p.z]; };
+    crowd(Q, look, sx, sz, 0, { kind: "watch", at: [sx, sz - 5], react: ["HeadTurn"], every: [8, 12] }, { seat, ...(who ? { who } : {}) });
   });
   (Q.crews || (Q.crews = [])).push(R);
   return R;
@@ -180,10 +188,15 @@ function crewTicker(Q) {
 /* free standing spots for the crews while they are not aboard (they are hidden then): clear of walls, keep-off rings, the story people and each other */
 function placeCrews(Q) {
   const taken = [...Q.specs.map((s) => [s.x, s.z]), ...Q.ambient.filter((a) => !(Q.crews || []).some((R) => R.list.some((r) => Q.ambient[r.idx] === a))).map((a) => [a.x, a.z])], B = Q.bounds;
-  const free = (x, z) => !Q.walls.some((w) => x > w[0] - 0.5 && x < w[2] + 0.5 && z > w[1] - 0.5 && z < w[3] + 0.5) && !Q.keepOff.some((k) => k.at && Math.hypot(x - k.at[0], z - k.at[1]) < (k.r || 0.8) + 0.4) && !taken.some(([a, b]) => Math.hypot(x - a, z - b) < 1.0);
+  /* their hidden standing spots keep off the player's start and out of every canoe (the crossing is small: the spots fell inside the hull) */
+  const hulls = (Q.crews || []).map((R) => { R.canoe.updateMatrixWorld(true); return new THREE.Box3().setFromObject(R.canoe).expandByScalar(0.5); });
+  const inHull = (x, z) => hulls.some((b) => x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z);
+  const free = (x, z) => !Q.walls.some((w) => x > w[0] - 0.5 && x < w[2] + 0.5 && z > w[1] - 0.5 && z < w[3] + 0.5) && !Q.keepOff.some((k) => k.at && Math.hypot(x - k.at[0], z - k.at[1]) < (k.r || 0.8) + 0.4) && !taken.some(([a, b]) => Math.hypot(x - a, z - b) < 1.0) &&
+    !(Q.start && Math.hypot(x - Q.start.x, z - Q.start.z) < 1.4) && !inHull(x, z);
   for (const R of Q.crews || []) for (const r of R.list) {
     let done = false;
-    for (let z = B.z1 - 0.8; z > B.z0 + 0.6 && !done; z -= 1.0) for (let x = B.x0 + 0.8; x < B.x1 - 0.6 && !done; x += 1.0) if (free(x, z)) { const a = Q.ambient[r.idx]; a.x = x; a.z = z; a.behaviour.at = [x, z - 5]; taken.push([x, z]); done = true; }
+    /* inside the place first; a small place (the crossing, a camera scene) runs out of room, so then wider, to the sides and back, away from the canoes and rocks ahead (they are hidden until manned) */
+    for (const m of [0, 4, 8]) for (let z = B.z1 - 0.8; z > B.z0 + 0.6 - m && !done; z -= 1.0) for (let x = B.x0 + 0.8 - m; x < B.x1 - 0.6 + m && !done; x += 1.0) if (free(x, z)) { const a = Q.ambient[r.idx]; a.x = x; a.z = z; a.behaviour.at = [x, z - 5]; taken.push([x, z]); done = true; }
   }
 }
 /* the places in a canoe: rows of two along its length, the Spaniards in the middle (Ferdinand: six Spaniards and ten paddlers in each) */
@@ -202,7 +215,7 @@ function wrecks(Q, at, y, turn) {
   const big = X.caravel({ aground: true, shores: [1], L: 22, B: 6.7 }),
     small = X.caravel({ aground: true, shores: [-1], L: 18.5, B: 5.7, band: 0xb08a4a, torn: false });
   const c = Math.cos(turn), s = Math.sin(turn), off = (d) => [at[0] + c * d, at[1] - s * d];
-  const [x1, z1] = off(-3.4), [x2, z2] = off(3.0);
+  const [x1, z1] = off(-3.55), [x2, z2] = off(3.15);   /* close, but the Santiago's yard no longer cuts into La Capitana's roof (audit, 26 November 2026) */
   add(Q, far(big), x1, z1, y, turn);
   add(Q, far(small), x2, z2 + 0.6, y + 0.15, turn + 0.21);
   small.rotation.z = -0.05;   /* listing a little toward her neighbour */
@@ -467,7 +480,7 @@ function maima({ night = false } = {}) {
     crowd(Q, "xa_man", -9.0, 3.3, face(-9.0, 3.3, -10.4, 2.0), { kind: "work", clips: ["PickUp", "WipeSweat", "IdleM"], work: [5, 9], face: [-10.4, 2.0] });
     crowd(Q, "xa_woman2", -4.0, 5.0, 0, { kind: "chat", group: "w", at: [-3.6, 5.2], ring: 0.6 });
     crowd(Q, "xa_man2", -3.0, 5.6, 0, { kind: "chat", group: "w" });
-    crowd(Q, "xa_girl", 6.7, 2.0, face(6.7, 2.0, 6.0, 1.4), { kind: "watch", at: [6.0, 1.4], react: ["HeadTurn", "Nod", "Point"], every: [4, 8] });   /* she watches her mother at work (she does not run about: the engine's girl-stride fault, docs/TODO.md) */
+    crowd(Q, "xa_girl", 7.6, 1.2, face(7.6, 1.2, 6.0, 1.4), { kind: "watch", at: [6.0, 1.4], react: ["HeadTurn", "Nod", "Point"], every: [4, 8] });   /* she watches her mother at work (she does not run about: the engine's girl-stride fault, docs/TODO.md) */
     crowd(Q, "xa_boy", 4.0, 7.0, 0, { kind: "play", area: [0, 4, 6, 9] });
   } else {
     crowd(Q, "xa_woman", -3.4, 4.4, face(-3.4, 4.4, -2.5, 3.5), { kind: "watch", at: [-2.5, 3.5], react: ["HeadTurn"], every: [6, 10] });
@@ -514,13 +527,13 @@ function shore() {
   ranges(Q, { centre: Math.PI / 2, spread: 2.8, y: 0, seed: 4, green: 0x4f7a40, haze: 0xcfd8d0, layers: [{ r: 40, base: 6, amp: 10, k: 0.2 }, { r: 90, base: 24, amp: 30, k: 0.45 }, { r: 200, base: 60, amp: 80, k: 0.75 }] });
   ranges(Q, { centre: -Math.PI / 2 - 1.0, spread: 0.6, y: SEA, seed: 3, green: SEA_GREEN, haze: 0xcfd8d0, layers: [{ r: 260, base: 4, amp: 20, k: 0.3 }] });
   ranges(Q, { centre: -Math.PI / 2 + 1.05, spread: 0.6, y: SEA, seed: 5, green: SEA_GREEN, haze: 0xcfd8d0, layers: [{ r: 280, base: 4, amp: 24, k: 0.35 }] });
-  woods(Q, [[-13, 11, "palm"], [-8, 12.5, "palm"], [-3, 11.5, "tree"], [2, 12.6, "palm"], [7, 11.4, "palm"], [11, 12.2, "tree"], [15, 10.5, "palm"], [-15.5, 6, "palm"], [16.5, 4, "tree"], [-11, 10.2, "bush"], [5, 10.4, "bush"], [14, 8.6, "bush"]], 6);
+  woods(Q, [[-13, 11, "palm"], [-8, 12.5, "palm"], [-3, 11.5, "tree"], [2, 12.6, "palm"], [7, 11.4, "palm"], [11, 12.2, "tree"], [15, 10.5, "palm"], [-15.5, 6, "palm"], [16.5, 4, "tree"], [-11, 10.2, "bush"], [5, 10.4, "bush"], [15.4, 9.2, "bush"]], 6);   /* the last bush stood where a villager watches (audit, 26 November 2026) */
   Q.walls.push([-40, 9.6, 40, 40]);
   /* the two caravels aground, bows to the beach, side by side; the water nearly to their decks */
   const ships = wrecks(Q, [(SHIPS[0][0] + SHIPS[1][0]) / 2, SHIPS[0][1]], SEA + 0.45, Math.PI - 0.35);
   /* the trading canoe at the water's edge (chapter 2), and the two big canoes (chapter 3) */
   const tradeCanoe = add(Q, dyn(X.canoe(5.2, { beam: 1.0, depth: 0.5 })), 3.2, -3.3, -0.1, Math.PI / 2 + 0.05);
-  crew(Q, tradeCanoe, [[-1.2, 0, false]], { taino: ["xa_cousin"] });   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
+  crew(Q, tradeCanoe, [[-1.2, 0, false]], { taino: ["xa_cousin"], who: "Cousin" });   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
   tradeCanoe.userData.floor = 0.2;   /* this smaller dugout is shallower: kneeling lower, his shins came through its bottom */
   const bigA = add(Q, bigCanoe(9), -1.0, -4.6, -0.12, Math.PI / 2 - 0.04),
     bigB = add(Q, bigCanoe(9), 3.6, -5.0, -0.12, Math.PI / 2 + 0.03);
@@ -534,7 +547,7 @@ function shore() {
   const gift = grp();
   box(0.6, 0.006, 0.45, X.M.cotton(), 0, 0.003, 0, gift);
   const bell = mesh(new THREE.SphereGeometry(0.03, 12, 8), solid(0xc8a24a, 0.3, 0.9), 0, 0.03, 0, gift);
-  box(0.05, 0.002, 0.004, solid(0x2a2010, 0.6), 0, 0.03, -0.029, gift);
+  box(0.05, 0.002, 0.004, solid(0x2a2010, 0.6), 0, 0, -0.029, bell);   /* the bell's slit moves with it */
   for (let i = 0; i < 9; i++) mesh(new THREE.SphereGeometry(0.008, 6, 4), solid(i % 2 ? 0xd8322a : 0xe8c02a, 0.2), 0.08 + (i % 5) * 0.022, 0.008, -0.05 + Math.floor(i / 5) * 0.03, gift);
   add(Q, dyn(gift), 3.2, -0.9, 0, 0.2);
   gift.visible = false;
@@ -542,8 +555,9 @@ function shore() {
     k = Math.min(1, +k);
     gift.visible = true;
     const e = sm(k);
-    bell.position.y = 0.03 + Math.sin(e * Math.PI * 3) * 0.06 * (1 - e) + e * 0.14;
-    bell.position.x = Math.sin(e * 20) * 0.01;
+    /* shaken: it hops and rattles on the cloth, then settles back down (it ended in the air: audit, 26 November 2026) */
+    bell.position.y = 0.03 + Math.abs(Math.sin(e * Math.PI * 4)) * 0.06 * (1 - e);
+    bell.position.x = Math.sin(e * 40) * 0.012 * (1 - e);
   };
   Q.lookViews = {};
   Q.enter = (stage) => {
@@ -621,7 +635,7 @@ function shore() {
 
 /* ---------- 3. The open sea, the second night of the crossing (a camera scene only) ---------- */
 function crossing() {
-  const Q = base("crossing", [-3, -3, 3, 3], [0, 2, Math.PI]);
+  const Q = base("crossing", [-8, -8, 8, 3], [0, 2, Math.PI]);   /* a camera scene: the wider floor only gives the hidden crew room to stand (sixteen spots did not fit in 6 m) */
   Q.floor = "wood";
   Q.beds = { sea: 0.1, wind: 0.05 };
   Q.light = { top: 0x0b1424, hor: 0x283048, stars: 1, moon: 0, fog: [0x101826, 80, 1600], sun: [0xb8c8ff, 0.6, 40, 50, -200], hemi: [0x5a6a90, 0x1a1a22, 0.9], fill: 1.0 };

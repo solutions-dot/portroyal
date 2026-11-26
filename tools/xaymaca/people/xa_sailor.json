@@ -64,5 +64,12 @@
   ]
  },
  "face": "narrow",
- "crowd": true
+ "crowd": true,
+ "variants": [
+  "long",
+  [
+   "strong",
+   0.5
+  ]
+ ]
 }

@@ -52,5 +52,13 @@
  },
  "face": "long",
  "smile": 0.15,
- "crowd": true
+ "crowd": true,
+ "variants": [
+  "wide",
+  [
+   "strong",
+   0.5
+  ],
+  "narrow"
+ ]
 }

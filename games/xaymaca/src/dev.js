@@ -326,7 +326,10 @@ export async function dev(A) {
       });
       // look-alikes: two people with one body and face within 2.5 m, the family and the crowd (engine/faces.js)
       const twins = faceCheck(
-        [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => ({ id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: n.x, z: n.z, life: n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) })),
+        [...Q.people, ...Q.extras].filter((n) => n.m).map((n) => {
+          const seat = n.seat && n.seat();   /* a canoe's crew is seen only in the canoe: measured there (places.js, crew) */
+          return { id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: seat ? seat[0] : n.x, z: seat ? seat[1] : n.z, still: !!seat, life: seat ? null : n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) };
+        }),
       );
       const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));

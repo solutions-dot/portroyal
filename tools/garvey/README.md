@@ -12,6 +12,7 @@ These are the steps that worked on 13 November 2026 (Python 3.13, no Blender ins
 python3 -m venv ~/venv && ~/venv/bin/pip install bpy==5.3.0        # Blender as a Python module, about 430 MB
 git clone --depth 1 https://github.com/makehumancommunity/makehuman ~/mh
 # MPFB (MakeHuman for Blender): download add-on-mpfb-v2.0.18.zip from https://extensions.blender.org/add-ons/mpfb/
+# (from a script: the archive_url for "mpfb" in https://extensions.blender.org/api/v1/extensions/ ; the zip's sha256 is in that URL, c075b3e9... for 2.0.18)
 mkdir -p ~/.config/blender/5.3/extensions/user_default/mpfb
 unzip add-on-mpfb-v2.0.18.zip -d ~/.config/blender/5.3/extensions/user_default/mpfb
 npm install

@@ -1,5 +1,5 @@
 /* The full look at a character (owner rule 15, 23 November 2026: "check every character thoroughly and don't give me half checked work").
-     node tools/review/full-check.mjs <game> <id,id,...> [anims=Idle:0.4,Walk:0.2,Walk:0.6,PickUp:0.4,SitIdle:0.4] [w=260] [h=360]
+     node tools/review/full-check.mjs <game> <id,id,...> [anims=Idle:0.4,Walk:0.2,Walk:0.6,PickUp:0.4,SitIdle:0.4] [clips=<game clip pack>] [w=260] [h=360]
    Serve the repository root first (python3 -m http.server 8765). For each id it writes one sheet, build/review/full-<game>-<id>.png, holding:
      - every pose in `anims` (clip:share of its length) from the front, three-quarter, side and back, whole body;
      - the clothes close up (torso, torso three-quarter, torso side, torso back) standing and mid-stride;
@@ -13,7 +13,7 @@ const [game, ids, ...rest] = process.argv.slice(2), o = Object.fromEntries(rest.
 if (!game || !ids) { console.log('usage: node tools/review/full-check.mjs <game> <id,id,...> [anims=Clip:0.4,...]'); process.exit(1); }
 const W = +(o.w || 260), H = +(o.h || 360), anims = (o.anims || 'Idle:0.4,Walk:0.2,Walk:0.6,PickUp:0.4,SitIdle:0.4').split(',').map((a) => a.split(':'));
 mkdirSync('build/review/parts', { recursive: true });
-const sheet = (id, views, anim, frac, extra = '') => {
+const sheet = (id, views, anim, frac, extra = o.clips ? 'clips=' + o.clips : '') => {   /* clips=anims_xa: a game's own clip pack (Xaymaca's Paddle), loaded after the shared library */
   const out = `build/review/parts/${game}-${id}-${views.replace(/,/g, '_')}-${anim}-${frac}.png`;
   const r = spawnSync(process.execPath, ['tools/review/people-sheet.mjs', game, id, out, `views=${views}`, `anim=${anim}`, `frac=${frac}`, `w=${W}`, `h=${H}`, 'cloth=1', ...(extra ? [extra] : [])], { encoding: 'utf8', timeout: 600000 });
   const txt = (r.stdout || '') + (r.stderr || ''); const ok = r.status === 0 && existsSync(out) && !/SHEET error/.test(txt);

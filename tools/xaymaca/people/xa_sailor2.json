@@ -64,5 +64,9 @@
   ]
  },
  "face": "broad",
- "crowd": true
+ "crowd": true,
+ "variants": [
+  "lean",
+  "round"
+ ]
 }

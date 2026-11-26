@@ -19,12 +19,7 @@ mkdirSync(out, { recursive: true });
 mkdirSync(models, { recursive: true });
 /* --repack (or REPACK=1): pack again from the bodies already built in build/xaymaca-people, with no Blender (after a change to tools/people/pack.mjs). */
 const REPACK = process.argv.includes("--repack") || process.env.REPACK === "1";
-const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--")),
-  recipes = readdirSync("tools/xaymaca/people").filter(
-    (n) =>
-      n.endsWith(".json") &&
-      (!wanted.length || wanted.includes(n.slice(0, -5))),
-  );
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 function pack(args) {
   const p = spawnSync(
     process.execPath,
@@ -33,10 +28,28 @@ function pack(args) {
   );
   if (p.status !== 0) process.exit(p.status || 1);
 }
-for (const name of recipes) {
-  const recipe = JSON.parse(
-    readFileSync(`tools/xaymaca/people/${name}`, "utf8"),
-  );
+/* "variants": ["lean", "wide"] in a recipe also builds <name>_b, <name>_c (and _d) with those faces and a slightly different build, as
+   tools/people/rebuild.mjs does for the other games, so a crowd (the ten paddlers of a canoe) need not put one face side by side (engine/faces.js).
+   Name a variant on the command line (xa_man_b) to build only that one. */
+const all = [];
+for (const file of readdirSync("tools/xaymaca/people").filter((n) => n.endsWith(".json"))) {
+  const P = JSON.parse(readFileSync(`tools/xaymaca/people/${file}`, "utf8"));
+  const { variants = [], ...base } = P;
+  all.push(base);
+  variants.forEach((entry, vi) => {   /* an entry is a face name, or [face, build] to set how far the build moves (default 1, -1, 0.4) */
+    const [face, sg] = Array.isArray(entry) ? entry : [entry, [1, -1, 0.4][vi]];
+    const V = JSON.parse(JSON.stringify(base));
+    V.name = base.name + ["_b", "_c", "_d"][vi];
+    V.face = face;
+    V.crowd = true;
+    V.body.weight = Math.max(0.2, Math.min(0.85, (V.body.weight ?? 0.5) + 0.07 * sg));
+    V.body.age = Math.max(0.2, Math.min(0.9, (V.body.age ?? 0.4) + 0.05 * sg));
+    V.body.height = Math.max(0.3, Math.min(0.7, (V.body.height ?? 0.5) - 0.03 * sg));
+    if (V.garments.hairlen !== undefined) V.garments.hairlen = +(V.garments.hairlen * [1.15, 0.8, 1.05][vi]).toFixed(2);
+    all.push(V);
+  });
+}
+for (const recipe of all.filter((r) => !wanted.length || wanted.includes(r.name))) {
   const log = path.join(out, recipe.name + ".log"),
     script = path.resolve("tools/xaymaca/build_person.py"),
     bpy = process.env.BPY_PYTHON;

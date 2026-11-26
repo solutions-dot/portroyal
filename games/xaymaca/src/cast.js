@@ -15,5 +15,8 @@ export const CROWD = {
   xa_girl: { sex: "f", idle: "Idle", scale: 0.8 }, xa_boy: { sex: "m", idle: "Idle", scale: 0.8 },
   xa_sailor: { sex: "m", idle: "IdleM" }, xa_sailor2: { sex: "m", idle: "IdleM" },
   xa_visitor: { sex: "m", idle: "IdleM" },
+  /* the crews' other faces (tools/xaymaca/people, "variants"): built only as crowd and phone copies */
+  ...Object.fromEntries(["xa_man", "xa_man2", "xa_runner"].flatMap((b) => ["_b", "_c", "_d"].map((v) => [b + v, { sex: "m", idle: "IdleM" }]))),
+  ...Object.fromEntries(["xa_sailor", "xa_sailor2"].flatMap((b) => ["_b", "_c"].map((v) => [b + v, { sex: "m", idle: "IdleM" }]))),
 };
 export const BASES = [...new Set([...Object.values(CAST).map((x) => x.base), ...Object.keys(CROWD)])];
