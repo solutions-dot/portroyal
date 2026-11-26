@@ -52,22 +52,31 @@ Counts come from `node tools/audio/cue-inventory.mjs`.
 
 ## Port Royal cast (proposal, 26 November 2026, not yet approved)
 
-Library voices (Cartesia, public, British) for the English and other European characters; the account's saved voices for Abba, Kofi, Grace and Peter (owner to choose). An audition of ten library voices saying one line was sent to the owner; the numbers below are the audition file names.
+Rule (owner, 26 November 2026): **every light-skinned character gets a pre-built Cartesia library voice; Black characters use the account's saved voices.** The split below follows each person's `Skin` colour in `tools/people/<id>.json` (dark: about 136 to 168; light: about 196 to 222), not a guess.
 
-| Character | Real or fictional | Candidate (audition no.) | Why |
-|---|---|---|---|
-| Old Ned, retired buccaneer | fictional | Griffin, elderly (1) | an old man's voice |
-| Henry Morgan | real | Roy, stern (2) | commanding; Morgan was Welsh, and no Welsh voice was found |
-| The Reverend Emmanuel Heath | real | Benedict, polished and formal (3) | a clergyman |
-| Symon Benning, pewterer | real family | Gary, measured (4) | a tradesman |
-| Sam, sailor | fictional | Spencer, casual (5) or Alec, lively (9) | easy, upbeat |
-| The gunner | fictional | Owen, Scottish (6) | a soldier's voice; many gunners and soldiers of the age were Scots |
-| Daniel Mendes, merchant | fictional | Clive, measured (7) | a merchant |
-| Constable Hart | fictional | Martin, mature (8) | an older officer |
-| Alexandre Exquemelin, surgeon | real | Rupert, warm and mature (10) | he was French; no French-accented English voice was tried yet |
-| Quartermaster, buccaneers | fictional | Roy or Gary | a second voice if needed |
+**Library voices (light-skinned):** audition numbers are the ten clips sent on 26 November 2026; "new" voices have no audition yet.
 
-Words of real people in Port Royal (Morgan, Exquemelin, Heath, Benning) are paraphrases and the doc's open question (whether they may stay) is for the owner; voicing them makes them more real, so decide that first.
+| Character | Real or fictional | Voice (audition no.) |
+|---|---|---|
+| Henry Morgan (29 lines, the biggest part) | real | Roy, stern (2). He was Welsh; no Welsh voice found. |
+| Old Ned, retired buccaneer | fictional | Griffin, elderly (1) |
+| Symon Benning, pewterer | real family | Gary, measured (4) |
+| Sam, sailor; and "Sailor" | fictional | Spencer, casual (5) |
+| The Reverend Emmanuel Heath | real | Benedict, polished (3) |
+| The gunner | fictional | Owen, Scottish (6) |
+| Daniel Mendes, merchant | fictional | Clive, measured (7) |
+| Constable Hart | fictional | Martin, mature (8) |
+| Alexandre Exquemelin, surgeon | real, French | Rupert, warm (10); a French-accented voice not yet tried |
+| Quartermaster | fictional | Harrison (new) |
+| Tom and Dick (the drill) | fictional | Alec, lively (9) and Toby (new) |
+| Will and Jack (tavern men) | fictional | Jasper (new) and Finn (new) |
+
+**Saved voices (Black characters):** Abba (tavern keeper), Kofi (dockworker, enslaved), Grace (market seller), Peter (turtler), and Hannah (tavern worker; check her model). The account has Faye Ellington (older lady), Rosie, Winston Stona (older man), Bob Marley, Sizzla, Jimmy Cliff and Michael Sharpe. Xaymaca already uses Faye, Winston, Bob Marley, Sizzla and Rosie, so Jimmy Cliff and Michael Sharpe are free for new roles; the owner decides whether a voice may serve two games. Suggested: Abba, Rosie or Faye; Kofi, Michael Sharpe; Peter, Jimmy Cliff; Grace, Rosie; Hannah, to be settled.
+
+**Notes**
+- `docs/games/port-royal.md` calls Abba a free Black woman who stands for the free Black people of Port Royal; the owner said (26 November 2026) that Abba and Kofi are enslaved. One of the two is out of date, so settle it before her lines are voiced (Rule 3: accuracy).
+- No lawyer speaks in Port Royal. The court scenes with a clerk and judge are in other games (Shark Papers, Morant Bay, The Mad Master). When those games' characters are cast, the same split applies to all fifteen games.
+- Real people's words in Port Royal (Morgan, Exquemelin, Heath, Benning) are paraphrases, and whether they may stay is the owner's open question; voicing them makes them more real, so settle it first.
 
 ## Delivery table written, clips not yet re-recorded (26 November 2026)
 
