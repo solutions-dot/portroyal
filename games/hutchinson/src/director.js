@@ -116,7 +116,10 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
       }
     const caption = [...F.captions].reverse().find((c) => t >= c[0]);
     $("sub").textContent = caption?.[1] || "";
-    if (!D.fast) FV.sync(caption, () => Math.max(0, D.time - caption[0]), D.key);
+    if (!D.fast) {
+      FV.syncScore(D.key, () => D.time);
+      FV.sync(caption, () => Math.max(0, D.time - caption[0]), D.key);
+    }
   };
   D.tick = (dt) => {
     if (!D.on || D.paused) return;

@@ -68,3 +68,19 @@ Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark
 - Scene text such as "Captain Ross: There it is." is read by the Narrator, not by a character voice. Character voices come later (`docs/audio/PLAN.md`).
 
 Checked: all 208 clips present, transcribed and compared (only digit and name spellings differ), build passes for all seven games, no page errors on load. **Not yet done**: a listening pass in a browser on phone and desktop (pause and resume, skip, Read instead, sound off).
+
+## The music bed in the other seven games (26 November 2026, owner rule 16)
+
+Every film in Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark Papers and Windrush has an original score, 33 tracks in `games/<game>/site/scores/score-<film>.mp3`. They are synthesised by `python3 tools/audio/make-score.py <game>` (no samples, nothing licensed): slow chord pads, a low drone where the story is grave, and a few soft bells where it is gentle. Each game has its own key and mode; a film can change the mood.
+
+| Game | Palette | Notes |
+|---|---|---|
+| Air Jamaica | G major, bells | The last landing is dorian and slower. |
+| The Mad Master | E phrygian, low drone, no bells | Dread kept quiet and steady. |
+| Morant Bay | D dorian, low pad, no bells | The riot, burning and courts are the darkest, with a slow tremolo; the dawn and today are lighter. |
+| Rose Hall | E minor, thin bells | The legend is eerie; the record scenes (pages, aisle) are plainer. |
+| The Emperor's Arrival | F major, warm, slow | |
+| Shark Papers | C mixolydian | The verdict is dorian, without bells. |
+| Windrush | F sharp major | The arrival is dorian. |
+
+Level: peak about -13 dB, like Xaymaca's scores. The engine plays them at 0.40 and ducks to 0.17 under a voice. **These were made and measured but not yet listened to.** A listening pass on phone speakers and headphones decides whether any palette needs changing (a film can override `mood` in `make-score.py`).

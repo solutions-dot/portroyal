@@ -218,7 +218,10 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
       }
     const caption = [...NARR].reverse().find(([at]) => t >= at);
     $("sub").textContent = caption?.[1] || "";
-    if (!D.fast) FV.sync(caption, () => Math.max(0, D.time - caption[0]), "arrival");
+    if (!D.fast) {
+      FV.syncScore("arrival", () => D.time);
+      FV.sync(caption, () => Math.max(0, D.time - caption[0]), "arrival");
+    }
   };
   D.tick = (dt) => {
     if (!D.on || D.paused) return;
