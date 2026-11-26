@@ -8,11 +8,12 @@
      time = FV.hold(time, nextTime, captions, end)  every tick: while a clip speaks, time never passes the next caption (or the end)
      FV.syncScore(film, () => film time)            every frame: a quiet music bed, scores/score-<film>.mp3, from the film's clock (owner rule 16)
      FV.say(path)                                   a character's recorded line (e.g. 'voices/gran-01.mp3') on the same voice channel, so it never overlaps a caption
+     FV.play(stem, elapsed) / FV.preloadClip(stem) / FV.preloadLine(file) / FV.stopVoice() / FV.stopScore()   single clips and channels, for an ending or a dialogue
      FV.stop()                                      on pause, skip, stop, mute or leaving the page (stops the voice and the score)
      FV.active()                                    a clip is speaking now
 
    The score plays at SCORE_GAIN and ducks to SCORE_DUCK while a voice speaks (Xaymaca's levels). A missing score or clip is simply silent.
-   Used by every game with timed captions except Xaymaca, which keeps its own copy in games/xaymaca/src/narration.js (it also plays a score). */
+   Used by every game with timed captions. Xaymaca's src/narration.js is a thin adapter over this module (moved 26 November 2026). */
 import { AU } from './audio.js';
 
 export const SCORE_GAIN = 0.4, SCORE_DUCK = 0.17;
@@ -99,6 +100,11 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
       const next = (captions.find((c) => c[0] > time) || [end])[0];
       return Math.min(nextTime, next - 0.0001);
     },
+    play(stem, elapsed = () => 0) { play(stem, elapsed); duck(); },   // a named clip at once (e.g. an ending), on the voice channel
+    preloadClip(stem) { if (AU.ctx) load(stem); },
+    preloadLine(file) { if (AU.ctx) load('./' + file, true); },
+    stopVoice,
+    stopScore,
     stop() { stopVoice(); stopScore(); },
     active: () => !!current,
   };

@@ -84,3 +84,5 @@ Every film in Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's 
 | Windrush | F sharp major | The arrival is dorian. |
 
 Level: peak about -13 dB, like Xaymaca's scores. The engine plays them at 0.40 and ducks to 0.17 under a voice. **These were made and measured but not yet listened to.** A listening pass on phone speakers and headphones decides whether any palette needs changing (a film can override `mood` in `make-score.py`).
+
+**Xaymaca on the shared player (26 November 2026).** `games/xaymaca/src/narration.js` keeps its exports but calls `engine/filmvoice.js`, so the director, dialogue and ending are unchanged and there is one player for all eight voiced games. Tested in a browser: the score plays at 0.40, ducks to 0.17 under a voice and returns to 0.40 when it ends; a character line replaces a caption's voice (never two voices); `stop()` silences all. The clip files and `src/line-voices.js` are untouched.
