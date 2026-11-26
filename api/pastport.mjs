@@ -5,7 +5,7 @@ const DAY = 86_400_000;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const uuid = (value) => typeof value === 'string' && UUID.test(value);
 const GAME = /^[a-z0-9-]{1,40}$/;
-const DEFAULTS = { defaultProfile: 'kids', games: {} };
+const DEFAULTS = { defaultProfile: 'teen', games: {} };
 const headers = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
 const json = (body, status = 200) => Response.json(body, { status, headers });
 const ownerSecret = () => process.env.PASTPORT_ADMIN_PASSWORD || '';
