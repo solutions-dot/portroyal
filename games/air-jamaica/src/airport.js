@@ -208,7 +208,7 @@ export function airport(Q, { deck = false, later = false } = {}) {
     seg.rotation.z = Math.PI / 2;
     seg.userData.fixed = true; /* held on its mast by the arm */
   }
-  for (const [x, z] of [[48, 28], [52, 22], [-52, 28]]) {
+  for (const [x, z] of [[48, 34], [54, 31], [-52, 28]]) {   /* the first two beside the gallery's end: at [48, 28] and [52, 22] their crowns filled the take-off's last shot from the gallery (the sweep, 26 November 2026) */
     const tub = grp(g, x, 0, z);
     cyl(0.9, 0.65, 0.65, concrete, 0, 0.325, 0, tub, 12);
     cyl(0.79, 0.79, 0.02, solid(0x685e41), 0, 0.64, 0, tub, 12);

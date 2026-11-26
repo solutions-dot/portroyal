@@ -260,7 +260,7 @@ export function buildCockpit() {
   }
   /* the flight engineer: a seat behind the first officer turned to face the side panel, and the panel on the right-hand wall */
   box(0.46, 0.12, 0.46, M.seat, 0.68, 0.5, 0.55, g);
-  box(0.1, 0.7, 0.46, M.seat, 0.46, 0.9, 0.55, g); /* the back behind him, on the side away from his panel (it stood on the panel side, so he faced his own seat back) */
+  box(0.1, 0.7, 0.28, M.seat, 0.46, 0.9, 0.55, g); /* narrow, so his arm swings past it as he reaches for the switches (the sweep, 26 November 2026: the right upper arm went 2 cm into a back 46 cm wide); */ /* the back behind him, on the side away from his panel (it stood on the panel side, so he faced his own seat back) */
   cyl(0.06, 0.08, 0.44, M.metal, 0.68, 0.22, 0.55, g, 8);
   /* his panel fills the wall from the desk to the ceiling (Douglas photograph of a DC-8-63's flight engineer's station), clear of the sliding window */
   const EP = { z0: -0.4, z1: 1.45, y0: 0.74, y1: 2.0 },   /* long, as on the DC-8: it runs back past him, so his reach finds switches */ ew = EP.z1 - EP.z0, eh = EP.y1 - EP.y0, ez = (EP.z0 + EP.z1) / 2, ey = (EP.y0 + EP.y1) / 2;
@@ -276,8 +276,8 @@ export function buildCockpit() {
     const lv = box(0.09, 0.018, 0.018, M.metal, 1.26, y, z, g); lv.rotation.z = -0.35;
     mesh(new THREE.SphereGeometry(0.02, 8, 6), solid(0xeeeee6, 0.5), 1.215, y + 0.016, z, g);
   }
-  box(0.2, 0.035, ew, solid(0x55595b, 0.7), 1.25, EP.y0 - 0.02, ez, g);   /* a narrow desk, clear of his knees (the audit found it over his lap) */
-  const log = box(0.16, 0.012, 0.32, solid(0xeeebdf, 0.85), 1.25, EP.y0 + 0.004, ez + 0.1, g); log.rotation.y = 0.05;
+  box(0.2, 0.035, ew, solid(0x55595b, 0.7), 1.25, EP.y0 - 0.075, ez, g);   /* a narrow desk, clear of his knees (the audit found it over his lap), 5.5 cm lower so his fingertips stop on it, not in it, as he flips the switches */
+  const log = box(0.16, 0.012, 0.32, solid(0xeeebdf, 0.85), 1.25, EP.y0 - 0.051, ez + 0.5, g);   /* along the desk, out of his hand's path to the switches */ log.rotation.y = 0.05;
   box(0.15, 0.008, 0.28, solid(0xe6e2d2, 0.85), 1.26, EP.y0 + 0.012, ez - 0.32, g);
   /* the roof over the nose: a brow from the windscreen's head rail up to the roof, and the roof itself, so no sky shows above the panes */
   for (let i = 0; i < FOOT.length - 1; i++) seg(FOOT[i], FOOT[i + 1], HEAD + 0.05, 2.05, M.ceiling, 0.05, 0, -LEAN);

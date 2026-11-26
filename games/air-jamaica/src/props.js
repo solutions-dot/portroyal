@@ -164,19 +164,74 @@ export function held(kind) {
   }
   return null;
 }
-/* a stewardess's white flight bag, standing on the ground (the 1969 advertisement: one at each crew member's feet): a soft box with two handles and a
-   small orange tag. Its long side runs along z. */
+/* a stewardess's flight bag, standing on the ground (the 1969 advertisement: one at each crew member's feet; owner, 26 November 2026: "the shape of
+   their bags looks a bit different"): a soft holdall, not a box. Seen end on, a flat base and straight sides that round over into an arched top; cream
+   with pale piping round each end, two strap handles arching over the ridge, a dark zip along the top and a small dark clasp. Its long side runs along z. */
 export function flightBag() {
-  const g = grp(), white = solid(0xf2f0ea, 0.6);
-  box(0.13, 0.26, 0.36, white, 0, 0.13, 0, g);
-  for (const z of [-0.06, 0.06]) {
-    const hnd = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 12, Math.PI), white);
-    hnd.position.set(0, 0.26, z);
-    hnd.rotation.y = Math.PI / 2;
+  const g = grp(), W = 0.21, H = 0.31, L = 0.38, r = W / 2, body = solid(0xe4dccb, 0.75), pipe = solid(0xf6f2e8, 0.6), dark = solid(0x4a3a2c, 0.5);
+  const sh = new THREE.Shape();   /* the end panel: base, sides, arched top */
+  sh.moveTo(-W / 2, 0); sh.lineTo(W / 2, 0); sh.lineTo(W / 2, H - r); sh.absarc(0, H - r, r, 0, Math.PI, false); sh.lineTo(-W / 2, 0);
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: L - 0.03, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.012, bevelSegments: 3, curveSegments: 14 });
+  geo.translate(0, 0, -(L - 0.03) / 2);
+  const bag = new THREE.Mesh(geo, body); bag.castShadow = true; g.add(bag);
+  const edge = new THREE.Path(); edge.moveTo(W / 2 + 0.01, 0.01); edge.lineTo(W / 2 + 0.01, H - r); edge.absarc(0, H - r, r + 0.01, 0, Math.PI, false); edge.lineTo(-W / 2 - 0.01, 0.01);
+  const pts = edge.getPoints(24).map((p) => new THREE.Vector3(p.x, p.y, 0));
+  for (const z of [-L / 2 - 0.004, L / 2 + 0.004]) {   /* the piping round each end */
+    const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, 0.007, 6, false), pipe); t.position.z = z; g.add(t);
+  }
+  box(0.012, 0.006, L * 0.9, dark, 0, H + 0.016, 0, g);   /* the zip along the ridge */
+  for (const z of [-0.075, 0.075]) {   /* two strap handles over the top, from side to side */
+    const hnd = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 6, 16, Math.PI), pipe);
+    hnd.position.set(0, H - 0.02, z);
     g.add(hnd);
   }
-  box(0.004, 0.05, 0.035, solid(0xe0662b, 0.6), 0.067, 0.18, 0.12, g);
+  box(0.04, 0.03, 0.008, dark, 0, H * 0.55, L / 2 + 0.012, g);   /* the clasp on the end */
+  box(0.004, 0.05, 0.035, solid(0xe0662b, 0.6), W / 2 + 0.013, 0.2, 0.12, g);   /* a small orange tag */
   return dynamic(g);
+}
+/* a stewardess's printed scarf, folded and carried over the forearm (the 1969 advertisement "They put a little bit of Jamaica in a whole lot of plane":
+   every stewardess in the line has one over her arm; the 1969 postcard shows one worn round the neck). Cream silk printed with orange, red and gold
+   flowers and teardrops, a red border at each end. Built in its own frame: x along the forearm, y up, the fold over the arm at the origin, one end
+   hanging in front of the arm (z+) and the longer end behind it (z-). placeScarf() sets it on the forearm every frame. */
+let scarfTex = null;
+export function scarf(seed = 0) {
+  scarfTex = scarfTex || cv(256, 512, (x, W, H) => {
+    let r = 7; const R = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+    x.fillStyle = "#f2e2bd"; x.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++) {   /* teardrops (paisley) and five-petal flowers, scattered */
+      const px = R() * W, py = R() * H, s = 9 + R() * 16, c = ["#d2451e", "#e8a21a", "#8a3a1a", "#c8262e", "#e9761f"][i % 5];
+      x.save(); x.translate(px, py); x.rotate(R() * 6.28); x.fillStyle = c;
+      if (i % 2) { x.beginPath(); x.arc(0, 0, s * 0.55, 0, Math.PI * 2); x.moveTo(0, -s); x.quadraticCurveTo(s * 0.9, -s * 0.2, 0, s * 0.55); x.quadraticCurveTo(-s * 0.9, -s * 0.2, 0, -s); x.fill(); x.fillStyle = "#f2e2bd"; x.beginPath(); x.arc(0, s * 0.05, s * 0.2, 0, 7); x.fill(); }
+      else { for (let k = 0; k < 5; k++) { x.beginPath(); x.ellipse(Math.cos(k * 1.256) * s * 0.42, Math.sin(k * 1.256) * s * 0.42, s * 0.3, s * 0.18, k * 1.256, 0, 7); x.fill(); } x.fillStyle = "#f5c64a"; x.beginPath(); x.arc(0, 0, s * 0.18, 0, 7); x.fill(); }
+      x.restore();
+    }
+    for (const y0 of [0, H - 26]) { x.fillStyle = "#b8301c"; x.fillRect(0, y0, W, 26); x.fillStyle = "#e8a21a"; x.fillRect(0, y0 + (y0 ? 4 : 18), W, 4); }
+  });
+  const r = 0.05, front = 0.3, back = 0.42, w = 0.24, prof = [];   /* the cloth's line across the arm: down the front, over the top, down the back */
+  for (let i = 0; i <= 8; i++) prof.push([r + 0.012 * (i / 8) ** 2, -front * (1 - i / 8)]);   /* front end, hanging, flaring a little at the bottom */
+  for (let i = 1; i < 12; i++) { const a = (i / 12) * Math.PI; prof.push([r * Math.cos(a), r * Math.sin(a)]); }   /* over the forearm */
+  for (let i = 0; i <= 10; i++) prof.push([-r - 0.016 * (i / 10) ** 2, -back * (i / 10)]);   /* back end */
+  const len = [0]; for (let i = 1; i < prof.length; i++) len.push(len[i - 1] + Math.hypot(prof[i][0] - prof[i - 1][0], prof[i][1] - prof[i - 1][1]));
+  const N = 6, pos = [], uv = [], idx = [];
+  for (let j = 0; j <= N; j++) for (let i = 0; i < prof.length; i++) {
+    const u = j / N, hang = Math.max(0, -prof[i][1]), wav = Math.sin(u * Math.PI * 2 + seed + i * 0.15) * 0.008 * hang * 3;   /* the hanging ends ripple a little */
+    pos.push((u - 0.5) * w * (1 - 0.18 * hang), prof[i][1], prof[i][0] + wav); uv.push(u, len[i] / len[len.length - 1]);
+  }
+  const P = prof.length; for (let j = 0; j < N; j++) for (let i = 0; i < P - 1; i++) { const a = j * P + i, b = a + P; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: scarfTex, roughness: 0.55, side: THREE.DoubleSide }));
+  m.name = "Scarf"; m.castShadow = true; m.userData.noSurface = true;
+  return dynamic(m);
+}
+/* lays the scarf over a forearm: at the fold, 55 cm of the way from elbow to wrist, its ends hanging straight down whatever the arm does */
+const _e = new THREE.Vector3(), _w = new THREE.Vector3(), _x = new THREE.Vector3(), _z = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _m4 = new THREE.Matrix4();
+export function placeScarf(sc, body, side = "Left") {
+  const el = body.getObjectByName("mixamorig" + side + "ForeArm"), wr = body.getObjectByName("mixamorig" + side + "Hand"); if (!el || !wr) return;
+  el.getWorldPosition(_e); wr.getWorldPosition(_w);
+  _x.copy(_w).sub(_e).setY(0); if (_x.lengthSq() < 1e-6) _x.set(0, 0, 1); _x.normalize(); _z.copy(_x).cross(_up).normalize();
+  _m4.makeBasis(_x, _up, _z); sc.quaternion.setFromRotationMatrix(_m4);
+  sc.position.copy(_e).lerp(_w, 0.55); sc.position.y += 0.012;
+  if (sc.parent) sc.parent.worldToLocal(sc.position);
 }
 /* a thing the player picks up and carries (steps.js TASKS): none yet in chapter 1 */
 export function item(id) {

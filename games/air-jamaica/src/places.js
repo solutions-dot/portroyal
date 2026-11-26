@@ -36,6 +36,7 @@ const base = (id, bounds, start) => ({
   props: {},
   routes: [],
   tickers: [],
+  posers: [],   /* run every frame after the people's clips have played (main.js tick): for arms set by the engine's reach */
   keepOff: [],
   reveal: {},
   films: {},
@@ -185,16 +186,28 @@ function apron() {
   for (const [i, x] of [...left, -7.4, ...right].entries()) {
     const z = lineZ + (x === -7.4 ? 0 : ([...left, ...right].indexOf(x) % 2) * 0.12);
     add(Q, P.flightBag(), x + 0.37, z + 0.05, 0, 0);
-    wall(Q, x + 0.3, z - 0.14, x + 0.44, z + 0.24);
+    wall(Q, x + 0.25, z - 0.16, x + 0.49, z + 0.26);   /* the holdall's footprint */
     void i;
   }
   /* families who came to see the first flight, waiting on the apron on this special morning (docs/games/air-jamaica.md: how close the public could get) */
   const fam = [[-20, 20, "wr_bman62"], [-18.4, 20.6, "wr_bwoman62"], [-19.2, 19.2, "wr_bboy62"], [18, 22, "wr_sam62"], [19.4, 22.4, "wr_lwoman62"], [-6, 21, "wr_may62"]];
   fam.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, -6, -2), { kind: "watch", at: [-6, -2], react: ["Wave"], every: [4, 8] }));
   Q.keepOff = [{ pts: [[-3, 24], [-3, 12], [-5, 2]], w: 1.4 }];
+  /* every stewardess carries her printed scarf folded over her left forearm, the forearm bent forward at the waist (the 1969 advertisement); the right
+     arm stays free for the wave. The engine's two-bone reach (engine/grip.js reachTo) holds the forearm after her clip has played each frame. */
+  const scarves = new Map(), _t = new THREE.Vector3();
+  Q.posers.push(() => {
+    for (const n of [...Q.people.filter((p) => p.id === "marcia"), ...Q.extras.filter((e) => looks.includes(e.look))]) {
+      if (!n.m || !n.m.visible) continue;
+      let sc = scarves.get(n);
+      if (!sc) { sc = P.scarf(scarves.size * 1.7); Q.group.add(sc); scarves.set(n, sc); }
+      reachTo(n.m, "Left", n.m.localToWorld(_t.set(-0.03, 1.0, 0.2)));   /* the wrist in front of the waist, the forearm across her front */
+      P.placeScarf(sc, n.m, "Left");
+    }
+  });
   Q.lookViews = {
     tail: { p: [23.5, 2.4, 5.5], look: [23.6, DC8_Y0() + 6.8, -7.9], fov: 38 },
-    crew: { p: [-15.6, 1.45, 2.2], look: [-2.2, 1.35, lineZ], fov: 46 },
+    crew: { p: [-8.0, 1.55, -0.6], look: [2.0, 1.1, lineZ - 0.2], fov: 46 },   /* along the long line past the steps (from the far end, the steps and Captain Ross filled the front of the shot) */
   };
   Q.enter = () => {};
   return Q;
@@ -290,6 +303,7 @@ function cockpit() {
       for (const [side, dx] of [["Left", -0.17], ["Right", 0.17]]) reachTo(n.m, side, room.localToWorld(_g.set(sx + dx, 0.95, -1.08)));
     }
   };
+  Q.posers.push(hold);   /* the hands stay on the wheels whenever you are on the flight deck (the sweep, 26 November 2026: before the landing they hung in the air in front of the wheels) */
   Q.films.landing = (t) => {
     const [ax, ay, pitch] = t < 0 ? [-250, 0, 0] : at(t);
     const az = -83; /* the runway's centre line */
@@ -332,9 +346,9 @@ function cabin() {
   const seatAt = (x, z, clips = ["SitIdle"]) => ({ kind: "sit", seat: { top, x, z, ry: Math.PI }, clips });
   /* Mum in her seat near the back, beside Tia's empty aisle seat (row 4 on the left); she stood behind the seats with her head in the bins (owner, 25 November 2026) */
   person(Q, "dee2", "dee2", -X[1], R[3], Math.PI, seatAt(-X[1], R[3], ["SitIdle", "SitTalk"]));
-  person(Q, "chef", "chef", 0.92, -3.86, face(0.92, -3.86, 0.1, -3.0), { kind: "idle" });
+  person(Q, "chef", "chef", 0.46, -3.7, face(0.46, -3.7, -0.1, -2.8), { kind: "idle" });   /* in the galley's opening, just in front of his trolley's end: at x 0.92 he stood behind the right-hand screen, half hidden from the aisle, and level with the trolley his foot went into it (the sweep and the owner, 26 November 2026) */
   person(Q, "clarke", "clarke", X[0], R[1], Math.PI, seatAt(X[0], R[1]));
-  crowd(Q, "aj_pass04", X[2], R[2], Math.PI, seatAt(X[2], R[2]));   /* moved across the aisle: Mum has his old seat */
+  crowd(Q, "aj_pass04", X[1], R[2], Math.PI, seatAt(X[1], R[2]));   /* moved across the aisle: Mum has his old seat; the middle seat, as in the window seat his arm went 6 cm into the wall (the sweep, 26 November 2026) */
   /* the walls: the two blocks of seats with the galley's side screens, the counter, the trolley */
   for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, CABIN.rows[0] - 0.65, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
@@ -342,7 +356,7 @@ function cabin() {
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
   Q.keepOff = [];
   Q.lookViews = {
-    trolley: { p: [0.3, 1.42, -3.4], look: [0.0, 1.0, -4.1], fov: 42 },
+    trolley: { p: [-0.39, 1.45, -3.2], look: [-0.24, 1.0, -4.1], fov: 42 },   /* from the aisle side: at x 0.3 the galley's right-hand screen filled the shot (the sweep, 26 November 2026) */
     magazine: { p: [-(CABIN.seatX[0] - 0.07), 1.45, CABIN.rows[3] + 0.97], look: [-CABIN.seatX[0], 0.84, CABIN.rows[3] + 0.41], fov: 44 },
   };
   Q.enter = () => {};
@@ -361,7 +375,7 @@ function newlook() {
   guests.forEach(([x, z, look]) => crowd(Q, look, x, z, face(x, z, 6, -8), { kind: "watch", at: [6, -8], react: ["Wave", "Nod"], every: [5, 9] }));
   Q.keepOff = [{ pts: [[-3, 24], [-3, 12], [-3, 4]], w: 1.4 }];
   Q.lookViews = {
-    tail: { p: [24.5, 2.6, 6.5], look: [24.0, 3.75 + 5.6, -8.0], fov: 38 },
+    tail94: { p: [24.5, 2.6, 6.5], look: [24.0, 3.75 + 5.6, -8.0], fov: 38 },   /* named for the look (steps.js LOOKS.tail94): as "tail" it was never found, so the look had no close-up (the sweep, 26 November 2026) */
     nose: { p: [-9.5, 1.7, 3.2], look: [-3.4, 4.4, -6.1], fov: 46 },
   };
   /* the new look's first flight (FILMS.newflight): the same way out as in 1969, watched from the apron by the hangar */
@@ -461,11 +475,11 @@ function lastflight() {
   person(Q, "grant", "grant", X[0], R[3], Math.PI, seatAt(X[0], R[3]));
   crowd(Q, "aj_pass10", -X[0], R[1], Math.PI, seatAt(-X[0], R[1]));
   crowd(Q, "aj_pass10w", X[1], R[2], Math.PI, seatAt(X[1], R[2]));
-  crowd(Q, "aj_pass04", X[2], R[0], Math.PI, seatAt(X[2], R[0]));
+  crowd(Q, "aj_pass04", X[1], R[0], Math.PI, seatAt(X[1], R[0]));   /* the middle seat: in the window seat his arm went into the wall */
   for (const sg of [-1, 1]) wall(Q, sg < 0 ? -CABIN.half : CABIN.aisle, CABIN.rows[0] - 0.65, sg < 0 ? -CABIN.aisle : CABIN.half, CABIN.rows[CABIN.rows.length - 1] + 0.35);
   wall(Q, -1.6, CABIN.counter.z0, 1.6, CABIN.counter.z1);
   Q.view = { pos: [0, 1.5, 2.6], look: [0, 1.1, -3] };
-  Q.lookViews = { window: { p: [-1.3, 1.22, 0.78], look: [-1.93, 1.18, CABIN.rows[3] - 0.08], fov: 44 } };
+  Q.lookViews = { window: { p: [-1.45, 1.38, 0.66], look: [-1.95, 1.12, CABIN.rows[3] - 0.12], fov: 44 } };   /* over Mum's shoulder, above the seat backs (lower, the seat in front hid half the window) */
   Q.enter = () => {};
   return Q;
 }

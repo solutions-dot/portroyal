@@ -1,4 +1,5 @@
 /* Development checks are stripped from public builds. */
+import * as THREE from "three";
 import { auditReveals } from "../../../engine/audit-reveal.js";
 import { auditProps } from "../../../engine/audit-props.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
@@ -332,6 +333,19 @@ export async function dev(A) {
       const seated = [];
       for (const n of [...Q.people, ...Q.extras]) if (n.m?.userData.seatAnchor && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); seated.push(...auditSeated(n.id, n.m, Q.snap, 0, [])); }
       const errors = [...seated, ...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
+      /* limbs in furniture (owner, 26 November 2026: the engineer's arm through his chair, the chef's foot in his trolley): hands, forearms, upper arms,
+         shins and feet, each with its thickness, against every exact box of the place (floors and the place's own shell left out) */
+      { const boxes = Q.snap.filter((e) => e.lb && e.inv && e.b.max.y > 0.06 + (Q.deck || 0) && e.b.getSize(new THREE.Vector3()).length() < 4), V = THREE.Vector3, seen = new Set();
+        const segs = [['Arm', 'ForeArm', 0.045], ['ForeArm', 'Hand', 0.035], ['UpLeg', 'Leg', 0], ['Leg', 'Foot', 0.05], ['Foot', 'ToeBase', 0.045]];
+        for (const n of [...Q.people, ...Q.extras]) { if (!n.m || !n.m.visible) continue; n.m.updateMatrixWorld(true);
+          for (const s of ['Left', 'Right']) for (const [a, b, r] of segs) { if (!r) continue; const A = n.m.getObjectByName('mixamorig' + s + a), B = n.m.getObjectByName('mixamorig' + s + b); if (!A || !B) continue;
+            const pa = new V().setFromMatrixPosition(A.matrixWorld), pb = new V().setFromMatrixPosition(B.matrixWorld);
+            for (const t of [0.3, 0.6, 1]) { const P = pa.clone().lerp(pb, t);
+              for (const e of boxes) { if (e.b.distanceToPoint(P) > r) continue; const L = P.clone().applyMatrix4(e.inv), lb = e.lb, o = [Math.max(lb.min.x - L.x, 0, L.x - lb.max.x), Math.max(lb.min.y - L.y, 0, L.y - lb.max.y), Math.max(lb.min.z - L.z, 0, L.z - lb.max.z)];
+                const inD = o.some((v) => v) ? 0 : Math.min(L.x - lb.min.x, lb.max.x - L.x, L.y - lb.min.y, lb.max.y - L.y, L.z - lb.min.z, lb.max.z - L.z), d = (r - Math.hypot(...o) * e.sc + inD * e.sc);
+                if (d < 0.012 || (n.m.userData.seatAnchor && /UpLeg|Leg/.test(a) && P.y < (n.m.userData.seatAnchor.top || 0.5) + 0.1 && e.b.max.y < (n.m.userData.seatAnchor.top || 0.5) + 0.12)) continue;   /* a seated person's legs rest on their own seat */
+                const k = n.id + ' ' + s + a; if (seen.has(k)) continue; seen.add(k); errors.push(`limb in furniture: ${n.id}'s ${s.toLowerCase()} ${a === 'Foot' ? 'foot' : a === 'Leg' ? 'shin' : a === 'ForeArm' ? 'hand' : 'arm'} ${(d * 100).toFixed(1)} cm into ${e.name || e.mat} ${e.col} at ${P.x.toFixed(2)}, ${P.y.toFixed(2)}, ${P.z.toFixed(2)}`); } } } } }
+      for (const [id, l] of Object.entries(LOOKS)) if (l.place === Q.id && !l.view && !Q.lookViews?.[id]) errors.push(`look ${id}: no camera view (LOOKS.${id}.view or the place's Q.lookViews.${id}), so it plays with no close-up`);   /* rule 13: every look eases in to its own close shot */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

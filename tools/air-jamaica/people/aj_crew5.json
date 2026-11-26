@@ -1,107 +1,107 @@
 {
-  "name": "aj_crew5",
-  "era": 1969,
-  "body": {
-    "gender": 0,
-    "age": 0.37,
-    "muscle": 0.4,
-    "weight": 0.44,
-    "height": 0.52,
-    "proportions": 0.56,
-    "african": 1,
-    "caucasian": 0,
-    "asian": 0,
-    "cupsize": 0.4,
-    "firmness": 0.55
-  },
-  "garments": {
-    "sleeve": 0.8,
-    "shoes": true,
-    "collar": "turn",
-    "hairvol": 0.55,
-    "hat": [],
-    "woman": true,
-    "skirt": true,
-    "hem": 1.28,
-    "flare": 0.6,
-    "pleats": 0,
-    "hang": 1.0,
-    "buttons": false,
-    "hair": "afro",
-    "waistband": false
-  },
-  "colors": {
-    "Skin": [
-      143,
-      97,
-      71
-    ],
-    "Hair": [
-      62,
-      58,
-      52
-    ],
-    "Shirt": [
-      150,
-      188,
-      64
-    ],
-    "Collar": [
-      150,
-      188,
-      64
-    ],
-    "Shoes": [
-      30,
-      26,
-      24
-    ],
-    "Sole": [
-      28,
-      23,
-      20
-    ],
-    "Buttons": [
-      150,
-      188,
-      64
-    ],
-    "Belt": [
-      150,
-      188,
-      64
-    ],
-    "Buckle": [
-      133,
-      112,
-      63
-    ],
-    "Skirt": [
-      150,
-      188,
-      64
-    ],
-    "Lipstick": [
-      152,
-      52,
-      56
-    ],
-    "Eyeshadow": [
-      90,
-      112,
-      108
-    ],
-    "Gloves": [
-      236,
-      234,
-      226
-    ]
-  },
-  "targets": {
-    "head-square": 0.25,
-    "chin-width-incr": 0.15,
-    "nose-scale-horiz-incr": 0.2,
-    "mouth-scale-horiz-incr": 0.15
-  },
-  "crowd": true
+ "name": "aj_crew5",
+ "era": 1969,
+ "body": {
+  "gender": 0,
+  "age": 0.37,
+  "muscle": 0.4,
+  "weight": 0.44,
+  "height": 0.52,
+  "proportions": 0.56,
+  "african": 1,
+  "caucasian": 0,
+  "asian": 0,
+  "cupsize": 0.4,
+  "firmness": 0.55
+ },
+ "garments": {
+  "sleeve": 0.6,
+  "shoes": true,
+  "collar": "stand",
+  "hairvol": 0.55,
+  "hat": [],
+  "woman": true,
+  "skirt": true,
+  "hem": 1.28,
+  "flare": 0.6,
+  "pleats": 0,
+  "hang": 1.0,
+  "buttons": true,
+  "hair": "afro",
+  "waistband": false
+ },
+ "colors": {
+  "Skin": [
+   143,
+   97,
+   71
+  ],
+  "Hair": [
+   62,
+   58,
+   52
+  ],
+  "Shirt": [
+   226,
+   182,
+   52
+  ],
+  "Collar": [
+   226,
+   182,
+   52
+  ],
+  "Shoes": [
+   30,
+   26,
+   24
+  ],
+  "Sole": [
+   28,
+   23,
+   20
+  ],
+  "Buttons": [
+   240,
+   232,
+   205
+  ],
+  "Belt": [
+   150,
+   188,
+   64
+  ],
+  "Buckle": [
+   133,
+   112,
+   63
+  ],
+  "Skirt": [
+   226,
+   182,
+   52
+  ],
+  "Lipstick": [
+   152,
+   52,
+   56
+  ],
+  "Eyeshadow": [
+   90,
+   112,
+   108
+  ],
+  "Gloves": [
+   236,
+   234,
+   226
+  ]
+ },
+ "targets": {
+  "head-square": 0.25,
+  "chin-width-incr": 0.15,
+  "nose-scale-horiz-incr": 0.2,
+  "mouth-scale-horiz-incr": 0.15
+ },
+ "crowd": true
 }

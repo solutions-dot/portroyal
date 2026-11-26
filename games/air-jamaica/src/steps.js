@@ -107,7 +107,7 @@ LOOKS.magazine = {
   place: "cabin", at: [-0.22, 1.25], label: "Look at the magazine", title: "SkyWritings",
   sound: "page",
   say: ["You pull the magazine from the seat pocket.", "It opens on a story about the airline."],
-  lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on the planes now.", "Go and meet him at the front."],
+  lines: ["SkyWritings is Air Jamaica's own magazine.", "Air Jamaica first flew on 1 April 1969.", "The Doctor Bird on the tail is called the Love Bird.", "In 1994 new owners gave the planes new colours.", "The page says a chef flies on some flights now.", "Go and meet him at the front."],
 };
 LOOKS.tail94 = {
   place: "newlook", at: [24.5, 6.5], label: "Look at the tail", title: "The new tail",

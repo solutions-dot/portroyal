@@ -1,5 +1,6 @@
 /* The cabin of a single-aisle Air Jamaica jet in the 2000s, for chapter 3, "The flying chef" (docs/games/air-jamaica.md, "Scene B").
-   WHAT IS A GENERAL PICTURE: the sources say the flying chef flew on the airline's flights and cooked Jamaican food on board (JIS, 21 March 2004), but
+   WHAT IS A GENERAL PICTURE: the source says the flying chef flew on several flights a week, talked to passengers and asked how they liked the dishes (JIS,
+   21 March 2004); it does not say he cooked on board, and he was on some flights, not all (owner, 26 November 2026), so the game says neither. And
    no photograph of the cabin of those years has been looked at. The cabin follows the common layout of a single-aisle jet of the time (an Airbus A320
    is 3.7 m wide inside, with three seats each side of one aisle); the seat cloth, the panels and the galley are general, and the aisle is a little
    wider than a real one so the player can pass. Do not call it a copy of Air Jamaica's own cabin.
@@ -15,7 +16,7 @@ export const CABIN = {
   seatTop: 0.48,
   front: -4.7, // the front wall of the galley
   back: 3.75, // the curtain at the back: 0.8 m more room behind the last row
-  trolley: { x: 0, z: -4.05 },
+  trolley: { x: -0.24, z: -4.05 },   /* to the left of the opening (its left edge in line with the left-hand screen; owner, 26 November 2026: "move the cart over a little to the left"), so the chef stands clear at its handle end, in view from the aisle */
   counter: { z0: -4.7, z1: -4.28, top: 1.0 },
 };
 const M = {
@@ -253,7 +254,7 @@ function magTexture(kind) {
         ["Jets", "One DC-8 and", "three DC-9s."],
         ["Bird", "The Doctor Bird on the", "tail is our Love Bird."],
         ["1994", "New owners, and new", "colours on the planes."],
-        ["Now", "Jamaican food, cooked", "by our flying chef."],
+        ["Now", "Jamaican food, served", "by our flying chef."],
       ];
       rows.forEach(([h, a, b], i) => {
         const y = 140 + i * 128;
