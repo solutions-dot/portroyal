@@ -8,7 +8,7 @@ export async function cues(g) {
   const m = await load(g); if (!m) return null;
   const out = { films: [], chapters: [], ends: [], cards: [] };
   for (const [id, f] of Object.entries(m.FILMS || {})) out.films.push({ id, title: f.title, duration: f.duration, captions: (f.captions || []).map((c) => ({ t: c[0], text: c[1], clip: c[2] })) });
-  if (m.ARRIVAL_CAPTIONS) out.films.push({ id: "arrival", title: "Arrival", captions: (Array.isArray(m.ARRIVAL_CAPTIONS) ? m.ARRIVAL_CAPTIONS : Object.values(m.ARRIVAL_CAPTIONS)).map((c) => ({ t: c[0], text: c[1] ?? txt(c) })) });
+  if (m.ARRIVAL_CAPTIONS) out.films.push({ id: "arrival", title: "Arrival", captions: m.ARRIVAL_CAPTIONS.map((c) => ({ t: c[1], text: c[0] })) });
   (m.CHAPTERS || []).forEach((c, i) => out.chapters.push({ i: i + 1, name: c.name || c.title, intro: c.intro || c.caption || c.blurb || "" }));
   for (const [id, c] of Object.entries(m.CHAPTER_END || {})) out.ends.push({ id, text: txt(c) });
   for (const [id, c] of Object.entries(m.CARDS || {})) out.cards.push({ id, title: c.title, text: txt(c.lines || c) });
