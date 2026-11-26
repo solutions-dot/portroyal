@@ -141,6 +141,18 @@
     let lastTick = performance.now(), activeUntil = lastTick + 90_000;
     let visible = document.visibilityState === 'visible';
 
+    const ua = navigator.userAgent;
+    const device = /iPad|Tablet/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ||
+      (/Android/.test(ua) && !/Mobile/.test(ua)) ? 'Tablet' : /Mobi|iPhone|iPod/i.test(ua) ? 'Phone' : 'Desktop';
+    const browser = /Edg/i.test(ua) ? 'Edge' : /Firefox|FxiOS/i.test(ua) ? 'Firefox' :
+      /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Chrome|CriOS/i.test(ua) ? 'Chrome' : /Safari/i.test(ua) ? 'Safari' : 'Other';
+    const landscape = matchMedia('(orientation: landscape)');
+    const orientation = () => landscape.matches ? 'Landscape' : 'Portrait';
+    const startOrientation = orientation(), issues = [];
+    let rotations = 0, issueTimer = 0;
+    function checkpoint() {
+      try { return played ? window.PastPortProgress?.() || {} : {}; } catch { return {}; }
+    }
     const tick = () => {
       const now = performance.now();
       if (visible && played) elapsed += Math.max(0, Math.min(now, activeUntil) - lastTick);
@@ -151,20 +163,56 @@
     const send = (reason = '') => {
       if (signal.aborted || !analyticsAllowed() || Date.now() - startedAt >= 86_400_000) return;
       tick();
-      const progress = played ? window.PastPortProgress?.() || {} : {};
+      const progress = checkpoint();
       const screen = !game ? 'menu' : !played ? 'title' :
         ['journal', 'chapters', 'dialogue', 'card', 'chcard', 'fade']
           .find((id) => { const element = document.getElementById(id); return element && !element.hidden && element.getClientRects().length; }) || 'game';
       const body = JSON.stringify({
         page, visitor: id, game, startedAt, sequence: ++sequence,
         seconds, played, chapter: progress.chapter ?? null, step: progress.step ?? null,
-        exit: exit || reason, screen
+        exit: exit || reason, screen, device, browser, startOrientation, orientation: orientation(),
+        rotations, build: String(window.__BUILD || '').slice(0,64), issues
       });
       fetch('/api/pastport?action=progress', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body, keepalive: true, referrerPolicy: 'no-referrer'
       }).catch(() => {});
     };
+    function recordIssue(kind, source = '', line = 0, column = 0) {
+      if (signal.aborted || !analyticsAllowed()) return;
+      const position = checkpoint(), view = orientation();
+      let file = '';
+      try {
+        const url = new URL(source,location.href);
+        if (source && url.origin === location.origin) {
+          const name = url.pathname.split('/').pop();
+          if (/^[a-z0-9_.-]{1,80}$/i.test(name)) file = name;
+        }
+      } catch { /* Some browser errors have no source file. */ }
+      const chapter = position.chapter ?? null, step = position.step ?? null;
+      const previous = issues.find(x => x.kind === kind && x.file === file && x.line === line &&
+        x.column === column && x.chapter === chapter && x.step === step && x.orientation === view);
+      if (previous) previous.count = Math.min(65535,previous.count + 1);
+      else if (issues.length < 16) issues.push({kind,file,line,column,chapter,step,orientation:view,count:1});
+      if (!issueTimer) issueTimer = setTimeout(() => { issueTimer = 0; send(); }, 300);
+    }
+    addEventListener('error', e => {
+      if (e instanceof ErrorEvent) recordIssue('Script error',e.filename,e.lineno,e.colno);
+      else if (e.target?.tagName && ['SCRIPT','LINK','IMG','AUDIO','VIDEO','SOURCE'].includes(e.target.tagName))
+        recordIssue('Asset load failure',e.target.currentSrc || e.target.src || e.target.href);
+    }, {capture:true,signal});
+    addEventListener('unhandledrejection', () => recordIssue('Unhandled rejection'), {signal});
+    document.addEventListener('webglcontextlost', () => recordIssue('Graphics context lost'), {capture:true,signal});
+    for (const id of ['loadnote','ctitle']) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const check = () => { if (/could not load|failed to load/i.test(el.textContent)) recordIssue(id === 'ctitle' ? 'Chapter load failure' : 'Startup failure'); };
+      const observer = new MutationObserver(check);
+      observer.observe(el,{childList:true,subtree:true,characterData:true});
+      observers.push(observer);
+      check();
+    }
+    landscape.addEventListener('change', () => { rotations = Math.min(65535,rotations+1); send(); }, {signal});
     for (const event of ['pointerdown', 'pointermove', 'keydown', 'touchstart']) addEventListener(event, active, { passive: true, signal });
     document.addEventListener('visibilitychange', () => {
       tick();
@@ -208,6 +256,7 @@
     return () => {
       events.abort();
       clearInterval(heartbeat);
+      clearTimeout(issueTimer);
       clearTimeout(pending);
       for (const observer of observers) observer.disconnect();
     };

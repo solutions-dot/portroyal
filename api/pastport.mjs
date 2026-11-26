@@ -44,10 +44,31 @@ async function payload(request, max) {
   } catch { return null; }
 }
 
+const views = ['Portrait','Landscape'];
+const issueKinds = ['Script error','Asset load failure','Unhandled rejection','Graphics context lost','Startup failure','Chapter load failure'];
+function diagnostics(body) {
+  if (body.device === undefined) return {}; // Visits from earlier builds.
+  if (!['Phone','Tablet','Desktop'].includes(body.device) ||
+      !['Chrome','Edge','Firefox','Safari','Samsung Internet','Other'].includes(body.browser) ||
+      !views.includes(body.orientation) || !views.includes(body.startOrientation) ||
+      !integer(body.rotations,0,65535) || typeof body.build !== 'string' || !/^[a-zA-Z0-9.-]{0,64}$/.test(body.build) ||
+      !Array.isArray(body.issues) || body.issues.length > 16) return null;
+  const issues = [];
+  for (const x of body.issues) {
+    if (!x || !issueKinds.includes(x.kind) || typeof x.file !== 'string' || !/^[a-zA-Z0-9_.-]{0,80}$/.test(x.file) ||
+        !integer(x.line,0,2147483647) || !integer(x.column,0,2147483647) || !integer(x.count,1,65535) ||
+        !views.includes(x.orientation) || (x.chapter !== null && !integer(x.chapter,1,100)) ||
+        (x.step !== null && !integer(x.step,0,10000))) return null;
+    issues.push({kind:x.kind,file:x.file,line:x.line,column:x.column,count:x.count,orientation:x.orientation,chapter:x.chapter,step:x.step});
+  }
+  return {device:body.device,browser:body.browser,orientation:body.orientation,startOrientation:body.startOrientation,rotations:body.rotations,build:body.build,issues};
+}
+
 async function progress(request, body) {
   const now = Date.now();
   const { page, visitor, game, startedAt, sequence, seconds, played, chapter, step, exit, screen } = body;
-  if (!uuid(page) || !uuid(visitor) ||
+  const health = diagnostics(body);
+  if (!health || !uuid(page) || !uuid(visitor) ||
       typeof game !== 'string' || (game !== '' && !GAME.test(game)) ||
       !integer(startedAt, now - DAY, now + 60_000) || !integer(sequence, 1, 20_000) ||
       !integer(seconds, 0, Math.min(86_400, Math.ceil((now - startedAt) / 1000) + 60)) ||
@@ -60,7 +81,7 @@ async function progress(request, body) {
   const path = `pastport/visits/${isoDay(startedAt)}/${page}.json`;
   await saveProgress(path, {
     page, visitor, tester: '', game, startedAt, updatedAt: now, sequence, seconds, played,
-    chapter, step, exit, screen, ...geo(request)
+    chapter, step, exit, screen, ...health, ...geo(request)
   }, '');
   return new Response(null, { status: 204, headers });
 }
@@ -148,7 +169,7 @@ export default {
       if (!storageReady()) return json({ error: 'This service is not available yet.' }, 503);
       if (action === 'admin') return await admin(request, url);
       if (request.method !== 'POST') return json({ error: 'Method not allowed.' }, 405);
-      const body = await payload(request, action === 'progress' ? 1600 : 20_000);
+      const body = await payload(request, action === 'progress' ? 8192 : 20_000);
       if (!body) return json({ error: 'Invalid submission.' }, 400);
       if (action === 'progress') return await progress(request, body);
       if (['newsletter', 'contact'].includes(action)) return await submission(body, action);

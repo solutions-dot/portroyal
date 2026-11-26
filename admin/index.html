@@ -38,17 +38,25 @@
         <article><h3>Most played games</h3><div id="popular"></div></article>
         <article><h3>Estimated locations</h3><div id="locations"></div></article>
       </div>
+      <div class="reports">
+        <article><h3>Devices by session</h3><div id="devices"></div></article>
+        <article><h3>Last orientation by session</h3><div id="orientations"></div></article>
+        <article><h3>Recorded exits by game and chapter</h3><div id="dropoffs"></div></article>
+      </div>
+      <h3>Game health</h3>
+      <p class="note" id="health-summary"></p>
+      <div class="table-wrap"><table><thead><tr><th>Issue</th><th>Game</th><th>Build / source</th><th>Device / browser</th><th>Orientation</th><th>Chapter / step</th><th>Sessions</th><th>Events</th></tr></thead><tbody id="health"></tbody></table></div>
       <h3>Visitor sessions</h3>
       <p class="note">Each session represents one browser tab. Location is estimated from the connection.</p>
       <div class="table-wrap"><table>
-        <thead><tr><th>Session</th><th>Location</th><th>Page opens</th><th>Game starts</th><th>Active play</th><th>Last seen (Jamaica)</th></tr></thead>
+        <thead><tr><th>Session</th><th>Location</th><th>Device / browser</th><th>Orientation</th><th>Page opens</th><th>Game starts</th><th>Active play</th><th>Last seen (Jamaica)</th></tr></thead>
         <tbody id="sessions"></tbody>
       </table></div>
       <h3>Page and game activity</h3>
       <label>Show session <select id="visitor-filter"><option value="">All sessions</option></select></label>
       <div class="table-wrap">
         <table>
-          <thead><tr><th scope="col">Opened</th><th scope="col">Visitor</th><th scope="col">Estimated location</th><th scope="col">Page or game</th><th scope="col">Play time</th><th scope="col">Last chapter and step</th><th scope="col">Exit</th></tr></thead>
+          <thead><tr><th scope="col">Opened</th><th scope="col">Visitor</th><th scope="col">Estimated location</th><th scope="col">Page or game</th><th scope="col">Orientation at open / last seen</th><th scope="col">Orientation changes</th><th scope="col">Play time</th><th scope="col">Last chapter and step</th><th scope="col">Exit</th></tr></thead>
           <tbody id="visit-rows"></tbody>
         </table>
       </div>

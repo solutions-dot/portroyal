@@ -99,6 +99,9 @@
 
   function summary(rows) {
     const sessions = new Map(), games = new Map(), places = new Map();
+    const devices = new Map(), orientations = new Map(), dropoffs = new Map(), health = new Map();
+    const affected = new Set();
+    const count = (map,key) => map.set(key,(map.get(key) || 0) + 1);
     const daily = new Map(reportDays.map(day => [day, 0]));
     let starts = 0, seconds = 0;
     for (const r of rows) {
@@ -109,6 +112,17 @@
       }
       session.opens++;
       if (r.updatedAt > session.latest.updatedAt) session.latest = r;
+      if (r.exit && r.game) count(dropoffs, title(r.game) + ' · ' + (r.chapter ? 'Chapter ' + r.chapter : screens[r.screen] || 'Unknown'));
+      for (const issue of r.issues || []) {
+        const values = [issue.kind,title(r.game) || 'Menu',[r.build,issue.file && [issue.file,issue.line,issue.column].join(':')].filter(Boolean).join(' / '),
+          [r.device,r.browser].join(' / '),issue.orientation,[issue.chapter,issue.step].filter(x=>x != null).join(' / ') || 'Opening'];
+        const key = JSON.stringify(values);
+        if (!health.has(key)) health.set(key,{values,sessions:new Set(),events:0});
+        const group = health.get(key);
+        group.sessions.add(r.visitor);
+        group.events += issue.count;
+        affected.add(r.visitor);
+      }
       if (!r.played) continue;
       starts++; seconds += r.seconds;
       session.starts++; session.seconds += r.seconds;
@@ -123,7 +137,9 @@
       const location = placeOf(item.latest);
       places.set(location,(places.get(location) || 0) + 1);
       filter.add(new Option(sessionName(id),id));
-      row($('sessions'), [sessionName(id),location,item.opens,item.starts,durations(item.seconds),date(item.latest.updatedAt)]);
+      count(devices,item.latest.device || 'Unknown');
+      count(orientations,item.latest.orientation || 'Unknown');
+      row($('sessions'), [sessionName(id),location,[item.latest.device,item.latest.browser].filter(Boolean).join(' / ') || 'Unknown',item.latest.orientation || 'Unknown',item.opens,item.starts,durations(item.seconds),date(item.latest.updatedAt)]);
     }
     if (sessions.has(old)) filter.value = old;
     if (!sessions.size) row($('sessions'), ['No sessions in this period']);
@@ -134,6 +150,16 @@
       card.append(label,number);
       $('totals').append(card);
     }
+    $('health').replaceChildren();
+    for (const item of [...health.values()].sort((a,b) => b.sessions.size-a.sessions.size || b.events-a.events)) {
+      row($('health'),[...item.values,item.sessions.size,item.events]);
+    }
+    const measured = new Set(rows.filter(x => Array.isArray(x.issues)).map(x => x.visitor)).size;
+    $('health-summary').textContent = affected.size + ' of ' + measured + ' sessions with diagnostics reported an issue. Abrupt closures may leave only the last checkpoint.';
+    if (!health.size) row($('health'), [measured ? 'No issues reported for this period' : 'No diagnostic data for this period']);
+    rankings('devices',devices,4);
+    rankings('orientations',orientations,3);
+    rankings('dropoffs',dropoffs,8);
     rankings('trend',daily);
     rankings('popular',games,8);
     rankings('locations',places,8);
@@ -190,7 +216,7 @@
         const tester = sessionName(entry.visitor);
         const progress = entry.chapter ? 'Chapter ' + entry.chapter + (entry.step === null ? '' : ' · Step ' + entry.step) : '—';
         const exit = screens[entry.screen] + ' · ' + (exits[entry.exit] || 'Last seen ' + date(entry.updatedAt));
-        row(table, [date(entry.startedAt), tester, place, title(entry.game) || 'Menu', entry.played ? durations(entry.seconds) : '—', progress, exit]);
+        row(table, [date(entry.startedAt), tester, place, title(entry.game) || 'Menu', entry.orientation ? entry.startOrientation + ' / ' + entry.orientation : 'Unknown', entry.rotations ?? 'Unknown', entry.played ? durations(entry.seconds) : '—', progress, exit]);
       }
     }
     if (!visible.length) row(table, ['No records in this period']);
@@ -268,8 +294,8 @@
 
   function downloadCsv(kind, entries) {
     const rows = kind === 'usage'
-      ? [['Session','Opened (UTC)','Game','City','Country','Started','Active seconds','Chapter','Step','Last screen','Exit','Last seen (UTC)'], ...entries.map(r => [r.visitor,new Date(r.startedAt).toISOString(),title(r.game)||'Menu',r.city,r.country,r.played,r.seconds,r.chapter,r.step,r.screen,r.exit,new Date(r.updatedAt).toISOString()])]
-      : kind === 'contact' 
+      ? [['Session','Opened (UTC)','Game','City','Country','Started','Active seconds','Chapter','Step','Last screen','Exit','Last seen (UTC)','Device','Browser','Start orientation','Last orientation','Orientation changes','Build','Diagnostics (JSON)'], ...entries.map(r => [r.visitor,new Date(r.startedAt).toISOString(),title(r.game)||'Menu',r.city,r.country,r.played,r.seconds,r.chapter,r.step,r.screen,r.exit,new Date(r.updatedAt).toISOString(),r.device,r.browser,r.startOrientation,r.orientation,r.rotations,r.build,r.issues && JSON.stringify(r.issues)])]
+      : kind === 'contact'
       ? [['Received (ISO UTC)', 'Name', 'Email', 'Role', 'Enquiry', 'Message'], ...entries.map((x) => [new Date(x.receivedAt).toISOString(), x.name, x.email, x.role, x.enquiry, x.message])]
       : kind === 'newsletter'
         ? [['Email', 'Signed up (ISO UTC)'], ...entries.map((x) => [x.email, new Date(x.receivedAt).toISOString()])]
