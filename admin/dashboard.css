@@ -1,0 +1,48 @@
+:root {
+  color-scheme: dark;
+  font: 16px/1.5 system-ui, sans-serif;
+  background: #101e23;
+  color: #fff8e7;
+}
+body { margin: 0; }
+main { width: min(76rem, 94%); margin: 2rem auto; }
+header, nav, .controls { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; }
+header { justify-content: space-between; margin-bottom: 1rem; }
+h1, h2 { margin: 0; }
+h2 { margin-bottom: .85rem; }
+nav { margin-bottom: 1.75rem; }
+button, input, select { font: inherit; }
+button, input:not([type=checkbox]), select { padding: .55rem .7rem; border-radius: .4rem; border: 1px solid #768d92; }
+button { background: #253d41; color: inherit; cursor: pointer; }
+button:hover { background: #395553; }
+button[aria-current=true] { background: #f3ce7d; color: #101e23; }
+button:disabled { opacity: .55; cursor: wait; }
+input, select { background: #172c32; color: inherit; box-sizing: border-box; max-width: 100%; }
+input[type=checkbox] { width: 1.15rem; height: 1.15rem; }
+#invite-result { margin-top: 1rem; }
+#invite-link { width: min(35rem, 100%); }
+#status:empty { display: none; }
+.table-wrap { overflow-x: auto; margin: .9rem 0; }
+table { border-collapse: collapse; width: 100%; min-width: 26rem; }
+th, td { padding: .7rem; border-bottom: 1px solid #516368; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+th { background: #253d41; }
+td.message { white-space: pre-wrap; min-width: 14rem; }
+#login label { display: inline-flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
+[hidden] { display: none !important; }
+
+@media (max-width: 40rem) {
+  #catalog table { min-width: 0; }
+  #catalog :is(th, td) { padding: .55rem .35rem; }
+  #catalog th { overflow-wrap: normal; }
+  #catalog td select { padding-inline: .3rem; }
+  section:not(#catalog) table { display: block; min-width: 0; }
+  section:not(#catalog) thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  section:not(#catalog) tbody { display: grid; gap: .75rem; }
+  section:not(#catalog) tr { display: grid; padding: .5rem .65rem; border: 1px solid #516368; border-radius: .4rem; }
+  section:not(#catalog) td { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: .5rem; padding: .3rem 0; border: 0; min-width: 0; }
+  section:not(#catalog) td[data-label]::before { content: attr(data-label); font-weight: 600; color: #d4e4e2; }
+  section:not(#catalog) td[colspan] { display: block; }
+}
+@media (max-width: 23rem) {
+  section:not(#catalog) td { grid-template-columns: 6.5rem minmax(0, 1fr); }
+}

@@ -2319,3 +2319,5 @@ if (__DEV__) wireChecks({
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83E\uDE99', label: 'Pieces of eight', page: 'coins', img: 'recap/coins.jpg' }, { icon: '\uD83C\uDF0A', label: 'The earthquake', page: 'quake', img: 'recap/quake.jpg' }, { icon: '\uD83E\uDEA6', label: 'The tombstone', page: 'stone', img: 'recap/stone.jpg' }], open: () => { hideCard(); openJournal(); }, title: 'The End', unlocked: () => state.unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: chapterNow() + 1, step: null });

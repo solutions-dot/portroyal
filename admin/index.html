@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>PastPort dashboard</title>
+  <link rel="stylesheet" href="/admin/dashboard.css">
+  <script src="/admin/dashboard.js" defer></script>
+</head>
+<body>
+<main>
+  <header><h1>PastPort dashboard</h1><button id="signout" type="button" hidden>Sign out</button></header>
+  <form id="login">
+    <label>Dashboard password <input name="password" type="password" required autocomplete="current-password"></label>
+    <button>Sign in</button>
+  </form>
+  <p id="status" role="status"></p>
+  <div id="workspace" hidden>
+    <nav aria-label="Dashboard sections">
+      <button type="button" data-tab="visits">Playtest</button>
+      <button type="button" data-tab="catalog">Games and profiles</button>
+      <button type="button" data-tab="newsletter">Newsletter</button>
+      <button type="button" data-tab="contact">Contact messages</button>
+    </nav>
+
+    <section id="visits" aria-labelledby="visits-title">
+      <h2 id="visits-title">Playtest</h2>
+      <div class="controls">
+        <label>Date (Jamaica) <input id="day" type="date"></label>
+        <button id="refresh" type="button">Refresh</button>
+        <label>Tester label (optional) <input id="invite-name" maxlength="80" placeholder="Example: Teacher 1"></label>
+        <button id="invite" type="button">Create tester link</button>
+      </div>
+      <div id="invite-result" hidden>
+        <label>Tester link <input id="invite-link" readonly></label>
+        <button id="copy" type="button">Copy link</button>
+        <p>Tester code <strong id="tester-code"></strong>. Send each link to one person or group.</p>
+      </div>
+      <p id="totals"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Opened</th><th scope="col">Visitor</th><th scope="col">Estimated location</th><th scope="col">Page or game</th><th scope="col">Play time</th><th scope="col">Last chapter and step</th><th scope="col">Exit</th></tr></thead>
+          <tbody id="visit-rows"></tbody>
+        </table>
+      </div>
+      <button type="button" data-more="visits" hidden>Load more</button>
+    </section>
+
+    <section id="catalog" aria-labelledby="catalog-title" hidden>
+      <h2 id="catalog-title">Games and profiles</h2>
+      <form id="settings">
+        <label>Default profile for new visitors
+          <select name="defaultProfile"><option value="kids">Kids</option><option value="teen">Teens and adults</option></select>
+        </label>
+        <div class="table-wrap"><table>
+          <thead><tr><th scope="col">Game</th><th scope="col">Enabled</th><th scope="col">Category</th></tr></thead>
+          <tbody id="game-rows"></tbody>
+        </table></div>
+        <button>Save settings</button>
+      </form>
+    </section>
+
+    <section id="newsletter" aria-labelledby="newsletter-title" hidden>
+      <h2 id="newsletter-title">Newsletter sign-ups</h2>
+      <button type="button" data-export="newsletter">Export sign-ups (CSV)</button>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">Email</th><th scope="col">Signed up</th></tr></thead><tbody id="newsletter-rows"></tbody>
+      </table></div>
+      <button type="button" data-more="newsletter" hidden>Load more</button>
+    </section>
+
+    <section id="contact" aria-labelledby="contact-title" hidden>
+      <h2 id="contact-title">Contact messages</h2>
+      <div class="controls">
+        <button type="button" data-export="contact">Export messages (CSV)</button>
+        <button type="button" data-export="emails">Export contact emails (CSV)</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">Received</th><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Enquiry</th><th scope="col">Message</th></tr></thead><tbody id="contact-rows"></tbody>
+      </table></div>
+      <button type="button" data-more="contact" hidden>Load more</button>
+    </section>
+  </div>
+</main>
+</body>
+</html>

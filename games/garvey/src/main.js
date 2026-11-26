@@ -1912,3 +1912,5 @@ function devChecks(q) {
 hudTidy();   /* the toast keeps clear of the action button and wraps its words (engine/hud.js) */
 addRecap({ items: [{ icon: '\uD83D\uDCF0', label: 'The Negro World', page: 'negro-world', img: 'recap/negro-world.jpg' }, { icon: '\uD83D\uDEA2', label: 'The Black Star Line', page: 'bsl', img: 'recap/bsl.jpg' }, { icon: '\uD83D\uDCDC', label: 'The Declaration of Rights', page: 'declaration', img: 'recap/declaration.jpg' }], open: (pg) => { hideCard(); openJournal(pg); }, title: 'The End', unlocked: () => unlocked });   /* three tappable journal pages on the last card (engine/recap.js) */
 addExit({ url: '../../../menu/', save: () => saveGame() });   /* Exit, right of the Journal button, with an "are you sure" (engine/exit.js) */
+
+if (!__DEV__) window.PastPortProgress = () => ({ chapter: Math.floor(stage / 10) + 1, step: stage });

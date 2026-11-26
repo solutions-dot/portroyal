@@ -34,13 +34,29 @@ npm run dist            # builds every game (public, no test code) into dist/
 npm run serve:dist      # http://localhost:8766/
 ```
 
-`dist/` is not committed (it is in `.gitignore`). The build needs only Node 18 or newer; Blender and Python are only for making new characters and animations, never for deploying.
+`dist/` is not committed (it is in `.gitignore`). The build needs Node 20 or newer; Blender and Python are only for making new characters and animations, never for deploying.
 
 ### The menu's other pages
 
 - `menu/about.html` is the "About this platform" page for teachers, students and parents. When a game is added or its sources change, update its section there ("The games and their sources", and the real and fictional people).
-- `menu/site.js` holds two switches, both empty until the owner chooses them. `SUBSCRIBE_URL` is where the "Get updates" form sends the email (any service that accepts a plain form post: Buttondown, Mailchimp, Formspree, a Google Form; `SUBSCRIBE_FIELD` names its email box). While it is empty the form says sign-ups are not open yet and sends nothing. `CONTACT_EMAIL` is set to `miramoraiinteractive@gmail.com`. The creator pill opens a contact dialog with name, email, user type, enquiry type and message. Submitting opens a prefilled email in the visitor’s email app; the visitor must press Send there. The site does not store these enquiries or send them through a server. This address also appears in the correction link on the About page.
-- The sign-up form is for adults only (a tick box says so), keeps no data on the site, and has a hidden box that catches spam robots.
+- The newsletter forms on the menu and About page and the contact form on the menu save to the private PastPort dashboard. The correction email link on the About page still opens the visitor's mail app.
+
+### PastPort dashboard
+
+The hosted site serves the dashboard at `/admin/`. It has playtest reports, game availability and profile settings, newsletter sign-ups, and contact messages. The newsletter list, full contact messages, and deduplicated contact email addresses each have a CSV export. Sign-ups are collected for later sending. PastPort does not send newsletters or contact notifications by email.
+
+Set up production on Vercel before sharing test links:
+
+1. In the project's **Storage** tab, create a dedicated **Private** Blob store and connect it to the project. Set its environment variable prefix to `PASTPORT_`, so the project gets `PASTPORT_BLOB_READ_WRITE_TOKEN`. If Vercel connects it as `BLOB_READ_WRITE_TOKEN`, set `PASTPORT_BLOB_READ_WRITE_TOKEN` to the dedicated store's token in **Settings → Environment Variables**.
+2. Set `PASTPORT_ADMIN_PASSWORD` as a sensitive production variable. Use a long, randomly generated ASCII password and keep it in your password manager. Set `PASTPORT_INVITE_SECRET` to a separate randomly generated value if tester links should survive a dashboard password change.
+3. Redeploy after changing the variables. Sign in at `/admin/`, send a test contact message, and submit a test newsletter address. Check that both arrive and download their CSVs. Create an individual tester link and confirm that a short play and return to the menu appear under that tester's label.
+4. Keep preview and development environments separate from the production store if enabling this feature there.
+
+Game controls apply to new page loads, including direct game links. The Teens and adults default shows Mature 13+ cards. Visitors still go through the age prompt before opening a mature story unless they previously selected the Teens and adults profile through that prompt. A saved profile choice takes precedence over the default. The host builds the game list from the menu cards.
+
+An adult can opt in on the shared link or a public game page. The report counts opted-in browser visits and groups individual tester links by their code. Testers can decline and still play. The report estimates city and country from Vercel's request headers. It stores no IP address, birth year, device fingerprint, email address or GPS coordinates in playtest records. The elapsed time counts visible play, up to 90 seconds after the last interaction. When a browser closes without sending its final status, the report shows the latest checkpoint and time received. The usual interval is 30 seconds, with additional updates at game start and when the goal changes.
+
+The dashboard uses a dedicated store with separate prefixes for visits, invites, settings, sign-ups and messages. For a removal request, delete the relevant entry from that private store. Manage newsletter sends and opt-outs in the service you import the CSV into.
 
 ## Publishing a game to its artifact
 
