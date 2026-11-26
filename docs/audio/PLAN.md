@@ -81,3 +81,17 @@ Rule (owner, 26 November 2026): **every light-skinned character gets a pre-built
 ## Delivery table written, clips not yet re-recorded (26 November 2026)
 
 `tools/audio/delivery.mjs` has put an emotion and speed on every line of the 15 games with narrator clips (`voice-script.json`, `voice-lines.json`). The 317 clips have not yet been re-recorded with it; Xaymaca's clips were recorded by another route and are not included.
+
+## New saved voices (owner, 26 November 2026, 20:30 UTC), not yet cast
+
+| Name in Cartesia | ID | Note |
+|---|---|---|
+| Woman generic | `aa188bb9-72e0-47ab-9fc8-6b927aaf45cd` | a woman; free for a Black woman's part (Hannah in Port Royal needs one) |
+| dorraine samuels | `74a89262-c877-4580-af34-28b50a665413` | name of a person; ask the owner who she is and what she may voice |
+| generic male | `54e2eb56-f80c-488b-8035-ca63bb19ab1d` | a man |
+| Man generic (two voices) | `e09b6b48-9904-49ed-9c67-6d4def9deda0`, `d4cd9717-9a69-4127-87ba-3b8377b24ada` | two different men |
+| msn generic3 | `1f2d4cc3-5950-41a5-bfda-c9801fab8a75` | unknown; audition |
+| Don topping | `f8b95dbe-5d18-488f-acd3-e2fc7a993680` | name of a person; ask the owner |
+| Marcus Garvey | `98b523a0-0957-49a4-a1a8-ff3e9205ef59` | a voice named for a real person. Marcus Garvey says only his real, sourced words (rule 3); do not use it until the owner says where, and keep to sourced words |
+
+Audition each one saying one line before casting (the descriptions are empty). Use them for Black characters, as with the older saved voices; light-skinned characters keep the library voices.
