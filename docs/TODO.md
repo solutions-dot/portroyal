@@ -1,5 +1,7 @@
 # To do: checks still open (19 November 2026)
 
+**Floating things (26 November 2026, PR on branch `fix/floating-props`):** the new rest check (`engine/audit-placed.js`, `auditReveals(Q, { resting: true, tasks: TASKS })`) is on in Xaymaca (0). Switch it on game by game after sorting each list in `docs/reviews/floating-20261126.md` (about 70 lines; some real: Windrush's cloth 107 cm up, the Shark Papers' bait 89 cm up, Air Jamaica's scarves; some are wall-mounted or hung things that need `userData.hung`).
+
 **Next LLM, start here (25 November 2026, branch `story-card-copy-and-title-typography`, PR #163; the owner stacks PRs: commit to the open PR, do not open a new one).**
 - [ ] **Narration on physical phones.** All 16 opening screens use a shared player that waits for Start, then falls back to a title tap or the speaker control. The menu handles the Mature 13+ profile filter. Confirm playback on iPhone Safari and Android Chrome.
 - [ ] **Autoplayer after the new chapter flow** (`engine/chapter-end.js`: `goingStraight`, `startCard`, `titleFade`): Xaymaca (AUTO END 75), the Shark Papers (48) and the Mad Master (68) passed on 25 November; **not yet confirmed:** Rose Hall, Morant Bay, Windrush, Air Jamaica, Port Royal (`?auto=1`; Port Royal from a dev build, then restore the public `app.js`). Then play one chapter change by hand: the end card's Next chapter, then the title fade, no Begin card.

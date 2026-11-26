@@ -1,0 +1,266 @@
+{
+ "takeoff-0": {
+  "text": "The waving gallery, pal-e-say-doze Airport. The first of April nineteen sixty-nine.",
+  "caption": "The waving gallery, Palisadoes Airport. 1 April 1969.",
+  "film": "takeoff",
+  "t": 0,
+  "emotion": "content",
+  "speed": 1
+ },
+ "takeoff-3_5": {
+  "text": "The crew wave. The steps are pulled away.",
+  "caption": "The crew wave. The steps are pulled away.",
+  "film": "takeoff",
+  "t": 3.5,
+  "emotion": "content",
+  "speed": 1
+ },
+ "takeoff-8": {
+  "text": "The first Air Jamaica jet starts to roll.",
+  "caption": "The first Air Jamaica jet starts to roll.",
+  "film": "takeoff",
+  "t": 8,
+  "emotion": "content",
+  "speed": 1
+ },
+ "takeoff-17": {
+  "text": "It turns out onto the runway.",
+  "caption": "It turns out onto the runway.",
+  "film": "takeoff",
+  "t": 17,
+  "emotion": "content",
+  "speed": 1
+ },
+ "takeoff-26": {
+  "text": "The engines roar. Faster and faster!",
+  "caption": "The engines roar. Faster and faster!",
+  "film": "takeoff",
+  "t": 26,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "takeoff-36": {
+  "text": "The nose lifts. It is flying!",
+  "caption": "The nose lifts. It is flying!",
+  "film": "takeoff",
+  "t": 36,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "takeoff-41": {
+  "text": "Jamaica falls away below.",
+  "caption": "Jamaica falls away below.",
+  "film": "takeoff",
+  "t": 41,
+  "emotion": "content",
+  "speed": 1
+ },
+ "landing-0": {
+  "text": "On the flight deck, high over the sea.",
+  "caption": "On the flight deck, high over the sea.",
+  "film": "landing",
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-4": {
+  "text": "Captain Ross: There it is. The airport, pal-e-say-doze. Home.",
+  "caption": "Captain Ross: “There it is. Palisadoes. Home.”",
+  "film": "landing",
+  "t": 4,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-9": {
+  "text": "The first officer: Wheels down.",
+  "caption": "The first officer: “Wheels down.”",
+  "film": "landing",
+  "t": 9,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-14": {
+  "text": "The thin strip of land grows bigger.",
+  "caption": "The thin strip of land grows bigger.",
+  "film": "landing",
+  "t": 14,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-20": {
+  "text": "The first officer: Nice and steady.",
+  "caption": "The first officer: “Nice and steady.”",
+  "film": "landing",
+  "t": 20,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-25": {
+  "text": "The runway comes up to meet the plane.",
+  "caption": "The runway comes up to meet the plane.",
+  "film": "landing",
+  "t": 25,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-28_5": {
+  "text": "Bump! The wheels touch the runway.",
+  "caption": "Bump! The wheels touch the runway.",
+  "film": "landing",
+  "t": 28.5,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-34": {
+  "text": "The pilots slow the plane.",
+  "caption": "The pilots slow the plane.",
+  "film": "landing",
+  "t": 34,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "landing-41": {
+  "text": "Captain Ross: Welcome home to Jamaica.",
+  "caption": "Captain Ross: “Welcome home to Jamaica.”",
+  "film": "landing",
+  "t": 41,
+  "emotion": "content",
+  "speed": 0.97
+ },
+ "reveal-0": {
+  "text": "December nineteen ninety-four. Norman Manley Airport, Kingston.",
+  "caption": "December 1994. Norman Manley Airport, Kingston.",
+  "film": "reveal",
+  "t": 0,
+  "emotion": "excited",
+  "speed": 1.05
+ },
+ "reveal-2_6": {
+  "text": "Air Jamaica has new colours.",
+  "caption": "Air Jamaica has new colours.",
+  "film": "reveal",
+  "t": 2.6,
+  "emotion": "excited",
+  "speed": 1.05
+ },
+ "reveal-5_4": {
+  "text": "Yellow, orange, pink and blue along the side.",
+  "caption": "Yellow, orange, pink and blue along the side.",
+  "film": "reveal",
+  "t": 5.4,
+  "emotion": "excited",
+  "speed": 0.92
+ },
+ "reveal-7_8": {
+  "text": "And on the dark blue tail, the bird.",
+  "caption": "And on the dark blue tail, the bird.",
+  "film": "reveal",
+  "t": 7.8,
+  "emotion": "excited",
+  "speed": 0.92
+ },
+ "newflight-0": {
+  "text": "Norman Manley Airport, Kingston. December nineteen ninety-four.",
+  "caption": "Norman Manley Airport, Kingston. December 1994.",
+  "film": "newflight",
+  "t": 0,
+  "emotion": "content",
+  "speed": 1.02
+ },
+ "newflight-3_5": {
+  "text": "Everyone steps back from the plane.",
+  "caption": "Everyone steps back from the plane.",
+  "film": "newflight",
+  "t": 3.5,
+  "emotion": "content",
+  "speed": 1.02
+ },
+ "newflight-8": {
+  "text": "The new look starts to roll.",
+  "caption": "The new look starts to roll.",
+  "film": "newflight",
+  "t": 8,
+  "emotion": "content",
+  "speed": 1.02
+ },
+ "newflight-17": {
+  "text": "It turns out onto the runway.",
+  "caption": "It turns out onto the runway.",
+  "film": "newflight",
+  "t": 17,
+  "emotion": "content",
+  "speed": 1.02
+ },
+ "newflight-26": {
+  "text": "The engines roar. Faster and faster!",
+  "caption": "The engines roar. Faster and faster!",
+  "film": "newflight",
+  "t": 26,
+  "emotion": "excited",
+  "speed": 1.03
+ },
+ "newflight-36": {
+  "text": "It lifts off over the sea.",
+  "caption": "It lifts off over the sea.",
+  "film": "newflight",
+  "t": 36,
+  "emotion": "content",
+  "speed": 1.02
+ },
+ "lastlanding-0": {
+  "text": "Kingston, the thirtieth of April twenty ten.",
+  "caption": "Kingston, 30 April 2010.",
+  "film": "lastlanding",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-4": {
+  "text": "The last Air Jamaica flight comes in over the sea.",
+  "caption": "The last Air Jamaica flight comes in over the sea.",
+  "film": "lastlanding",
+  "t": 4,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-16": {
+  "text": "The wheels touch the runway.",
+  "caption": "The wheels touch the runway.",
+  "film": "lastlanding",
+  "t": 16,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-24": {
+  "text": "The plane slows down.",
+  "caption": "The plane slows down.",
+  "film": "lastlanding",
+  "t": 24,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-36": {
+  "text": "It rolls back to the apron.",
+  "caption": "It rolls back to the apron.",
+  "film": "lastlanding",
+  "t": 36,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-50": {
+  "text": "It stops. The engines go quiet.",
+  "caption": "It stops. The engines go quiet.",
+  "film": "lastlanding",
+  "t": 50,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "lastlanding-56": {
+  "text": "The Love Bird on the tail, one last time.",
+  "caption": "The Love Bird on the tail, one last time.",
+  "film": "lastlanding",
+  "t": 56,
+  "emotion": "sad",
+  "speed": 0.9
+ }
+}

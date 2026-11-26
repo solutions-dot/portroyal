@@ -196,6 +196,7 @@ export function casabe(r = 0.2) {
   const g = grp();
   cyl(r, r, 0.016, M.casabe(), 0, 0.008, 0, g, 20);
   cyl(r * 0.96, r * 0.96, 0.002, M.casabeTop(), 0, 0.017, 0, g, 20);
+  g.userData.rests = "a cassava cake";   /* it must lie on something (engine/audit-placed.js) */
   return g;
 }
 /* the buren: a thick clay griddle about half a metre across on three hearth stones, a low fire under it, a cake baking on top.
@@ -237,7 +238,7 @@ export function basket(n = 4, r = 0.26) {
   rim.rotation.x = Math.PI / 2;
   for (let i = 0; i < n; i++) {
     const c = casabe(r * 0.72);
-    c.position.set(0, r * 0.55 + i * 0.02, 0);
+    c.position.set(0, 0.011 + i * 0.019, 0);   /* stacked up from the basket's floor (they floated half way up: owner, 26 November 2026) */
     c.rotation.set(0.05 * (i % 2 ? 1 : -1), i, 0);
     g.add(c);
   }

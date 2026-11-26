@@ -353,10 +353,11 @@ function maima({ night = false } = {}) {
   /* Grandmother's zemi, in her house (the round house at the east end), under a cotton cloth; the close-up lifts the cloth (chapter 1). The game's zemi is
      imagined, modelled on the Carpenter's Mountain zemis (xaymaca.js); keeping it in the house is a choice to check with the reviewer (docs/games/xaymaca.md). */
   const zemiAt = [0.7, 1.0];   /* in the house's own frame (the house at 9.6, -5.2): to the side of the centre pole */
-  const zemiFig = X.zemi();
+  const zemiFig = dyn(X.zemi());   /* kept whole (out of the batching), so the rest check sees one thing on its stone */
   zemiFig.position.set(zemiAt[0], 0, zemiAt[1]);
   zemiFig.rotation.y = -Math.PI / 2 - 0.5;   /* turned toward the door, on the west */
   const zemiCloth = dyn(grp());
+  zemiCloth.userData.cover = true;   /* draped over the zemi: it holds nothing up */
   zemiCloth.position.set(zemiAt[0], 0, zemiAt[1]);
   { const c = mesh(new THREE.SphereGeometry(0.3, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), X.M.cotton(), 0, 0.12, 0, zemiCloth); c.scale.set(0.9, 1.9, 0.9); c.material.side = THREE.DoubleSide; }
   if (!night) Q.reveal.zemi = (k) => {

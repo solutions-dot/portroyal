@@ -54,3 +54,50 @@ The Xaymaca player uses the shared Web Audio master for dialogue and cinematic n
 All non-player story dialogue, character repeat lines, and cinematic captions have assigned recordings. Faye voices Grandmother, the approved Bob Marley voice voices Cousin, Winston voices the cacique, Sizzla voices the runner, Rosie voices Miss Sharon, Daniel voices the interpreter in neutral English, and Marcos voices Diego Méndez in English with a Spanish delivery. The player speaks through captions only. The production voice list is stored in Cartesia and the game's line-to-file map is in `src/line-voices.js`.
 
 Verify early scenes as well as dramatic later scenes before declaring a character voiced. A returning character must have coverage in every conversation. Cinematic narration waits for a spoken cue to finish before its caption changes. Missing audio must leave controls and text usable.
+
+## Film narration in the other seven games (26 November 2026)
+
+Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark Papers and Windrush speak every film caption in the **Narrator** voice (Cartesia voice `06d22dff-4250-4f54-be10-a82700f8d924`, the owner's narrator for every game). 208 clips, mono-compatible 64 kbps MP3 at 44.1 kHz.
+
+- The player is shared: `engine/filmvoice.js` (see `docs/ENGINE.md`). Each game's `director.js` has the same few lines: `FV.preload`, `FV.sync`, `FV.hold`, `FV.stop`. Xaymaca keeps its own copy in `src/narration.js` because it also plays a score.
+- A clip is `games/<game>/site/voices/narrator-<film>-<second>.mp3`, where a dot in the second becomes an underscore (`takeoff-3_5`). A caption may name its clip with a third field instead.
+- The spoken text is in `games/<game>/voice-script.json`, made by `node tools/audio/voice-script.mjs <game> --write` (numbers as words, "Mr" as "Mister", hard names respelled). The caption on screen is unchanged.
+- Respelled names: **Palisadoes is said "Palesaydoze"** (owner, 26 November 2026), written that way in voice scripts. Cartesia's pronunciation dictionary did not give the right sound ("Palisades"); the respelling did. Still to check by ear: Morant, Jacmel, Takoo, Planno, Stony Gut.
+- Where a clip is longer than its caption window the film waits on that caption until the clip ends (a pause of up to 2 seconds), so a line is never cut off. `node tools/audio/film-voice-check.mjs` lists those and any missing clip.
+- Recording: one `text_to_speech` call per caption through the Cartesia MCP (`https://mcp.cartesia.ai/mcp`), downloaded with `tools/audio/fetch-clips.sh`. Check every batch for a clip that holds the wrong line (one did, and was re-recorded): transcribe and compare, as for Xaymaca.
+- Scene text such as "Captain Ross: There it is." is read by the Narrator, not by a character voice. Character voices come later (`docs/audio/PLAN.md`).
+
+Checked: all 208 clips present, transcribed and compared (only digit and name spellings differ), build passes for all seven games, no page errors on load. **Not yet done**: a listening pass in a browser on phone and desktop (pause and resume, skip, Read instead, sound off).
+
+## The music bed in the other seven games (26 November 2026, owner rule 16)
+
+Every film in Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark Papers and Windrush has an original score, 33 tracks in `games/<game>/site/scores/score-<film>.mp3`. They are synthesised by `python3 tools/audio/make-score.py <game>` (no samples, nothing licensed): slow chord pads, a low drone where the story is grave, and a few soft bells where it is gentle. Each game has its own key and mode; a film can change the mood.
+
+| Game | Palette | Notes |
+|---|---|---|
+| Air Jamaica | G major, bells | The last landing is dorian and slower. |
+| The Mad Master | E phrygian, low drone, no bells | Dread kept quiet and steady. |
+| Morant Bay | D dorian, low pad, no bells | The riot, burning and courts are the darkest, with a slow tremolo; the dawn and today are lighter. |
+| Rose Hall | E minor, thin bells | The legend is eerie; the record scenes (pages, aisle) are plainer. |
+| The Emperor's Arrival | F major, warm, slow | |
+| Shark Papers | C mixolydian | The verdict is dorian, without bells. |
+| Windrush | F sharp major | The arrival is dorian. |
+
+Level: peak about -13 dB, like Xaymaca's scores. The engine plays them at 0.40 and ducks to 0.17 under a voice. **These were made and measured but not yet listened to.** A listening pass on phone speakers and headphones decides whether any palette needs changing (a film can override `mood` in `make-score.py`).
+
+**Xaymaca on the shared player (26 November 2026).** `games/xaymaca/src/narration.js` keeps its exports but calls `engine/filmvoice.js`, so the director, dialogue and ending are unchanged and there is one player for all eight voiced games. Tested in a browser: the score plays at 0.40, ducks to 0.17 under a voice and returns to 0.40 when it ends; a character line replaces a caption's voice (never two voices); `stop()` silences all. The clip files and `src/line-voices.js` are untouched.
+
+## Eight games with no film captions (26 November 2026)
+
+Bog Walk, Eventide, Kendal, Melissa, Nanny Town, Tivoli, Marcus Garvey and Port Royal have camera scenes and title cards, not timed films. The Narrator reads **text the game already shows**, so nothing new is invented and the history stays as vetted.
+
+- **How it works:** `engine/narrator.js` loads `voices/index.json` (exact on-screen text to clip file) and `speak(text)` plays that clip on the shared voice channel. Each game calls it from its chapter title card (`chapterFade`, or `titleFade` in Port Royal, or `card` in Tivoli) and from its camera-scene captions (`say`, in Eventide, Kendal, Melissa, Nanny). Text with no clip is silent.
+- **Making the lines:** `node tools/audio/voice-lines.mjs <game> --write` lists the text and the spoken version (`voice-lines.json`); record each with the Narrator; `node tools/audio/fetch-lines.mjs <game> <first> < ids` downloads them and writes the index. It repairs a link id with a swapped or dropped character.
+- **Lines recorded (109):** Kendal 47, Eventide 16, Melissa 14, Garvey 10, Tivoli 8, Bog Walk 6, Nanny 6, Port Royal 2.
+- **Music (owner rule 16):** `configureCinematicBed('story')` plays `scores/score-story.mp3` under every `showCinematicSkip` scene; `nextCinematicBed('event')` picks a graver bed for the Kendal crash, the Melissa storm and the Port Royal earthquake. Made by `tools/audio/make-score.py`, 120 seconds each. Tivoli and Garvey have no `showCinematicSkip` scenes, so they have no bed yet (Tivoli's May 2010 scenes need the owner's say first).
+- **Gaps:** Port Royal has only its two title cards in the scan; its chapter cards go through `startCard` and the look-shots (`LS.play` lines) are not yet voiced. Nanny's `SAY` and `CARDS`, Bog Walk's story captions (`say(who, text)`), Garvey's scene text and Tivoli's chapter text are not yet voiced. Closers (the chapter-end cards) are not voiced: the next chapter's title card does that job. A line read with a name label ("Lloyd: We are going so fast!") is read by the Narrator, not by Lloyd.
+- **Delivery:** these clips use Cartesia's default delivery. They have NOT been directed per line (emotion and pace). See "Delivery" below.
+
+## Delivery (tone and pace), open as of 26 November 2026
+
+All 317 narrator clips (208 film captions, 109 text lines) and the earlier Xaymaca clips were recorded with default delivery. Words are checked by transcription; **how a line sounds has not been checked, by anyone**. Cartesia's `text_to_speech` takes `emotion` and `speed` per line. A plan: give each line a `delivery` (for example calm, sad, excited, tense; speed 0.85 to 1.1), keep it in the voice script next to the text, record again, and have the owner listen to the scene with the music under it. Samples (flat against directed) were sent to the owner on 26 November 2026.

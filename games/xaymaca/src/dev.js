@@ -331,7 +331,7 @@ export async function dev(A) {
           return { id: n.id, face: n.bodyId || n.base, m: n.m, hidden: true, x: seat ? seat[0] : n.x, z: seat ? seat[1] : n.z, still: !!seat, life: seat ? null : n.amb && n.amb.spec, who: n.who, story: Q.people.includes(n) };
         }),
       );
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { resting: true, tasks: TASKS, groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")

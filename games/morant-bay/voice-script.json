@@ -1,0 +1,522 @@
+{
+ "dry-0": {
+  "text": "Saint Thomas-in-the-East, Jamaica. August eighteen sixty-five.",
+  "caption": "St Thomas-in-the-East, Jamaica. August 1865.",
+  "film": "dry",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "dry-6": {
+  "text": "Stony Gut, in the hills above Morant Bay.",
+  "caption": "Stony Gut, in the hills above Morant Bay.",
+  "film": "dry",
+  "t": 6,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "dry-12": {
+  "text": "No rain for two years. The yams are small.",
+  "caption": "No rain for two years. The yams are small.",
+  "film": "dry",
+  "t": 12,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "dry-18": {
+  "text": "Paul Bogle's yard. He is a deacon here.",
+  "caption": "Paul Bogle's yard. He is a deacon here.",
+  "film": "dry",
+  "t": 18,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "dry-24": {
+  "text": "The chapel, thatched, where the village meets.",
+  "caption": "The chapel, thatched, where the village meets.",
+  "film": "dry",
+  "t": 24,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "dry-30": {
+  "text": "Your house. Your family. You are Hannah.",
+  "caption": "Your house. Your family. You are Hannah.",
+  "film": "dry",
+  "t": 30,
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ "walk-0": {
+  "text": "Spanish Town, the capital. Two days' walk from Stony Gut.",
+  "caption": "Spanish Town, the capital. Two days' walk from Stony Gut.",
+  "film": "walk",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "walk-7": {
+  "text": "The square. King's House, where the Governor lives.",
+  "caption": "The square. King's House, where the Governor lives.",
+  "film": "walk",
+  "t": 7,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "walk-14": {
+  "text": "The men from Stony Gut wait in the sun.",
+  "caption": "The men from Stony Gut wait in the sun.",
+  "film": "walk",
+  "t": 14,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "walk-20": {
+  "text": "They want only to be heard.",
+  "caption": "They want only to be heard.",
+  "film": "walk",
+  "t": 20,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "home-0": {
+  "text": "The door stays shut.",
+  "caption": "The door stays shut.",
+  "film": "home",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "home-6": {
+  "text": "Two days' walk home, with nothing.",
+  "caption": "Two days' walk home, with nothing.",
+  "film": "home",
+  "t": 6,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "home-12": {
+  "text": "In Saint Thomas, people talk of nothing else.",
+  "caption": "In St Thomas, people talk of nothing else.",
+  "film": "home",
+  "t": 12,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "meeting-0": {
+  "text": "A night in late September.",
+  "caption": "A night in late September.",
+  "film": "meeting",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "meeting-6": {
+  "text": "One by one, men come up the path to the chapel.",
+  "caption": "One by one, men come up the path to the chapel.",
+  "film": "meeting",
+  "t": 6,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "meeting-13": {
+  "text": "A lantern inside. The men speak low.",
+  "caption": "A lantern inside. The men speak low.",
+  "film": "meeting",
+  "t": 13,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "meeting-18": {
+  "text": "Deacon Clarke has sent for you. You can write.",
+  "caption": "Deacon Clarke has sent for you. You can write.",
+  "film": "meeting",
+  "t": 18,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "warrant-0": {
+  "text": "Tuesday the tenth of October eighteen sixty-five. Early morning.",
+  "caption": "Tuesday 10 October 1865. Early morning.",
+  "film": "warrant",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "warrant-5": {
+  "text": "Police come up the track with a warrant.",
+  "caption": "Police come up the track with a warrant.",
+  "film": "warrant",
+  "t": 5,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "warrant-11": {
+  "text": "They have come to take Paul Bogle.",
+  "caption": "They have come to take Paul Bogle.",
+  "film": "warrant",
+  "t": 11,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "warrant-16": {
+  "text": "A shell blows. A drum.",
+  "caption": "A shell blows. A drum.",
+  "film": "warrant",
+  "t": 16,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "warrant-21": {
+  "text": "Men come out of the chapel, out of the cane.",
+  "caption": "Men come out of the chapel, out of the cane.",
+  "film": "warrant",
+  "t": 21,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "warrant-27": {
+  "text": "Now the police are the ones who are held.",
+  "caption": "Now the police are the ones who are held.",
+  "film": "warrant",
+  "t": 27,
+  "emotion": "neutral",
+  "speed": 0.97
+ },
+ "bay-0": {
+  "text": "Morant Bay. Wednesday the eleventh of October eighteen sixty-five.",
+  "caption": "Morant Bay. Wednesday 11 October 1865.",
+  "film": "bay",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "bay-7": {
+  "text": "The court-house, with its row of arches.",
+  "caption": "The court-house, with its row of arches.",
+  "film": "bay",
+  "t": 7,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "bay-13": {
+  "text": "The vestry sits inside. Volunteers stand guard.",
+  "caption": "The vestry sits inside. Volunteers stand guard.",
+  "film": "bay",
+  "t": 13,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "bay-19": {
+  "text": "The market on the Parade, under the guinep tree.",
+  "caption": "The market on the Parade, under the guinep tree.",
+  "film": "bay",
+  "t": 19,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-0": {
+  "text": "Behind the stall. Between three and four o'clock.",
+  "caption": "Behind the stall. Between three and four o'clock.",
+  "film": "riot",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-4": {
+  "text": "Shells and drums, from the east road.",
+  "caption": "Shells and drums, from the east road.",
+  "film": "riot",
+  "t": 4,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-10": {
+  "text": "Hundreds of people come onto the Parade.",
+  "caption": "Hundreds of people come onto the Parade.",
+  "film": "riot",
+  "t": 10,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-17": {
+  "text": "The Custos calls out: Peace, peace.",
+  "caption": "The Custos calls out: \"Peace, peace.\"",
+  "film": "riot",
+  "t": 17,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-20": {
+  "text": "The crowd answers: War.",
+  "caption": "The crowd answers: \"War.\"",
+  "film": "riot",
+  "t": 20,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-23": {
+  "text": "He begins to read the Riot Act. Stones fly.",
+  "caption": "He begins to read the Riot Act. Stones fly.",
+  "film": "riot",
+  "t": 23,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-27_5": {
+  "text": "The Volunteers fire.",
+  "caption": "The Volunteers fire.",
+  "film": "riot",
+  "t": 27.5,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "riot-28_4": {
+  "text": "People fall.",
+  "caption": "People fall.",
+  "film": "riot",
+  "t": 28.4,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-29_9": {
+  "text": "You hide your eyes. People run.",
+  "caption": "You hide your eyes. People run.",
+  "film": "riot",
+  "t": 29.9,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-34": {
+  "text": "The crowd rushes the steps.",
+  "caption": "The crowd rushes the steps.",
+  "film": "riot",
+  "t": 34,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-39": {
+  "text": "Someone sets the school-house alight.",
+  "caption": "Someone sets the school-house alight.",
+  "film": "riot",
+  "t": 39,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "riot-45": {
+  "text": "The fire spreads to the court-house. It grows dark.",
+  "caption": "The fire spreads to the court-house. It grows dark.",
+  "film": "riot",
+  "t": 45,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "soldiers-0": {
+  "text": "Wednesday the eighteenth of October eighteen sixty-five.",
+  "caption": "Wednesday 18 October 1865.",
+  "film": "soldiers",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "soldiers-5": {
+  "text": "Soldiers march up the track.",
+  "caption": "Soldiers march up the track.",
+  "film": "soldiers",
+  "t": 5,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "soldiers-11": {
+  "text": "People run for the cane and the hills.",
+  "caption": "People run for the cane and the hills.",
+  "film": "soldiers",
+  "t": 11,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "soldiers-17": {
+  "text": "Gran pulls you behind the house.",
+  "caption": "Gran pulls you behind the house.",
+  "film": "soldiers",
+  "t": 17,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "burning-0": {
+  "text": "Thursday the nineteenth of October. From the cave mouth.",
+  "caption": "Thursday 19 October. From the cave mouth.",
+  "film": "burning",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "burning-3_5": {
+  "text": "Smoke over the chapel.",
+  "caption": "Smoke over the chapel.",
+  "film": "burning",
+  "t": 3.5,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "burning-8": {
+  "text": "The chapel roof falls in.",
+  "caption": "The chapel roof falls in.",
+  "film": "burning",
+  "t": 8,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "burning-11_5": {
+  "text": "Then Mister Bogle's house. Then yours.",
+  "caption": "Then Mr Bogle's house. Then yours.",
+  "film": "burning",
+  "t": 11.5,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "burning-23": {
+  "text": "Night. Lanterns on the path.",
+  "caption": "Night. Lanterns on the path.",
+  "film": "burning",
+  "t": 23,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "burning-27": {
+  "text": "Soldiers lead men away. One wears a hat like Papa's.",
+  "caption": "Soldiers lead men away. One wears a hat like Papa's.",
+  "film": "burning",
+  "t": 27,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "courts-0": {
+  "text": "Morant Bay, late October eighteen sixty-five.",
+  "caption": "Morant Bay, late October 1865.",
+  "film": "courts",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.88
+ },
+ "courts-6": {
+  "text": "The court-house is a burnt shell. A shed is the court now.",
+  "caption": "The court-house is a burnt shell. A shed is the court now.",
+  "film": "courts",
+  "t": 6,
+  "emotion": "sad",
+  "speed": 0.88
+ },
+ "courts-13": {
+  "text": "Officers judge. Prisoners wait on the benches.",
+  "caption": "Officers judge. Prisoners wait on the benches.",
+  "film": "courts",
+  "t": 13,
+  "emotion": "sad",
+  "speed": 0.88
+ },
+ "courts-19": {
+  "text": "Behind the shed, a man is tied to a post.",
+  "caption": "Behind the shed, a man is tied to a post.",
+  "film": "courts",
+  "t": 19,
+  "emotion": "sad",
+  "speed": 0.88
+ },
+ "courts-22": {
+  "text": "Mama turns your face away. You hear it.",
+  "caption": "Mama turns your face away. You hear it.",
+  "film": "courts",
+  "t": 22,
+  "emotion": "sad",
+  "speed": 0.88
+ },
+ "dawn-0": {
+  "text": "Dawn over the bay.",
+  "caption": "Dawn over the bay.",
+  "film": "dawn",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "dawn-7": {
+  "text": "Far along the shore, a frame of dark timber.",
+  "caption": "Far along the shore, a frame of dark timber.",
+  "film": "dawn",
+  "t": 7,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "dawn-14": {
+  "text": "At Morant Bay, George William Gordon was hanged on the twenty-third of October.",
+  "caption": "At Morant Bay, George William Gordon was hanged on 23 October.",
+  "film": "dawn",
+  "t": 14,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "dawn-20": {
+  "text": "Paul Bogle was hanged at Morant Bay too.",
+  "caption": "Paul Bogle was hanged at Morant Bay too.",
+  "film": "dawn",
+  "t": 20,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "dawn-26": {
+  "text": "Both are National Heroes of Jamaica today.",
+  "caption": "Both are National Heroes of Jamaica today.",
+  "film": "dawn",
+  "t": 26,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "today-0": {
+  "text": "Morant Bay, twenty twenty-six.",
+  "caption": "Morant Bay, 2026.",
+  "film": "today",
+  "t": 0,
+  "emotion": "content",
+  "speed": 0.95
+ },
+ "today-6": {
+  "text": "The court-house was rebuilt after eighteen sixty-five. It burned in two thousand and seven.",
+  "caption": "The court-house was rebuilt after 1865. It burned in 2007.",
+  "film": "today",
+  "t": 6,
+  "emotion": "content",
+  "speed": 0.95
+ },
+ "today-12": {
+  "text": "Edna Manley's statue of Paul Bogle stood here from nineteen sixty-five.",
+  "caption": "Edna Manley's statue of Paul Bogle stood here from 1965.",
+  "film": "today",
+  "t": 12,
+  "emotion": "content",
+  "speed": 0.95
+ },
+ "today-16": {
+  "text": "It was taken down to be mended after the fire.",
+  "caption": "It was taken down to be mended after the fire.",
+  "film": "today",
+  "t": 16,
+  "emotion": "content",
+  "speed": 0.92
+ },
+ "today-20": {
+  "text": "Paul Bogle and George William Gordon are National Heroes of Jamaica.",
+  "caption": "Paul Bogle and George William Gordon are National Heroes of Jamaica.",
+  "film": "today",
+  "t": 20,
+  "emotion": "content",
+  "speed": 0.95
+ },
+ "today-24": {
+  "text": "Thousands of others have no statue. Their names are in the record.",
+  "caption": "Thousands of others have no statue. Their names are in the record.",
+  "film": "today",
+  "t": 24,
+  "emotion": "content",
+  "speed": 0.95
+ }
+}

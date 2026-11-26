@@ -7,7 +7,8 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Layout: setup, state and controls, people, places and scenes, interface, saving, talking, chapters and stages, things to do, the night, the helper arrow, sound, loading, the loop, tests.
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
-import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { createNarrator } from '../../../engine/narrator.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
@@ -45,6 +46,9 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, work, warm, release } from '../../../engine/preload.js';   /* the next chapter made ready while you read, the last one let go (engine/preload.js) */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
+NARR.preload();
+configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -351,7 +355,7 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
-function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
+function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
@@ -378,7 +382,7 @@ const LETTER_HELD = (() => { const g = new THREE.Group(), tex = new THREE.Canvas
   g.position.set(0, -0.12, -0.42); g.visible = false; camera.add(g); return g; })();
 
 let subTimer = 0;
-function say(text, ms = 4200) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
+function say(text, ms = 4200) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 const TICKS = [];
 function tween(sec, fn) { const ep = EP; return new Promise((res) => { let t = 0; const d = Math.max(0.05, sec * TS); TICKS.push((dt) => { if (ep !== EP) { res(false); return true; } t += dt; const k = Math.min(1, t / d); fn(k); if (k >= 1) { res(true); return true; } return false; }); }); }

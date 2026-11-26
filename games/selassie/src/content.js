@@ -501,7 +501,7 @@ export const SOURCES = {
 export const ARRIVAL_CAPTIONS = [
   ["A sound reaches you before the aircraft appears.", 0],
   ["People turn toward the same patch of sky.", 5],
-  ["The aircraft reaches Palisadoes.", 10],
+  ["The aircraft reaches the airport.", 10],
   ["A great welcome gathers around it.", 24],
   ["Steps are rolled up to the door.", 40],
   ["Mortimo Planno helps the arrival proceed.", 48],

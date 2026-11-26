@@ -1,0 +1,282 @@
+{
+ "opening-0": {
+  "text": "Saint Ann, Jamaica, seventeen seventy-two. In this story, a dry season.",
+  "caption": "St Ann, Jamaica, 1772. In this story, a dry season.",
+  "film": "opening",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "opening-6": {
+  "text": "Doctor Hutton's cattle pen. The pond is cracked mud.",
+  "caption": "Dr Hutton’s cattle pen. The pond is cracked mud.",
+  "film": "opening",
+  "t": 6,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "opening-12": {
+  "text": "The road runs west over the dry limestone hills.",
+  "caption": "The road runs west over the dry limestone hills.",
+  "film": "opening",
+  "t": 12,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "opening-17": {
+  "text": "Two miles off, on a rise: Edinburgh Castle.",
+  "caption": "Two miles off, on a rise: Edinburgh Castle.",
+  "film": "opening",
+  "t": 17,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "opening-24": {
+  "text": "A pack mule comes down that road. No rider.",
+  "caption": "A pack mule comes down that road. No rider.",
+  "film": "opening",
+  "t": 24,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "opening-32": {
+  "text": "People say travellers go missing up there.",
+  "caption": "People say travellers go missing up there.",
+  "film": "opening",
+  "t": 32,
+  "emotion": "neutral",
+  "speed": 0.93
+ },
+ "towers-0": {
+  "text": "Dusk. Sampson's cart comes up the castle road.",
+  "caption": "Dusk. Sampson’s cart comes up the castle road.",
+  "film": "towers",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-6": {
+  "text": "Edinburgh Castle stands on its rise over the road.",
+  "caption": "Edinburgh Castle stands on its rise over the road.",
+  "film": "towers",
+  "t": 6,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-12": {
+  "text": "Two storeys of rough stone. A round tower at two corners.",
+  "caption": "Two storeys of rough stone. A round tower at two corners.",
+  "film": "towers",
+  "t": 12,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-19": {
+  "text": "Small square loopholes in the walls. Holes to shoot through.",
+  "caption": "Small square loopholes in the walls. Holes to shoot through.",
+  "film": "towers",
+  "t": 19,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-26": {
+  "text": "One upper window has shutters. Tonight they are shut.",
+  "caption": "One upper window has shutters. Tonight they are shut.",
+  "film": "towers",
+  "t": 26,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-31": {
+  "text": "Below the house, the well still gives water.",
+  "caption": "Below the house, the well still gives water.",
+  "film": "towers",
+  "t": 31,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "towers-37": {
+  "text": "Sampson stops behind the long wall.",
+  "caption": "Sampson stops behind the long wall.",
+  "film": "towers",
+  "t": 37,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-0": {
+  "text": "Later that morning. The house is silent.",
+  "caption": "Later that morning. The house is silent.",
+  "film": "search",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-4": {
+  "text": "Sampson's cart takes John Callendar home.",
+  "caption": "Sampson’s cart takes John Callendar home.",
+  "film": "search",
+  "t": 4,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-9": {
+  "text": "He lies still, under a sheet.",
+  "caption": "He lies still, under a sheet.",
+  "film": "search",
+  "t": 9,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-15": {
+  "text": "Nobody from the house comes out.",
+  "caption": "Nobody from the house comes out.",
+  "film": "search",
+  "t": 15,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-22_5": {
+  "text": "Days later, Captain Reid comes up the road.",
+  "caption": "Days later, Captain Reid comes up the road.",
+  "film": "search",
+  "t": 22.5,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-27_5": {
+  "text": "Hector, enslaved here, goes down to meet him.",
+  "caption": "Hector, enslaved here, goes down to meet him.",
+  "film": "search",
+  "t": 27.5,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-33_5": {
+  "text": "The east door stands open.",
+  "caption": "The east door stands open.",
+  "film": "search",
+  "t": 33.5,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "search-38_5": {
+  "text": "The house is empty. He has run.",
+  "caption": "The house is empty. He has run.",
+  "film": "search",
+  "t": 38.5,
+  "emotion": "neutral",
+  "speed": 0.92
+ },
+ "warrant-0": {
+  "text": "Morning. The house stands on its rise over the road.",
+  "caption": "Morning. The house stands on its rise over the road.",
+  "film": "warrant",
+  "t": 0,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-4": {
+  "text": "John Callendar walks up the track.",
+  "caption": "John Callendar walks up the track.",
+  "film": "warrant",
+  "t": 4,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-12": {
+  "text": "His jackass is in the castle yard. He calls out. Nobody answers.",
+  "caption": "His jackass is in the castle yard. He calls out. Nobody answers.",
+  "film": "warrant",
+  "t": 12,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-19_5": {
+  "text": "The upper shutter swings open.",
+  "caption": "The upper shutter swings open.",
+  "film": "warrant",
+  "t": 19.5,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-22_5": {
+  "text": "One shot. The birds go up from the cotton tree.",
+  "caption": "One shot. The birds go up from the cotton tree.",
+  "film": "warrant",
+  "t": 22.5,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-28": {
+  "text": "A hat lies on the track.",
+  "caption": "A hat lies on the track.",
+  "film": "warrant",
+  "t": 28,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "warrant-32": {
+  "text": "A sick man in the house has seen. He slips out by the east door to tell.",
+  "caption": "A sick man in the house has seen. He slips out by the east door to tell.",
+  "film": "warrant",
+  "t": 32,
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ "morning-0": {
+  "text": "Spanish Town. The sixteenth morning of March, seventeen seventy-three.",
+  "caption": "Spanish Town. The sixteenth morning of March, 1773.",
+  "film": "morning",
+  "t": 0,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-7": {
+  "text": "King's House is dark. The square is full before the sun is up.",
+  "caption": "King’s House is dark. The square is full before the sun is up.",
+  "film": "morning",
+  "t": 7,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-14": {
+  "text": "Everyone looks one way, down the street.",
+  "caption": "Everyone looks one way, down the street.",
+  "film": "morning",
+  "t": 14,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-20": {
+  "text": "At its end, a frame of timber.",
+  "caption": "At its end, a frame of timber.",
+  "film": "morning",
+  "t": 20,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-27": {
+  "text": "Their sentence, pride, and malice I defy, Despise their power and like a Roman die.",
+  "caption": "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”",
+  "film": "morning",
+  "t": 27,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-34": {
+  "text": "His words. His stone was never made.",
+  "caption": "His words. His stone was never made.",
+  "film": "morning",
+  "t": 34,
+  "emotion": "sad",
+  "speed": 0.9
+ },
+ "morning-38": {
+  "text": "The court tried him for one killing. No other was ever tried.",
+  "caption": "The court tried him for one killing. No other was ever tried.",
+  "film": "morning",
+  "t": 38,
+  "emotion": "sad",
+  "speed": 0.9
+ }
+}
