@@ -1,10 +1,10 @@
 /* Downloads recorded clips for voice-lines.json, in order, and keeps games/<game>/site/voices/index.json (text -> clip) up to date.
-   node tools/audio/fetch-lines.mjs <game> <first-index> < ids     ids: Cartesia link ids (the part after link_), whitespace separated, one per line of voice-lines.json starting at first-index. */
+   node tools/audio/fetch-lines.mjs <game> <first-index> [voice-cast.json] < ids     ids: Cartesia link ids (the part after link_), whitespace separated, one per line of voice-lines.json starting at first-index. */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-const [game, first = "0"] = process.argv.slice(2);
+const [game, first = "0", file = "voice-lines.json"] = process.argv.slice(2);
 const root = new URL("../../games/", import.meta.url).pathname;
-const lines = JSON.parse(readFileSync(`${root}${game}/voice-lines.json`, "utf8"));
+const lines = JSON.parse(readFileSync(`${root}${game}/${file}`, "utf8"));
 const ids = readFileSync(0, "utf8").split(/\s+/).filter(Boolean);
 const dir = `${root}${game}/site/voices/`; mkdirSync(dir, { recursive: true });
 const idxFile = dir + "index.json"; const index = existsSync(idxFile) ? JSON.parse(readFileSync(idxFile, "utf8")) : {};
