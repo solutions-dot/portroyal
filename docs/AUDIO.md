@@ -54,3 +54,17 @@ The Xaymaca player uses the shared Web Audio master for dialogue and cinematic n
 All non-player story dialogue, character repeat lines, and cinematic captions have assigned recordings. Faye voices Grandmother, the approved Bob Marley voice voices Cousin, Winston voices the cacique, Sizzla voices the runner, Rosie voices Miss Sharon, Daniel voices the interpreter in neutral English, and Marcos voices Diego Méndez in English with a Spanish delivery. The player speaks through captions only. The production voice list is stored in Cartesia and the game's line-to-file map is in `src/line-voices.js`.
 
 Verify early scenes as well as dramatic later scenes before declaring a character voiced. A returning character must have coverage in every conversation. Cinematic narration waits for a spoken cue to finish before its caption changes. Missing audio must leave controls and text usable.
+
+## Film narration in the other seven games (26 November 2026)
+
+Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark Papers and Windrush speak every film caption in the **Narrator** voice (Cartesia voice `06d22dff-4250-4f54-be10-a82700f8d924`, the owner's narrator for every game). 208 clips, mono-compatible 64 kbps MP3 at 44.1 kHz.
+
+- The player is shared: `engine/filmvoice.js` (see `docs/ENGINE.md`). Each game's `director.js` has the same few lines: `FV.preload`, `FV.sync`, `FV.hold`, `FV.stop`. Xaymaca keeps its own copy in `src/narration.js` because it also plays a score.
+- A clip is `games/<game>/site/voices/narrator-<film>-<second>.mp3`, where a dot in the second becomes an underscore (`takeoff-3_5`). A caption may name its clip with a third field instead.
+- The spoken text is in `games/<game>/voice-script.json`, made by `node tools/audio/voice-script.mjs <game> --write` (numbers as words, "Mr" as "Mister", hard names respelled). The caption on screen is unchanged.
+- Respelled names: **Palisadoes is said "Palisaydoze"** (owner, 26 November 2026), written that way in voice scripts. Cartesia's pronunciation dictionary did not give the right sound ("Palisades"); the respelling did. Still to check by ear: Morant, Jacmel, Takoo, Planno, Stony Gut.
+- Where a clip is longer than its caption window the film waits on that caption until the clip ends (a pause of up to 2 seconds), so a line is never cut off. `node tools/audio/film-voice-check.mjs` lists those and any missing clip.
+- Recording: one `text_to_speech` call per caption through the Cartesia MCP (`https://mcp.cartesia.ai/mcp`), downloaded with `tools/audio/fetch-clips.sh`. Check every batch for a clip that holds the wrong line (one did, and was re-recorded): transcribe and compare, as for Xaymaca.
+- Scene text such as "Captain Ross: There it is." is read by the Narrator, not by a character voice. Character voices come later (`docs/audio/PLAN.md`).
+
+Checked: all 208 clips present, transcribed and compared (only digit and name spellings differ), build passes for all seven games, no page errors on load. **Not yet done**: a listening pass in a browser on phone and desktop (pause and resume, skip, Read instead, sound off).

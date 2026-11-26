@@ -36,7 +36,7 @@ Counts come from `node tools/audio/cue-inventory.mjs`.
 
 ## Order of work
 
-1. **Games with film captions already written** (Air Jamaica, Mad Master, Morant Bay, Rose Hall, Selassie, Shark Papers, Windrush): voice the captions with the Narrator, as Xaymaca did. Rewrite a caption for the ear only where needed (numbers as words, no digits, short lines), keep the on-screen text the same, and keep each clip inside its caption window.
+1. **DONE 26 November 2026, listening pass still to do.** **Games with film captions already written** (Air Jamaica, Mad Master, Morant Bay, Rose Hall, Selassie, Shark Papers, Windrush): voice the captions with the Narrator, as Xaymaca did. Rewrite a caption for the ear only where needed (numbers as words, no digits, short lines), keep the on-screen text the same, and keep each clip inside its caption window.
 2. **Games with cards and camera scenes only** (Bog Walk, Eventide, Kendal, Melissa, Nanny, Tivoli, Garvey, Port Royal): write narrator lines for each cinematic, each chapter opener and each closer, one reading each, then record. The scripts go through the same accuracy and tone rules as the game text. Tivoli, Nanny and Morant Bay keep their own rules.
 3. **Character voices**: after the narrator is in, cast each game's speaking parts from the saved voices, with the owner choosing. Record the cast in each game's doc, as `docs/AUDIO.md` asks.
 

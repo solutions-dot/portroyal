@@ -747,3 +747,7 @@ A glow by brightness could not tell a lamp from a sunlit beach, so the glow is n
 ## Surfaces in one plane: each lifted only over what it overlaps (`engine/depthfight.js`, 24 November 2026)
 
 `settleFights` used to give every face in a whole chain of touching faces its own step of polygon offset, with a slope factor growing with the step. A house body in Spanish Town (The Mad Master) reached factor -30 through its roof edge, and seen at an angle its front wall leapt in front of the windows 5 cm before it, so they came and went as you walked (owner, 24 November 2026). Now each face sits one step over the faces it really overlaps (a longest path through the overlap pairs, at most 48 steps), always with slope factor -1.
+
+## engine/filmvoice.js: a narrator for timed film captions
+
+`createFilmVoice()` returns `{ preload(captions, film), sync(caption, elapsed, film), hold(time, nextTime, captions, end), stop(), active() }`. A caption is `[time, text, clip]`; with no third field the clip is `voices/narrator-<film>-<second>.mp3`. It plays through the shared Web Audio master, so the sound button mutes it; a missing clip leaves the caption showing. While a clip speaks, `hold` keeps film time from passing the next caption. Used by the directors of Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's Arrival, Shark Papers and Windrush. Xaymaca still has its own `src/narration.js` (it also plays a score); move it over when it is next touched. See `docs/AUDIO.md`.
