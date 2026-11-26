@@ -15,7 +15,8 @@ export const STEPS = {
   12: t("maima", "Find Cousin at the edge of the hill.", ["cousin"], 13, { show: FAM, journal: "cousin" }),
   13: l("maima", "Look down at the ships from the rock.", ["lookout"], 14, { show: FAM, journal: "ships" }),
   14: d("maima", "Carry the cassava bread to Cousin's basket.", ["bread"], 15, { show: FAM }),
-  15: t("maima", "Talk to Cousin.", ["cousin"], 20, { show: FAM }),
+  15: t("maima", "Talk to Cousin.", ["cousin"], 16, { show: FAM }),
+  16: l("maima", "Look at Grandmother's zemi in her house.", ["zemi"], 20, { show: FAM, journal: "zemi" }),
   /* 2. Bread for bells (July 1503) */
   20: t("shore", "Talk to Cousin by the canoe.", ["cousin"], 21, { show: ["cousin"] }),
   21: d("shore", "Carry the basket of bread to the canoe.", ["basket"], 22, { show: ["cousin"] }),
@@ -71,12 +72,13 @@ export const TASKS = {
    eases to (or the place's own Q.lookViews[id]). sound: LOOK_SFX in main.js. say: the short story line while the thing moves. lines: the card after. */
 const V = (p, look, fov) => ({ p, look, fov });
 export const LOOKS = {
+  zemi: { place: "maima", at: [6.8, -5.2], label: "Look inside", title: "Grandmother's zemi", view: V([7.3, 1.05, -5.6], [10.3, 0.42, -4.2], 30), sound: "wind", say: ["Grandmother lifts the cloth. The zemi looks back at you."], lines: ["It is carved from very hard, dark wood.", "Its eyes and teeth are made of shell.", "The Taino believed a zemi held a spirit.", "Grandmother keeps it safe while the strangers are here."] },
   buren: { place: "maima", at: [2.6, 0.9], label: "Turn the bread", title: "Cassava bread", view: V([3.0, 1.35, 0.6], [2.0, 0.42, -1.0], 40), sound: "sizzle", say: ["You flip the flat cake with a stick. It smells good."], lines: ["Grandmother grated the cassava root and squeezed out its juice.", "Now the cake bakes on the hot clay griddle.", "One side is golden. Now the other."] },
   lookout: { place: "maima", at: [0.0, -9.4], label: "Look down at the bay", title: "The two ships", sound: "wind", say: ["Far below, men are busy on the ships."], lines: ["They are tying straw roofs onto the decks.", "The ships sit in the water, side by side.", "They will never sail again."] },
   bell: { place: "shore", at: [3.4, -0.4], label: "Look at it", title: "A hawk's bell", view: V([3.5, 1.0, 0.0], [3.2, 0.45, -0.9], 30), sound: "bell", say: ["A little round thing. You shake it. Ting-ting-ting!"], lines: ["The sailors gave it for the big basket of bread.", "Nobody here has heard a sound like it.", "Cousin also got red and yellow glass beads."] },
   newship: { place: "maima", at: [0.0, -9.4], label: "Look at the new ship", title: "A ship from Hispaniola", sound: "wind", say: ["A new ship is anchored by the old wrecks."], lines: ["Diego Mendez sent it from Hispaniola.", "So at least one canoe got across the sea.", "But where are the paddlers?"] },
   house: { place: "today", at: [-3.6, -2.4], label: "Look at the house", title: "A round house", view: V([-2.2, 1.7, -1.0], [-6.0, 1.4, -4.0], 44), sound: "wind", say: ["A model of a Taino house, round and tall."], lines: ["The house dug up at Maima was about 4 metres across.", "One pole held up the middle of the roof.", "Its door faced west, away from the wind."] },
-  sign: { place: "today", at: [3.6, -4.2], label: "Read the sign", title: "Words from the Taino", view: V([3.9, 1.5, -4.4], [4.0, 1.25, -6.0], 36), sound: "page", say: ["You read the sign by the path."], lines: ["Canoe, hammock, hurricane and barbecue all come from Taino words.", "Xaymaca was their name for this island.", "It is often said to mean land of wood and water."] },
+  sign: { place: "today", at: [3.6, -4.2], label: "Read the sign", title: "The Legacy of the Taino", view: V([3.9, 1.5, -4.4], [4.0, 1.3, -6.0], 36), sound: "page", say: ["The Legacy of the Taino. You read the big panel."], lines: ["It says the Taino left their mark on Jamaica today.", "Bammy, barbecue and yam hills all come from the Taino.", "Fishermen still make dugout canoes from the silk cotton tree.", "Canoe, hammock and hurricane come from Taino words too."] },
 };
 for (const r of Object.values(STEPS)) for (const n of r.needs?.do || []) if (n.carry) n.carry = TASKS[n.id].item;
 export const ITEMS = [...new Set(Object.values(TASKS).map((t) => t.item))];

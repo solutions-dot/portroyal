@@ -350,8 +350,25 @@ function maima({ night = false } = {}) {
     [-6.6, 7.6, 1.8, 3],
     [9.6, -5.2, 2.0, 4],
   ];
+  /* Grandmother's zemi, in her house (the round house at the east end), under a cotton cloth; the close-up lifts the cloth (chapter 1). The game's zemi is
+     imagined, modelled on the Carpenter's Mountain zemis (xaymaca.js); keeping it in the house is a choice to check with the reviewer (docs/games/xaymaca.md). */
+  const zemiAt = [0.7, 1.0];   /* in the house's own frame (the house at 9.6, -5.2): to the side of the centre pole */
+  const zemiFig = X.zemi();
+  zemiFig.position.set(zemiAt[0], 0, zemiAt[1]);
+  zemiFig.rotation.y = -Math.PI / 2 - 0.5;   /* turned toward the door, on the west */
+  const zemiCloth = dyn(grp());
+  zemiCloth.position.set(zemiAt[0], 0, zemiAt[1]);
+  { const c = mesh(new THREE.SphereGeometry(0.3, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), X.M.cotton(), 0, 0.12, 0, zemiCloth); c.scale.set(0.9, 1.9, 0.9); c.material.side = THREE.DoubleSide; }
+  if (!night) Q.reveal.zemi = (k) => {
+    k = Math.min(1, +k);
+    const e = sm(k);
+    zemiCloth.visible = e < 0.97;
+    zemiCloth.position.set(zemiAt[0] - e * 0.5, e * 0.9, zemiAt[1]);   /* Grandmother lifts the cloth up and away, toward the door */
+    zemiCloth.scale.setScalar(1 - e * 0.35);
+  };
   for (const [x, z, r, sd] of houses) {
-    add(Q, X.roundHouse(r, { seed: sd }), x, z, 0, 0);   /* the door on the west side (-x), away from the wind (Burley 2022) */
+    const house = add(Q, X.roundHouse(r, { seed: sd, hammock: sd !== 4 }), x, z, 0, 0);   /* (the zemi house keeps its floor clear for the close-up) */   /* the door on the west side (-x), away from the wind (Burley 2022) */
+    if (sd === 4) house.add(zemiFig, zemiCloth);   /* part of the house, as its pot and hammock are */
     wall(Q, x, z, r * 1.6, r * 1.6);
     Q.keepOff.push({ at: [x, z], r: r + 0.6 });
   }
@@ -708,12 +725,23 @@ function today() {
   path.name = "terrain";
   /* the replica Taino houses: three round houses with cone roofs among the trees, a little sign on a post in front (owner's photographs of the park,
      26 November 2026; the Jamaica Observer, 18 July 2010, describes huts for a family and a kitchen) */
-  add(Q, X.roundHouse(2.2, { seed: 9 }), -6.0, -4.0, 0, 0);
+  add(Q, X.replicaHut(2.0, { seed: 9, h: 2.0 }), -6.0, -4.0, 0, 0);
   wall(Q, -6.0, -4.0, 3.6, 3.6);
-  add(Q, X.roundHouse(1.5, { seed: 10, hammock: false }), -9.6, -1.2, 0, 0.4);
+  add(Q, X.replicaHut(1.5, { seed: 10 }), -9.6, -1.2, 0, 0.4);
   wall(Q, -9.6, -1.2, 2.4, 2.4);
-  add(Q, X.roundHouse(1.4, { seed: 11, hammock: false }), -9.4, -6.4, 0, -0.3);
+  add(Q, X.replicaHut(1.4, { seed: 11, window: false }), -9.4, -6.4, 0, -0.3);
   wall(Q, -9.4, -6.4, 2.2, 2.2);
+  /* the open kitchen beside the houses: a lean-to of thatch on four poles (the Jamaica Observer, 18 July 2010: "A replica of the Taino kitchen (left) and hut";
+     a photograph of 2008, jamaicatravelandculture.com) */
+  {
+    const k = grp(), poleM = X.M.pole(), hi = 2.2, lo = 1.4, dz = 1.6, tilt = Math.atan2(hi - lo, dz);
+    for (const [x, z, h] of [[-1.1, -dz / 2, hi], [1.1, -dz / 2, hi], [-1.1, dz / 2, lo], [1.1, dz / 2, lo]]) cyl(0.05, 0.06, h, poleM, x, h / 2, z, k, 6);
+    for (const [z, h] of [[-dz / 2, hi], [dz / 2, lo]]) box(2.5, 0.08, 0.08, poleM, 0, h, z, k);   /* a beam across the top of each pair of posts */
+    const roof = box(2.8, 0.08, Math.hypot(dz, hi - lo) + 0.6, X.replicaThatch(), 0, (hi + lo) / 2 + 0.08, 0, k);
+    roof.rotation.x = tilt;   /* high at the back posts, low at the front ones, resting on both beams */
+    add(Q, k, -7.4, 1.8, 0, 0.5);
+    wall(Q, -7.4, 1.8, 2.4, 2.0);
+  }
   {
     const post = grp();
     box(0.06, 1.0, 0.06, solid(0x4a3020, 0.9), 0, 0.5, 0, post);
@@ -724,26 +752,55 @@ function today() {
     add(Q, post, -4.2, -1.9, 0, 0.9);
     wall(Q, -4.2, -1.9, 0.3, 0.3);
   }
+  /* the two replica houses of the enslaved Africans of the Seville estate, built by the Ghanaian Army Engineer Corps in March 2026 (their panel, a visitor's
+     photograph, 26 November 2026: "Walls made of wattle and daub", "Thatched palm roofs", "Usually, one doorway and one window") */
+  for (const [x, z, ry] of [[8.4, -6.8, -0.4], [11.2, -1.2, -0.9]]) {
+    add(Q, X.africanHouse(), x, z, 0, ry);
+    wall(Q, x, z, 3.4, 3.4);
+  }
   /* the Great House on its rise behind the lawn, the flag before it, and the entrance sign by the path */
   const gh = add(Q, X.greatHouse(), 1.5, 30, 0.6, Math.PI);
   wall(Q, 1.5, 30, 26, 18);
   add(Q, X.flagpole(), 7.5, 19.5, 0, 0);
   add(Q, X.parkSign(), -2.8, 10.8, 0, Math.PI);
   wall(Q, -2.8, 10.8, 5, 1.2);
+  /* the storyboard by the path: the Great House museum's panel "The Legacy of the Taino", with its own title, opening words and headings (from a visitor's
+     photograph the owner found in the park's Google reviews, 26 November 2026). In the park it hangs inside the museum; here it stands by the path so the
+     player can read it (said so in docs/games/xaymaca.md). */
   const sign = grp();
-  box(1.5, 0.95, 0.06, solid(0x5a3a22, 0.8), 0, 1.25, 0, sign);
-  const head = P.label("THE TAINO OF MAIMA", 1.36, 0.16, "#f0e8d0", "#3a2a1a");
-  head.position.set(0, 1.58, 0.035);
-  sign.add(head);
-  const words = P.label("canoe · hammock · hurricane · barbecue", 1.36, 0.12, "#f0e8d0", "#3a2a1a", "normal");
-  words.position.set(0, 1.25, 0.035);
-  sign.add(words);
-  const xay = P.label("Xaymaca: land of wood and water", 1.36, 0.12, "#f0e8d0", "#3a2a1a", "italic");
-  xay.position.set(0, 1.0, 0.035);
-  sign.add(xay);
-  for (const x of [-0.6, 0.6]) box(0.08, 0.8, 0.08, solid(0x4a3020, 0.9), x, 0.4, 0, sign);
+  {
+    const face = cv(640, 800, (x, w, h) => {
+      /* the museum's panel "The Legacy of the Taino": a dark brown band with the title, a pale body, its own headings and a picture of round houses */
+      x.fillStyle = "#e6dcc0"; x.fillRect(0, 0, w, h);
+      x.fillStyle = "#4a2e1e"; x.fillRect(0, 0, w, h * 0.12);
+      x.fillStyle = "#f6efe0"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = "bold 46px Georgia, serif";
+      x.fillText("THE LEGACY OF THE TA\u00cdNO", w / 2, h * 0.062, w * 0.94);
+      x.fillStyle = "#2a2018"; x.textAlign = "left";
+      x.font = "bold 27px Georgia, serif";
+      ["The Ta\u00edno have left their", "imprint on Jamaica today", "in many ways, including:"].forEach((t, i) => x.fillText(t, w * 0.06, h * (0.17 + i * 0.045), w * 0.9));
+      const heads = ["Settlement patterns", "Architecture", "Technology", "The Introduction of Plants", "Food Procurement, Processing and Preparation"];
+      heads.forEach((t, i) => {
+        const y = h * (0.35 + i * 0.12);
+        x.font = "bold 25px Georgia, serif"; x.fillStyle = "#2a2018"; x.fillText(t, w * 0.06, y, w * 0.52);
+        x.fillStyle = "rgba(42,32,24,.45)";
+        for (let k = 0; k < 3; k++) x.fillRect(w * 0.06, y + 22 + k * 13, w * (0.5 - k * 0.07), 5);   /* the small print, too fine to read at a distance */
+      });
+      /* the picture of round houses, on the right */
+      x.fillStyle = "#cfc4a6"; x.fillRect(w * 0.62, h * 0.33, w * 0.33, h * 0.24);
+      x.fillStyle = "#7d8a5a"; x.fillRect(w * 0.62, h * 0.49, w * 0.33, h * 0.08);
+      for (const [cx, s] of [[0.7, 1], [0.86, 0.8]]) {
+        x.fillStyle = "#8a7448"; x.beginPath(); x.moveTo(w * cx, h * 0.38); x.lineTo(w * (cx + 0.07 * s), h * 0.45); x.lineTo(w * (cx - 0.07 * s), h * 0.45); x.fill();
+        x.fillStyle = "#a8946a"; x.fillRect(w * (cx - 0.055 * s), h * 0.45, w * 0.11 * s, h * 0.05);
+      }
+    });
+    const panelM = new THREE.MeshStandardMaterial({ map: face, roughness: 0.8 }), back = solid(0xe8e4dc, 0.8);
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.125, 0.04), [back, back, back, back, panelM, back]);
+    panel.position.set(0, 1.35, 0.03);
+    sign.add(panel);
+    box(0.07, 1.85, 0.07, solid(0x3a3a3a, 0.6), 0, 0.925, -0.06, sign);   /* the post, behind the panel */
+  }
   add(Q, sign, 4.0, -6.2, 0, 0);
-  wall(Q, 4.0, -6.2, 1.6, 0.4);
+  wall(Q, 4.0, -6.2, 0.9, 0.3);
   for (const [x, z, w, d] of [[7, 3, 5, 0.5], [9.25, 5, 0.5, 4], [7, 7, 5, 0.5]]) {
     box(w, 0.45, d, X.M.stone(), x, 0.225, z, Q.group);
     wall(Q, x, z, w, d);

@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { cv, std, solid, mesh, box, cyl, plane, grp, rng } from "./gfx.js";
 import { lines, hull, spar, rope, sail, shrouds, SM } from "./ships.js";
 import { dugOut } from "../../../engine/boats.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 const once = new Map();
 const keep = (k, make) => (once.has(k) ? once.get(k) : (once.set(k, make()), once.get(k)));
@@ -32,6 +33,23 @@ export const thatchTex = (repeat = [4, 2]) =>
         x.fillStyle = "rgba(48,36,18,0.32)";
         x.fillRect(0, y, w, 3);
       }
+    }, repeat),
+  );
+/* palm thatch for the houses of Maima (owner, 26 November 2026; the Seville museum's panel "The Legacy of the Taino": the Taino thatched with the leaves of
+   native palms, silver thatch, broad thatch and long thatch): fresh, so greener and browner than the grey of the park's weathered replicas, laid shaggy */
+export const palmTex = (repeat = [4, 2]) =>
+  keep("palm" + repeat, () =>
+    cv(256, 256, (x, w, h) => {
+      x.fillStyle = "#6c6047"; x.fillRect(0, 0, w, h);
+      const r = rng(17);
+      for (let i = 0; i < 2400; i++) {
+        const g = 100 + r() * 70, green = r() < 0.12;
+        x.strokeStyle = green ? `rgba(${(g * 0.84) | 0},${(g * 0.86) | 0},${(g * 0.6) | 0},0.5)` : `rgba(${g | 0},${(g * 0.86) | 0},${(g * 0.64) | 0},0.55)`;
+        x.lineWidth = 1 + r() * 1.6;
+        const px = r() * w, py = r() * h;
+        x.beginPath(); x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 7, py + 14 + r() * 28); x.stroke();
+      }
+      for (let y = 0; y < h; y += 64) { x.fillStyle = "rgba(40,34,18,0.18)"; x.fillRect(0, y, w, 4); }
     }, repeat),
   );
 /* cane walls: upright canes tied with a band of vine */
@@ -75,6 +93,7 @@ export const earthTex = (repeat = [10, 10], base = [150, 128, 96]) =>
   );
 export const M = {
   thatch: () => keep("m-thatch", () => std(thatchTex(), 1)),
+  palm: () => keep("m-palm", () => std(palmTex(), 1)),
   cane: () => keep("m-cane", () => std(caneTex(), 0.95)),
   pole: () => keep("m-pole", () => solid(0x6e5236, 0.9)),
   clay: () => keep("m-clay", () => solid(0x9a6a48, 0.95)),
@@ -97,11 +116,15 @@ export function roundHouse(r = 2, { h = 1.7, seed = 1, door = true, hammock = tr
     gap = door ? 0.5 : 0,   /* half the door's angle */
     wall = new THREE.CylinderGeometry(r, r, h, 28, 1, true, Math.PI * 1.5 + gap, Math.PI * 2 - gap * 2);
   mesh(wall, M.cane(), 0, h / 2, 0, g).material.side = THREE.DoubleSide;
-  /* the roof: a tall cone of thatch, lapping out past the wall, with a little cap of bound grass at the peak */
+  /* the roof: a tall cone of palm thatch, lapping out past the wall, with a little cap of bound leaves at the peak */
   const roofH = r * 1.35,
-    roof = mesh(new THREE.ConeGeometry(r + 0.45, roofH, 28, 3, true), M.thatch(), 0, h + roofH / 2 - 0.05, 0, g);
+    roofGeo = new THREE.ConeGeometry(r + 0.5, roofH, 28, 3, true);
+  { const rr = rng(seed * 13 + 5), p = roofGeo.attributes.position;   /* a shaggy, uneven hem of palm leaves */
+    for (let i = 0; i < p.count; i++) if (p.getY(i) < -roofH / 2 + 0.01) p.setY(i, p.getY(i) - 0.04 - rr() * 0.2);
+    roofGeo.computeVertexNormals(); }
+  const roof = mesh(roofGeo, M.palm(), 0, h + roofH / 2 - 0.05, 0, g);
   roof.material.side = THREE.DoubleSide;
-  cyl(0.18, 0.05, 0.4, M.thatch(), 0, h + roofH - 0.02, 0, g, 10);
+  cyl(0.18, 0.05, 0.4, M.palm(), 0, h + roofH - 0.02, 0, g, 10);
   /* the centre pole, and the ring beam it carries */
   cyl(0.08, 0.1, h + roofH - 0.2, M.pole(), 0, (h + roofH - 0.2) / 2, 0, g, 8);
   const ring = mesh(new THREE.TorusGeometry(r - 0.02, 0.05, 5, 28), M.pole(), 0, h, 0, g);
@@ -110,10 +133,27 @@ export function roundHouse(r = 2, { h = 1.7, seed = 1, door = true, hammock = tr
   if (door) for (const s of [-1, 1]) cyl(0.06, 0.07, h + 0.1, M.pole(), -r * Math.cos(gap) , (h + 0.1) / 2, s * r * Math.sin(gap), g, 6);
   /* inside: a cotton hammock slung from the centre pole to the wall, a pot and a mat */
   if (hammock) {
-    const hm = mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.5, 10, 1, true, Math.PI, Math.PI), M.cotton(), 0.85, 0.75, 0.25, g);
-    hm.rotation.set(0, 0.3, Math.PI / 2);
-    hm.material.side = THREE.DoubleSide;
-    for (const [ax, az, bx, bz] of [[0.1, 0.0, 0.1, 0.05], [1.62, 0.5, 1.6, 0.5]]) rope([ax, 1.3, az], [bx + 0.0, 0.85, bz + 0.0], 0.008, SM.hemp, g);
+    /* a cotton hammock slung from the centre pole to the wall: a woven bed that sags in the middle and curls up at the sides, gathered at each end into
+       a rope tied high on the pole and on a wall post (drawn as a half tube with thin cords, it read as a bowl floating in the air: owner, 26 November 2026) */
+    const L = Math.min(1.7, r * 0.85), Wd = 0.85, sag = 0.26, y0 = 1.0, hg = new THREE.PlaneGeometry(L, Wd, 12, 6), hp = hg.attributes.position;
+    for (let i = 0; i < hp.count; i++) {
+      const x = hp.getX(i), z = hp.getY(i), t = (2 * x) / L, u = (2 * z) / Wd;
+      const narrow = 0.5 + 0.5 * Math.sqrt(Math.max(0, 1 - t * t));   /* gathered toward each end */
+      hp.setXYZ(i, x, -sag * (1 - t * t) + 0.05 * u * u * narrow, z * narrow);
+    }
+    hg.computeVertexNormals();
+    const bed = new THREE.Group();
+    const hm = mesh(hg, keep("m-hammock", () => { const m = solid(0xe8dcc0, 1); m.side = THREE.DoubleSide; return m; }), 0, 0, 0, bed);
+    void hm;
+    const ang = 0.35, cx = 0.12 + (L / 2 + 0.25) * Math.cos(ang), cz = (L / 2 + 0.25) * Math.sin(ang);
+    bed.position.set(cx, y0, cz);
+    bed.rotation.y = -ang;
+    g.add(bed);
+    const end = (sx) => new THREE.Vector3(sx * L / 2, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), -ang).add(bed.position);
+    const a0 = end(-1), a1 = end(1), wallPt = [Math.cos(ang) * (r - 0.06), 1.45, Math.sin(ang) * (r - 0.06)];
+    rope([0.08 * Math.cos(ang), 1.45, 0.08 * Math.sin(ang)], [a0.x, a0.y, a0.z], 0.014, SM.hemp, g);   /* to the centre pole */
+    rope(wallPt, [a1.x, a1.y, a1.z], 0.014, SM.hemp, g);   /* to the wall */
+    cyl(0.05, 0.055, 1.7, M.pole(), wallPt[0], 0.85, wallPt[2], g, 6);   /* the wall post it hangs from */
     const mat = box(0.9, 0.012, 0.6, M.basket(), -0.6, 0.006, 0.7, g);
     mat.rotation.y = 0.4;
     const p = pot(0.18);
@@ -398,13 +438,13 @@ export function navassa() {
 
 /* ---------- Seville Heritage Park, 2026 ----------
    Modelled on photographs of the park the owner supplied (26 November 2026) and the park's descriptions (jamaicagreathouses.com/seville; Jamaica
-   Observer, 18 July 2010): the Great House on its rise above the lawn, cream walls, a grey shingle hipped roof, a verandah all round with teal posts and
-   white rails, a projecting entrance portico, wide stone steps down to the lawn and a flagpole with the Jamaican flag; the entrance sign on stone piers
+   Observer, 18 July 2010): the Great House on its rise above the lawn, cream walls, a grey shingle hipped roof, a verandah all round with white posts, white
+   rails and green balusters, a projecting entrance portico, wide stone steps down to the lawn and a flagpole with the Jamaican flag; the entrance sign on stone piers
    with ball tops, cream with dark red letters, over a red-mulched planter. Sizes are read off the photographs, not measured. */
 const PARK = {
   wall: () => keep("m-park-wall", () => solid(0xe9e2cf, 0.9)),
   roof: () => keep("m-park-roof", () => solid(0x8c877c, 0.95)),
-  teal: () => keep("m-park-teal", () => solid(0x3f8b8a, 0.7)),
+  teal: () => keep("m-park-teal", () => solid(0x3d7a4e, 0.7)),   /* the verandah's green balusters */
   white: () => keep("m-park-white", () => solid(0xf2f0e8, 0.8)),
   step: () => keep("m-park-step", () => solid(0x8f8a7e, 1, 0, { flatShading: true })),
   pier: () => keep("m-park-pier", () => solid(0xcdbf9e, 1, 0, { flatShading: true })),
@@ -428,15 +468,16 @@ export function greatHouse() {
   for (const [sx, sz, n, len, along] of [[0, Dv / 2, 11, Wv, "x"], [0, -Dv / 2, 11, Wv, "x"], [Wv / 2, 0, 7, Dv, "z"], [-Wv / 2, 0, 7, Dv, "z"]]) {
     for (let i = 0; i < n; i++) {
       const k = -len / 2 + (i * len) / (n - 1), x = along === "x" ? k : sx, z = along === "x" ? sz : k;
-      box(0.16, wallH, 0.16, PARK.teal(), x, base + wallH / 2, z, g);
+      box(0.16, wallH, 0.16, PARK.white(), x, base + wallH / 2, z, g);
     }
     for (const y of [base + 0.9, base + 0.15]) box(along === "x" ? len : 0.08, 0.08, along === "x" ? 0.08 : len, PARK.white(), sx, y, sz, g);
+    box(along === "x" ? len : 0.05, 0.7, along === "x" ? 0.05 : len, PARK.teal(), sx, base + 0.52, sz, g);   /* green balusters between the rails (Google reviews photograph of the verandah) */
   }
   hipRoof(W + 2 * ver + 1.0, D + 2 * ver + 1.0, 7.2, PARK.roof(), top, g);   /* steep and broad, as in the photographs */
   /* the entrance portico, out from the verandah, with its own roof and white louvred front */
   const pz = D / 2 + ver + 1.6;
   box(5.0, 0.12, 3.4, PARK.white(), 0, base + 0.06, pz, g);
-  for (const x of [-2.3, 2.3]) box(0.2, wallH, 0.2, PARK.teal(), x, base + wallH / 2, pz + 1.5, g);
+  for (const x of [-2.3, 2.3]) box(0.2, wallH, 0.2, PARK.white(), x, base + wallH / 2, pz + 1.5, g);
   box(5.0, 0.9, 0.06, PARK.louvre(), 0, base + wallH - 0.5, pz + 1.65, g);
   hipRoof(5.8, 4.0, 2.4, PARK.roof(), top, g).position.z = pz;
   /* wide stone steps down to the lawn */
@@ -486,5 +527,120 @@ export function parkSign() {
   kerb.scale.z = 0.6;
   const mulch = mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.36, 24, 1, false, -Math.PI / 2, Math.PI), solid(0x7a1f16, 1), 0, 0.18, 0.12, g);
   mulch.scale.z = 0.52;
+  return g;
+}
+
+/* ---------- the park's replica Taino houses, 2026 ----------
+   As in the owner's photographs from the park's Google reviews and a visitor's photograph of 2017 (adventuresfromelle.com): walls of separate grey,
+   weathered poles with gaps between them, tied by two rails (one near the foot, one at mid height), a gap for a window; a low, shaggy cone of dried palm
+   thatch, grey, with a ragged edge hanging over the wall. All the poles are one mesh and all the thatch another, so a house costs a few draw calls. */
+const greyThatchTex = () =>
+  keep("greythatch", () =>
+    cv(256, 256, (x, w, h) => {
+      x.fillStyle = "#6f6862"; x.fillRect(0, 0, w, h);
+      const r = rng(23);
+      for (let i = 0; i < 2600; i++) {
+        const g = 90 + r() * 80;
+        x.strokeStyle = `rgba(${g | 0},${(g * 0.95) | 0},${(g * 0.9) | 0},0.75)`;
+        x.lineWidth = 1 + r() * 1.5;
+        const px = r() * w, py = r() * h, len = 14 + r() * 26;
+        x.beginPath(); x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 6, py + len); x.stroke();
+      }
+    }, [3, 2]),
+  );
+export function replicaHut(r = 1.5, { h = 1.85, seed = 1, window = true } = {}) {
+  const g = grp(), rand = rng(seed * 31 + 7), poles = [];
+  const door = 0.42, win = window ? [Math.PI * 0.62, 0.32] : null;   /* half-angles of the door (on -x) and window gaps */
+  const n = Math.round((2 * Math.PI * r) / 0.085);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const fromDoor = Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI)));
+    if (fromDoor < door) continue;
+    const ph = h * (0.94 + rand() * 0.1), rad = 0.024 + rand() * 0.014;
+    if (win && Math.abs(Math.atan2(Math.sin(a - win[0]), Math.cos(a - win[0]))) < win[1]) {
+      /* under the window, the poles stop short; above it, a short stub to the rail at the top */
+      const c = new THREE.CylinderGeometry(rad, rad * 1.1, h * 0.5, 5); c.translate(Math.cos(a) * r, h * 0.25, Math.sin(a) * r); poles.push(c);
+      const t = new THREE.CylinderGeometry(rad, rad, h * 0.12, 5); t.translate(Math.cos(a) * r, h * 0.94, Math.sin(a) * r); poles.push(t);
+      continue;
+    }
+    const c = new THREE.CylinderGeometry(rad, rad * 1.1, ph, 5);
+    c.rotateZ((rand() - 0.5) * 0.05);
+    c.translate(Math.cos(a) * (r + (rand() - 0.5) * 0.02), ph / 2, Math.sin(a) * (r + (rand() - 0.5) * 0.02));
+    poles.push(c);
+  }
+  const pale = keep("m-replica-pole", () => solid(0xa49c90, 0.95));
+  mesh(mergeGeometries(poles), pale, 0, 0, 0, g);
+  /* the two rails, just outside the poles, and the door posts */
+  const railM = keep("m-replica-rail", () => solid(0x7a6a58, 0.9));
+  for (const y of [0.18, h * 0.55]) {
+    const t = new THREE.TorusGeometry(r + 0.035, 0.022, 4, 40, Math.PI * 2 - door * 2);
+    const rail = mesh(t, railM, 0, y, 0, g);
+    rail.rotation.set(Math.PI / 2, 0, door);   /* the open part of the ring at the door (-x) */
+  }
+  for (const s of [-1, 1]) cyl(0.05, 0.055, h + 0.1, railM, -r * Math.cos(door), (h + 0.1) / 2, s * r * Math.sin(door), g, 6);
+  /* the roof: a low cone of grey palm thatch, the edge hanging past the wall and cut ragged */
+  const roofR = r + 0.6, roofH = r * 0.78, seg = 36;   /* low and wide, as in the photographs */
+  const cone = new THREE.ConeGeometry(roofR, roofH, seg, 4, true);
+  const pos = cone.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    if (y < -roofH / 2 + 0.01) pos.setY(i, y - 0.05 - rand() * 0.28);   /* the ragged hem */
+    else if (y < roofH / 2 - 0.01) { const k = 1 + (rand() - 0.5) * 0.06; pos.setX(i, pos.getX(i) * k); pos.setZ(i, pos.getZ(i) * k); }
+  }
+  cone.computeVertexNormals();
+  const thatchM = keep("m-replica-thatch", () => { const m = std(greyThatchTex(), 1); m.side = THREE.DoubleSide; return m; });
+  mesh(cone, thatchM, 0, h + roofH / 2 - 0.1, 0, g);
+  cyl(0.06, 0.07, h + roofH - 0.25, railM, 0, (h + roofH - 0.25) / 2, 0, g, 6);   /* the centre pole */
+  g.userData.r = r;
+  return g;
+}
+export function replicaThatch() { return keep("m-replica-thatch", () => { const m = std(greyThatchTex(), 1); m.side = THREE.DoubleSide; return m; }); }
+
+/* a replica house of the enslaved Africans of the Seville estate, as built in the park in March 2026: about 3 by 4 metres (the panel: "about 3 x 4 metres to
+   4 x 6 metres"), walls of wattle and daub, a thatched palm roof, one doorway and one window */
+export function africanHouse() {
+  const g = grp(), W = 3.6, D = 2.8, H = 2.0;
+  const daub = keep("m-daub", () => solid(0xa8744e, 1)), dark = keep("m-daub-dark", () => solid(0x3a2a20, 1));
+  box(W, H, D, daub, 0, H / 2, 0, g);
+  box(0.8, 1.7, 0.04, dark, -0.5, 0.85, D / 2 + 0.01, g);   /* the doorway */
+  box(0.55, 0.45, 0.04, dark, 0.95, 1.25, D / 2 + 0.01, g);   /* the window */
+  /* a hipped roof of palm thatch, overhanging */
+  const geo = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4, 1).rotateY(Math.PI / 4);
+  const roof = mesh(geo, replicaThatch(), 0, H + 0.75, 0, g);
+  roof.scale.set(W + 1.0, 1.5, D + 1.0);
+  return g;
+}
+
+/* ---------- a zemi (cemi) ----------
+   The game's zemi is imagined, modelled on the three wooden zemis found in a cave in the Carpenter's Mountains, Jamaica, in June 1792 (now in the British
+   Museum: "Bird Man", "Boinayel" and the "Man with the Canopy", Atkinson 2006 in Palmer 2022): carved from guayacan, a very hard tropical wood, polished
+   to a black lustre, the limbs powerful, the eyes and teeth inlaid with shell (Wikipedia, "Zemi figures from Vere, Jamaica", after Ostapkowicz). A seated
+   figure, knees up, hands on the knees, as Taino zemis often sit; its body is left plain for a children's game. About 60 cm high on a low stone. */
+export function zemi() {
+  const g = grp(), wood = keep("m-zemi", () => solid(0x2c2018, 0.28, 0.1)), shell = keep("m-zemi-shell", () => solid(0xf1ece0, 0.4));
+  mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.12, 9), M.stone(), 0, 0.06, 0, g);   /* the stone it sits on */
+  const b = grp(); b.position.y = 0.12; g.add(b);
+  cyl(0.09, 0.11, 0.24, wood, 0, 0.2, 0, b, 10);   /* the body */
+  for (const s of [-1, 1]) {
+    const thigh = cyl(0.04, 0.045, 0.2, wood, s * 0.06, 0.12, 0.07, b, 8); thigh.rotation.x = Math.PI / 2.4;   /* knees drawn up */
+    cyl(0.035, 0.04, 0.16, wood, s * 0.065, 0.1, 0.16, b, 8);   /* shins */
+    const arm = cyl(0.03, 0.03, 0.2, wood, s * 0.11, 0.24, 0.07, b, 8); arm.rotation.x = 0.7;   /* arms down to the knees */
+  }
+  /* the head: broad and flat-faced, as on the Jamaican zemis, with large round eyes ringed in shell, a wide mouth with a row of shell teeth, ears, and a
+     flat round disc on top (the Carpenter's Mountain "Man with the Canopy" carries one over his face) */
+  const head = mesh(new THREE.SphereGeometry(0.11, 16, 12), wood, 0, 0.44, 0, b);
+  head.scale.set(1.2, 0.92, 0.85);
+  mesh(new THREE.CylinderGeometry(0.115, 0.1, 0.07, 18), wood, 0, 0.44, 0.045, b).rotation.x = Math.PI / 2;   /* the flat face */
+  for (const s of [-1, 1]) {
+    const ring = mesh(new THREE.TorusGeometry(0.026, 0.009, 8, 18), shell, s * 0.048, 0.46, 0.082, b);   /* eye rings of shell */
+    void ring;
+    mesh(new THREE.CircleGeometry(0.018, 14), wood, s * 0.048, 0.46, 0.081, b);
+    const ear = cyl(0.025, 0.025, 0.03, wood, s * 0.125, 0.45, 0, b, 10); ear.rotation.z = Math.PI / 2;
+  }
+  box(0.11, 0.032, 0.012, wood, 0, 0.395, 0.083, b);   /* the wide mouth */
+  for (let k = -3; k <= 3; k++) box(0.011, 0.016, 0.006, shell, k * 0.014, 0.395, 0.09, b);   /* a row of shell teeth */
+  mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.025, 20), wood, 0, 0.535, 0, b);   /* the flat disc on top of the head */
+  cyl(0.04, 0.05, 0.05, wood, 0, 0.51, 0, b, 10);
+  g.userData.top = 0.68;
   return g;
 }
