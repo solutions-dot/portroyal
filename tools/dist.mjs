@@ -37,10 +37,11 @@ if (!testing && process.env.VERCEL === '1') {
     path: `${out}/games/${game}/site/index.html`, game,
     age: catalog.find((entry) => entry.id === game)?.category === 'teen' ? 13 : 6
   }));
-  for (const { path, game = '', age = 6 } of [{ path: `${out}/index.html` }, { path: `${out}/menu/index.html` }, ...gamePages]) {
+  for (const { path, game = '', age = 6, page = '' } of [{ path: `${out}/index.html` }, { path: `${out}/menu/index.html` },
+    { path: `${out}/about.html`, page: 'about' }, { path: `${out}/menu/about.html`, page: 'about' }, ...gamePages]) {
     if (!existsSync(path)) continue;
     let html = readFileSync(path, 'utf8');
-    const feature = `<link rel="stylesheet" href="/playtest.css"><script src="/playtest.js" data-game="${game}" data-age="${age}"></script>`;
+    const feature = `<link rel="stylesheet" href="/playtest.css"><script src="/playtest.js" data-game="${game}" data-age="${age}" data-page="${page}"></script>`;
     html = html.replace('</head>', feature + '</head>');
     if (game) html = html.replace(/<script src="(app\.js[^"]*)"><\/script>/, '<script type="application/json" data-pastport-app="$1"></script>');
     writeFileSync(path, html);
