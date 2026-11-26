@@ -27,8 +27,10 @@ export function speak(s) {
   t = t.replace(/([.!?]) ([a-z])/g, (_, p, c) => p + " " + c.toUpperCase());
   return t.replace(/\s+/g, " ").trim().replace(/^[,;:\s]+/, "").replace(/^[a-z]/, (c) => c.toUpperCase());
 }
+export { speak as speakText };
+const direct = import.meta.url === `file://${process.argv[1]}`;
 const game = process.argv[2], write = process.argv.includes("--write");
-if (game) {
+if (direct && game) {
   const c = await cues(game), out = {};
   for (const f of c.films) f.captions.forEach((cap) => { const stem = `${f.id}-${String(cap.t).replace(".", "_")}`; out[stem] = { text: speak(cap.text), caption: cap.text, film: f.id, t: cap.t }; });
   for (const [k, v] of Object.entries(out)) console.log(k.padEnd(22), "|", v.text, v.text === v.caption ? "" : "   <= " + v.caption);

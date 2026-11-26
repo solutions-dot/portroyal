@@ -20,6 +20,16 @@ P = {
  "shark-papers": dict(root=130.8, mode="mixo", chords=[[0, 2, 4], [3, 5, 7], [4, 6, 8]], bell=True, dark=0.4, pace=8.0, tremolo=0.05, films={"verdict": dict(mode="dorian", bell=False, dark=0.6)}),
  "windrush": dict(root=185.0, mode="major", chords=[[0, 2, 4], [5, 7, 9], [3, 5, 7], [4, 6, 8]], bell=True, dark=0.3, pace=9.0, tremolo=0.0, films={"arrival": dict(mode="dorian", pace=10.0, dark=0.5)}),
 }
+# games with no timed films: a bed per cinematic mood ('story' calm, 'event' grave), 120 seconds each (engine/cine.js plays them under every camera scene)
+P.update({
+ "bog-walk": dict(root=123.5, mode="dorian", chords=[[0, 2, 4], [1, 3, 5], [0, 3, 4]], bell=False, dark=0.6, pace=9.0, tremolo=0.05, films={}),
+ "eventide": dict(root=155.6, mode="dorian", chords=[[0, 2, 4], [3, 5, 7], [1, 3, 5]], bell=True, dark=0.4, pace=9.0, tremolo=0.0, films={}),
+ "kendal": dict(root=146.8, mode="mixo", chords=[[0, 2, 4], [3, 5, 7], [4, 6, 8]], bell=True, dark=0.3, pace=8.0, tremolo=0.0, films={"event": dict(mode="minor", bell=False, dark=0.9, pace=9.0, tremolo=0.15)}),
+ "melissa": dict(root=130.8, mode="dorian", chords=[[0, 2, 4], [1, 3, 5], [0, 3, 4]], bell=False, dark=0.5, pace=9.0, tremolo=0.05, films={"event": dict(dark=1.0, tremolo=0.3, pace=6.0)}),
+ "nanny": dict(root=110.0, mode="dorian", chords=[[0, 2, 4], [0, 3, 4], [1, 3, 5]], bell=False, dark=0.6, pace=10.0, tremolo=0.0, films={}),
+ "port-royal": dict(root=146.8, mode="minor", chords=[[0, 2, 4], [3, 5, 7], [0, 3, 4]], bell=True, dark=0.5, pace=9.0, tremolo=0.05, films={"event": dict(bell=False, dark=1.0, tremolo=0.35, pace=6.0)}),
+})
+BEDS = {"bog-walk": ["story"], "eventide": ["story"], "kendal": ["story", "event"], "melissa": ["story", "event"], "nanny": ["story"], "port-royal": ["story", "event"]}
 def note(root, mode, deg):
     sc = MODES[mode]; o, i = divmod(deg, len(sc)); return root * 2 ** ((sc[i] + 12 * o) / 12)
 def pad(freq, n, rng):
@@ -53,7 +63,7 @@ def make(game, film, duration):
     return out / (np.abs(out).max() + 1e-9) * 0.23
 if __name__ == "__main__":
     game = sys.argv[1]; root = os.path.dirname(os.path.abspath(__file__)) + "/../../"
-    films = json.loads(subprocess.check_output(["node", "-e", "import('./games/%s/src/content.js').then(m=>console.log(JSON.stringify(Object.fromEntries(Object.entries(m.FILMS||{}).map(([k,f])=>[k,f.duration])))))" % game], cwd=root, stderr=subprocess.DEVNULL))
+    films = {b: 120 for b in BEDS[game]} if game in BEDS else json.loads(subprocess.check_output(["node", "-e", "import('./games/%s/src/content.js').then(m=>console.log(JSON.stringify(Object.fromEntries(Object.entries(m.FILMS||{}).map(([k,f])=>[k,f.duration])))))" % game], cwd=root, stderr=subprocess.DEVNULL))
     if not films: films = {"arrival": 98}   # Selassie: one film, END = 98
     out_dir = f"{root}games/{game}/site/scores"; os.makedirs(out_dir, exist_ok=True)
     for film, dur in films.items():

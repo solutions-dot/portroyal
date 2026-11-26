@@ -111,3 +111,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
   addEventListener('pagehide', () => { stopVoice(); stopScore(); });
   return api;
 }
+
+/* one shared voice channel for the page, for modules that have no game object (the cinematic bed in engine/cine.js, the text narrator in engine/narrator.js) */
+let shared = null;
+export const sharedVoice = () => (shared ||= createFilmVoice());

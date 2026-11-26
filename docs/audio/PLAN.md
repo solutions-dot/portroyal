@@ -45,3 +45,7 @@ Counts come from `node tools/audio/cue-inventory.mjs`.
 - `node tools/xaymaca/voice-coverage.mjs` for Xaymaca. A generic version for every game comes with the first new voiced game.
 - Clip against script: transcribe each clip (a local model works) and compare. Xaymaca, 26 November 2026: 132 clips checked, 2 to listen to by ear ("Navassa" heard as "Nevada", and "Ten canoes. Our people made them." heard as "10 canoes are people made them"). The other differences were only digits or contractions.
 - Every clip must fit its caption window. Run the timing check from `docs/AUDIO.md` section 5.
+
+## Casting notes from the owner
+
+- **Port Royal (26 November 2026):** the English characters, and anyone who is not Black, could use a pre-built Cartesia library voice with an English accent. Choose and audition from the library when the character-voice phase starts; Black Jamaican characters use the account's saved voices.

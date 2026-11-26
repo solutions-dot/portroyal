@@ -2,7 +2,8 @@ import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '..
 import { addRecap } from '../../../engine/recap.js';
 import { makeHelicopter } from '../../../engine/helicopter.js';   /* the shared helicopter (engine/helicopter.js) */   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
-import { renderFramed, playChapterFade, showCinematicSkip } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { createNarrator } from '../../../engine/narrator.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
@@ -47,6 +48,9 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
+NARR.preload();
+configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);
 const PI = Math.PI;
@@ -269,14 +273,14 @@ function card(title, paras, btns, { col = false, dismiss } = {}) {
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
 function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
-function chapterFade(title, sub, fn) {   /* fade to a black title card, change the scene while it is dark, fade back */
+function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
 }
 function fadeBlack(on, ms = 900) { const f = $('fade'); f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease'; if (on) { f.hidden = false; $('fadeT').textContent = ''; $('fadeS').textContent = ''; f.classList.remove('txt'); requestAnimationFrame(() => f.classList.add('on')); } else { f.classList.remove('on'); setTimeout(() => { f.hidden = true; f.style.transition = ''; }, QUICK ? 0 : ms + 50); } }
 const bars = (on) => document.body.classList.toggle('cine', on);
 let subTimer = 0;
-function say(text, ms = 3800) { const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
+function say(text, ms = 3800) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
 function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
@@ -610,7 +614,7 @@ async function kingstonCutaway() {
 let hideStormSkip;
 async function stormRun(kind) {
   const ep = EP, P = P_(), L = LINES[kind], hall = kind === 'm25', live = () => ep === EP && ST.on, lights = hall ? P.lights : [P.lampLight];
-  hideStormSkip = showCinematicSkip(() => {
+  nextCinematicBed('event'); hideStormSkip = showCinematicSkip(() => {
     EP++; ST.on = false; moveLock = false; SB = null; endCut(); bars(false); say('', 0);
     FX.shake = 0; FX.roll = 0; HOLD.on = false; $('holdwrap').hidden = true;
     STORM.clear(); SFX.setBeds({}, 0.1); flash(0, 0); $('fade').classList.remove('on', 'txt'); $('fade').hidden = true;

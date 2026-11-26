@@ -6,7 +6,8 @@
 
      renderFramed(renderer, scene, camera, cine)   in place of renderer.render(scene, camera); cine: is a camera scene playing now
      cineFov(fov, aspect)                          the field of view used, for a check or a test view */
-import { draw } from './look.js';   /* the picture itself: light from the sky and soft shading in corners (engine/look.js) */
+import { draw } from './look.js';
+import { sharedVoice } from './filmvoice.js';   /* the picture itself: light from the sky and soft shading in corners (engine/look.js) */
 const D = Math.PI / 180;
 export function cineFov(fov, aspect) {
   if (!(aspect > 0) || aspect >= 1) return fov;
@@ -20,13 +21,19 @@ export function renderFramed(renderer, scene, camera, cine) {
   camera.fov = f; camera.updateProjectionMatrix(); draw(renderer, scene, camera); camera.fov = f0; camera.updateProjectionMatrix();
 }
 
-let skipButton, dismissSkip;
+let skipButton, dismissSkip, bedDefault = null;
+/* A quiet music bed under every cinematic (owner rule 16): a game calls configureCinematicBed('story') once, and each showCinematicSkip starts
+   scores/score-story.mp3 (or its own { bed: 'event' }) until the scene ends or is skipped. Games that play films through engine/filmvoice.js leave it unset. */
+export const configureCinematicBed = (name) => { bedDefault = name; };
+let bedOnce = null;
+/* the next cinematic only plays this bed, e.g. nextCinematicBed('event') just before the earthquake, the crash or the storm */
+export const nextCinematicBed = (name) => { bedOnce = name; };
 
 /* A cinematic shows only the skip X (owner, 21 November 2026, every game): the Journal, Exit, sound, reset and view buttons and a scene's own
    Pause / Read instead bar hide while it plays (body.cine-on), and the X is faded so it does not pull the eye, brighter when touched or focused. Chapter title cards have no X at all. */
 
 /* A scene owns its button until it finishes or a new scene replaces it. */
-export function showCinematicSkip(onSkip, { bottom = false, left = false } = {}) {
+export function showCinematicSkip(onSkip, { bottom = false, left = false, bed } = {}) {
   if (!skipButton) {
     skipButton = document.createElement('button');
     skipButton.type = 'button';
@@ -73,8 +80,12 @@ export function showCinematicSkip(onSkip, { bottom = false, left = false } = {})
     skipButton.hidden = true;
     skipButton.onclick = null;
     document.body.classList.remove('cine-on');
+    if (bedOn) sharedVoice().stopScore();
   };
+  const useBed = bed || bedOnce || bedDefault; bedOnce = null;
+  const bedOn = !!useBed;
   dismissSkip = dismiss;
+  if (bedOn) sharedVoice().syncScore(useBed, () => 0);
   skipButton.classList.toggle('bottom', bottom);
   skipButton.classList.toggle('left', left);
   skipButton.hidden = false;

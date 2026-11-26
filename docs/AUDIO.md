@@ -86,3 +86,18 @@ Every film in Air Jamaica, The Mad Master, Morant Bay, Rose Hall, The Emperor's 
 Level: peak about -13 dB, like Xaymaca's scores. The engine plays them at 0.40 and ducks to 0.17 under a voice. **These were made and measured but not yet listened to.** A listening pass on phone speakers and headphones decides whether any palette needs changing (a film can override `mood` in `make-score.py`).
 
 **Xaymaca on the shared player (26 November 2026).** `games/xaymaca/src/narration.js` keeps its exports but calls `engine/filmvoice.js`, so the director, dialogue and ending are unchanged and there is one player for all eight voiced games. Tested in a browser: the score plays at 0.40, ducks to 0.17 under a voice and returns to 0.40 when it ends; a character line replaces a caption's voice (never two voices); `stop()` silences all. The clip files and `src/line-voices.js` are untouched.
+
+## Eight games with no film captions (26 November 2026)
+
+Bog Walk, Eventide, Kendal, Melissa, Nanny Town, Tivoli, Marcus Garvey and Port Royal have camera scenes and title cards, not timed films. The Narrator reads **text the game already shows**, so nothing new is invented and the history stays as vetted.
+
+- **How it works:** `engine/narrator.js` loads `voices/index.json` (exact on-screen text to clip file) and `speak(text)` plays that clip on the shared voice channel. Each game calls it from its chapter title card (`chapterFade`, or `titleFade` in Port Royal, or `card` in Tivoli) and from its camera-scene captions (`say`, in Eventide, Kendal, Melissa, Nanny). Text with no clip is silent.
+- **Making the lines:** `node tools/audio/voice-lines.mjs <game> --write` lists the text and the spoken version (`voice-lines.json`); record each with the Narrator; `node tools/audio/fetch-lines.mjs <game> <first> < ids` downloads them and writes the index. It repairs a link id with a swapped or dropped character.
+- **Lines recorded (109):** Kendal 47, Eventide 16, Melissa 14, Garvey 10, Tivoli 8, Bog Walk 6, Nanny 6, Port Royal 2.
+- **Music (owner rule 16):** `configureCinematicBed('story')` plays `scores/score-story.mp3` under every `showCinematicSkip` scene; `nextCinematicBed('event')` picks a graver bed for the Kendal crash, the Melissa storm and the Port Royal earthquake. Made by `tools/audio/make-score.py`, 120 seconds each. Tivoli and Garvey have no `showCinematicSkip` scenes, so they have no bed yet (Tivoli's May 2010 scenes need the owner's say first).
+- **Gaps:** Port Royal has only its two title cards in the scan; its chapter cards go through `startCard` and the look-shots (`LS.play` lines) are not yet voiced. Nanny's `SAY` and `CARDS`, Bog Walk's story captions (`say(who, text)`), Garvey's scene text and Tivoli's chapter text are not yet voiced. Closers (the chapter-end cards) are not voiced: the next chapter's title card does that job. A line read with a name label ("Lloyd: We are going so fast!") is read by the Narrator, not by Lloyd.
+- **Delivery:** these clips use Cartesia's default delivery. They have NOT been directed per line (emotion and pace). See "Delivery" below.
+
+## Delivery (tone and pace), open as of 26 November 2026
+
+All 317 narrator clips (208 film captions, 109 text lines) and the earlier Xaymaca clips were recorded with default delivery. Words are checked by transcription; **how a line sounds has not been checked, by anyone**. Cartesia's `text_to_speech` takes `emotion` and `speed` per line. A plan: give each line a `delivery` (for example calm, sad, excited, tense; speed 0.85 to 1.1), keep it in the voice script next to the text, record again, and have the owner listen to the scene with the music under it. Samples (flat against directed) were sent to the owner on 26 November 2026.
