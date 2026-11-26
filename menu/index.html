@@ -211,6 +211,29 @@
   @media (max-width:370px){.links{gap:.25rem}.links a,.links button{padding:0 .5rem;font-size:.72rem}.links .contact-pill span[aria-hidden]{display:none}}   /* the smallest phones: tighter, and the arrow goes */
   @media (max-width:760px){.game:not([data-game="port-royal"]){background-size:cover;background-position:50% 30%} .game.tivoli::before{background-position:50% 30%}.game:not([data-game="port-royal"])::after{background:linear-gradient(to top,rgba(4,27,42,.96) 0%,rgba(4,27,42,.78) 40%,rgba(4,27,42,0) 70%)}}   /* phones: every card shows its title, what happened, and Go there, one under the other */
   @media (max-width:760px){.game.windrush{min-height:400px}}   /* keep the ship above the title and controls */
+  /* Phones (owner, 26 November 2026: "some show majority sky"): a phone card is nearly square, so with "cover" the picture is exactly as tall as the card
+     and only its top shows above the words. Each picture is drawn a little wider than the card instead and slid up so its subject sits in the clear
+     window above the title. --s: picture width in card widths; --ar: picture height over width; --a: the share of the picture's height above the window;
+     --x: across. The card is the page width less its 1rem margins. */
+  @media (max-width:760px){
+    .game[data-crop]{background-size:calc(var(--s) * 100%) auto !important;background-position:var(--x,50%) calc((100vw - 2rem) * var(--s) * var(--ar) * var(--a) * -1) !important}
+    .game[data-crop]::after{background:linear-gradient(to top,rgba(4,27,42,.97) 0%,rgba(4,27,42,.94) 50%,rgba(4,27,42,.6) 60%,rgba(4,27,42,0) 74%) !important}   /* the wash reaches a little higher, so the foot of the slid-up picture melts into it */
+    .game.tivoli[data-crop]::before{inset:0;background-size:calc(var(--s) * 100%) auto;background-position:var(--x,50%) calc((100vw - 2rem) * var(--s) * var(--ar) * var(--a) * -1)}
+    .game[data-game="air-jamaica"]{--s:1.3;--ar:.5625;--a:.22}
+    .game[data-game="bog-walk"]{--s:1.35;--ar:.5625;--a:.3}
+    .game[data-game="eventide"]{--s:1.3;--ar:.607;--a:.08}
+    .game[data-game="garvey"]{--s:1.3;--ar:.5625;--a:.3;--x:45%}
+    .game[data-game="hutchinson"]{--s:1.3;--ar:.625;--a:.22;--x:40%}
+    .game[data-game="kendal"]{--s:1.35;--ar:.5625;--a:.28;--x:35%}
+    .game[data-game="melissa"]{--s:1.3;--ar:.5625;--a:.24}
+    .game[data-game="morant-bay"]{--s:1.3;--ar:.625;--a:.32}
+    .game[data-game="nanny"]{--s:1.3;--ar:.5625;--a:.3;--x:60%}
+    .game[data-game="rose-hall"]{--s:1.3;--ar:.625;--a:.3;--x:55%}
+    .game[data-game="selassie"]{--s:1.3;--ar:.5625;--a:.32;--x:60%}
+    .game[data-game="shark-papers"]{--s:1.35;--ar:.625;--a:.36;--x:40%}
+    .game[data-game="tivoli"]{--s:1.3;--ar:.5625;--a:.24}
+    .game[data-game="xaymaca"]{--s:1.3;--ar:.625;--a:.3;--x:55%}
+  }
   @media (max-width:760px) and (max-height:700px){.game .text{padding:.8rem 1rem}.play{min-height:44px;padding:0 1.2rem;font-size:1rem}}
   @media (prefers-reduced-motion:reduce){.play{animation:none}}
 </style>
@@ -259,7 +282,7 @@
     <p class="lib-sr" id="libstatus" role="status"></p>
   </div>
   <section class="games" aria-label="Games">
-    <a class="game xaymaca" data-game="xaymaca" data-year="1503" data-genres="family" data-tags="taino columbus canoes eclipse st-ann 1500s" data-age="6" href="games/xaymaca/site/">
+    <a class="game xaymaca" data-crop data-game="xaymaca" data-year="1503" data-genres="family" data-tags="taino columbus canoes eclipse st-ann 1500s" data-age="6" href="games/xaymaca/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -280,7 +303,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game nanny" data-game="nanny" data-year="1734" data-genres="freedom" data-tags="maroons mountains resistance 1700s" data-age="6" href="games/nanny/site/">
+    <a class="game nanny" data-crop data-game="nanny" data-year="1734" data-genres="freedom" data-tags="maroons mountains resistance 1700s" data-age="6" href="games/nanny/site/">
       <div class="text">
         <div>
           <span class="year">1734</span>
@@ -290,7 +313,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game hutchinson" data-game="hutchinson" data-year="1773" data-genres="mystery" data-tags="crime mystery st-ann 1700s hard-history" data-age="13" data-warn="This story is about a man who killed travellers on a lonely road. It has fear, a gunshot and a hanging. Nothing is shown close up." href="games/hutchinson/site/">
+    <a class="game hutchinson" data-crop data-game="hutchinson" data-year="1773" data-genres="mystery" data-tags="crime mystery st-ann 1700s hard-history" data-age="13" data-warn="This story is about a man who killed travellers on a lonely road. It has fear, a gunshot and a hanging. Nothing is shown close up." href="games/hutchinson/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -301,7 +324,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game sharkpapers" data-game="shark-papers" data-year="1799" data-genres="mystery" data-tags="sea ships court detective 1700s" data-age="6" href="games/shark-papers/site/">
+    <a class="game sharkpapers" data-crop data-game="shark-papers" data-year="1799" data-genres="mystery" data-tags="sea ships court detective 1700s" data-age="6" href="games/shark-papers/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -312,7 +335,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game rosehall" data-game="rose-hall" data-year="1831" data-genres="mystery" data-tags="legend ghost-story st-james 1800s hard-history" data-age="13" data-warn="This is a ghost story about murder, and then the truth behind it. It talks about killing and about slavery. Nothing is shown close up." href="games/rose-hall/site/">
+    <a class="game rosehall" data-crop data-game="rose-hall" data-year="1831" data-genres="mystery" data-tags="legend ghost-story st-james 1800s hard-history" data-age="13" data-warn="This is a ghost story about murder, and then the truth behind it. It talks about killing and about slavery. Nothing is shown close up." href="games/rose-hall/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -322,7 +345,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game morantbay" data-game="morant-bay" data-year="1865" data-genres="freedom" data-tags="rebellion freedom st-thomas paul-bogle 1800s hard-history" data-age="13" data-warn="This story is about the Morant Bay rebellion of 1865. It has angry crowds, gunfire at a distance, burning and harsh punishment, then a cut away. There is no blood." href="games/morant-bay/site/">
+    <a class="game morantbay" data-crop data-game="morant-bay" data-year="1865" data-genres="freedom" data-tags="rebellion freedom st-thomas paul-bogle 1800s hard-history" data-age="13" data-warn="This story is about the Morant Bay rebellion of 1865. It has angry crowds, gunfire at a distance, burning and harsh punishment, then a cut away. There is no blood." href="games/morant-bay/site/">
       <p class="tag">New</p>
       <div class="text">
         <div>
@@ -333,7 +356,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game bogwalk" data-game="bog-walk" data-year="1904" data-genres="disasters" data-tags="flood workers engineering kingston" data-age="6" href="games/bog-walk/site/">
+    <a class="game bogwalk" data-crop data-game="bog-walk" data-year="1904" data-genres="disasters" data-tags="flood workers engineering kingston" data-age="6" href="games/bog-walk/site/">
       <div class="text">
         <div>
           <span class="year">1904</span>
@@ -343,7 +366,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game garvey" data-game="garvey" data-year="1914" data-genres="leaders freedom" data-tags="biography movement kingston ships" data-age="6" href="games/garvey/site/">
+    <a class="game garvey" data-crop data-game="garvey" data-year="1914" data-genres="leaders freedom" data-tags="biography movement kingston ships" data-age="6" href="games/garvey/site/">
       <div class="text">
         <div>
           <span class="year">Early 1900s onward</span>
@@ -360,7 +383,7 @@
         <p>Cross the Atlantic with a Jamaican family, then stand beside them when their right to stay in England is questioned.</p>
       </div><span class="play">Go there</span></div>
     </a>
-    <a class="game kendal" data-game="kendal" data-year="1957" data-genres="disasters" data-tags="railway crash journey" data-age="6" href="games/kendal/site/">
+    <a class="game kendal" data-crop data-game="kendal" data-year="1957" data-genres="disasters" data-tags="railway crash journey" data-age="6" href="games/kendal/site/">
       <div class="text">
         <div>
           <span class="year">1957</span>
@@ -370,7 +393,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game selassie" data-game="selassie" data-year="1966" data-genres="leaders family" data-tags="celebration kingston family" data-age="6" href="games/selassie/site/">
+    <a class="game selassie" data-crop data-game="selassie" data-year="1966" data-genres="leaders family" data-tags="celebration kingston family" data-age="6" href="games/selassie/site/">
       <div class="text">
         <div>
           <span class="year">1966</span>
@@ -380,7 +403,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game airjamaica" data-game="air-jamaica" data-year="1969" data-genres="family" data-tags="airline flight family" data-age="6" href="games/air-jamaica/site/">
+    <a class="game airjamaica" data-crop data-game="air-jamaica" data-year="1969" data-genres="family" data-tags="airline flight family" data-age="6" href="games/air-jamaica/site/">
       <div class="text">
         <div>
           <span class="year">1969–2010</span>
@@ -390,7 +413,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game eventide" data-game="eventide" data-year="1980" data-genres="disasters" data-tags="fire kingston elders" data-age="6" href="games/eventide/site/">
+    <a class="game eventide" data-crop data-game="eventide" data-year="1980" data-genres="disasters" data-tags="fire kingston elders" data-age="6" href="games/eventide/site/">
       <div class="text">
         <div>
           <span class="year">1980</span>
@@ -400,7 +423,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game tivoli" data-game="tivoli" data-year="2010" data-genres="freedom" data-tags="kingston community hard-history" data-age="13" data-warn="This story is about the 2010 security operation in Tivoli Gardens, when many people died. It has gunfire and fear. No one is hit on the screen." href="games/tivoli/site/">
+    <a class="game tivoli" data-crop data-game="tivoli" data-year="2010" data-genres="freedom" data-tags="kingston community hard-history" data-age="13" data-warn="This story is about the 2010 security operation in Tivoli Gardens, when many people died. It has gunfire and fear. No one is hit on the screen." href="games/tivoli/site/">
       <div class="text">
         <div>
           <span class="year">1960s to today</span>
@@ -410,7 +433,7 @@
         <span class="play">Go there</span>
       </div>
     </a>
-    <a class="game melissa" data-game="melissa" data-year="2025" data-genres="disasters family" data-tags="storm family community" data-age="6" href="games/melissa/site/">
+    <a class="game melissa" data-crop data-game="melissa" data-year="2025" data-genres="disasters family" data-tags="storm family community" data-age="6" href="games/melissa/site/">
       <div class="text">
         <div>
           <span class="year">2025</span>
