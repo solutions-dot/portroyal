@@ -13,7 +13,7 @@ const ORD = { 1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth", 6: "
 const ordinal = (n) => ORD[n] || (n < 100 ? TENS[Math.floor(n / 10)] + "-" + ORD[n % 10] : String(n));
 const MONTH = "January|February|March|April|May|June|July|August|September|October|November|December";
 // the model says the same respelling differently by context (owner, 26 November 2026): the opening line of Air Jamaica is right with "pal-e-say-doze", the others with "Palesaydoze"
-const RESPELL = [[/gallery, Palisadoes/g, "gallery, pal-e-say-doze"], [/Palisadoes/g, "Palesaydoze"], [/\bthot\b/g, "thought"]];
+const RESPELL = [[/gallery, Palisadoes/g, "gallery, pal-e-say-doze"], [/There it is\. Palisadoes\./g, "There it is. The airport, pal-e-say-doze."], [/reaches Palisadoes/g, "reaches the airport, pal-e-say-doze"], [/Palisadoes/g, "Palesaydoze"], [/\bthot\b/g, "thought"]];
 export function speak(s) {
   let t = s.replace(/[“”"]/g, "").replace(/’/g, "'").replace(/…/g, "...").replace(/\.\.\./g, ", ").replace(/ — | – /g, ", ").replace(/\bLEGEND\.\s*/g, "Legend. ").replace(/\bMr\b\.?/g, "Mister").replace(/\bMrs\b\.?/g, "Missus").replace(/\bDr\b\.?/g, "Doctor").replace(/\bSt\b\.?(?=\s)/g, "Saint").replace(/\bCapt\b\.?/g, "Captain").replace(/\bLieut\b\.?/g, "Lieutenant").replace(/ \/ /g, " ");
   t = t.replace(new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)? (${MONTH})\\b`, "g"), (_, d, m) => "the " + ordinal(+d) + " of " + m);
