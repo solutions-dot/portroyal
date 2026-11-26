@@ -12,6 +12,7 @@
 
    Wire it into the game's ?test=audit: results.push(...auditReveals(Q, { groundAt })) for every place. Each line starts "reveal <id>". */
 import * as THREE from 'three';
+import { auditResting } from './audit-placed.js';
 
 const glow = (o) => { const m = [].concat(o.material)[0]; return !m || (m.isMeshBasicMaterial && m.transparent) || o.userData.flame || o.userData.guide; };
 function meshes(group) {
@@ -29,7 +30,7 @@ function meshes(group) {
 const fixedTo = (o) => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.fixed) return true; return false; };
 const moved = (a, b) => !a || a.min.distanceTo(b.min) > 0.01 || a.max.distanceTo(b.max) > 0.01;
 
-export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02 } = {}) {
+export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02, tasks = null, resting = false } = {}) {   /* resting: also run the things-rest-on-something check (engine/audit-placed.js); on in Xaymaca, off elsewhere until each game's findings are sorted (docs/reviews/floating-20261126.md) */
   const out = [], R = Q.reveal || {}, g = groundAt || (() => 0), V = new THREE.Vector3();
   for (const id of Object.keys(R)) {
     const fn = R[id]; if (typeof fn !== 'function') continue;
@@ -75,5 +76,6 @@ export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02 } =
     }
     fn(false); settle?.();
   }
+  if (resting) out.push(...auditResting(Q, { tasks, groundAt }));   /* things that should rest on something, in every game's audit (engine/audit-placed.js, 26 November 2026) */
   return out;
 }
