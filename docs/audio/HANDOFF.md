@@ -13,14 +13,12 @@ Read this first to resume. It is written so another session or another model can
 
 The owner approved the delivery (26 November 2026: "the delivery sounds good, we need this on the clips"). `tools/audio/delivery.mjs` has already written `emotion` and `speed` into every line of `voice-script.json` and `voice-lines.json`. The clips on disk for most lines are still the first, flat recording.
 
-**Directed (done and checked):** Air Jamaica 33 of 33; The Mad Master 34 of 35 (`warrant-32` failed to download); Morant Bay 27 of 65 (indices 0 to 26).
+**Directed (done and checked by transcription):** Air Jamaica 33 of 33; The Mad Master 34 of 35 (`warrant-32` failed to download); Morant Bay 65 of 65; Rose Hall 31 of 31.
 
 **Still to record with delivery** (`node tools/audio/stale-clips.mjs <game>` lists them; it compares each clip's last commit with the delivery commit `87970788`):
 
 | Game | Left |
 |---|---|
-| Morant Bay | 38 (indices 27 to 64, from `riot-0`) |
-| Rose Hall | 31 |
 | Shark Papers | 27 |
 | Selassie | 8 |
 | Windrush | 8 |
@@ -69,3 +67,5 @@ Other games' characters (Air Jamaica, The Mad Master, Morant Bay, Rose Hall, Sel
 - **Direct every clip** (emotion and pace per line), not only some. Until the table above reaches zero stale clips, the games play a mix of directed and flat takes.
 - **Add sounds and music where needed.** Gaps found so far: Tivoli and Garvey have no cinematic bed (Tivoli's May 2010 scenes need the owner's say first; Garvey has no `showCinematicSkip` scenes, so the chapter-7 record scene and the ship scenes could take a bed or a gramophone crackle); the title cards and chapter closers of the eight no-caption games have no sound of their own; Port Royal's character lines are not wired. Audit each game once by playing it with sound on and note silent stretches.
 - **Done on 26 November 2026 after the handoff was first written:** Xaymaca's guide Miss Sharon (the 2026 chapter, 11 clips) now uses the saved voice "Woman generic" instead of Rosie; Garvey's three sourced record lines play in the recreated "Marcus Garvey" voice (see `docs/games/garvey.md`, "His voice").
+
+**Update 26 November 2026, 22:50 UTC:** Morant Bay and Rose Hall are fully directed and checked. Left: Shark Papers 27, Selassie 8, Windrush 8, The Mad Master 1 (`warrant-32`), then the 109 no-caption lines. `fetch-film.mjs` now repairs a mistyped link id by trying swapped, moved, dropped and wrong characters in parallel (`tools/audio/probe.sh`); ids with more than one error still fail, so re-record those and download right away.
