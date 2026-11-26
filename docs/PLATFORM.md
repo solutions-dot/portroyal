@@ -59,6 +59,8 @@ The standard order is Start (or Continue when a saved game is available), Chapte
 
 The sound and star buttons use matching boxes. A speaker and play triangle share one button. It shows Pause while the intro plays. On desktop, Sound and Star come before Exit, the last button. On phones and tablets the two buttons sit together in the upper-right header.
 
+**Touch me** (owner, 26 November 2026, sample A of three). On a phone or tablet whose browser refuses to start the narration by itself (the play is rejected with `NotAllowedError`), a small glowing gold hand print with the words "Touch me" appears in the empty top-left corner of the title, 16 px in from the edges and clear of the notch. Touching it plays the narration. It fades when touched, when the narration starts any other way, when the title closes, or after 5 seconds. Where the narration starts by itself it never appears, and on a desktop it never appears. It lives in `shared/intro-audio.js`, so all 16 games have it; the build copies that file into each game.
+
 `shared/title.css` owns the shared control styles and is copied to each game's `site/title.css` by `tools/build.mjs`. The template uses it too. Keep every opening screen usable on narrow phones and short landscape screens.
 
 ## The New badge
