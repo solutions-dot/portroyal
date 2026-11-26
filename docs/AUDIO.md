@@ -45,7 +45,7 @@ Deliver a dry voice preview for casting and a scene mix preview when reviewing m
 
 Cast foreign characters with a suitable accent for their background. Diego Méndez in Xaymaca uses Marcos, a Spain-based library voice, for his English dialogue. The interpreter uses Daniel's neutral English delivery. His historical Taíno accent is unknown, so the voice is an English storytelling performance. Record the choice per game and review a sample in context.
 
-Write all numbers as words in voice scripts and voiced captions. In Xaymaca, 1503 is “fifteen oh three”, and 29 February 1504 is “the twenty-ninth of February, fifteen oh four”. Check the actual spoken result.
+Write all numbers as words in the voice script only. On screen a number shows as it is written, as digits ("June 1503", "29 February 1504"): the caption text is never spelled the way it sounds (owner, 26 November 2026). A clip is chosen by its clip name, so the caption can differ from the spoken words. In Xaymaca, 1503 is “fifteen oh three”, and 29 February 1504 is “the twenty-ninth of February, fifteen oh four”. Check the actual spoken result.
 
 The Xaymaca player uses the shared Web Audio master for dialogue and cinematic narration. Conversation clips preload as the dialogue opens. A cinematic holds its current caption when needed until the active spoken line finishes. Test these paths with normal play and muted play.
 

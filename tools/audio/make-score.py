@@ -27,9 +27,11 @@ P.update({
  "kendal": dict(root=146.8, mode="mixo", chords=[[0, 2, 4], [3, 5, 7], [4, 6, 8]], bell=True, dark=0.3, pace=8.0, tremolo=0.0, films={"event": dict(mode="minor", bell=False, dark=0.9, pace=9.0, tremolo=0.15)}),
  "melissa": dict(root=130.8, mode="dorian", chords=[[0, 2, 4], [1, 3, 5], [0, 3, 4]], bell=False, dark=0.5, pace=9.0, tremolo=0.05, films={"event": dict(dark=1.0, tremolo=0.3, pace=6.0)}),
  "nanny": dict(root=110.0, mode="dorian", chords=[[0, 2, 4], [0, 3, 4], [1, 3, 5]], bell=False, dark=0.6, pace=10.0, tremolo=0.0, films={}),
+ "tivoli": dict(root=98.0, mode="dorian", chords=[[0, 2, 4], [1, 3, 5], [0, 3, 4]], bell=False, dark=0.8, pace=10.0, tremolo=0.05, films={"event": dict(dark=1.0, tremolo=0.12, pace=11.0)}),
+ "garvey": dict(root=130.8, mode="mixo", chords=[[0, 2, 4]], bell=False, dark=0.2, pace=10.0, tremolo=0.0, films={}),
  "port-royal": dict(root=146.8, mode="minor", chords=[[0, 2, 4], [3, 5, 7], [0, 3, 4]], bell=True, dark=0.5, pace=9.0, tremolo=0.05, films={"event": dict(bell=False, dark=1.0, tremolo=0.35, pace=6.0)}),
 })
-BEDS = {"bog-walk": ["story"], "eventide": ["story"], "kendal": ["story", "event"], "melissa": ["story", "event"], "nanny": ["story"], "port-royal": ["story", "event"]}
+BEDS = {"tivoli": ["story", "event"], "garvey": ["record"], "bog-walk": ["story"], "eventide": ["story"], "kendal": ["story", "event"], "melissa": ["story", "event"], "nanny": ["story"], "port-royal": ["story", "event"]}
 def note(root, mode, deg):
     sc = MODES[mode]; o, i = divmod(deg, len(sc)); return root * 2 ** ((sc[i] + 12 * o) / 12)
 def pad(freq, n, rng):
@@ -41,7 +43,16 @@ def reverb(x, rng):
     n = int(SR * 2.4); ir = rng.standard_normal(n) * np.exp(-np.arange(n) / (SR * 0.55)); ir[0] = 0
     L = len(x) + n; X = np.fft.rfft(x, L); H = np.fft.rfft(ir, L); wet = np.fft.irfft(X * H, L)[:len(x)]
     return x + 0.35 * wet / (np.abs(wet).max() + 1e-9) * np.abs(x).max()
+def crackle(duration):
+    # a gramophone: a soft hiss and the odd pop (owner, 26 November 2026), narrow like an old record
+    rng = np.random.default_rng(7); n = int(duration * SR); h = rng.standard_normal(n) * 0.05
+    k = np.ones(6) / 6; h = np.convolve(h, k, mode="same")
+    for _ in range(int(duration * 3)):
+        i = int(rng.uniform(0, n - 400)); L = int(rng.uniform(20, 90)); h[i:i + L] += rng.standard_normal(L) * rng.uniform(0.08, 0.3) * np.exp(-np.arange(L) / 25)
+    fi = int(1.0 * SR); h[:fi] *= np.linspace(0, 1, fi); h[-fi:] *= np.linspace(1, 0, fi)
+    return h / (np.abs(h).max() + 1e-9) * 0.2
 def make(game, film, duration):
+    if film == "record": return crackle(duration)
     p = dict(P[game]); p.update(P[game]["films"].get(film, {})); rng = np.random.default_rng(abs(hash((game, film))) % 2**32 if False else sum(map(ord, game + film)))
     n = int((duration + 2.5) * SR); out = np.zeros(n); pace = p["pace"]; k = 0; t0 = 0.0
     while t0 < duration + 2.5:

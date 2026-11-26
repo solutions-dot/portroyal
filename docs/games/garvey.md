@@ -403,3 +403,7 @@ Footsteps follow the ground of each place (wood in the shop, hall, press, dock, 
 ## Autoplayer fix (22 November 2026)
 
 `?auto=9` stopped with a page error in its timeline-board step. It was the test, not the game: after its deliberate wrong tap the board shows the right answer and picks it for you, and taps are ignored meanwhile; the run tapped on at once, so every tap was ignored and the list stayed empty. It now waits until the answer is picked. `?auto=9`: ALLDONE.
+
+### His voice (owner, 26 November 2026)
+
+The account's saved voice "Marcus Garvey" (Cartesia, id `98b523a0-0957-49a4-a1a8-ff3e9205ef59`) reads his three sourced lines in the chapter 7 gramophone scene (`g-record-1..3.mp3`, played by `showStep` through `engine/narrator.js`). It is a **recreated voice**, not the 1921 recording, and the journal page "His voice on a record" says so. He still says nothing else: every other line is the story's or a fictional person's.

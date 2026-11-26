@@ -1,3 +1,4 @@
+import { chapterChime } from './audio.js';
 /* engine/chapter-end.js: the "Chapter N is finished" card, the same in every game (owner, 21 November 2026).
    1. A pause first. The card came up the moment the last action finished, so the player could not see what they had just done.
       Now the screen must be clear (no dialogue, panel, card, fade or camera scene) for PAUSE_MS in a row before the card shows.
@@ -13,12 +14,12 @@ export const PAUSE_MS = 2500;
 const STEP = 200;
 
 export function offerNextChapter({ still = () => true, clear = () => true, show, pause = PAUSE_MS }) {
-  if (pause <= 0) { if (still() && clear()) { show(); return; } pause = 0; }   /* a test run (pause 0): at once, as the autoplayer expects */
+  if (pause <= 0) { if (still() && clear()) { chapterChime('close'); show(); return; } pause = 0; }   /* a test run (pause 0): at once, as the autoplayer expects */
   let quiet = 0;
   const tick = () => {
     if (!still()) return;
     quiet = clear() ? quiet + STEP : 0;
-    if (quiet >= pause) { show(); return; }
+    if (quiet >= pause) { chapterChime('close'); show(); return; }
     setTimeout(tick, STEP);
   };
   setTimeout(tick, STEP);

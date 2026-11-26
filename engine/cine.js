@@ -7,7 +7,8 @@
      renderFramed(renderer, scene, camera, cine)   in place of renderer.render(scene, camera); cine: is a camera scene playing now
      cineFov(fov, aspect)                          the field of view used, for a check or a test view */
 import { draw } from './look.js';
-import { sharedVoice } from './filmvoice.js';   /* the picture itself: light from the sky and soft shading in corners (engine/look.js) */
+import { sharedVoice } from './filmvoice.js';
+import { chapterChime } from './audio.js';   /* the picture itself: light from the sky and soft shading in corners (engine/look.js) */
 const D = Math.PI / 180;
 export function cineFov(fov, aspect) {
   if (!(aspect > 0) || aspect >= 1) return fov;
@@ -97,6 +98,7 @@ export function showCinematicSkip(onSkip, { bottom = false, left = false, bed } 
 /* A chapter title card is short and has no skip X (owner, 21 November 2026: the X to close should not be on the chapter text screens, in any game).
    The chapter setup runs once. */
 export function playChapterFade(fade, setup, onDone, [open, textOff, fadeOut, end]) {
+  chapterChime('open');   /* a soft chime under the title card */
   let applied = false;
   const apply = () => { if (!applied) { applied = true; setup(); } };
   const finish = () => {
