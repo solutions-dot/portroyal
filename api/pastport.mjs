@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { catalogPath, isWriteConflict, read, records, saveProgress, storageReady, write } from '../server/pastport-store.mjs';
+import { allRecords, catalogPath, isWriteConflict, read, records, saveProgress, storageReady, write } from '../server/pastport-store.mjs';
 
 const DAY = 86_400_000;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -45,8 +45,31 @@ async function payload(request, max) {
 }
 
 const views = ['Portrait','Landscape'];
-const issueKinds = ['Script error','Asset load failure','Unhandled rejection','Graphics context lost','Startup failure','Chapter load failure'];
-function diagnostics(body) {
+const issueKinds = ['Script error','Asset load failure','Unhandled rejection','Graphics context lost','Startup failure','Chapter load failure','Long freeze'];
+const clean = (value, limit, pattern = /[^\w .,:;'"()[\]{}<>=!?/+*&%#-]/g) => typeof value === 'string' ? value.replace(pattern, ' ').replace(/\s+/g, ' ').trim().slice(0, limit) : '';
+const number = (value, min, max) => typeof value === 'number' && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : null;
+const whole = (value, min, max) => { const n = number(value, min, max); return n === null ? null : Math.round(n); };
+
+/* Device, screen and graphics details. Each field is cleaned on its own, so one odd value never loses a visit. */
+function environment(env) {
+  if (!env || typeof env !== 'object' || Array.isArray(env)) return {};
+  const os = ['iOS','Android','Windows','macOS','ChromeOS','Linux','Other'].includes(env.os) ? env.os : 'Other';
+  return {
+    os, osVersion: clean(env.osVersion, 8, /[^\d.]/g), browserVersion: clean(env.browserVersion, 8, /[^\d.]/g),
+    touch: env.touch === true, screenW: whole(env.screenW, 0, 20000), screenH: whole(env.screenH, 0, 20000),
+    viewW: whole(env.viewW, 0, 20000), viewH: whole(env.viewH, 0, 20000), dpr: number(env.dpr, 0, 10),
+    cores: whole(env.cores, 0, 512), memory: number(env.memory, 0, 1024), gpu: clean(env.gpu, 80), webgl: env.webgl !== false,
+    lang: clean(env.lang, 16, /[^\w-]/g), net: clean(env.net, 8, /[^\w-]/g), saveData: env.saveData === true, standalone: env.standalone === true
+  };
+}
+
+function performanceOf(perf) {
+  if (!perf || typeof perf !== 'object' || Array.isArray(perf)) return {};
+  return { load: whole(perf.load, 0, 600000), fps: whole(perf.fps, 0, 240), fpsLow: whole(perf.fpsLow, 0, 240),
+    longest: whole(perf.longest, 0, 60000), samples: whole(perf.samples, 0, 1e6) ?? 0, taps: whole(perf.taps, 0, 1e6) ?? 0 };
+}
+
+function diagnostics(body, now) {
   if (body.device === undefined) return {}; // Visits from earlier builds.
   if (!['Phone','Tablet','Desktop'].includes(body.device) ||
       !['Chrome','Edge','Firefox','Safari','Samsung Internet','Other'].includes(body.browser) ||
@@ -55,19 +78,30 @@ function diagnostics(body) {
       !Array.isArray(body.issues) || body.issues.length > 16) return null;
   const issues = [];
   for (const x of body.issues) {
-    if (!x || !issueKinds.includes(x.kind) || typeof x.file !== 'string' || !/^[a-zA-Z0-9_.-]{0,80}$/.test(x.file) ||
+    if (!x || !issueKinds.includes(x.kind) || typeof x.file !== 'string' || !/^[a-zA-Z0-9_./-]{0,80}$/.test(x.file) ||
         !integer(x.line,0,2147483647) || !integer(x.column,0,2147483647) || !integer(x.count,1,65535) ||
         !views.includes(x.orientation) || (x.chapter !== null && !integer(x.chapter,1,100)) ||
         (x.step !== null && !integer(x.step,0,10000))) return null;
-    issues.push({kind:x.kind,file:x.file,line:x.line,column:x.column,count:x.count,orientation:x.orientation,chapter:x.chapter,step:x.step});
+    issues.push({kind:x.kind,message:clean(x.message,160),file:x.file,line:x.line,column:x.column,count:x.count,
+      orientation:x.orientation,chapter:x.chapter,step:x.step,at:whole(x.at,0,86400)});
   }
-  return {device:body.device,browser:body.browser,orientation:body.orientation,startOrientation:body.startOrientation,rotations:body.rotations,build:body.build,issues};
+  const reached = Array.isArray(body.reached) ? body.reached.slice(0, 40)
+    .filter((pair) => Array.isArray(pair) && integer(pair[0], 1, 100) && integer(pair[1], 0, 86400)).map(([c, s]) => [c, s]) : [];
+  return {
+    device:body.device,browser:body.browser,orientation:body.orientation,startOrientation:body.startOrientation,
+    rotations:body.rotations,build:body.build,issues,
+    user: uuid(body.user) ? body.user : '',
+    firstSeen: integer(body.firstSeen, Date.UTC(2026, 0, 1), now + 60_000) ? body.firstSeen : null,
+    opens: whole(body.opens, 0, 1e6),
+    referrer: clean(body.referrer, 80, /[^\w.-]/g),
+    ...environment(body.env), perf: performanceOf(body.perf), reached
+  };
 }
 
 async function progress(request, body) {
   const now = Date.now();
   const { page, visitor, game, startedAt, sequence, seconds, played, chapter, step, exit, screen } = body;
-  const health = diagnostics(body);
+  const health = diagnostics(body, now);
   if (!health || !uuid(page) || !uuid(visitor) ||
       typeof game !== 'string' || (game !== '' && !GAME.test(game)) ||
       !integer(startedAt, now - DAY, now + 60_000) || !integer(sequence, 1, 20_000) ||
@@ -134,6 +168,23 @@ async function admin(request, url) {
   if (request.method === 'GET' && kind === 'catalog') {
     const catalog = await read(catalogPath, true);
     return json({ settings: catalog?.value || DEFAULTS, revision: catalog?.etag || null });
+  }
+  if (request.method === 'GET' && kind === 'day') {
+    // Every visit of one Jamaica day in one reply. A day that can no longer change is saved as one file and read from there.
+    const day = url.searchParams.get('day') || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isFinite(Date.parse(day))) return json({ error: 'Invalid date.' }, 400);
+    const closed = Date.parse(day + 'T05:00:00Z') + 2 * DAY + 3_600_000 < Date.now();
+    const cachePath = `pastport/daily/${day}.json`;
+    if (closed) {
+      const cached = await read(cachePath).catch(() => null);
+      if (cached?.value?.version === 2) return json({ day, rows: cached.value.rows, closed, cached: true });
+    }
+    const rows = (await allRecords(`pastport/visits/${day}/`, 5000)).map((row) => {
+      const { tester, testerLabel, ...rest } = row;
+      return rest;
+    });
+    if (closed) await write(cachePath, { version: 2, day, rows }).catch(() => {});
+    return json({ day, rows, closed, cached: false });
   }
   if (request.method === 'GET' && ['visits', 'newsletter', 'contact'].includes(kind)) {
     const day = url.searchParams.get('day') || isoDay(Date.now());

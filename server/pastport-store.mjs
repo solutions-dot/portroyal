@@ -46,3 +46,23 @@ export async function saveProgress(path, value, invite) {
     }
   }
 }
+
+/* Every record under a prefix (up to `max`), read a few at a time so a busy day stays within the function's time. */
+export async function allRecords(prefix, max = 5000) {
+  const paths = [];
+  let cursor;
+  do {
+    const page = await list({ ...options(), prefix, cursor, limit: 1000 });
+    paths.push(...page.blobs.map((blob) => blob.pathname));
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor && paths.length < max);
+  const rows = new Array(Math.min(paths.length, max));
+  let next = 0;
+  await Promise.all(Array.from({ length: 24 }, async () => {
+    while (next < rows.length) {
+      const index = next++;
+      try { rows[index] = (await read(paths[index], true))?.value; } catch { rows[index] = null; }
+    }
+  }));
+  return rows.filter(Boolean);
+}
