@@ -15,14 +15,6 @@
   "emotion": "content",
   "speed": 1
  },
- "arrival-10": {
-  "text": "The aircraft reaches the airport, pal-e-say-doze.",
-  "caption": "The aircraft reaches Palisadoes.",
-  "film": "arrival",
-  "t": 10,
-  "emotion": "content",
-  "speed": 1
- },
  "arrival-24": {
   "text": "A great welcome gathers around it.",
   "caption": "A great welcome gathers around it.",
