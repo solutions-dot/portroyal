@@ -1,10 +1,10 @@
 /* engine/filmvoice.js: a narrator that speaks a film's captions (docs/AUDIO.md). A caption is [time, text, clip]; the third field is the
-   clip name, played from  voices/narrator-<clip>.mp3  next to the game's page. A caption with no third field stays silent. Clips play through the
+   clip name (when it is missing the clip is <film>-<second>), played from  voices/narrator-<clip>.mp3  next to the game's page. A caption with no third field stays silent. Clips play through the
    shared Web Audio master (engine/audio.js), so the sound button mutes them. Missing or blocked audio never stops a film: the caption still shows.
 
      const FV = createFilmVoice();
-     FV.preload(captions)                           when a film starts (skip it in a fast test run)
-     FV.sync(caption, () => seconds into caption)   every frame, with the caption showing now; starts a clip when the caption changes
+     FV.preload(captions, film)                     when a film starts (skip it in a fast test run)
+     FV.sync(caption, () => seconds into caption, film)  every frame, with the caption showing now; starts a clip when the caption changes
      time = FV.hold(time, nextTime, captions, end)  every tick: while a clip speaks, time never passes the next caption (or the end)
      FV.stop()                                      on pause, skip, stop, mute or leaving the page
      FV.active()                                    a clip is speaking now
@@ -15,6 +15,8 @@ import { AU } from './audio.js';
 export function createFilmVoice({ dir = './voices/', prefix = 'narrator-' } = {}) {
   const clips = new Map();
   let current = null, cue = null;
+  /* a caption's clip: its third field, or <film>-<second> (a dot in the second becomes an underscore) */
+  const stemOf = (c, film) => c[2] || (film ? film + '-' + String(c[0]).replace('.', '_') : null);
   const path = (stem) => dir + prefix + stem + '.mp3';
   function load(stem) {
     const p = path(stem);
@@ -44,9 +46,9 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-' } = {}
     });
   }
   const api = {
-    preload(captions) { if (AU.ctx) for (const c of captions || []) if (c[2]) load(c[2]); },
-    sync(caption, elapsed) {
-      const stem = AU.on && caption ? caption[2] : null;
+    preload(captions, film) { if (AU.ctx) for (const c of captions || []) { const s = stemOf(c, film); if (s) load(s); } },
+    sync(caption, elapsed, film) {
+      const stem = AU.on && caption ? stemOf(caption, film) : null;
       if (stem === cue) return;
       stop();
       if (stem) play(stem, elapsed);

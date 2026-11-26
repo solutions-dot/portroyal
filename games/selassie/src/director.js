@@ -16,6 +16,7 @@ import { showCinematicSkip } from "../../../engine/cine.js";
    Nobody is given invented words. Every camera stays outside the aircraft, the steps and the people (the dev check tests it). */
 import * as THREE from "three";
 import { ARRIVAL_CAPTIONS } from "./content.js";
+import { createFilmVoice } from "../../../engine/filmvoice.js";
 import { AU, chan, setG } from "../../../engine/audio.js";
 import { $ } from "./ui.js";
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
@@ -100,6 +101,8 @@ export function shots(P) {
 }
 export function createDirector({ camera, place, finish, read, fast = false }) {
   const D = { on: false, paused: false, time: 0, fast };
+  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js; captions here are [text, at] */
+  const NARR = ARRIVAL_CAPTIONS.map(([text, at]) => [at, text]);
   let engine = null,
     crowd = null,
     saluted = false,
@@ -125,6 +128,7 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
     document.body.classList.add("cine");
     $("sub").classList.remove("dim");
     $("sub").textContent = ARRIVAL_CAPTIONS[0][0];
+    if (!D.fast) FV.preload(NARR, "arrival");
   };
   /* the people at the steps, back as the story finds them after the arrival */
   function settle(Q) {
@@ -137,6 +141,7 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
   }
   let hideSkip;
   D.stop = () => {
+    FV.stop();
     hideSkip?.();
     D.on = false;
     settle(place());
@@ -151,6 +156,7 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
   };
   $("pauseCine").onclick = () => {
     D.paused = !D.paused;
+    if (D.paused) FV.stop();
     $("pauseCine").textContent = D.paused ? "Continue" : "Pause";
     $("pauseCine").setAttribute("aria-pressed", D.paused);
     if (D.paused && engine) {
@@ -210,13 +216,15 @@ export function createDirector({ camera, place, finish, read, fast = false }) {
         camera.lookAt(_look.set(...look(t, Q)));
         break;
       }
-    $("sub").textContent =
-      [...ARRIVAL_CAPTIONS].reverse().find(([, at]) => t >= at)?.[0] || "";
+    const caption = [...NARR].reverse().find(([at]) => t >= at);
+    $("sub").textContent = caption?.[1] || "";
+    if (!D.fast) FV.sync(caption, () => Math.max(0, D.time - caption[0]), "arrival");
   };
   D.tick = (dt) => {
     if (!D.on || D.paused) return;
-    const step = dt * (D.fast ? 25 : 1);
+    const step = dt * (D.fast ? 25 : 1), before = D.time;
     D.time += step;
+    if (!D.fast) D.time = FV.hold(before, D.time, NARR, END);
     D.pose(D.time, step);
     sound();
     if (D.time >= END) {

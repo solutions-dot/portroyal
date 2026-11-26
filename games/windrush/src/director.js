@@ -1,4 +1,5 @@
 import { showCinematicSkip } from "../../../engine/cine.js";
+import { createFilmVoice } from "../../../engine/filmvoice.js";
 /* Game-only camera scenes: the departure from Kingston and the arrival at Tilbury. The timing and compression are a reconstruction.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
    curve, and can change its lens. The ship can move along keyframes (she leaves her berth, or comes alongside), with her wake strengthening
@@ -23,6 +24,7 @@ function sampleKeys(keys, t) {
 }
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false }) {
   const D = { on: false, paused: false, time: 0, key: null, fast };
+  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js */
   let rumble = null,
     curve = null,
     lookCurve = null,
@@ -52,6 +54,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
     D.time = 0;
     D.paused = false;
     D.on = true;
+    if (!D.fast) FV.preload(FILMS[key].captions, key);
     fired = new Set();
     build(FILMS[key]);
     $("cineControls").hidden = false;
@@ -63,6 +66,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
   let hideSkip;
   D.hideSkip = () => hideSkip?.();
   D.stop = () => {
+    FV.stop();
     D.hideSkip();
     const Q = world && world();
     if (D.on && Q) {
@@ -87,6 +91,7 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
   };
   $("pauseCine").onclick = () => {
     D.paused = !D.paused;
+    if (D.paused) FV.stop();
     $("pauseCine").textContent = D.paused ? "Continue" : "Pause";
     $("pauseCine").setAttribute("aria-pressed", D.paused);
     if (D.paused && rumble) setG(rumble, 0, 0.1);
@@ -131,13 +136,16 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
           if (n) n.ctl.play(clip, true);
         }
       }
-    $("sub").textContent = [...F.captions].reverse().find((c) => t >= c[0])?.[1] || "";
+    const caption = [...F.captions].reverse().find((c) => t >= c[0]);
+    $("sub").textContent = caption?.[1] || "";
+    if (!D.fast) FV.sync(caption, () => Math.max(0, D.time - caption[0]), D.key);
   };
   D.tick = (dt) => {
     if (!D.on || D.paused) return;
     const F = FILMS[D.key],
       before = D.time;
     D.time += dt * (D.fast ? 30 : 1);
+    if (!D.fast) D.time = FV.hold(before, D.time, F.captions, F.duration);
     const t = D.time;
     D.apply(Math.min(t, F.duration));
     if (AU.ctx && AU.on && AU.ctx.state === "running") {
