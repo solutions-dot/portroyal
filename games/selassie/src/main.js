@@ -866,7 +866,7 @@ function nextCard() {
   uiSound("goal");
   card(
     "Chapter " + (i + 1) + " is finished!",
-    ["Well done. Next is " + nx.name + " (" + nx.year + ")."],
+    ["Well done."],
     [
       [
         "Next chapter",

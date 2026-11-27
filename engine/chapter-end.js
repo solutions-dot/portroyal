@@ -36,7 +36,8 @@ export function offerNextChapter({ still = () => true, clear = () => true, show,
      titleFade(fade, title, sub, done, quick)   the timed fade over #fade / #fadeT / #fadeS (engine/cine.js playChapterFade); quick: at once (tests) */
 import { playChapterFade } from './cine.js';
 let straight = false;
-export const nextLines = (nx) => ['Next is ' + nx.name + ' (' + nx.year + ').'];
+/* The end card no longer says what comes next (owner, 27 November 2026): the next chapter's own opening announces itself. */
+export const nextLines = () => ['Well done.'];
 export function goingStraight() { straight = true; }
 export function startCard() { const s = straight; straight = false; return !s; }
 export function titleFade(fade, title, sub, done, quick = false) {

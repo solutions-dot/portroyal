@@ -397,7 +397,7 @@ function callBackReturn(s) {
 }
 function nextCard(i, s) {   /* a finished chapter: offer the next one after a pause on a clear screen, with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS[i + 1]; if (!nx) return;
-  offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
+  offerNextChapter({ still: () => stage === s, clear: () => !(panelsOpen() || fading) && $('card').hidden, show: () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done.'], [{ t: 'Next chapter', go: () => { hideCard(); beginChapter(i + 1); } }]); } });
 }
 function showPlace(text) { const el = $('place'); el.textContent = text || CHAPTERS[chapterOf(stage)].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(showPlace.t); showPlace.t = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetTransient() { LOOK.cancel(); endSceneWarning(); hideStormSkip?.(); hideStorySkip?.(); HOLD.on = false;   /* leave anything running: scripted scenes, the storm, the camera director */

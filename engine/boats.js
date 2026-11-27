@@ -221,9 +221,11 @@ export function dugOut(o = {}) {
     /* a calabash bailer: half a dried gourd */
     { const x = 0.08 * L, z = -Math.min(0.14, hw * 0.35), g = new THREE.SphereGeometry(0.1, 10, 5, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); g.scale(1.1, 0.8, 1); g.translate(x, floor + 0.09, z); K.add(g, 0xa38a4c);
       const rim = new THREE.TorusGeometry(0.105, 0.008, 4, 12); rim.rotateX(Math.PI / 2); rim.scale(1.1, 1, 1); rim.translate(x, floor + 0.09, z); K.add(rim, 0x7a6232); }
-    /* the painter: a rope through a hole in the bow deck, its end coiled loose on the deck */
-    { const s = 0.93, x = xOf(s), y = sheer(s) + 0.01, rope = 0xbfa97e; K.tube([V(x + 0.12, y - 0.04, 0), V(x + 0.1, y + 0.04, 0.03), V(x - 0.02, y + 0.03, 0.05), V(x - 0.14, y + 0.025, 0)], 0.012, rope, 8, 4);
-      for (let i = 0; i < 2; i++) { const g = new THREE.TorusGeometry(0.09 - i * 0.02, 0.012, 4, 12); g.rotateX(Math.PI / 2); g.translate(x - 0.2, y + 0.015 + i * 0.022, 0); K.add(g, rope); } }
+    /* the painter: a rope through a hole in the bow deck, its end coiled loose on the deck. It rests on the real deck surface (inner(s, 0) at each x): the bow
+       deck dips toward the hollow, and at a fixed height the coil floated above it (owner, 27 November 2026: "rope is floating in the boat") */
+    { const s0 = 0.93, x = xOf(s0), rope = 0xbfa97e, yAt = (xx) => inner(Math.max(0, Math.min(1, xx / L + 0.5)), 0)[1];
+      K.tube([V(x + 0.12, yAt(x + 0.12) - 0.03, 0), V(x + 0.1, yAt(x + 0.1) + 0.03, 0.03), V(x - 0.02, yAt(x - 0.02) + 0.022, 0.05), V(x - 0.14, yAt(x - 0.14) + 0.02, 0)], 0.012, rope, 8, 4);
+      for (let i = 0; i < 2; i++) { const g = new THREE.TorusGeometry(0.09 - i * 0.02, 0.012, 4, 12); g.rotateX(Math.PI / 2); g.translate(x - 0.2, yAt(x - 0.2) + 0.014 + i * 0.022, 0); K.add(g, rope); } }
   }
   const gear = K.mesh('canoeGear'); group.add(gear);
   /* seatBoxes: each seat board as a box in the canoe's own frame [x0, y0, z0, x1, y1, z1] (engine/audit-crew.js checks legs against them) */

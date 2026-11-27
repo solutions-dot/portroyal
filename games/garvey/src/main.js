@@ -518,7 +518,7 @@ function resetChapter() {   /* the print shop again: people go home, the goal st
 const CHAPTER_END = { 3: 0, 14: 1, 23: 2, 34: 3, 44: 4, 54: 5, 64: 6 };   /* the last stage of each chapter but the final one, and which chapter it ends */
 function nextCard(i, s, now = false) {   /* when a chapter is finished, offer the next one on screen after a pause (engine/chapter-end.js); now: a test view, at once */
   const nx = CHAPTERS[i + 1]; if (!nx || !nx.ready) return;
-  const show = () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done. Next is ' + nx.name + ' (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }]); };
+  const show = () => { uiSound('goal'); card('Chapter ' + (i + 1) + ' is finished!', ['Well done.'], [{ t: 'Next chapter', go: () => { hideCard(); nx.go(); } }]); };
   if (now) { if (stage === s) show(); return; }
   offerNextChapter({ still: () => stage === s, clear: () => !panelsOpen() && !fading && $('card').hidden, show });
 }

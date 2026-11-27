@@ -492,7 +492,8 @@ function maima({ night = false } = {}) {
   };
   Q.enter = (stage) => {
     rescue.visible = stage >= 61 && stage < 63;
-    for (const sh of ships) sh.userData.manned = stage < 63;   /* everyone sailed home in June 1504 */
+    stageNow = stage;
+    for (const sh of ships) { sh.userData.manned = stage < 63; sh.visible = stage >= 10; }   /* everyone sailed home in June 1504; and the wrecks are not there until the opening scene has brought them in and run them aground (owner, 27 November 2026: "they already are aground" while the narration says they are sailing in) */
     flotilla.forEach((c) => (c.visible = false));
     if (night) {
       moon.material.uniforms.k.value = 0;
@@ -514,12 +515,15 @@ function maima({ night = false } = {}) {
   };
   /* ---- camera scenes ---- */
   /* the arrival: the two ships sail slowly in round the point and are run aground side by side */
+  let stageNow = 0;   /* the stage Q.enter last saw */
+  const S_STAGE = () => stageNow;
   Q.films.arrival = (t) => {
     if (t < 0) {
-      ships.forEach((s, i) => { s.position.copy(shipHome[i][0]); s.rotation.y = shipHome[i][1]; });
+      ships.forEach((s, i) => { s.position.copy(shipHome[i][0]); s.rotation.y = shipHome[i][1]; s.visible = S_STAGE() >= 10; });
       return;
     }
     ships.forEach((s, i) => {
+      s.visible = true;
       /* they come in bow first along the course they end on, and run aground side by side (they slid in sideways before) */
       const k = sm((t - 4) / 22), h = shipHome[i][0], ry = shipHome[i][1], fx = -Math.sin(ry), fz = -Math.cos(ry), far = 95 + i * 6;
       const from = [h.x - fx * far, h.z - fz * far];
@@ -665,9 +669,10 @@ function shore() {
   for (let i = 0; i < 9; i++) mesh(new THREE.SphereGeometry(0.008, 6, 4), solid(i % 2 ? 0xd8322a : 0xe8c02a, 0.2), 0.08 + (i % 5) * 0.022, 0.008, -0.05 + Math.floor(i / 5) * 0.03, gift);
   add(Q, dyn(gift), 4.5, 0.5, 0, 0.2);   /* up the beach from the trading canoe, whose stern lay beside the old spot and hid the bell in its close-up (owner, 27 November 2026: "there is no bell to be seen") */
   gift.visible = false;
+  let shoreStage = 0;   /* the stage Q.enter last saw */
   Q.reveal.bell = (k) => {
     k = Math.min(1, +k);
-    gift.visible = true;
+    gift.visible = k > 0 || (shoreStage >= 24 && shoreStage < 30);   /* the trinkets are not there until the trade has happened (owner, 27 November 2026) */
     const e = sm(k);
     /* shaken: it hops and rattles on the cloth, then settles back down (it ended in the air: audit, 26 November 2026) */
     bell.position.y = 0.03 + Math.abs(Math.sin(e * Math.PI * 4)) * 0.06 * (1 - e);
@@ -675,8 +680,9 @@ function shore() {
   };
   Q.lookViews = {};
   Q.enter = (stage) => {
+    shoreStage = stage;
     gift.visible = stage >= 24 && stage < 30;
-    if (Q.items.basket && Q.items.basket.parent === Q.group) Q.items.basket.visible = stage < 30;   /* the bread went out to the ships in chapter 2 */
+    if (Q.items.basket && Q.items.basket.parent === Q.group) Q.items.basket.visible = stage < 23;   /* the bread went out to the ships in the trade scene (it lay on the beach for the rest of the chapter before) */
     tradeCanoe.visible = stage < 30;
     bigA.visible = bigB.visible = stage >= 30;
     tradeCanoe.position.set(3.2, -0.1, -3.3);
@@ -685,16 +691,22 @@ function shore() {
     if (stage < 30) {
       stand(Q, "cousin", stage >= 24 ? 1.8 : 1.4, stage >= 24 ? -1.2 : -2.0, 3.2, -3.2);
       stand(Q, "interp", -3.4, 1.6, 2, -1);
-      stand(Q, "mendez", -5.9, -0.2, 2, -1);
+      stand(Q, "mendez", -4.9, 0.5, 2, -1);
     } else {
       stand(Q, "cousin", -0.6, -2.4, -1, -4.6);
       stand(Q, "gran", 1.4, 0.8, -0.6, -2.4);
     }
   };
   /* the trade: Cousin paddles the canoe out to the ships' side and back */
+  const tradeBasket = X.basket(4, 0.3);   /* the bread Cousin took out to the ships, in the bottom of his canoe, ahead of him */
+  tradeBasket.position.set(0.55, (tradeCanoe.userData.bottom ?? 0.05) + 0.01, 0);
+  tradeBasket.visible = false;
+  tradeCanoe.add(tradeBasket);
   const tradeHold = filmHold(Q, ["cousin"], (t, [cousin]) => {
     const out = sm((t - 3) / 8.6), back = sm((t - 23) / 4.5), k = out - back;   /* there by 11.6 s, then swung in alongside while still */
     tradeCanoe.userData.manned = t >= 3 && t <= 27;
+    tradeCanoe.userData.ashore = t >= 12.3 && t < 21.3;   /* alongside the ship he stops paddling and holds the paddle up while the trade is made (owner, 27 November 2026: "he is still rowing") */
+    tradeBasket.visible = t >= 3 && t < 19;   /* the basket of bread rides out in the canoe and is handed up to the sailors */
     tradeCanoe.position.set(3.2 + (TP[0] - 3.2) * k, -0.1, -3.3 + (TP[1] + 3.3) * k);   /* out to the wreck's side, where the sailors stand at the rail */
     /* bow out to the ship's side, alongside while trading, turned round beside the ship, bow back to the beach */
     const beached = Math.PI / 2 + 0.05, out1 = canoeHeading(TP[0] - 3.2, TP[1] + 3.3), back1 = out1 + Math.PI;
@@ -731,7 +743,7 @@ function shore() {
   /* ---- people ---- */
   person(Q, "cousin", "cousin", 1.4, -2.0, face(1.4, -2.0, 3.2, -3.2), { kind: "watch", at: [3.2, -3.2], idles: ["IdleM"], react: ["HeadTurn", "Point"], every: [5, 9] });
   person(Q, "interp", "interp", -3.4, 1.6, face(-3.4, 1.6, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
-  person(Q, "mendez", "mendez", -5.9, -0.2, face(-5.9, -0.2, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] });
+  person(Q, "mendez", "mendez", -4.9, 0.5, face(-4.9, 0.5, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] });
   person(Q, "gran", "gran", 1.4, 0.8, face(1.4, 0.8, -0.6, -2.4), { kind: "watch", at: [-0.6, -2.4], idles: ["Idle"], react: ["HeadTurn"], every: [6, 10] });
   crowd(Q, "xa_sailor", -7.6, -1.6, face(-7.6, -1.6, -6.4, -3.6), { kind: "watch", at: [-6.4, -3.6], react: ["HeadTurn", "Shrug"], every: [6, 9] });
   crowd(Q, "xa_man", 8.4, 1.0, face(8.4, 1.0, 3, -3), { kind: "chat", group: "b", at: [8.8, 1.2], ring: 0.6 });

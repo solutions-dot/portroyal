@@ -960,7 +960,7 @@ function nextChapterCard(i, _tries = 0, gen = navGen) {
   offerNextChapter({
     still: () => gen === navGen && state.started && !Q.on && !FB.on,   /* the player has not gone somewhere else, or to another chapter */
     clear: () => !(busy || fading || !$('card').hidden || !$('dialogue').hidden || !$('journal').hidden || !$('chapters').hidden),
-    show: () => { uiSound('goal'); card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done. Next is \u201c' + nx.name + '\u201d (' + nx.year + ').'], [{ t: 'Next chapter', go: () => { hideCard(); goingStraight(); playChapter(nx); } }]); },
+    show: () => { uiSound('goal'); card('\u201c' + CHAPTERS[i].name + '\u201d is finished!', ['Well done.'], [{ t: 'Next chapter', go: () => { hideCard(); goingStraight(); playChapter(nx); } }]); },
   });
 }
 /* falling bricks and dust as the houses break up */

@@ -392,17 +392,14 @@
 
   function analyticsFooter() {
     if (embedded || !crypto.randomUUID) return;
-    const host = game ? document.getElementById('pp-access') || titleFooterHost()
-      : document.querySelector(about ? 'footer' : '#footlinks');
-    if (!host) return;
+    /* The switch lives on the menu and the About page only (owner, 27 November 2026: the link on each game's opening screen came out). A game page
+       still honours the choice made there. */
+    const host = game ? null : document.querySelector(about ? 'footer' : '#footlinks');
+    if (!game && !host) return;
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'pp-analytics';
-    if (game) {
-      const footer = document.createElement('footer');
-      footer.append(button);
-      host.append(footer);
-    } else host.append(button);
+    if (host) host.append(button);
 
     let stop;
     const sync = () => {
