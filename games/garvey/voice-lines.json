@@ -488,5 +488,12 @@
   "text": "The news cards on the desk need sorting.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "His old letters still fill the Negro World.",
+  "stem": "n-f9a1153c",
+  "text": "His old letters still fill the Negro World.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

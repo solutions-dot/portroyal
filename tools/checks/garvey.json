@@ -1,5 +1,5 @@
 {
- "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3).",
+ "about": "Per-game settings for tools/lint_content.mjs and engine/checks.js (docs/TESTING.md, section 7). real: people who really lived and speak in the game (their lines are listed for checking, rule 3). quotesOnly is empty for Garvey since 27 November 2026: he may say imagined everyday words (text only) as well as sourced ones; a journal page must say so.",
  "real": [
   "Marcus Garvey",
   "Amy Ashwood",
@@ -7,7 +7,5 @@
  ],
  "allowLong": [],
  "factsIgnore": [],
- "quotesOnly": [
-  "Marcus Garvey"
- ]
+ "quotesOnly": []
 }
