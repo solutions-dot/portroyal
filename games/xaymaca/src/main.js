@@ -972,7 +972,7 @@ function tick(dt, now = performance.now()) {
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
   for (const f of Q.posers || []) f(t, dt, camera);   /* people who ride on something a scene moves (places.js crewTicker) */
-  if (DIR.on) {
+  if (DIR.on && !(__DEV__ && S.view && S.viewOverFilm)) {   /* dev: S.viewOverFilm lets a check look at a held scene from any angle (/tmp angles) */
     /* the scene holds the camera */
   } else if (LS.tick(dt)) {
     /* a look moment holds the camera */

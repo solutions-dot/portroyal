@@ -230,10 +230,48 @@ export function dugOut(o = {}) {
   const gear = K.mesh('canoeGear'); group.add(gear);
   /* seatBoxes: each seat board as a box in the canoe's own frame [x0, y0, z0, x1, y1, z1] (engine/audit-crew.js checks legs against them) */
   const seatBoxes = seats.map((x) => { const sv = x / L + 0.5, y = sheer(sv) - 0.035, hw2 = half(sv) + 0.02; return [x - 0.1, y - 0.015, -hw2, x + 0.1, y + 0.015, hw2]; });
-  Object.assign(group.userData, { L, beam, depth: D, floor, halfIn, sheer: (x) => sheer(x / L + 0.5), bow: 'x', seatBoxes, bottom: floor });   /* bottom: the true inside bottom (a game may raise .floor to seat people higher) */   /* bow: which local axis the bow points along (engine/audit-course.js) */
+  /* outline(y): the hull's outer edge where it crosses height y, as [x, z] points from the stern to the bow on the +z side (empty where the bottom curves above y).
+     waterRing (below) draws the splash round a boat from it. */
+  const outline = (y) => { const out = []; for (let i = 0; i <= NS; i++) { const s = i / NS; let z = null, prev = null; for (let j = 0; j <= NT; j++) { const [zz, yy] = sect(s, j / NT); if (prev && prev[1] <= y && yy >= y) { const k = (y - prev[1]) / Math.max(1e-6, yy - prev[1]); z = prev[0] + (zz - prev[0]) * k; break; } prev = [zz, yy]; } if (z !== null && z > 0.02) out.push([xOf(s), z]); } return out; };
+  Object.assign(group.userData, { outline, L, beam, depth: D, floor, halfIn, sheer: (x) => sheer(x / L + 0.5), bow: 'x', seatBoxes, bottom: floor });   /* bottom: the true inside bottom (a game may raise .floor to seat people higher) */   /* bow: which local axis the bow points along (engine/audit-course.js) */
   return group;
 }
 let DUGWOOD = null;
+/* waterRing(boat, { y, width }): a ring of foam round a dugout at its waterline (local height y, default boat.userData.draught or 0.18), so she sits IN the water
+   with a little splash along her sides instead of resting on top of it (owner, 27 November 2026: "it looks like it's on it, it needs a little splash around the
+   body"). Add it to the dugout itself; the boat must lie with its keel `y` below the water. boat.userData.ring.userData.tick(time, speed) animates it
+   (speed 0 is still water, 1 is a canoe under way: a wider, brighter bow and sides). Returns the ring (also boat.userData.ring) or null. */
+let RING_TEX = null;
+function ringTex() {
+  if (RING_TEX) return RING_TEX;
+  const c = document.createElement('canvas'); c.width = 128; c.height = 32; const g = c.getContext('2d'), img = g.createImageData(128, 32);
+  for (let y = 0; y < 32; y++) for (let x = 0; x < 128; x++) { const v = y / 31, edge = Math.pow(1 - v, 1.4), n = 0.55 + 0.45 * Math.sin(x * 0.7 + Math.sin(y * 0.5) * 2.0) * Math.sin(x * 0.23 + y * 0.31); const a = Math.max(0, Math.min(1, edge * (0.75 + 0.6 * n))); const i = (y * 128 + x) * 4; img.data[i] = 245; img.data[i + 1] = 250; img.data[i + 2] = 248; img.data[i + 3] = Math.round(255 * a); }
+  g.putImageData(img, 0, 0); RING_TEX = new THREE.CanvasTexture(c); RING_TEX.wrapS = THREE.RepeatWrapping; RING_TEX.colorSpace = THREE.SRGBColorSpace; return RING_TEX;
+}
+export function waterRing(boat, o = {}) {
+  /* o.points: [[along, half]] from stern to bow, for a hull without outline() (a ship); o.axis 'z' when the boat's length runs along its local z (a caravel) */
+  const u = boat.userData, wl = o.y ?? u.draught ?? 0.18, w0 = o.width ?? 0.24, pts = o.points || (u.outline ? u.outline(wl) : []), Lh = (o.length || u.L || 5) / 2;
+  if (pts.length < 6) return null;
+  const loop = [...pts.map(([x, z]) => [x, z]), ...pts.slice().reverse().map(([x, z]) => [x, -z])], n = loop.length, pos = [], uv = [], idx = [];
+  let run = 0;
+  for (let i = 0; i < n; i++) {
+    const [x, z] = loop[i], [x0, z0] = loop[(i + n - 1) % n], [x1, z1] = loop[(i + 1) % n];
+    let tx = x1 - x0, tz = z1 - z0; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+    let nx = tz, nz = -tx; if (nx * x + nz * z < 0) { nx = -nx; nz = -nz; }   /* outward */
+    const e = Math.min(1, Math.abs(x) / Lh), w = w0 * (0.85 + 0.5 * Math.pow(Math.max(0, (x / Lh + 1) / 2), 6) + 0.15 * Math.pow(e, 4));   /* wider toward the bow and the ends */
+    pos.push(x - nx * 0.04, wl + 0.02, z - nz * 0.04, x + nx * w, wl + 0.02, z + nz * w);
+    if (i) run += Math.hypot(x - loop[i - 1][0], z - loop[i - 1][1]);
+    uv.push(run / 1.2, 0, run / 1.2, 1);
+  }
+  for (let i = 0; i < n; i++) { const a = i * 2, b = ((i + 1) % n) * 2; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+  const m = new THREE.MeshBasicMaterial({ map: ringTex().clone(), transparent: true, depthWrite: false, opacity: 0.85, side: THREE.DoubleSide }); m.map.needsUpdate = true;
+  if (o.axis === 'z') { const a = g.attributes.position; for (let i = 0; i < a.count; i++) { const x = a.getX(i), z = a.getZ(i); a.setXYZ(i, z, a.getY(i), x); } }   /* along z: swap */
+  const ring = new THREE.Mesh(g, m); ring.name = 'waterRing'; ring.renderOrder = 3; ring.frustumCulled = false;
+  ring.traverse((q) => { q.userData.noBatch = true; q.userData.noAudit = true; q.userData.water = true; });
+  ring.userData.tick = (time, speed = 0) => { const k = Math.max(0, Math.min(1, speed)); m.opacity = 0.6 + 0.25 * k; m.map.offset.x = (time * (0.12 + 0.5 * k)) % 1; };
+  boat.add(ring); u.ring = ring; return ring;
+}
 
 /* shipLifeboat(o): a ship's lifeboat of the 1920s to 1950s hung in a pair of davits: a double-ended (pointed both ends) hull painted white,
    a varnished gunwale and rubbing band, grab lines looped along the sides, a canvas cover laced over a ridge, and the falls (lifting ropes)

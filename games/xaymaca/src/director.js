@@ -1,3 +1,4 @@
+import { shotPath } from "../../../engine/shotpath.js";
 import { showCinematicSkip } from "../../../engine/cine.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
@@ -27,29 +28,11 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
   const D = { on: false, paused: false, time: 0, key: null, fast };
   let rumble = null,
     curve = null,
-    lookCurve = null,
     fired = new Set(),
     narrationCue = null,
     scorePlaying = false;
-  const build = (F) => {
-    const P = F.shots.map((s) => new THREE.Vector3(...s.p)),
-      L = F.shots.map((s) => new THREE.Vector3(...s.look));
-    curve = new THREE.CatmullRomCurve3(P, false, "centripetal");
-    lookCurve = new THREE.CatmullRomCurve3(L, false, "centripetal");
-  };
-  /* where along the curves at time t: the shot times map to equal steps along the spline, eased at both ends */
-  const along = (F, t) => {
-    const S = F.shots,
-      n = S.length - 1;
-    if (t <= S[0].t) return 0;
-    if (t >= S[n].t) return 1;
-    let i = 0;
-    while (i < n - 1 && t >= S[i + 1].t) i++;
-    let k = (t - S[i].t) / (S[i + 1].t - S[i].t);
-    if (i === 0) k = k * k * (2 - k) * 0.5 + k * 0.5; // ease in
-    if (i === n - 1) k = 1 - (1 - k) * (1 - k) * 0.5 - (1 - k) * 0.5; // ease out
-    return (i + k) / n;
-  };
+  /* the camera path, with real cuts (engine/shotpath.js, rule 10): a shot marked cut: true jumps instead of gliding (the trade scene cuts to the deck) */
+  const build = (F) => { curve = shotPath(F.shots); };
   D.start = (key) => {
     D.key = key;
     D.time = 0;
@@ -109,9 +92,9 @@ export function createDirector({ camera, world, finish, read, fast = false, redu
   D.apply = (t) => {
     const F = FILMS[D.key],
       Q = world && world();
-    const k = reduced ? 0 : along(F, t);
-    camera.position.copy(curve.getPoint(k));
-    camera.lookAt(lookCurve.getPoint(k));
+    const at = curve.at(t, reduced);
+    camera.position.copy(at.p);
+    camera.lookAt(at.look);
     const tall = innerWidth / innerHeight < 0.8,
       fov = (F.fov ? sampleKeys(F.fov, t)[0] : 50) * (tall ? 1.35 : 1);
     if (Math.abs(camera.fov - fov) > 0.01) {
