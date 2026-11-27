@@ -382,7 +382,7 @@ const LETTER_HELD = (() => { const g = new THREE.Group(), tex = new THREE.Canvas
   g.position.set(0, -0.12, -0.42); g.visible = false; camera.add(g); return g; })();
 
 let subTimer = 0;
-function say(text, ms = 4200) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
+function say(text, ms = 4200) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); NARR.after(Math.max(500, ms * TS), () => { el.classList.add('dim'); document.body.classList.remove('subbing'); }); }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 const TICKS = [];
 function tween(sec, fn) { const ep = EP; return new Promise((res) => { let t = 0; const d = Math.max(0.05, sec * TS); TICKS.push((dt) => { if (ep !== EP) { res(false); return true; } t += dt; const k = Math.min(1, t / d); fn(k); if (k >= 1) { res(true); return true; } return false; }); }); }
