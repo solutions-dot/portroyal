@@ -265,7 +265,7 @@ export function waterRing(boat, o = {}) {
   }
   for (let i = 0; i < n; i++) { const a = i * 2, b = ((i + 1) % n) * 2; idx.push(a, a + 1, b, b, a + 1, b + 1); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-  const m = new THREE.MeshBasicMaterial({ map: ringTex().clone(), transparent: true, depthWrite: false, opacity: 0.85, side: THREE.DoubleSide }); m.map.needsUpdate = true;
+  const m = new THREE.MeshBasicMaterial({ map: ringTex().clone(), color: o.color ?? 0xffffff, transparent: true, depthWrite: false, opacity: 0.85, side: THREE.DoubleSide });   /* o.color: darker at night (an unlit white glowed) */ m.map.needsUpdate = true;
   if (o.axis === 'z') { const a = g.attributes.position; for (let i = 0; i < a.count; i++) { const x = a.getX(i), z = a.getZ(i); a.setXYZ(i, z, a.getY(i), x); } }   /* along z: swap */
   const ring = new THREE.Mesh(g, m); ring.name = 'waterRing'; ring.renderOrder = 3; ring.frustumCulled = false;
   ring.traverse((q) => { q.userData.noBatch = true; q.userData.noAudit = true; q.userData.water = true; });

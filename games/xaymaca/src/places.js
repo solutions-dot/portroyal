@@ -126,10 +126,10 @@ function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of
    across the floor); on the sand she lies on the ground, and the change comes over a metre at the water's edge. Run every frame after the scene (Q.posers).
    water: the sea's height; ground: her height on the sand; edge: the z the water starts at (canoes lie in the water at z below it; default: everywhere). */
 const DRAUGHT = 0.1;
-function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity, bob = 0.03 }) {
+function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity, bob = 0.03, foam = 0xffffff }) {
   /* sea: the place's water (engine/sea.js); she rides its swell (sea.height, the same waves the water is drawn with), pitching bow and stern with it */
   const hull = canoe.userData.bow ? canoe : canoe.children.find((c) => c.userData.bow) || canoe;
-  const ring = waterRing(hull, { y: DRAUGHT }), L = hull.userData.L || 5;
+  const ring = waterRing(hull, { y: DRAUGHT, color: foam }), L = hull.userData.L || 5;
   const last = new THREE.Vector3();
   let prevT = null;
   const seed = Q.posers ? Q.posers.length : 0;
@@ -150,12 +150,12 @@ function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity
 }
 /* A ship's foam line: where her hull meets the water, kept at the water's height as she moves (she rises and settles in the arrival scene). The ring is
    built in her own frame (length along z, the bow at -z) from her lines, at the width of her side near the water. */
-function shipWater(Q, ship, { water, sea = null }) {
+function shipWater(Q, ship, { water, sea = null, foam = 0xffffff }) {
   const F = ship.userData.F;
   if (!F) return null;
   const pts = [];
   for (let i = 0; i <= 30; i++) { const s = i / 30, h = F.half(s) * 0.9; if (h > 0.15) pts.push([F.z(s), h]); }   /* z(s) runs stern (+z) to bow (-z) */
-  const ring = waterRing(ship, { points: pts.reverse().map(([z, h]) => [-z, h]), y: 0, width: 1.1, length: F.L, axis: "z" });
+  const ring = waterRing(ship, { points: pts.reverse().map(([z, h]) => [-z, h]), y: 0, width: 1.1, length: F.L, axis: "z", color: foam });
   if (!ring) return null;
   ring.rotation.y = Math.PI;   /* the points ran along -z: turned back to her own frame */
   (Q.posers || (Q.posers = [])).push((t) => {
@@ -196,7 +196,7 @@ function crew(Q, canoe, slots, { taino = TAINO_CREW, spanish = SPANISH_CREW, who
   (Q.crews || (Q.crews = [])).push(R);
   return R;
 }
-const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0);
+const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0), _hu = new THREE.Vector3(), _hl = new THREE.Vector3(), _hd = new THREE.Vector3(), _tip = new THREE.Vector3();
 function crewTicker(Q) {
   /* Q.posers run every frame after the camera scene has moved the boats, even while the scene holds everything else still: the crews were placed
      before the ship moved, or not at all during a scene, so the sailors hung in the air while their ship sailed in under them (owner, 27 November 2026) */
@@ -290,7 +290,19 @@ function crewTicker(Q) {
           _dir.subVectors(_side, mid);
           if (_dir.lengthSq() < 1e-6) _dir.set(0, -1, 0);
           _dir.normalize();
-          if (!R.canoe.userData.ashore) mid.addScaledVector(_dir, -0.28);   /* the top of the shaft a hand's breadth above the grip */
+          let gripped = false;
+          if (!R.canoe.userData.ashore) {
+            /* The grip in a hand (owner, 27 November 2026: "check hand placements"; the shaft started between the two hands, so neither held it). The
+               Paddle clip holds both hands at about one height, so a shaft through both lay flat across the canoe; instead the top hand holds the grip
+               and the shaft runs from it down to the water beside the canoe, past the lower hand. */
+            r.hands[0].getWorldPosition(_hu); r.hands[1].getWorldPosition(_hl);
+            const sideZ = r.z >= 0 ? 1 : -1, zu = R.canoe.worldToLocal(_tip.copy(_hu)).z * sideZ, zl = R.canoe.worldToLocal(_tip.copy(_hl)).z * sideZ;
+            const grip = Math.abs(_hu.y - _hl.y) > 0.06 ? (_hu.y > _hl.y ? _hu : _hl) : zu <= zl ? _hu : _hl;   /* the top hand holds the grip, as in a real stroke (the hand further from the water when they are level) */
+            _dir.subVectors(_side, grip).normalize();
+            mid.copy(grip).addScaledVector(_dir, -0.08);
+            gripped = true;
+          }
+          if (!R.canoe.userData.ashore && !gripped) mid.addScaledVector(_dir, -0.28);   /* the top of the shaft a hand's breadth above the grip */
           Q.group.worldToLocal(mid);
           r.paddle.position.copy(mid);
           r.paddle.quaternion.setFromUnitVectors(_down, _dir);
@@ -333,7 +345,7 @@ function placeCrews(Q) {
 function canoeSlots(L, n = 16, nSp = 6) {
   const rows = Math.ceil(n / 2), out = [];
   for (let k = 0; k < n; k++) {
-    const row = Math.floor(k / 2), x = -L * 0.3 + (L * 0.6 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
+    const row = Math.floor(k / 2), x = -L * 0.27 + (L * 0.54 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
     out.push([x, (k % 2 ? 0.36 : -0.36), mid && out.filter((s) => s[2]).length < nSp]);   /* two abreast, shoulders clear of each other and knees clear of the 2 m hull */
   }
   return out;
@@ -443,20 +455,20 @@ function maima({ night = false } = {}) {
   ranges(Q, { centre: Math.PI / 2, spread: 2.6, y: -6, seed: 7, green: 0x4f7a40, haze: 0xc8d4cc, layers: [{ r: 80, base: 8, amp: 18, k: 0.2 }, { r: 160, base: 30, amp: 50, k: 0.5 }, { r: 300, base: 70, amp: 110, k: 0.8 }] });
   /* the two caravels aground, side by side, bows to the beach */
   const ships = wrecks(Q, [(BAY.ships[0][0] + BAY.ships[1][0]) / 2, BAY.shipZ], BAY.y + 0.5, Math.PI - 0.55);   /* three-quarter on from the hill */
-  for (const sh of ships) shipWater(Q, sh, { water: BAY.y, sea });
+  for (const sh of ships) shipWater(Q, sh, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
   deckCrew(Q, ships[1], [[0.45, 1, -Math.PI / 2, "LookAround"], [0.62, 0, 0.6, "IdleM"]]);   /* a few men on the wrecks, seen from the hill, until the rescue ship takes them */
   deckCrew(Q, ships[0], [[0.55, -1, Math.PI / 2, "IdleM"]]);
   const shipHome = ships.map((s) => [s.position.clone(), s.rotation.y]);   /* turned bow to the beach, local +x is west: each ship is propped on its outer side only, the two lean on each other */
   /* the rescue ship of June 1504, anchored off the wrecks (shown in chapter 6) */
   const rescue = add(Q, dyn(far(X.caravel({ aground: false, sails: true }))), 14, -230, BAY.y + 1.3, Math.PI * 0.55);
-  shipWater(Q, rescue, { water: BAY.y, sea });
+  shipWater(Q, rescue, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
   rescue.visible = false;
   /* the ten canoes of the mutiny, far off on the bay (chapter 4's camera scene) */
   const flotilla = [];
   for (let i = 0; i < 10; i++) {
     const c = add(Q, far(bigCanoe(6, 1.2)), 8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2, BAY.y + 0.05, Math.PI / 2);   /* drawn up along the beach, 9 m apart bow to stern, not in a block (owner, 27 November 2026: "piled on top of each other") */
     c.visible = false;
-    floatBoat(Q, c, { water: BAY.y, sea });
+    floatBoat(Q, c, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
     flotilla.push(c);
     if (!night) crew(Q, c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]], { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
   }
@@ -906,7 +918,7 @@ function crossing() {
   Q.tickers.push((t) => sea.tick && sea.tick(t));
   const c = add(Q, bigCanoe(), 0, 3.5, -0.2, Math.PI / 2 + 0.1);   /* her stern stays just clear of the camera that looks along her from behind (content.js, crossing) */
   c.userData.manned = true;
-  floatBoat(Q, c, { water: -0.3, sea, bob: 0.05 });
+  floatBoat(Q, c, { water: -0.3, sea, bob: 0.05, foam: 0x55607a });   /* night: dim foam */
   crew(Q, c, canoeSlots(12));
   Q.tickers.push((t) => {
     c.position.y = -0.2 + Math.sin(t * 0.9) * 0.05;
