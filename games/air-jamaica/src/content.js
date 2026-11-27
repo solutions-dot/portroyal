@@ -437,7 +437,7 @@ FILMS.landing = {
 FILMS.reveal = {
   place: "newlook", next: 40, journal: "newlook", title: "New colours",
   read: ["In December 1994 Air Jamaica showed off its new colours at Norman Manley Airport in Kingston, before the new look's first flight."],
-  captions: [[0, "December 1994. Norman Manley Airport, Kingston."], [2.6, "Air Jamaica has new colours."], [5.4, "Yellow, orange, pink and blue along the side."], [7.8, "And on the dark blue tail, the bird."]],
+  captions: [[0, "December 1994. Kingston."], [2.9, "New colours for Air Jamaica.", "reveal-2_6"], [5.2, "Yellow, orange, pink and blue.", "reveal-5_4"], [7.8, "And on the tail, the bird.", "reveal-7_8"]],
   shots: [
     { t: 0, p: [-28, 1.6, 9], look: [-9, 4, -8] },
     { t: 2.6, p: [-15, 2.6, 7], look: [0, 4.2, -8] },

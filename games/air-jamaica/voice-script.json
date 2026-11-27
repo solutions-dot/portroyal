@@ -128,36 +128,36 @@
   "speed": 0.97
  },
  "reveal-0": {
-  "text": "December nineteen ninety-four. Norman Manley Airport, Kingston.",
-  "caption": "December 1994. Norman Manley Airport, Kingston.",
+  "text": "December nineteen ninety-four. Kingston.",
+  "caption": "December 1994. Kingston.",
   "film": "reveal",
   "t": 0,
   "emotion": "excited",
   "speed": 1.05
  },
  "reveal-2_6": {
-  "text": "Air Jamaica has new colours.",
-  "caption": "Air Jamaica has new colours.",
+  "text": "New colours for Air Jamaica.",
+  "caption": "New colours for Air Jamaica.",
   "film": "reveal",
   "t": 2.6,
   "emotion": "excited",
   "speed": 1.05
  },
  "reveal-5_4": {
-  "text": "Yellow, orange, pink and blue along the side.",
-  "caption": "Yellow, orange, pink and blue along the side.",
+  "text": "Yellow, orange, pink and blue.",
+  "caption": "Yellow, orange, pink and blue.",
   "film": "reveal",
   "t": 5.4,
   "emotion": "excited",
-  "speed": 0.92
+  "speed": 0.95
  },
  "reveal-7_8": {
-  "text": "And on the dark blue tail, the bird.",
-  "caption": "And on the dark blue tail, the bird.",
+  "text": "And on the tail, the bird.",
+  "caption": "And on the tail, the bird.",
   "film": "reveal",
   "t": 7.8,
   "emotion": "excited",
-  "speed": 0.92
+  "speed": 0.95
  },
  "newflight-0": {
   "text": "Norman Manley Airport, Kingston. December nineteen ninety-four.",
