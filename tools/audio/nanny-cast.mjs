@@ -1,13 +1,12 @@
 /* Nanny Town's spoken lines and who says them: node tools/audio/nanny-cast.mjs [--write]
    Writes games/nanny/voice-cast.json: [{ key: "<who>|<text>", who, text, spoken, voice, emotion, speed, stem }]. Nanny never speaks (docs/games/nanny.md).
-   Voices (owner, 27 November 2026): Mama dorraine samuels, Cubbenah Bob Marley, Auntie Mimba Faye Ellington, Quamin Jimmy Cliff; Beneba and Phibba wait for a child's voice
-   (their lines are listed with "voice": null and are not recorded). Docs: docs/audio/PLAN.md. */
+   Voices (owner, 27 November 2026): Mama dorraine samuels, Cubbenah Bob Marley, Auntie Mimba Faye Ellington, Quamin Jimmy Cliff; Beneba "young child", Phibba "Small girl child". Docs: docs/audio/PLAN.md. */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { speakText } from "./voice-script.mjs";
 const root = new URL("../../games/nanny/", import.meta.url).pathname;
-const V = { mama: "74a89262-c877-4580-af34-28b50a665413", cubbenah: "2bd626f2-4c0c-44f0-940b-034afd5701eb", mimba: "c6f27449-17f7-4ec6-afcc-fc4ea217b099", quamin: "90543854-f1d7-4ed4-b265-44eeb96e4d80" };
-export const CAST = { Mama: ["mama", "content", 0.95], Cubbenah: ["cubbenah", "content", 0.97], "Auntie Mimba": ["mimba", "content", 0.93], Quamin: ["quamin", "content", 0.97], Beneba: [null, "content", 1.03], Phibba: [null, "sad", 0.95] };
+const V = { mama: "74a89262-c877-4580-af34-28b50a665413", cubbenah: "2bd626f2-4c0c-44f0-940b-034afd5701eb", mimba: "c6f27449-17f7-4ec6-afcc-fc4ea217b099", quamin: "90543854-f1d7-4ed4-b265-44eeb96e4d80", beneba: "b883942d-facf-4719-917d-b164d2f3d93b", phibba: "7ea04cdd-1d37-49f1-b724-e07f36db60de" };
+export const CAST = { Mama: ["mama", "content", 0.95], Cubbenah: ["cubbenah", "content", 0.97], "Auntie Mimba": ["mimba", "content", 0.93], Quamin: ["quamin", "content", 0.97], Beneba: ["beneba", "content", 1.03], Phibba: ["phibba", "sad", 0.95] };
 /* the scene's mood, by the order lines appear in the file (see the numbered dump: node tools/audio/nanny-cast.mjs --list) */
 const MOOD = (who, i, t) => {
   if (who === "Mama") { if (i <= 4) return ["neutral", 0.9]; if (i >= 64 && i <= 68) return ["excited", 1.05]; if (i >= 67 && i <= 76 || i === 63) return ["sad", 0.9]; return null; }

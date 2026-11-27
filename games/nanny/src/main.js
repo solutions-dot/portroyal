@@ -417,6 +417,7 @@ function showLine() {
   }
   const s = lines[step], me = s.who === 'You'; if (s.unlock) unlock(s.unlock); if (s.give === 'cloak') { story.cloak = true; saveGame(); toast(SAY.cloak, 3200); SFX.rustle(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
+  if (!me && s.text) NARR.speak(s.who + '|' + String(s.text).replace(/\s+/g, ' ').trim()); else NARR.stop();   /* the character's recorded line (voices/index.json, owner rule 17) */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c, b); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
@@ -427,6 +428,7 @@ function choose(s, c, btn) {
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
+  NARR.stop();
   document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
