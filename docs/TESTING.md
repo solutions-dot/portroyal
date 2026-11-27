@@ -329,3 +329,10 @@ Use this as the work list for clothes. `people-check` measures surfaces, so it a
 `node tools/review/look-shot.mjs <game> <out.png> "<query>" [wait ms] [WxH]` takes a picture with every button hidden (with `shot=...` it uses the dev build's test view; under 600 wide it opens a touch phone). Judge a change by eye from before and after pictures in a bright place, a night place and an interior, and at phone size. `people-sheet` sheets load `engine/look.js`, so clothes show the weave (`noweave=1` to compare).
 
 `node tools/people/bake-shade.mjs --all | --game <g> | <files>` bakes corner shading into packed bodies (the packer does it for new ones). Look at faces after it in several games (rule 9).
+
+
+## Screenshot views added 27 November 2026 (Xaymaca)
+
+- `?shot=film&key=<film>&at=<s>&ui=1`: the camera scene as a player sees it, with the black bars and the words in the lower bar. Without `&ui=1` the bars are off and the words float in a box over the picture, which is not what players see.
+- `?shot=fill&key=<task>&at=<0..1>&ui=1`: a task's filling close-up (`TASKS[key].fill`, the calabash at the stream) held at a point.
+- Any angle on a held scene: set `S.view = { pos, look }` and `S.viewOverFilm = true` through `window.__GAME` (dev only) to look at a boat from the side, the top or water level (the six-angle sheets used for the canoes).

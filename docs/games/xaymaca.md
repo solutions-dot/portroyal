@@ -144,3 +144,17 @@ Bodies in `tools/xaymaca/people/` (`xa_`), built by the shared `tools/garvey/era
 - The women's chest band, tried again (26 November 2026): giving the skin under the band the band's own (spine) weights, with and without the small inward tuck, made it worse (16 to 21 mm even standing). Reverted. The band and the side of the chest need a look in Blender with the arms raised.
 - Mendez's coat neck: `Body shows through CoatNeck` 3 to 8 mm in IdleM, TalkM1 and TalkM2 (26 November 2026). A deeper tuck (`necktuckdepth` 3.6) and a taller tuck band were tried and did not move the worst point (rest 0.123, 0.432, 0.046), so that skin is not reached by `tuck_under_piece` at all (no ray hit, or outside its band); look at it in Blender before changing the builder. His model was left as it was.
 - Cloth lines still reported on the original bodies (unchanged this session): the women's chest band in Talk2, Talk3 and Laugh (up to 30 mm at the side of the chest with the arms raised), `xa_boy` 6, `xa_girl` 4, `xa_gran` 2, `xa_interp` 2, `xa_cousin`, `xa_man`, `xa_guide` and `xa_visitor` 1 each.
+
+
+## Changes of 27 November 2026 (owner's review of the scenes)
+
+- **Opening scene:** the wrecks sail in with their sailors (they were baked into the beach by the scenery merge); they appear at 3.5 s. The scene no longer plays behind the first chapter card.
+- **Boats in the water:** every canoe floats at a draught on the swell with a foam ring and a wake; the wrecks and the rescue ship have a foam line.
+- **Trade:** Cousin is in the canoe from the first frame and pushes off; he paddles out bow first, lies along the wreck bow to the sea and back-paddles to stop and to go home (no spin into the ship); while trading his paddle lies in the canoe and he sits and talks; the scene cuts to a low shot of the basket up on the rail between the sailors. The camera sits low enough that the words clear Cousin on phones.
+- **Departure:** the crews are aboard from the first frame, paddles up, on the sand until pushed off; Cousin's own body no longer stands in the canoe; the two canoes travel side by side 8 m apart; a low shot at water level and a high sweep follow them.
+- **Paddlers:** the top hand holds the grip and the shaft goes over the side into the water; each paddler sits on a low wooden block (no boards across the rim, which put their legs through the bottom); rows sit clear of the narrow ends; the kneeling Spaniards sit 8 cm higher.
+- **Mutiny:** the ten canoes are manned from the start, paddle straight out and curve east with the bow along the course.
+- **The red moon:** the camera follows the moon's own path; the moon has a smooth surface (it was blocky); the scene cuts to the people at the lookout and, at the red, to a woman running home, a man kneeling and two villagers running down the path with food on their heads (Ferdinand); the moonlight turns red. Nobody is hurt.
+- **The calabash:** filling it is a close-up at a real running stream (engine `createStream`): lowered on its cord into a pool with the stopper out, water runs in, set down dripping, then carried to Cousin. The two lines have no voice clips yet.
+- **Mendez:** the coat neck no longer shows skin when he talks (`neckmask`); his shirt still shows at the elbow in TalkM1 (older fault).
+- **Checks:** audit, held, layout and crew 0 in all five places; autoplayer 75 on desktop and phone.
