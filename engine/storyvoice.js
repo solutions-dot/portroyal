@@ -30,7 +30,11 @@ export function createStoryVoice(opts) {
   return {
     narrator,
     line(who, text, isMe) { if (!isMe && text) { seen('line', who + '|' + text); narrator.speak(who + '|' + norm(text)); } else narrator.stop(); },
-    card(title, paragraphs) { seen('card', title + '. ' + paragraphs.join(' ')); narrator.speak(title + '. ' + paragraphs.join(' ')); },
+    card(title, paragraphs) {
+      /* "Chapter 3 is finished!" has a different number every time: one clip, "Chapter finished. Well done.", is read for all of them */
+      const head = /^Chapter \d+ is finished/i.test(title) ? 'Chapter finished' : title, text = head + '. ' + paragraphs.join(' ');
+      seen('card', text); narrator.speak(text);
+    },
     stop() { narrator.stop(); },
     look: { speak: (t) => { seen('look', t); narrator.speak(t); }, voiceBusy: () => sharedVoice().active() },
     lookLines: (lk) => [...(lk.say || []), ...(lk.lines || [])],

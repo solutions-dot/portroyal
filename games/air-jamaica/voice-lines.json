@@ -418,5 +418,12 @@
   "text": "The plane starts to come down toward Kingston.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "Chapter finished. Well done.",
+  "stem": "n-b84db689",
+  "text": "Chapter finished. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

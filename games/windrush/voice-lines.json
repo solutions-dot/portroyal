@@ -75,5 +75,12 @@
   "text": "The letter asks Iris to prove her right to be here.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "Chapter finished. Well done.",
+  "stem": "n-b84db689",
+  "text": "Chapter finished. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

@@ -264,5 +264,12 @@
   "text": "Canoe, hammock and hurricane come from Taino words too.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "Chapter finished. Well done.",
+  "stem": "n-b84db689",
+  "text": "Chapter finished. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]
