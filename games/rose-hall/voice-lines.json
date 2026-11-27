@@ -31,8 +31,8 @@
   "key": "The names. Back at Rose Hall, in daylight. The book had names in it.",
   "stem": "n-3c72dd57",
   "text": "The names. Back at Rose Hall, in daylight. The book had names in it.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Legend or record. One last stop on the tour. Then you decide.",
@@ -52,29 +52,29 @@
   "key": "Two women, one story. Rosa Palmer: four husbands, died 1790, praised on her stone. Annie Palmer: born 1802. What do her own papers say?",
   "stem": "n-9b6465ad",
   "text": "Two women, one story. Rosa Palmer: four husbands, died seventeen ninety, praised on her stone. Annie Palmer: born eighteen oh two. What do her own papers say?",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "The book with the names. The papers say Annie Palmer was no murderer. But the estate's own book names 208 people held in slavery. Go back to Rose Hall by day, and meet them on the page.",
   "stem": "n-8c704177",
   "text": "The book with the names. The papers say Annie Palmer was no murderer. But the estate's own book names two hundred and eight people held in slavery. Go back to Rose Hall by day, and meet them on the page.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Two hundred and eight. You have read ten names. There are 198 more. One last stop on the tour. Then you decide: legend or record?",
   "stem": "n-b4abbac5",
   "text": "Two hundred and eight. You have read ten names. There are one hundred and ninety-eight more. One last stop on the tour. Then you decide: legend or record?",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Legend and record. The White Witch is a story. It began in print in 1868 and grew in a novel. Annie Palmer was real. She had one husband and died in 1846. The people held here were real too. 208 of them have names. You can still enjoy a ghost story. Just know which is which.",
   "stem": "n-189a1616",
   "text": "Legend and record. The White Witch is a story. It began in print in eighteen sixty-eight and grew in a novel. Annie Palmer was real. She had one husband and died in eighteen forty-six. The people held here were real too. Two hundred and eight of them have names. You can still enjoy a ghost story. Just know which is which.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Miss Bryan lifts her candle up the stair.",
@@ -143,8 +143,8 @@
   "key": "Poison, arsenic and boiling oil are told only on modern tours.",
   "stem": "n-3d9ae3ac",
   "text": "Poison, arsenic and boiling oil are told only on modern tours.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "No record says any husband was poisoned.",
@@ -276,8 +276,8 @@
   "key": "“Near this place are deposited the Remains of Mrs Rosa Palmer, who died on the first day of May 1790.”",
   "stem": "n-c2c79ead",
   "text": "Near this place are deposited the Remains of Missus Rosa Palmer, who died on the first day of May seventeen ninety.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "“Her manners were open, cheerful and agreeable.”",
@@ -353,8 +353,8 @@
   "key": "She never married again. They had no children.",
   "stem": "n-9599be7c",
   "text": "She never married again. They had no children.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Under the tissue, a newspaper of 1827.",
@@ -367,15 +367,15 @@
   "key": "John Rose Palmer died at Rose Hall, aged 42, deep in debt.",
   "stem": "n-d93b6c81",
   "text": "John Rose Palmer died at Rose Hall, aged forty-two, deep in debt.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "The cause of his death is not known.",
   "stem": "n-403ca3fa",
   "text": "The cause of his death is not known.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "“His intrinsic worth, kind heart, and generous disposition obtained him the esteem of all his acquaintance.”",
@@ -395,8 +395,8 @@
   "key": "In 1830 Annie sold “whatever rights she may have had” in Rose Hall.",
   "stem": "n-b0a80878",
   "text": "In eighteen thirty Annie sold whatever rights she may have had in Rose Hall.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "She was paid 200 pounds.",
@@ -409,8 +409,8 @@
   "key": "She sold a year before the great rebellion began.",
   "stem": "n-9377b8ae",
   "text": "She sold a year before the great rebellion began.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "The burial book of Montego Bay.",
@@ -423,15 +423,15 @@
   "key": "Annie Palmer was buried in Montego Bay churchyard on 9 July 1846.",
   "stem": "n-03c62f9e",
   "text": "Annie Palmer was buried in Montego Bay churchyard on the ninth of July eighteen forty-six.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "The legend says she was killed in 1831. She lived fifteen years more.",
   "stem": "n-43ec841f",
   "text": "The legend says she was killed in eighteen thirty-one. She lived fifteen years more.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "No tombstone of hers has survived.",
@@ -444,22 +444,22 @@
   "key": "The case light shows a page of names.",
   "stem": "n-87bb7723",
   "text": "The case light shows a page of names.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "The registers list the people each owner held in slavery.",
   "stem": "n-7dbc58cc",
   "text": "The registers list the people each owner held in slavery.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Annie Palmer held four people in 1829, and eight in 1833.",
   "stem": "n-382bfcd0",
   "text": "Annie Palmer held four people in eighteen twenty-nine, and eight in eighteen thirty-three.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "She was no witch. But she did own people.",
@@ -479,15 +479,15 @@
   "key": "Here the tale is first printed: a Mrs Palmer, three husbands, murder.",
   "stem": "n-1dc203b7",
   "text": "Here the tale is first printed: a Missus Palmer, three husbands, murder.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "It was printed twenty-two years after Annie died.",
   "stem": "n-38e1939c",
   "text": "It was printed twenty-two years after Annie died.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "It has no Haiti, no voodoo, no Takoo and no White Witch.",
@@ -528,8 +528,8 @@
   "key": "Miss Bryan points to the names.",
   "stem": "n-d8c08cd4",
   "text": "Miss Bryan points to the names.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Celia, Dorinda, Cecelia, Mary James, George Stennet.",
@@ -549,8 +549,8 @@
   "key": "The estate book names 208 people held here from 1817 to 1832.",
   "stem": "n-ed4a07a1",
   "text": "The estate book names two hundred and eight people held here from eighteen seventeen to eighteen thirty-two.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Miss Bryan points to the card.",
@@ -619,8 +619,8 @@
   "key": "Nine children. Four died before they were five.",
   "stem": "n-5c2cf0ac",
   "text": "Nine children. Four died before they were five.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "21 April 1830: “Dorrinda the midwife being orderd to the field for general neglect in the performance of her duty thot proper to abscond.” She ran.",
@@ -633,8 +633,8 @@
   "key": "You lay a flower by their names.",
   "stem": "n-be67a277",
   "text": "You lay a flower by their names.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Cecelia, born in Africa about 1769: “Attending Young Children”.",
@@ -745,8 +745,8 @@
   "key": "She was buried in Montego Bay churchyard on 9 July 1846.",
   "stem": "n-a305d7be",
   "text": "She was buried in Montego Bay churchyard on the ninth of July eighteen forty-six.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "No tombstone of hers has survived. Nobody knows when this tomb was built.",
@@ -794,8 +794,8 @@
   "key": "Its leader, Samuel Sharpe, was hanged on 23 May 1832.",
   "stem": "n-db3a32aa",
   "text": "Its leader, Samuel Sharpe, was hanged on the twenty-third of May eighteen thirty-two.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "sad",
+  "speed": 0.93
  },
  {
   "key": "Full freedom came on 1 August 1838.",
