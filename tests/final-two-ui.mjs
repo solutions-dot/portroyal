@@ -18,7 +18,8 @@ for (const game of ['windrush', 'selassie']) {
       assert.match(html, new RegExp('id="' + id + '"'), game + ' is missing UI control ' + id);
     }
     /* every shared rule of Kendal's page is in this page too (sizes, fonts, panels, the glowing Journal button, the fainter joystick) */
-    const missing = shared.filter((l) => !css.includes(l));
+    /* the narration bar (body.cine #sub) must exist, but this page may set its own text size: Windrush and Selassie are framed for a phone held upright and read larger (27 November 2026) */
+    const missing = shared.filter((l) => !css.includes(l) && !(l.startsWith('body.cine #sub{') && css.includes('body.cine #sub{')));
     assert.deepEqual(missing, [], game + ' is missing some of Kendal\'s interface rules');
     assert.doesNotMatch(css, /#jbtn\.new/, 'the Journal button glows with .glow, as in every game');
     /* behaviour */
