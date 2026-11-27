@@ -5,7 +5,7 @@
 | # | Game | Narrator and music | Character voices | Left to do |
 |---|---|---|---|---|
 | 1 | Xaymaca 1503 | done (shared player) | done (coverage check passes) | listen to "Navassa" (came back as "Nevada") and "Ten canoes. Our people made them."; Taino-heritage review |
-| 2 | Port Royal | done | 169 lines, 20 voices, checked and wired | click through a real talk to hear it; owner decision: paraphrased lines for Morgan, Exquemelin, Heath, Benning (Abba is free, settled 27 November 2026; her lines stay as recorded) |
+| 2 | Port Royal | done | 169 lines, 20 voices, checked and wired | click through a real talk to hear it; Abba is free and the four real people (Morgan, Exquemelin, Heath, Benning) keep their imagined lines, each journal page now says so (owner, 27 November 2026) |
 | 3 | Nanny Town | done | 90 lines, 6 voices, checked and wired (`showLine`) | listen to the clips; Quamin could move to "young man (expressive)" if the owner prefers |
 | 4 | The Mad Master | done except `warrant-32` (failed download, re-record) | **not started** | list speakers, propose voices (light-skinned: library British voices; Black: saved voices), record, wire |
 | 5 to 16 | Shark Papers, Rose Hall, Morant Bay, Bog Walk, Garvey, Windrush, Kendal, Selassie, Air Jamaica, Eventide, Tivoli, Melissa | narrator done | **not started** (Eventide: cast file written, 24 clips not recorded, dialogue not wired) | same steps, one game at a time |

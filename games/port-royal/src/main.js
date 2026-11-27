@@ -156,10 +156,10 @@ const JOURNAL = [
     simple: ['A privateer had papers from the government to attack enemy ships. A pirate had no papers.', 'In the 1660s, English leaders let privateers from Port Royal raid Spanish ships and towns.'],
     deeper: ['The most famous was Henry Morgan. He later became Lieutenant Governor of Jamaica.', 'By the 1680s the government had turned against the raiders. Pirates caught by the law were hanged at Gallows Point, just outside the town.', 'Sam is a fictional character.'] },
   { id: 'benning', title: 'The Bennings, pewterers',
-    simple: ['Simon Benning was a real pewterer. He made plates, spoons and cups from pewter.', 'He died in 1687. His son Symon kept the shop going until the earthquake.'],
+    simple: ['Simon Benning was a real pewterer. He made plates, spoons and cups from pewter.', 'He died in 1687. His son Symon kept the shop going until the earthquake.', 'Symon Benning was real. His words in the game are imagined.'],
     deeper: ['Their mark was a pineapple with the letters S and B. Pewter with this mark has been found under the sea at Port Royal.', 'Marks like these help archaeologists work out who made the things they find.', 'The words Symon Benning says in this game are imagined, to tell the story.'] },
   { id: 'heath', title: 'The Reverend Emmanuel Heath',
-    simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. We know a lot about that day because of him.'],
+    simple: ['Emmanuel Heath was a real person. He was the minister of St Paul\u2019s Church in Port Royal.', 'He lived through the earthquake and wrote letters about it. We know a lot about that day because of him.', 'Emmanuel Heath was real. His words in the game are imagined.'],
     deeper: ['He wrote from a ship called the Granada, out in the harbour. He went ashore to pray with the hurt and dying, and to christen children.', 'Like many people then, he believed the earthquake was God\u2019s punishment. Today, scientists explain it with loose, wet sand turning to liquid.', 'His words in this game are fictional, but they follow what he wrote.', 'The words Emmanuel Heath says in this game are imagined, to tell the story.'] },
 ];
 const COINS = [
@@ -1706,7 +1706,7 @@ $('reset').onclick = () => { if (fading) return; closeJournal(); const i = chapt
 const FB = { on: false }, FORT = { ready: false };
 JOURNAL.push(
   { id: 'morgan', title: 'Captain Henry Morgan',
-    simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales.', 'The governor gave him papers to attack Spanish ships and towns. His men chose him to lead them.'],
+    simple: ['Henry Morgan was the most famous privateer of Port Royal. He came from Wales.', 'The governor gave him papers to attack Spanish ships and towns. His men chose him to lead them.', 'Henry Morgan was real. His words in the game are imagined, to keep the story moving.'],
     deeper: ['He raided Portobelo in 1668 and Maracaibo in 1669. In January 1671 his men took the city of Panama, and it burned.', 'England and Spain had just made peace, so Morgan was arrested and sent to England in 1672. Instead of being punished, he was made a knight in 1674.', 'He came back in 1675 as Lieutenant Governor of Jamaica, and the law he served now hanged pirates. Ned is a fictional character, but Morgan was real.', 'Will and Jack, the two old sailors in The Turtle, are fictional too.', 'The words Henry Morgan says in this game are imagined, to tell the story.'] },
   { id: 'funeral', title: 'Morgan’s grave',
     simple: ['Henry Morgan died in Port Royal on 25 August 1688.', 'He was buried near the town. The ships fired 22 guns for him.'],
@@ -1884,7 +1884,7 @@ JOURNAL.push(
     simple: ['Before a trip, buccaneers agreed to rules called articles.', 'Nobody got wages. They shared what they took. A ship’s boy got half a share.'],
     deeper: ['A man who was badly hurt was paid first. The surgeon Exquemelin wrote that the loss of a right arm was worth 600 pieces of eight.', 'He also wrote that this could be paid as six enslaved people. Even these rules treated human beings as money.'] },
   { id: 'exquemelin', title: 'The surgeon who wrote it down',
-    simple: ['Alexandre Exquemelin was a real ship’s doctor. He sailed with Morgan to Panama.', 'He wrote a book about them in 1678. It made Morgan famous.'],
+    simple: ['Alexandre Exquemelin was a real ship’s doctor. He sailed with Morgan to Panama.', 'He wrote a book about them in 1678. It made Morgan famous.', 'Exquemelin was real. His words in the game are imagined, based on what he wrote in his book.'],
     deeper: ['When it came out in English in 1684, Morgan sued the publishers for saying false things about him. He won, and was paid £200.', 'Much of what we know about Morgan comes from that book, but historians read it carefully, because it is not always fair.', 'The words Exquemelin says in this game are imagined, to tell the story.'] });
 const MORGAN_TOPICS = [
   { t: 'Who are you, Admiral?', lines: [
