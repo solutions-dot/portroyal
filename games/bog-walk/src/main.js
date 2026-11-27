@@ -1,4 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { loadMule } from "../../../engine/mule.js";
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -831,7 +832,7 @@ function begin(skipIntroCards) {   /* the night only (dev views and the night's 
 let modelsReady = false;
 applySave(loadGame());
 $('start').onclick = () => { startGame(); cue('begin'); const ch = hasSave ? chapterOf(stage) : 0, st = hasSave && stage >= 10 ? (SAFE[stage] || stage) : undefined; beginChapter(ch, ch === 2 || ch === 3 ? undefined : st); setTimeout(backgroundLoad, 5000); };
-model('anims').then((an) => { loadClips(an); $('bar').style.width = '50%'; return ensurePlace(hasSave ? (CH_PLACE[chapterOf(stage)] === 'tube' ? 'station' : CH_PLACE[chapterOf(stage)]) : 'station'); }).then(() => {
+Promise.all([model('anims'), loadMule()]).then(([an]) => { loadClips(an); $('bar').style.width = '50%'; return ensurePlace(hasSave ? (CH_PLACE[chapterOf(stage)] === 'tube' ? 'station' : CH_PLACE[chapterOf(stage)]) : 'station'); }).then(() => {
   $('bar').style.width = '100%'; modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; if (__DEV__) devViews(); });
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's place first, then the rest in story order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => [...nextOf(chapterOf(stage)), 'station', 'kingston', 'yard', 'ruins'], 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
