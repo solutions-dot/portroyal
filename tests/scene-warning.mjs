@@ -31,3 +31,19 @@ test('a warning card never says nobody is hurt twice, and leaves it out where pe
   assert.deepEqual(warningLines(['Nobody is hurt in front of you.']), ['Nobody is hurt in front of you.', 'It may be scary.']);
   assert.deepEqual(warningLines(['People fall, far off.'], true, { hurt: true }), ['People fall, far off.', 'It may be scary.']);
 });
+
+/* owner, 27 November 2026: no warning card before a scene, in any game, and it must never flash */
+test('with the card off, a scene starts at once and the card is never built', async () => {
+  const { sceneWarning, SHOW_CARD } = await import('../engine/scene-warning.js');
+  assert.equal(SHOW_CARD, false);
+  let built = 0, watched = 0, read = 0;
+  sceneWarning(() => { built++; }, { title: 'A', what: ['x'], scary: true, hurt: true, watch: () => { watched++; }, read: () => { read++; } });
+  sceneWarning(() => { built++; }, { title: 'B', what: ['x'], scary: false, watch: () => { watched++; }, read: () => { read++; } });
+  assert.deepEqual([built, watched, read], [0, 2, 0], 'the card is not built, the scene runs, and nobody is sent to the read card');
+});
+test('no game opens its own scene card without asking SHOW_CARD (Tivoli keeps its card HTML but must not show it)', () => {
+  const src = readFileSync(new URL('../games/tivoli/src/fight.js', import.meta.url), 'utf8');
+  const open = src.slice(src.indexOf('export function openCard()'), src.indexOf('function show('));
+  assert.match(open, /if \(!SHOW_CARD\) \{ begin\(\); return; \}/, 'Tivoli openCard starts the scene at once while the card is off');
+  assert.ok(open.indexOf('!SHOW_CARD') < open.indexOf("$('fightcard').hidden = false"), 'the check comes before the card is shown');
+});
