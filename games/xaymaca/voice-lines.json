@@ -271,5 +271,19 @@
   "text": "Chapter finished. Well done.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "You dip the calabash into the cool stream.",
+  "stem": "n-1edb111f",
+  "text": "You dip the calabash into the cool stream.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It fills with fresh water for the crossing.",
+  "stem": "n-c4d5042e",
+  "text": "It fills with fresh water for the crossing.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]
