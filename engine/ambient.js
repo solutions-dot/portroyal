@@ -445,6 +445,7 @@ export function createAmbient(opts = {}) {
   life.issues = () => {
     life.ready(); const out = [], K = keepOff(), name = (n) => n.id || n.base || '?', pt = (p) => `(${p[0].toFixed(1)},${p[1].toFixed(1)})`;
     for (const n of people) {
+      if (n.m && n.m.userData.aboard) continue;   /* standing on a ship's deck or kneeling in a boat: the game places them, not the ground plan */
       const a = n.amb, s = a.spec, id = name(n), seat = n.m && n.m.userData.seatAnchor;
       const spots = [];
       if (a.kind === 'wander' || a.kind === 'play') (s.pts || []).forEach((p) => spots.push(['a wander point', p]));

@@ -383,6 +383,7 @@ export function caravel({ aground = true, sails = !aground, seed = 1, shores = [
   /* the stern: a round stern with a rudder */
   box(0.18, F.fb + 1.2, 1.0, M.shipWood(), 0, -F.fb / 2 + 0.3, F.z(0) + 0.45, g);
   g.userData.F = F;
+  g.userData.bow = '-z';   /* the bow is at z(1) = -L/2 (engine/audit-course.js) */
   g.userData.deckTop = scTop;
   return g;
 }

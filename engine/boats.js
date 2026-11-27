@@ -223,7 +223,9 @@ export function dugOut(o = {}) {
       for (let i = 0; i < 2; i++) { const g = new THREE.TorusGeometry(0.09 - i * 0.02, 0.012, 4, 12); g.rotateX(Math.PI / 2); g.translate(x - 0.2, y + 0.015 + i * 0.022, 0); K.add(g, rope); } }
   }
   const gear = K.mesh('canoeGear'); group.add(gear);
-  Object.assign(group.userData, { L, beam, depth: D, floor, halfIn, sheer: (x) => sheer(x / L + 0.5) });
+  /* seatBoxes: each seat board as a box in the canoe's own frame [x0, y0, z0, x1, y1, z1] (engine/audit-crew.js checks legs against them) */
+  const seatBoxes = seats.map((x) => { const sv = x / L + 0.5, y = sheer(sv) - 0.035, hw2 = half(sv) + 0.02; return [x - 0.1, y - 0.015, -hw2, x + 0.1, y + 0.015, hw2]; });
+  Object.assign(group.userData, { L, beam, depth: D, floor, halfIn, sheer: (x) => sheer(x / L + 0.5), bow: 'x', seatBoxes, bottom: floor });   /* bottom: the true inside bottom (a game may raise .floor to seat people higher) */   /* bow: which local axis the bow points along (engine/audit-course.js) */
   return group;
 }
 let DUGWOOD = null;

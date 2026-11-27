@@ -1,4 +1,8 @@
 # To do: checks still open (19 November 2026)
+**Resume here (27 November 2026, Xaymaca boats; owner ran out of usage):** pushed to `main` from `fix/floating-props` (PR #171).
+- Done: every boat points where it goes (trade canoe, the two big canoes, the ten mutiny canoes, the arriving wrecks, the rescue ship); new engine check `engine/audit-course.js` (on in Xaymaca, 0). Sailors stand on both wrecks until the rescue ship leaves (`deckCrew` in `places.js`); the trade canoe goes alongside the nearer wreck where two sailors stand at the rail. Cousin sits on the trade canoe's stern seat board; new engine check `engine/audit-crew.js` (legs in boat seats or through the bottom; on in Xaymaca, 0). Floating bread fixed; `engine/audit-placed.js` on in Xaymaca.
+- To do: look again by eye at the trade scene at 13 to 18 s (the sailors at the rail should be in frame; the camera shots are in `content.js` FILMS.trade) and at Cousin's paddle while seated; run the autoplayer (`?auto=1`, desktop and phone) after these changes; switch `audit-course`, `audit-crew` and `resting: true` on in the other games (Port Royal's rescue boat, Air Jamaica, Windrush) and sort `docs/reviews/floating-20261126.md`; Mendez's collar and the women's chest band (see `docs/games/xaymaca.md`).
+
 
 **Floating things (26 November 2026, PR on branch `fix/floating-props`):** the new rest check (`engine/audit-placed.js`, `auditReveals(Q, { resting: true, tasks: TASKS })`) is on in Xaymaca (0). Switch it on game by game after sorting each list in `docs/reviews/floating-20261126.md` (about 70 lines; some real: Windrush's cloth 107 cm up, the Shark Papers' bait 89 cm up, Air Jamaica's scarves; some are wall-mounted or hung things that need `userData.hung`).
 

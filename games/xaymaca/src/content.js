@@ -128,7 +128,7 @@ export const FILMS = {
     place: "shore", next: 24, journal: "trade", title: "Out to the ships",
     read: ["The Taino paddled out to the ships with food. Two men on the ships did all the buying.", "Two hutias bought a piece of tin. Cassava bread bought two or three glass beads. A big load earned a hawk's bell."],
     captions: [[0,"Cousin pushes the canoe out.","full-trade-0"],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side.","full-trade-11"],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
-    shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [9, 2.4, -16], look: [4, 1, -30] }, { t: 16, p: [10, 2.0, -21], look: [5, 1.0, -30] }, { t: 22, p: [10.5, 1.6, -22], look: [5.5, 0.3, -29.5] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
+    shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [7.4, 2.0, -28.6], look: [1.7, 1.3, -31.4] }, { t: 16, p: [7.0, 1.7, -30.4], look: [1.7, 1.1, -31.0] }, { t: 22, p: [6.4, 1.6, -33.2], look: [2.6, 0.5, -30.9] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
     fov: [[0, 50], [11, 44], [16, 36], [22, 40], [28, 48]],
     acts: [],
     sounds: [[0.3, "begin"], [5, "oars"], [7, "oars"], [9, "oars"], [11, "oars"], [14, "gull"], [17, "creak"], [21, "oars"], [23, "oars"]],
