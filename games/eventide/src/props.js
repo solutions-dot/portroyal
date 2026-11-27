@@ -194,40 +194,6 @@ export function standpipe() { const g = grp(); cyl(0.1, 0.12, 1.1, M.iron, 0, 0.
 export function waterTower(o) { return buildWaterTower({ grp, cyl, box, solid, M }, o); }   /* one water tower for every game (engine/water-tower.js) */
 export function barrel() { const g = grp(); cyl(0.3, 0.3, 0.8, solid(0x7a5a3c, 0.9), 0, 0.4, 0, g, 12); for (const y of [0.15, 0.65]) cyl(0.315, 0.315, 0.04, M.iron, 0, y, 0, g, 12); return g; }
 
-/* ---------- a mule with a pack saddle, panniers and a bridle; tick(t) breathes, nods, flicks an ear, swishes the tail and sometimes paws ---------- */
-export function mule(c = 0x6a5644) {
-  const g = grp(), body = solid(c, 0.95), belly = solid(0x9c8870, 0.95), dk = solid(0x2d241d, 1), muz = solid(0xb8a58c, 1), hoof = solid(0x1f1a16, 0.8), leather = solid(0x4a3020, 0.9), cloth = solid(0x9a3a2a, 1), wood = solid(0x7a5a3c, 0.95);
-  const torso = mesh(new THREE.CylinderGeometry(0.34, 0.33, 1.15, 16), body, 0, 1.02, 0, g); torso.rotation.z = PI2; torso.scale.set(1, 1, 0.9);
-  const chest = mesh(new THREE.SphereGeometry(0.36, 14, 10), body, 0.58, 1.05, 0, g); chest.scale.set(0.95, 1.05, 0.88); const rump = mesh(new THREE.SphereGeometry(0.36, 14, 10), body, -0.58, 1.06, 0, g); rump.scale.set(1, 1.02, 0.9);
-  const under = mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.0, 12), belly, 0, 0.84, 0, g); under.rotation.z = PI2; under.scale.set(1, 1, 0.9);
-  const neck = mesh(new THREE.CylinderGeometry(0.13, 0.2, 0.7, 10), body, 0.9, 1.38, 0, g); neck.rotation.z = -0.62;
-  for (let i = 0; i < 7; i++) { const m = box(0.05, 0.12, 0.03, dk, 0.78 + i * 0.045, 1.58 + i * 0.065 - 0.04, 0, g); m.rotation.z = -0.62; }   /* the mane */
-  const head = grp(g, 1.16, 1.66, 0), hd = mesh(new THREE.SphereGeometry(0.15, 12, 9), body, 0.1, -0.02, 0, head); hd.scale.set(1.35, 1.05, 0.85);
-  const mz = mesh(new THREE.SphereGeometry(0.105, 10, 8), muz, 0.33, -0.1, 0, head); mz.scale.set(1.35, 0.9, 0.82); for (const z of [-0.04, 0.04]) mesh(new THREE.SphereGeometry(0.018, 6, 5), dk, 0.45, -0.1, z, head);
-  for (const z of [-0.115, 0.115]) mesh(new THREE.SphereGeometry(0.027, 8, 6), glow(0x0a0806), 0.2, 0.03, z, head);
-  const ears = []; for (const z of [-0.075, 0.075]) { const e = mesh(new THREE.ConeGeometry(0.045, 0.3, 6), body, -0.04, 0.2, z, head); e.rotation.x = z > 0 ? -0.22 : 0.22; e.rotation.z = 0.1; ears.push(e); mesh(new THREE.ConeGeometry(0.022, 0.2, 5), dk, -0.04, 0.2, z * 1.02, head).rotation.copy(e.rotation); }
-  box(0.04, 0.05, 0.27, leather, 0.3, -0.07, 0, head); box(0.18, 0.025, 0.27, leather, 0.0, 0.08, 0, head); for (const z of [-0.12, 0.12]) box(0.22, 0.02, 0.02, leather, 0.1, -0.03, z, head);   /* the bridle */
-  const rope = cyl(0.012, 0.012, 0.6, solid(0xb8a070, 1), 0.28, -0.4, 0.12, head, 5); rope.rotation.x = 0.1;   /* the lead rope */
-  const legs = []; for (const [x, z, f] of [[0.56, -0.17, 1], [0.56, 0.17, 1], [-0.56, -0.17, 0], [-0.56, 0.17, 0]]) { const lg = grp(g, x, 0.74, z); mesh(new THREE.CylinderGeometry(0.095, 0.065, 0.46, 8), body, 0, -0.18, 0, lg); mesh(new THREE.SphereGeometry(0.065, 7, 6), dk, 0, -0.42, 0, lg); mesh(new THREE.CylinderGeometry(0.052, 0.05, 0.36, 7), dk, 0, -0.55, 0, lg); mesh(new THREE.CylinderGeometry(0.072, 0.082, 0.08, 8), hoof, 0, -0.7, 0, lg); legs.push(lg); }
-  const tail = grp(g, -0.92, 1.14, 0); cyl(0.03, 0.02, 0.5, dk, 0, -0.25, 0, tail, 6); mesh(new THREE.SphereGeometry(0.06, 7, 6), dk, 0, -0.55, 0, tail).scale.set(1, 2.2, 1);
-  /* the pack: a cloth pad, crossed wooden frames, a girth strap and two woven panniers on ropes */
-  box(0.8, 0.05, 0.5, cloth, 0, 1.38, 0, g); for (const x of [-0.25, 0.25]) for (const s of [-1, 1]) { const bk = box(0.05, 0.5, 0.05, wood, x, 1.5, s * 0.0, g); bk.rotation.x = s * 0.5; }
-  box(0.7, 0.05, 0.05, wood, 0, 1.72, 0, g); const girth = mesh(new THREE.TorusGeometry(0.345, 0.014, 5, 20), leather, 0.12, 1.02, 0, g); girth.rotation.y = PI2; girth.scale.set(1, 1, 0.92);
-  const panniers = []; for (const s of [-1, 1]) { const pn = cyl(0.27, 0.21, 0.46, std(T.weave([3, 1]), 0.95), -0.02, 1.0, s * 0.5, g, 14); const rim = mesh(new THREE.TorusGeometry(0.27, 0.025, 5, 16), solid(0x8a6428, 1), -0.02, 1.23, s * 0.5, g); rim.rotation.x = PI2; panniers.push(pn); for (const dx of [-0.16, 0.16]) { box(0.02, 0.02, 0.5, solid(0xb8a070, 1), dx, 1.3, s * 0.27, g); } }
-  g.userData.slots = [[-0.02, 1.27, -0.5], [-0.02, 1.27, 0.5], [-0.04, 1.78, 0]];   /* where the three loads go */
-  g.userData.dip = 0; const base = { torso: torso.position.y };
-  g.userData.tick = (t) => { const k = Math.sin(t * 1.6) * 0.012; torso.scale.y = 1 + k; head.rotation.z = Math.sin(t * 1.1) * 0.06 - 0.06 - g.userData.dip * 0.6; ears[0].rotation.z = 0.1 + (Math.sin(t * 0.7) > 0.93 ? Math.sin(t * 40) * 0.25 : 0); tail.rotation.x = Math.sin(t * 2.2) * 0.2; tail.rotation.z = Math.sin(t * 1.3) * 0.08;
-    const paw = Math.sin(t * 0.35) > 0.96 ? Math.sin(t * 14) * 0.35 : 0; legs[0].rotation.z = paw; g.position.y = -g.userData.dip * 0.05; };
-  return g;
-}
-const PI2 = Math.PI / 2;
-/* things to load: a basket of yams, a sack of provisions, a bunch of bananas bound with rope */
-export function yamBasket() { const g = grp(); cyl(0.26, 0.2, 0.34, std(T.weave([3, 1]), 0.95), 0, 0.17, 0, g, 14); for (let i = 0; i < 7; i++) { const y = mesh(new THREE.SphereGeometry(0.1, 8, 6), solid([0x8a5a30, 0x9a6a3a, 0x7a4a28][i % 3], 1), Math.cos(i * 1.1) * 0.12, 0.4 + (i > 4 ? 0.07 : 0), Math.sin(i * 1.1) * 0.12, g); y.scale.set(1.5, 0.8, 0.9); y.rotation.y = i; } return g; }
-export function provisionSack() { const g = grp(); const b = mesh(new THREE.SphereGeometry(0.28, 12, 9), solid(0xc2ad78, 1), 0, 0.28, 0, g); b.scale.set(1, 1.15, 0.85); const neck = cyl(0.07, 0.1, 0.1, solid(0xa89258, 1), 0, 0.6, 0, g, 8); mesh(new THREE.TorusGeometry(0.075, 0.014, 5, 10), solid(0x6a4a28, 1), 0, 0.58, 0, g).rotation.x = PI2; return g; }
-export function bananaLoad() {   /* three bunches lying across the mule's back, tied round with rope */
-  const g = grp(); [[-0.13, 0.17], [0.13, 0.17], [0, 0.36]].forEach(([x, y], i) => { const b = bananaBunch(0.66); b.rotation.order = 'ZXY'; b.rotation.set(PI2, i * 1.5, 0); b.position.set(x, y, -0.22); g.add(b); });
-  const rope = mesh(new THREE.TorusGeometry(0.26, 0.012, 5, 18), solid(0xb8a070, 1), 0, 0.2, 0.0, g); rope.scale.y = 0.85; return g; }
-export function loadedMule() { return mule(); }
 export function cart(L = 2.6, W = 1.4) {
   const g = grp(); box(L, 0.1, W, M.wood, 0, 0.7, 0, g); for (const s of [-1, 1]) box(L, 0.4, 0.07, M.wood, 0, 0.95, s * W / 2, g); box(0.07, 0.4, W, M.wood, -L / 2, 0.95, 0, g);
   for (const s of [-1, 1]) { const w = cyl(0.62, 0.62, 0.07, M.woodDark, -0.2, 0.62, s * (W / 2 + 0.08), g, 14); w.rotation.x = Math.PI / 2; for (let i = 0; i < 3; i++) { const sp = box(1.2, 0.06, 0.05, M.wood, -0.2, 0.62, s * (W / 2 + 0.12), g); sp.rotation.z = i * Math.PI / 3; } }

@@ -235,20 +235,17 @@ function road() {
     c.add(b);
   }
   solid1(Q, c, 6.8, 9.4, 3.0, 1.9);
-  solid1(Q, mule(0x6a5644), 9.9, 9.4, 2.0, 0.8, Math.PI / 2);
+  solid1(Q, mule(0x6a5644, { pack: false }), 9.9, 9.4, 2.0, 0.8);   /* the cart's mule, out of the shafts: no pack saddle */
   /* a pack mule that came down the road alone: tied to the wall, its load still on */
-  const stray = mule(0x4f4238);
-  const pack = grp(stray, 0, 1.38, -0.1);
+  const stray = mule(0x4f4238, { pack: "pad" });   /* a riding pad, with the traveller's bags and bedroll strapped on top */
+  const pack = grp(stray.userData.back, -0.08, 1.63, 0);   /* rides on its back as it walks (engine/mule.js) */
   box(0.36, 0.3, 0.62, solid(0x6b4a30, 1), 0.3, 0, 0, pack);
   box(0.36, 0.3, 0.62, solid(0x6b4a30, 1), -0.3, 0, 0, pack);
   box(0.7, 0.07, 0.5, solid(0x3d2d20, 1), 0, 0.17, 0, pack);
-  /* a blanket rolled tight and strapped across the saddle */
-  const roll = cyl(0.1, 0.1, 0.62, solid(0x7a6a52, 1), 0, 0.28, 0, pack, 16);
-  roll.rotation.z = Math.PI / 2;
-  for (const x of [-0.2, 0.2]) {
-    const st = mesh(new THREE.TorusGeometry(0.104, 0.008, 4, 16), solid(0x3a2a1c, 0.8), x, 0.28, 0, pack);
-    st.rotation.y = Math.PI / 2;
-  }
+  /* a blanket rolled tight and strapped across the back bag, so the front bag's flap can open clear of it */
+  const roll = cyl(0.1, 0.1, 0.62, solid(0x7a6a52, 1), -0.3, 0.27, 0, pack, 16);
+  roll.rotation.x = Math.PI / 2;
+  for (const z of [-0.2, 0.2]) mesh(new THREE.TorusGeometry(0.104, 0.008, 4, 16), solid(0x3a2a1c, 0.8), -0.3, 0.27, z, pack);
   const flap = box(0.37, 0.05, 0.6, solid(0x7a5a3c, 1), 0.3, 0.18, 0, pack);   /* the bag's flap: lifted when you look inside */
   flap.userData.noBatch = true;
   /* what is in the bag: a tin cup and a shirt folded small, seen as the flap comes up */
@@ -268,16 +265,21 @@ function road() {
     inside.visible = u > 0.3;
     inside.position.y = mix(0.06, 0.16, span(K(seen), 0.4, 0.9));
   };
-  /* the opening camera scene: the pack mule comes down the road from the castle alone, and stops by the wall where Sampson will tie it */
-  const MULEWAY = [[-46, 5.8], [-11, 5.8], [-8.6, 3.7], [-7, 3.6]];
+  /* the opening camera scene: the pack mule comes down the road from the castle alone, and stops by the wall where Sampson will tie it.
+     It sets off at 17 s, while the camera looks at the castle, so it is first seen on the road at 24 s, as the caption says, and it comes
+     at a mule's steady walk (about 1.6 m/s, 24 m in 15 s); it walks by itself
+     from how far it moves (engine/mule.js), so the film only sets where it is. */
+  const MULEWAY = [[-30, 5.8], [-11, 5.8], [-8.6, 3.7], [-7, 3.6]];
   Q.films.opening = (t) => {
-    const k = t < 0 ? 1 : (t - 14) / 18,
-      p = along(MULEWAY, k),
-      step = k > 0 && k < 1 ? Math.sin(t * 9) : 0;
-    stray.position.set(p[0], Math.abs(step) * 0.02, p[1]);
-    stray.rotation.y = k >= 1 ? Math.PI / 2 : p[2];
-    stray.rotation.x = step * 0.015;
-    stray.visible = k >= 0;   /* round the far bend, out of sight, until it comes */
+    const k = t < 0 ? 1 : (t - 17) / 15,
+      p = along(MULEWAY, k);
+    stray.position.set(p[0], 0, p[1]);
+    /* along() gives the heading of a body that faces +z; the mule faces +x, so a quarter turn less. Over the last steps it turns
+       to face the wall where Sampson ties it. */
+    const ry = p[2] - Math.PI / 2, u = Math.min(1, Math.max(0, (k - 0.86) / 0.14)),
+      d = Math.atan2(Math.sin(Math.PI / 2 - ry), Math.cos(Math.PI / 2 - ry));
+    stray.rotation.y = ry + d * u * u * (3 - 2 * u);
+    stray.visible = k >= 0;
   };
   for (const [x, z, s] of [[-16.8, 10.9, 1.2], [3, 11.1, 1], [15.5, 10.6, 1.3], [-4, 10.9, 0.9], [-9, 11.2, 1.1]]) solid1(Q, W.scrub(x * 7 + 3, s), x, z, 0.5, 0.5);
   scatter(Q.group, (i) => W.scrub(i + 30, 0.8 + (i % 3) * 0.3), 36, [-60, 14, 60, 60], [], 7);
@@ -390,10 +392,10 @@ function castle() {
   }
   wall(Q, 17.5, 3.4, 9.7, 6.3);
   hide(12.6, 6.6, 22.4, 8.2);
-  add(Q, S.cow(S.COATS[0], "stand", 21), 19.6, 2.2, 0, 2.6);
-  add(Q, S.cow(S.COATS[3], "graze", 22), 15.2, 4.6, 0, -0.5);
+  add(Q, S.cow(S.COATS[0], "stand", 21), 19.8, 2.4, 0, Math.PI);   /* along the wall, its head clear of the stones */
+  add(Q, S.cow(S.COATS[3], "graze", 22), 13.6, 4.3, 0, -0.5);   /* clear of the jackass's way to the wall */
   add(Q, S.cow(S.COATS[1], "lie", 23), 20.2, 4.8, 0, 1.2);
-  const jack = mule(0x8f8a80);
+  const jack = mule(0x8f8a80, { coat: "grey", pack: false });   /* a grey donkey with a halter: the strayed jackass */
   jack.scale.setScalar(0.74);
   jack.traverse((o) => (o.userData.noBatch = true));
   add(Q, jack, 15.6, 2.0, 0, -0.6);
@@ -402,9 +404,8 @@ function castle() {
     const k = K(seen),
       turn = span(k, 0, 0.35),
       walk = span(k, 0.25, 1);
-    jack.position.set(mix(15.6, 17.2, walk), Math.abs(Math.sin(walk * Math.PI * 5)) * 0.025 * (k < 1 ? 1 : 0), mix(2.0, 5.0, walk));
+    jack.position.set(mix(15.6, 17.2, walk), 0, mix(2.0, 5.0, walk));   /* it walks by itself as it moves (engine/mule.js) */
     jack.rotation.y = mix(-0.6, Math.PI, turn);
-    jack.rotation.x = Math.sin(walk * Math.PI * 5) * 0.03 * (k < 1 ? 1 : 0);
   };
   /* a riding hat between the roots of the cotton tree: you find it, and hang it where it can be seen */
   const hat = add(Q, P.feltHat(), 0.1, 5.5, 0.025);
@@ -468,10 +469,10 @@ function castle() {
   stain.rotation.x = -Math.PI / 2;   /* one small stain on the cloth, as the Mature 13+ line allows */
   covered.visible = false;
   c.traverse((o) => (o.userData.noBatch = true));
-  const cartMule = mule(0x6a5644);
+  const cartMule = mule(0x6a5644, { pack: false });   /* in the shafts: no pack saddle */
   cartMule.traverse((o) => (o.userData.noBatch = true));
   solid1(Q, c, 12.4, 13.6, 3.0, 1.9);
-  solid1(Q, cartMule, 17.1, 13.6, 2.0, 0.8, Math.PI / 2);
+  solid1(Q, cartMule, 17.1, 13.6, 2.0, 0.8);   /* facing +x, the way the cart goes */
   /* where you are in cover (on the road side of each solid thing), and the open ground the upper window looks over */
   const show = (k) => {
     C.userData.shutter.userData.swing(k);
@@ -1094,7 +1095,7 @@ function town() {
     wc.add(b);
   }
   solid1(Q, wc, -16, 9.6, 3.0, 1.9, 0.4);
-  solid1(Q, mule(0x5a4a3c), -16.9, 12.6, 0.9, 2.0, 0.4);
+  solid1(Q, mule(0x5a4a3c), -16.9, 12.6, 2.0, 0.9, 0.4);
   solid1(Q, barrel(), 16.6, 7.4, 0.7, 0.7);
   solid1(Q, barrel(), 16.9, 8.3, 0.7, 0.7);
   solid1(Q, S.groundStall(1), 14.8, 15.4, 1.9, 1.3, -0.4);

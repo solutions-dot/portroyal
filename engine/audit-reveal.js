@@ -28,6 +28,9 @@ function meshes(group) {
    userData.fixed = true on it or a parent. Anything else needs a surface under it or a hook, beam or rope over it: a hat touching a
    tree trunk from the side is still in the air. */
 const fixedTo = (o) => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.fixed) return true; return false; };
+/* worn by a rigged animal (a pack saddle, a halter, a load in engine/mule.js's userData.back): its group rides on a bone of a skinned body
+   that stands on its own hooves, and skinned bodies are not rays' targets here, so a worn piece is held by the animal (27 November 2026) */
+const wornBy = (o) => { for (let a = o; a; a = a.parent) if (a.userData && a.userData.worn) return true; return false; };
 const moved = (a, b) => !a || a.min.distanceTo(b.min) > 0.01 || a.max.distanceTo(b.max) > 0.01;
 
 export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02, tasks = null, resting = false } = {}) {   /* resting: also run the things-rest-on-something check (engine/audit-placed.js); on in Xaymaca, off elsewhere until each game's findings are sorted (docs/reviews/floating-20261126.md) */
@@ -64,7 +67,7 @@ export function auditReveals(Q, { groundAt = null, settle = null, tol = 0.02, ta
       const rests = new Set();
       for (const [o, b] of move) {
         const c = b.getCenter(new THREE.Vector3());
-        if (b.min.y <= g(c.x, c.z) + 0.03 || touches(b, fixedTo(o))) rests.add(o);
+        if (b.min.y <= g(c.x, c.z) + 0.03 || wornBy(o) || touches(b, fixedTo(o))) rests.add(o);
       }
       for (let grew = true; grew; ) { grew = false;   /* a moved piece resting on a moved piece that rests */
         for (const [o, b] of move) if (!rests.has(o)) { const near = b.clone().expandByScalar(tol); if (move.some(([p, s]) => rests.has(p) && s.intersectsBox(near))) { rests.add(o); grew = true; } } }

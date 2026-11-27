@@ -373,3 +373,7 @@ Dev: `?look=<id>&at=<chapter>,<stage>&k=0.5` holds a look part way for a screens
 ## Layout test 0 (22 November 2026)
 
 The nineteen findings were one thing: the Journal button's count badge hangs over its corner by design (engine/hud.js), and the cut-off check counted it as text running out of the button. The check now uses `buttonCutOff` in engine/ui-audit.js, which leaves absolutely placed children out. `?test=layout`: 0 at 390x800 and 667x375.
+
+## The mule (27 November 2026)
+
+The mule car's two mules are the shared rigged mule (`engine/mule.js`, Quaternius, CC0) with no pack saddle; their harness (collar, hames, back band, breeching, traces) was refitted to its body and rides on its spine (`userData.back`), joined into one mesh per material (`bake`).

@@ -157,6 +157,8 @@ export async function dev(A) {
       A.DIR.paused = true;
       A.DIR.time = Number(q.get("at") || 0);
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
+      /* the last half second drawn frame by frame, so anything that animates from how far it moved (the mule, engine/mule.js) is caught mid-step */
+      for (let i = 15, end = A.DIR.time; i >= 0; i--) { A.DIR.time = Math.max(0, end - i / 30); A.DIR.apply(A.DIR.time); A.tick(0, performance.now()); }
       $("cineControls").hidden = !q.has("ui");
       if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
     }

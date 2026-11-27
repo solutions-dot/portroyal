@@ -89,3 +89,9 @@ games/xaymaca/site/models/anims.js
 
 # The shared intro player (shared/intro-audio.js), copied into each game by tools/build.mjs on every build: not tracked
 games/*/site/intro-audio.js
+
+# Shared animals (engine/beasts.js): tools/build.mjs copies shared/models/{mule,cow,bull,horse}.js into every game, so the copies are not tracked
+games/*/site/models/mule.js
+games/*/site/models/cow.js
+games/*/site/models/bull.js
+games/*/site/models/horse.js

@@ -956,7 +956,7 @@ function town() {
     wc.add(b);
   }
   solid1(Q, wc, -16, 9.6, 3.0, 1.9, 0.4);
-  solid1(Q, mule(0x5a4a3c), -16.9, 12.6, 0.9, 2.0, 0.4);
+  solid1(Q, mule(0x5a4a3c), -16.9, 12.6, 2.0, 0.9, 0.4);   /* the mule faces +x: its footprint is long in x */
   solid1(Q, barrel(), 16.6, 7.4, 0.7, 0.7);
   solid1(Q, barrel(), 16.9, 8.3, 0.7, 0.7);
   solid1(Q, S.groundStall(1), 14.8, 15.4, 1.9, 1.3, -0.4);
