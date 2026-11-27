@@ -1,8 +1,8 @@
 /* Xaymaca's audio calls, now served by the shared player (engine/filmvoice.js, owner rules 16 and 17). The exports stay as they were so the
    director, the dialogue and the ending do not change; the clips are still voices/narrator-<name>.mp3 and scores/score-<name>.mp3. */
-import { createFilmVoice } from "../../../engine/filmvoice.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
 
-const FV = createFilmVoice();
+const FV = sharedVoice();   /* the page's one voice channel, so the narrator and the film never overlap (owner rule 17) */
 
 export const narrationActive = () => FV.active();
 export const preloadNarration = (name) => FV.preloadClip(name);

@@ -11,6 +11,7 @@
      addSceneWarningOptions(body, watchBtn, readBtn, watch, read)   wire a card the page already has
      readWhatHappened(card, { what, go, pairs })        the card after "Read what happened instead": titled What happened, a few short paragraphs, Go on */
 export const SCARY_LINES = ['It may be scary.', 'Nobody is hurt on the screen.'];
+export const SHOW_CARD = false;   /* the Watch / Read card before a scene is off (owner, 27 November 2026) */
 export const WATCH = 'Watch scene';
 export const READ = 'Read what happened instead';
 
@@ -62,9 +63,11 @@ export function addSceneWarningOptions(body, watchButton, readButton, watch, rea
 }
 
 export function sceneWarning(card, { title, what, scary = true, hurt = false, watch, read, pairs = false }) {
-  /* A scene that is not scary goes straight to the film (owner, 27 November 2026: the Watch / Read card was an unnecessary click).
-     The film still has its own "Read instead" and skip. Scary and hurt scenes keep the card, so the choice is there when it matters. */
-  if (scary === false && !hurt && typeof watch === 'function') { watch(); return; }
+  /* No card before a scene, scary or not (owner, 27 November 2026: the player chose the game knowing what it is about; a Watch / Read card
+     is an extra click). The scene plays at once. Mature 13+ games are still behind the menu's age prompt. To bring the card back,
+     set SHOW_CARD to true: scary scenes (scary !== false, or hurt) then show it again. */
+  if (typeof watch === 'function' && !SHOW_CARD) { watch(); return; }
+  if (typeof watch === 'function' && scary === false && !hurt) { watch(); return; }
   const noop = () => {};
   const buttons = pairs ? [[WATCH, noop], [READ, noop]] : [{ t: WATCH, go: noop }, { t: READ, go: noop }];
   card(title, [warningText(what, scary, { hurt })], buttons, { col: true });

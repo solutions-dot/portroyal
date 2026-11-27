@@ -4,6 +4,7 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 /* An all-ages mystery on the shared engine. It plays like every other game (walk, talk, do, watch a scene). Everything that differs from one mature game
    to the next is data: content.js (words), steps.js (the story table), places.js (the world) and cast.js (the people). */
 import { renderFramed } from "../../../engine/cine.js";
+import { createNarrator } from "../../../engine/narrator.js";
 import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { placeActionButton } from "../../../engine/action-button.js";
@@ -32,9 +33,9 @@ import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { LINE_VOICES } from "./line-voices.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
-import { $, openPanel, dialogue, stopDialogueVoice, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, openPanel, dialogue, stopDialogueVoice, card, cardVoice, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
-import { playNarration, preloadNarration, stopNarration, preloadScore, stopScore } from "./narration.js";
+import { playNarration, preloadNarration, stopNarration, preloadScore, stopScore, narrationActive } from "./narration.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
 import { sunShadow } from '../../../engine/sunshadow.js';
@@ -579,6 +580,10 @@ const LOOK_SFX = {
 };
 const _lq = new THREE.Quaternion(),
   _le = new THREE.Euler();
+const NARR = createNarrator();   /* the narrator reads on-screen text from voices/index.json (engine/narrator.js) */
+NARR.preload();
+cardVoice.speak = (t) => NARR.speak(t);
+cardVoice.stop = () => NARR.stop();
 const LS = createLookShot({
   camera,
   fov: playFov,
@@ -592,6 +597,8 @@ const LS = createLookShot({
     $("sub").textContent = text;
     $("sub").classList.toggle("dim", !text);
   },
+  speak: (t) => NARR.speak(t),
+  voiceBusy: () => narrationActive(),
   freeze: (on) => (busy = on),
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
@@ -613,13 +620,16 @@ async function lookAt(id) {
       save();
     };
   /* a framing from the look itself, or from the place when it depends on how the place was built (a ship out in the harbour) */
-  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  /* the story lines, then what it means, one at a time in the lower bar over the close shot, each read aloud and held until it is finished;
+     no pop-up card covers the thing (owner, 27 November 2026) */
+  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, line: 1.6, sound: lk.sound, lines: [...(lk.say || []), ...(lk.lines || [])], reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();
     return done();
   }
-  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
+  await LS.back();
+  done();
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;

@@ -119,7 +119,7 @@ body:has(#nudge:not([hidden])) #place{opacity:0!important}
 body.cine #bars::before,body.cine #bars::after{height:13vh}
 body.cine #goal,body.cine #hint,body.cine #toast{opacity:.0;pointer-events:none}
 body.cine #dialogue{bottom:calc(13vh + 12px)}body.cine #talk{bottom:calc(13vh + 20px)}
-body.cine #sub{bottom:0;height:13vh;display:flex;align-items:center;justify-content:center;font-size:clamp(1rem,2.6vw,1.5rem)}   /* the narration sits inside the lower black bar */
+body.cine #sub{bottom:0;height:13vh;display:flex;align-items:center;justify-content:center;font-size:clamp(1.1rem,min(3.4vw,4.6vh),2rem);line-height:1.2;background:none;padding:0}   /* the narration sits inside the lower black bar, bigger and with no box (owner, 27 November 2026) */
 body.subbing #hint,body.subbing #toast{opacity:0;pointer-events:none}   /* the hint and the toast wait while narration shows */
 body.talking #sub{opacity:0!important;visibility:hidden}
 body.talking #goal,body.talking #hint{visibility:hidden}   /* while someone is speaking, the goal and the hint step aside */   /* narration waits while someone is speaking, so the two never overlap */

@@ -1,3 +1,4 @@
+import './card-keys.js';   /* the space bar presses a card's Next button on a desktop (engine/card-keys.js) */
 // A keyup or pointerup can be lost when a browser or phone changes focus.
 export function useInteractionKey(e, action) {
   if (e.defaultPrevented || e.repeat || !['e', 'enter', ' '].includes(e.key.toLowerCase())) return false;
