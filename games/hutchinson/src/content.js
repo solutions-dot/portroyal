@@ -129,10 +129,12 @@ export const FILMS = {
       { t: 12, p: [16, 2.4, 8], look: [2, 4.2, -11] },
       { t: 19, p: [9, 2.0, 2.5], look: [1, 3.6, -9] },
       { t: 25.5, p: [5.4, 1.6, 4.6], look: [-1.7, 5.8, -9.5] },
-      { t: 31, p: [-4, 2.4, 8.6], look: [-13.5, 1, 1] },
+      { t: 29.5, p: [5.1, 1.6, 4.8], look: [-1.7, 5.8, -9.5] },   /* held on the shuttered window through its caption */
+      { t: 30.6, p: [1.5, 2.4, 9.6], look: [-8, 1.5, 9.4] },   /* then round the road side of the cotton tree (at -0.8, 4.2), not across its trunk */
+      { t: 31.6, p: [-4, 2.4, 8.6], look: [-13.5, 1, 1] },
       { t: 37, p: [9.4, 1.9, 14.3], look: [14.5, 1.3, 11.4] },
     ],
-    fov: [[0, 46], [6, 42], [12, 34], [19, 28], [25.5, 24], [31, 40], [37, 50]],
+    fov: [[0, 46], [6, 42], [12, 34], [19, 28], [25.5, 24], [29.5, 25], [31.6, 40], [37, 50]],
     acts: [],
     sounds: [[1, "begin"], [2, "hoof"], [5, "hoof"], [8, "hoof"], [11, "hoof"], [29, "creak"]],
     duration: 41,
@@ -153,8 +155,8 @@ export const FILMS = {
       { t: 31.5, p: [7.5, 5, 3.5], look: [3, 1.2, 8.5] },
       { t: 34.5, p: [12.6, 2.3, -12.4], look: [5.8, 2.0, -12.4] },
       { t: 37, p: [12.2, 2.3, -12.1], look: [5.8, 2.0, -12.4] },
-      { t: 39, p: [3.4, 2.3, 7.0], look: [2.9, 2.0, -6] },
-      { t: 43, p: [3.6, 3.4, 9.5], look: [2.6, 2.6, -8] },
+      { t: 39, p: [4.2, 2.3, 7.6], look: [3.0, 2.0, -6] },   /* clear of the cotton tree's trunk (at -0.8, 4.2) and the outcrop */
+      { t: 43, p: [4.4, 3.4, 9.8], look: [2.9, 2.6, -8] },
     ],
     fov: [[0, 48], [4, 40], [10, 40], [15, 36], [22, 30], [22.6, 40], [26, 40], [29.5, 42], [31.5, 44], [34.5, 40], [37, 38], [39, 38], [43, 46]],
     acts: [],
@@ -169,11 +171,11 @@ export const FILMS = {
       { t: 0, p: [17, 2.4, 14.6], look: [0, 4.4, -12] },
       { t: 5, p: [11, 1.7, 13.2], look: [3, 1.5, 9] },
       { t: 11, p: [6.4, 1.5, 9.8], look: [3, 1.4, 7] },
-      { t: 14, p: [6.0, 1.4, 7.4], look: [3, 1.5, 4] },
-      { t: 16.5, p: [5.0, 1.2, 6.4], look: [2, 3.2, -4] },
-      { t: 19.5, p: [4.6, 1.3, 5.2], look: [-1.7, 5.8, -9.5] },
-      { t: 22.3, p: [4.5, 1.3, 5.2], look: [-1.7, 5.9, -9.5] },
-      { t: 23.3, p: [4.6, 1.6, 6.4], look: [-0.8, 12, 4.2] },
+      { t: 14, p: [3.9, 1.4, 7.7], look: [3, 1.5, 4] },   /* beside the outcrop (5.9, 6.5), the boy's cover, never inside it */
+      { t: 16.5, p: [3.9, 1.2, 7.3], look: [2, 3.2, -4] },
+      { t: 19.5, p: [4.0, 1.3, 5.2], look: [-1.7, 5.8, -9.5] },
+      { t: 22.3, p: [3.9, 1.3, 5.2], look: [-1.7, 5.9, -9.5] },
+      { t: 23.3, p: [3.8, 1.6, 6.4], look: [-0.8, 12, 4.2] },
       { t: 27.5, p: [5.2, 2.2, 8.4], look: [-3, 17, 2] },
       { t: 28.4, p: [6.6, 1.5, 2.9], look: [3.2, 0.2, 1.7] },
       { t: 31.5, p: [6.0, 1.1, 2.3], look: [3.2, 0.3, 1.6] },
@@ -192,7 +194,7 @@ export const FILMS = {
     captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "King’s House is dark. The square is full before the sun is up."], [14, "Everyone looks one way, down the street."], [20, "At its end, a frame of timber."], [27, "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”"], [34.8, "His words. His stone was never made.", "morning-34"], [38.1, "The court tried him for one killing. No other was ever tried.", "morning-38"]],
     shots: [
       { t: 0, p: [-17.5, 1.8, -9], look: [-30, 6.5, 0] },
-      { t: 7, p: [-14.6, 2.4, -7.5], look: [-9, 1.6, 0] },
+      { t: 7, p: [-14.6, 3.1, -7.5], look: [-9, 1.6, 0] },   /* over the railing's pillars, not behind them */
       { t: 13, p: [-4, 2, -4], look: [-6, 1.6, 6] },
       { t: 19, p: [-7.4, 1.9, 8.5], look: [-8.8, 2.6, 30] },
       { t: 27, p: [-8.6, 2, 9], look: [-9, 3.4, 56] },
