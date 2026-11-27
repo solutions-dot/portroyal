@@ -1,0 +1,86 @@
+[
+ {
+  "key": "Before the suitcase. You are Iris, aged nine. Help your family in the yard.",
+  "stem": "n-4f03ca14",
+  "text": "Before the suitcase. You are Iris, aged nine. Help your family in the yard.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What we carry. The family has chosen to travel. There is much to pack.",
+  "stem": "n-d0894d61",
+  "text": "What we carry. The family has chosen to travel. There is much to pack.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Across the Atlantic. There is a whole sea between your two shores.",
+  "stem": "n-bdc78a09",
+  "text": "Across the Atlantic. There is a whole sea between your two shores.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The other shore. You have come ashore. Stay beside your family.",
+  "stem": "n-b516c3b2",
+  "text": "The other shore. You have come ashore. Stay beside your family.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A room and a start. Finding a room is harder than the family hoped.",
+  "stem": "n-37e3fbac",
+  "text": "A room and a start. Finding a room is harder than the family hoped.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Two places called home. Fourteen years have passed. You are Iris, now twenty-three.",
+  "stem": "n-183c4283",
+  "text": "Two places called home. Fourteen years have passed. You are Iris, now twenty-three.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The letter on the mat. You are Maya, Iris’s granddaughter. Iris is now seventy-nine.",
+  "stem": "n-8c5d7fb2",
+  "text": "The letter on the mat. You are Maya, Iris's granddaughter. Iris is now seventy-nine.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A life is more than papers. Iris will tell her own story. You can stand beside her.",
+  "stem": "n-fe0e2e46",
+  "text": "A life is more than papers. Iris will tell her own story. You can stand beside her.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A life is more than papers. Iris has told her story. Her family and adviser stand beside her. Her case is still being worked on. The game does not promise a result. This family is fictional. The history and harm are real. People have kept working for recognition, repair and justice.",
+  "stem": "n-6b667ee7",
+  "text": "A life is more than papers. Iris has told her story. Her family and adviser stand beside her. Her case is still being worked on. The game does not promise a result. This family is fictional. The history and harm are real. People have kept working for recognition, repair and justice.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter from London, and something folded inside.",
+  "stem": "n-f25f7fbb",
+  "text": "A letter from London, and something folded inside.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The letter asks Iris to prove her right to be here.",
+  "stem": "n-8b48b4b7",
+  "text": "The letter asks Iris to prove her right to be here.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Chapter finished. Well done.",
+  "stem": "n-b84db689",
+  "text": "Chapter finished. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+]

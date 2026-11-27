@@ -10,11 +10,15 @@ import { sharedVoice } from './filmvoice.js';
 const norm = (t) => String(t).replace(/\s+/g, ' ').trim();
 export function createNarrator({ dir = './voices/' } = {}) {
   const FV = sharedVoice();
-  let map = {}, gen = 0;
+  let map = {}, gen = 0, last = { f: '', t: 0 };
   const ready = fetch(dir + 'index.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({})).then((m) => { map = m || {}; return map; });
   return {
     ready,
-    speak(text) { const f = text && map[norm(text)]; if (!f) { FV.stopVoice(); return false; } FV.say('voices/' + f); return true; },
+    speak(text) {   /* the same text asked twice within 1.5 s (a game and the engine both asking) plays once */
+      const f = text && map[norm(text)]; if (!f) { FV.stopVoice(); return false; }
+      const now = Date.now(); if (f === last.f && now - last.t < 1500) return true; last = { f, t: now };
+      FV.say('voices/' + f); return true;
+    },
     stop() { FV.stopVoice(); },
     /* run fn after ms, but never while the narrator is still speaking (owner, 27 November 2026: captions and cards must not go before the voice ends).
        A newer after() call replaces an older one. */

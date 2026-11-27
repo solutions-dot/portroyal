@@ -1,5 +1,5 @@
 import { showCinematicSkip } from "../../../engine/cine.js";
-import { createFilmVoice } from "../../../engine/filmvoice.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
 /* Game-only camera scenes: the departure from Kingston and the arrival at Tilbury. The timing and compression are a reconstruction.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
    curve, and can change its lens. The ship can move along keyframes (she leaves her berth, or comes alongside), with her wake strengthening
@@ -24,7 +24,7 @@ function sampleKeys(keys, t) {
 }
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false }) {
   const D = { on: false, paused: false, time: 0, key: null, fast };
-  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js */
+  const FV = sharedVoice();   /* the narrator: engine/filmvoice.js */
   let rumble = null,
     curve = null,
     lookCurve = null,

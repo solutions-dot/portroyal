@@ -327,5 +327,47 @@
   "text": "The train climbs into the hills, slowly and steadily, and the engines work very hard indeed.",
   "emotion": "content",
   "speed": 1
+ },
+ {
+  "key": "The Projector. Boiling water makes steam. The steam pushes pistons, and the pistons turn the big wheels. She can pull a whole train at up to 30 miles an hour. That was very fast in 1845!",
+  "stem": "n-058758fa",
+  "text": "The Projector. Boiling water makes steam. The steam pushes pistons, and the pistons turn the big wheels. She can pull a whole train at up to thirty miles an hour. That was very fast in eighteen forty-five!",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The storyboard. Close to 200 people died.",
+  "stem": "n-a95e6a6d",
+  "text": "The storyboard. Close to two hundred people died.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The monument. The real monument has the names of 177 people. It also thanks the helpers and remembers the survivors. We do not know its real words, so these are our own.",
+  "stem": "n-d3d86994",
+  "text": "The monument. The real monument has the names of one hundred and seventy-seven people. It also thanks the helpers and remembers the survivors. We do not know its real words, so these are our own.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The morning after. By morning, close to 200 people had died, and about 700 were hurt. Hundreds of people from Kendal and nearby helped through the night. Friday 8 September was a National Day of Mourning. The railway later replaced all its wooden coaches with metal ones. Four new pages are in your journal.",
+  "stem": "n-4f036805",
+  "text": "The morning after. By morning, close to two hundred people had died, and about seven hundred were hurt. Hundreds of people from Kendal and nearby helped through the night. Friday the eighth of September was a National Day of Mourning. The railway later replaced all its wooden coaches with metal ones. Four new pages are in your journal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The End. The Kendal train crash was a very sad day for Jamaica. It was also a day when many people helped. Thank you for remembering. You can read your journey in the Journal.",
+  "stem": "n-05e0a27f",
+  "text": "The End. The Kendal train crash was a very sad day for Jamaica. It was also a day when many people helped. Thank you for remembering. You can read your journey in the Journal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. You are a child in Jamaica. You are fictional. Gran, Lloyd, Mass Ezra and the other people you meet are fictional too. The railway, the Kendal crash and the helpers of Kendal are real.",
+  "stem": "n-53978ad7",
+  "text": "Who you are. You are a child in Jamaica. You are fictional. Gran, Lloyd, Mass Ezra and the other people you meet are fictional too. The railway, the Kendal crash and the helpers of Kendal are real.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

@@ -72,6 +72,7 @@ import {
 } from "./content.js";
 import {
   $,
+  SV,
   openPanel,
   dialogue,
   card,
@@ -997,6 +998,7 @@ const LS = createLookShot({
     $("sub").textContent = text;
     $("sub").classList.toggle("dim", !text);
   },
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: lookSound,
   quick: () => QUICK && !S.lookShot,
@@ -1008,7 +1010,7 @@ async function lookMoment(id) {
     Q = world(),
     st = S.stage;
   uiSound("tap");
-  await LS.play({ view: L.view, act: L.act, sound: L.sound, lines: L.say, reveal: (k) => Q.reveal?.[id]?.(k) });
+  await LS.play({ view: L.view, act: L.act, sound: L.sound, line: 1.6, lines: SV.lookLines(L), reveal: (k) => Q.reveal?.[id]?.(k) });
   if (S.stage !== st) return;
   await LS.back();
   complete(id);

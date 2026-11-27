@@ -54,5 +54,54 @@
   "text": "Today",
   "emotion": "neutral",
   "speed": 0.93
+ },
+ {
+  "key": "Back-o-Wall. In 1963 the Government began to clear Back-o-Wall. The last part was cleared on 12 July 1966. Ivy, her gran and Mass Roy are made up. What happened to Back-o-Wall was real.",
+  "stem": "n-b1e5daa1",
+  "text": "Back-o-Wall. In nineteen sixty-three the Government began to clear Back-o-Wall. The last part was cleared on the twelfth of July nineteen sixty-six. Ivy, her gran and Mass Roy are made up. What happened to Back-o-Wall was real.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The new Tivoli. Tivoli Gardens was built in the 1960s. It had new homes, a clinic, a crèche, schools and a community centre. People still disagree about the clearing that came first. Ivy, her gran and Mr Clarke are made up.",
+  "stem": "n-d13585c4",
+  "text": "The new Tivoli. Tivoli Gardens was built in the nineteen sixties. It had new homes, a clinic, a crèche, schools and a community centre. People still disagree about the clearing that came first. Ivy, her gran and Mister Clarke are made up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Politics and power. Edward Seaga said fights over politics changed Tivoli from the mid-1970s. He said gangs took hold in the late 1990s. In 2009 the United States asked Jamaica to send it Christopher Coke. Ivy, Mass Roy and Coach Davis are made up.",
+  "stem": "n-e31f70a3",
+  "text": "Politics and power. Edward Seaga said fights over politics changed Tivoli from the mid-nineteen seventies. He said gangs took hold in the late nineteen nineties. In two thousand and nine the United States asked Jamaica to send it Christopher Coke. Ivy, Mass Roy and Coach Davis are made up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "May 2010: before. On 23 May 2010 the Government declared a state of emergency. Barricades blocked the roads into Tivoli Gardens. The next day, soldiers and police went in. Gran Ivy, Miss Dawn and Mr Brown are made up.",
+  "stem": "n-16081168",
+  "text": "May twenty ten: before. On the twenty-third of May twenty ten the Government declared a state of emergency. Barricades blocked the roads into Tivoli Gardens. The next day, soldiers and police went in. Gran Ivy, Miss Dawn and Mister Brown are made up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "After. About 70 people died in Tivoli Gardens. One soldier died too. Many people were held for days. Families asked what happened. A Commission of Enquiry looked into it later. Gran Ivy, Mr Brown and Pastor Grant are made up.",
+  "stem": "n-b4c6197f",
+  "text": "After. About seventy people died in Tivoli Gardens. One soldier died too. Many people were held for days. Families asked what happened. A Commission of Enquiry looked into it later. Gran Ivy, Mister Brown and Pastor Grant are made up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The report. On 15 June 2016 the Commission’s report went to Parliament. It made 51 recommendations. In December 2017 the Prime Minister said sorry. People still disagree about what happened. Gran Ivy, Mr Brown and Pastor Grant are made up.",
+  "stem": "n-c304648d",
+  "text": "The report. On the fifteenth of June twenty sixteen the Commission's report went to Parliament. It made fifty-one recommendations. In December twenty seventeen the Prime Minister said sorry. People still disagree about what happened. Gran Ivy, Mister Brown and Pastor Grant are made up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Today. Tivoli Gardens is still home to many families. People remember May 2010. Some families say they still wait for justice. Artists, dancers and footballers show another side of Tivoli. Gran Ivy and her family are made up. Their history is real. Thank you for playing.",
+  "stem": "n-924d1296",
+  "text": "Today. Tivoli Gardens is still home to many families. People remember May twenty ten. Some families say they still wait for justice. Artists, dancers and footballers show another side of Tivoli. Gran Ivy and her family are made up. Their history is real. Thank you for playing.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

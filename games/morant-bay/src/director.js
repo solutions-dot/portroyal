@@ -1,7 +1,7 @@
 /* the camera scenes run a little quicker than they were written (owner, 23 November 2026: "some of the cinematic scenes feel a little too long ... some is just camera zooming") */
 const PACE = 1.15;
 import { showCinematicSkip } from "../../../engine/cine.js";
-import { createFilmVoice } from "../../../engine/filmvoice.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
 import { shotPath } from "../../../engine/shotpath.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
@@ -28,7 +28,7 @@ function sampleKeys(keys, t) {
 }
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false, fov: playFov = () => 66 }) {
   const D = { on: false, paused: false, time: 0, key: null, fast };
-  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js */
+  const FV = sharedVoice();   /* the page's one voice channel: engine/filmvoice.js */
   let rumble = null,
     path = null,
     fired = new Set();

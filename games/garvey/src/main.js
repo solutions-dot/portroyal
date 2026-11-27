@@ -1,5 +1,5 @@
 import { playChapterFade } from '../../../engine/cine.js';
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { draw } from '../../../engine/look.js';   /* light from the sky and soft shading in corners */
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import { offerNextChapter } from '../../../engine/chapter-end.js';
@@ -44,8 +44,8 @@ import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
 import { createLookShot, frameOf, cineLayer, lookFrom } from '../../../engine/lookshot.js';   /* looking at a thing is a close-up action (owner rule 13) */
 import { lookSound } from '../../../engine/look-sounds.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 
 const $ = (id) => document.getElementById(id);
 soundPref('garvey-sound');
@@ -498,11 +498,12 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 
 /* ---------- cards (small prompts) and chapter titles ---------- */
 function card(title, paras, btns) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   $('card').hidden = false; document.body.classList.add('carding'); busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   if (QUICK) { fn(); return; } if (fading) return; stopIntro(); fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
@@ -1088,7 +1089,7 @@ const _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
 let LS = null, SEE_LOOK = false;   /* SEE_LOOK: a dev view that wants to see the close-up although the test speed-up is on */
 function lookShot() {
   if (LS) return LS; const C = cineLayer();
-  LS = createLookShot({ camera, fov: () => camera.fov, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } }, bars: C.bars, say: C.say, freeze: (on) => { busy = on; if (on) keys.clear(); },
+  LS = createLookShot({ ...SV.look, camera, fov: () => camera.fov, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } }, bars: C.bars, say: C.say, freeze: (on) => { busy = on; if (on) keys.clear(); },
     sound: lookSound, quick: () => QUICK && !SEE_LOOK, reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, home: () => ({ pos: new THREE.Vector3(state.x, EYE, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
   return LS;
 }

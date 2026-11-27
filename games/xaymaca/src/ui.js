@@ -1,3 +1,4 @@
+import { createStoryVoice } from "../../../engine/storyvoice.js";
 import { liveHint } from '../../../engine/device.js';
 /* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
@@ -309,11 +310,11 @@ $("next").onclick = () => {
 $("dclose").onclick = () => hide("dialogue");
 
 /* ---------- cards: the first button is the main one, the others are outlined; col puts the buttons one under another ---------- */
-/* a card is read aloud, and the voice stops when a button is pressed (owner, 27 November 2026); main.js sets these */
-export const cardVoice = { speak: () => {}, stop: () => {} };
+/* spoken lines, cards and look lines: one shared module (engine/storyvoice.js) */
+export const SV = createStoryVoice();
 export function card(title, L, buttons, { col = false } = {}) {
   show("card");
-  cardVoice.speak(title + ". " + L.join(" "));
+  SV.card(title, L);
   $("ctitle").textContent = title;
   $("cbody").replaceChildren(
     ...L.map((t) => {
@@ -329,7 +330,7 @@ export function card(title, L, buttons, { col = false } = {}) {
       b.className = "btn" + (i ? " ghost" : "");
       b.textContent = text;
       b.onclick = () => {
-        cardVoice.stop();
+        SV.stop();
         hide("card");
         fn?.();
       };

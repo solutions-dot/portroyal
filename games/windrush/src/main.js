@@ -68,6 +68,7 @@ import {
 } from "./content.js";
 import {
   $,
+  SV,
   openPanel,
   dialogue,
   card,
@@ -733,6 +734,7 @@ const LS = createLookShot({
   },
   bars: (on) => document.body.classList.toggle("cine", on),
   say: (text) => ($("sub").textContent = text),
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: lookSound,
   quick: () => QUICK && !S.lookShot,
@@ -744,7 +746,7 @@ async function closeup(id) {
     Q = world(),
     st = S.stage;
   uiSound("tap");
-  await LS.play({ view: L.view, act: L.act, sound: L.sound, lines: L.say, reveal: (k) => Q.reveal?.[id]?.(k) });
+  await LS.play({ view: L.view, act: L.act, sound: L.sound, line: 1.6, lines: SV.lookLines(L), reveal: (k) => Q.reveal?.[id]?.(k) });
   if (S.stage !== st) return false;
   await LS.back();
   return S.stage === st;

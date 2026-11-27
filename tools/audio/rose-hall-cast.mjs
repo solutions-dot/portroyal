@@ -1,12 +1,12 @@
 /* The White Witch of Rose Hall's spoken lines and who says them: node tools/audio/rose-hall-cast.mjs [--write] [--list]
    Writes games/rose-hall/voice-cast.json: [{ key: "<who>|<text>", who, text, spoken, voice, emotion, speed, stem }]. 
-   Voices (owner, 27 November 2026): Miss Bryan "woman (middle aged)", Tia "young child", Mrs Lindo dorraine samuels, Sister Reid "Woman generic"; the player is silent. */
+   Voices (owner, 27 November 2026): Miss Bryan "woman (middle aged)", Tia "Kofee" (girl younger, owner 27 Nov 2026), Mrs Lindo dorraine samuels, Sister Reid "Woman generic"; the player is silent. */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { speakText } from "./voice-script.mjs";
 const root = new URL("../../games/rose-hall/", import.meta.url).pathname;
-const V = { bryan: "41f3f9c6-d6e2-438a-af5a-2069a61d62ba", tia: "b883942d-facf-4719-917d-b164d2f3d93b", lindo: "74a89262-c877-4580-af34-28b50a665413", reid: "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd" };
-/* owner, 27 November 2026: Miss Bryan "woman (middle aged)", Tia "young child" (Rosie was too abrasive), Mrs Lindo dorraine samuels, Sister Reid "Woman generic" */
+const V = { bryan: "41f3f9c6-d6e2-438a-af5a-2069a61d62ba", tia: "dac044c3-0e78-4d47-913b-6e47e80e8e3e", lindo: "74a89262-c877-4580-af34-28b50a665413", reid: "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd" };
+/* owner, 27 November 2026: Miss Bryan "woman (middle aged)", Tia "Kofee" (girl younger, owner 27 Nov 2026) (Rosie was too abrasive), Mrs Lindo dorraine samuels, Sister Reid "Woman generic" */
 export const CAST = { "Miss Bryan": ["bryan", "content", 0.97], Tia: ["tia", "content", 1.03], "Mrs Lindo": ["lindo", "neutral", 0.97], "Sister Reid": ["reid", "neutral", 0.95] };
 const MOOD = (who, i, t) => (who === "Miss Bryan" && /\b(real cruelty|names|held|stones)\b/i.test(t) ? ["sad", 0.93] : /!/.test(t) ? ["excited", Math.max(CAST[who][2], 1.03)] : who === "Tia" && /\b(afraid|scared|shak|arm|dark|shadow)\b/i.test(t) ? ["sad", 0.97] : null);
 if (import.meta.url === `file://${process.argv[1]}`) {

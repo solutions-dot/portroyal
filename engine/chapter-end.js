@@ -35,6 +35,7 @@ export function offerNextChapter({ still = () => true, clear = () => true, show,
      startCard()                 true unless the player came straight on from the end card (it resets itself)
      titleFade(fade, title, sub, done, quick)   the timed fade over #fade / #fadeT / #fadeS (engine/cine.js playChapterFade); quick: at once (tests) */
 import { playChapterFade } from './cine.js';
+import { speakStory } from './storyvoice.js';
 let straight = false;
 /* The end card no longer says what comes next (owner, 27 November 2026): the next chapter's own opening announces itself. */
 export const nextLines = () => ['Well done.'];
@@ -42,6 +43,7 @@ export function goingStraight() { straight = true; }
 export function startCard() { const s = straight; straight = false; return !s; }
 export function titleFade(fade, title, sub, done, quick = false) {
   if (quick || !fade) { done(); return; }
+  speakStory(title + '. ' + (sub || ''));   /* read aloud (owner rule 17); the card waits for the voice (engine/cine.js) */
   const T = fade.querySelector('#fadeT'), S = fade.querySelector('#fadeS');
   if (T) T.textContent = title;
   if (S) S.textContent = sub || '';

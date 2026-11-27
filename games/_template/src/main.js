@@ -13,6 +13,11 @@ import * as THREE from 'three';
 import { CL, mixers, loadClips, animate } from '../../../engine/anim.js';
 import { soundPref, setSound, audioInit, stepSound, uiSound, AU } from '../../../engine/audio.js';
 import { model, onLoadFail } from '../../../engine/loader.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
+/* every spoken line, card and look line goes through ONE module (engine/storyvoice.js, docs/ENGINE.md "Story voice"):
+   SV.line(who, text, isMe) in the dialogue box, SV.card(title, paragraphs) in the card, ...SV.look and SV.lookLines(lk) for a look scene (createLookShot).
+   Do not write your own copy of any of it (tests/story-voice.mjs). */
+const SV = createStoryVoice(); const NARR = SV.narrator;   /* NARR: title cards and captions */
 import { tunePixels } from '../../../engine/perf.js';
 
 const $ = (id) => document.getElementById(id);
