@@ -575,16 +575,21 @@ export function cottonTree(h = 13, seed = 3) {
     f.scale.set(0.8 + r() * 0.3, 0.8 + r() * 0.35, 1);
   }
   const leaves = [0x3f5a30, 0x4a6a36, 0x36502c, 0x567a3c];
+  /* six big limbs, each tapering out and up and ending inside a clump of leaves (seen from below, as when the shot is fired, no limb ends
+     bare past the leaves: owner, 27 November 2026), a second clump over its middle, and smaller clumps filling the underside of the crown */
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2 + r(),
       L = h * (0.32 + r() * 0.12),
-      limb = cyl(0.12, 0.26, L, solid(bark, 1), Math.cos(a) * L * 0.36, h * 0.58 + L * 0.3, Math.sin(a) * L * 0.36, g, 6);
-    limb.rotation.set(Math.sin(a) * 0.95, 0, -Math.cos(a) * 0.95);
-    for (let k = 0; k < 2; k++) {
-      const s = h * (0.16 + r() * 0.07),
-        b = mesh(new THREE.IcosahedronGeometry(s, 1), flat(leaves[(r() * 4) | 0]), Math.cos(a) * L * (0.62 + k * 0.2) + (r() - 0.5), h * 0.58 + L * 0.62 + r() * 1.2, Math.sin(a) * L * (0.62 + k * 0.2) + (r() - 0.5), g);
-      b.scale.y = 0.55;
-    }
+      ca = Math.cos(a), sa = Math.sin(a),
+      limb = cyl(0.07, 0.26, L, solid(bark, 1), ca * L * 0.36, h * 0.58 + L * 0.3, sa * L * 0.36, g, 6);
+    limb.rotation.set(sa * 0.95, 0, -ca * 0.95);
+    const tip = [ca * L * 0.77, h * 0.58 + L * 0.6, sa * L * 0.77];
+    const tipClump = mesh(new THREE.IcosahedronGeometry(h * (0.17 + r() * 0.05), 1), flat(leaves[(r() * 4) | 0]), tip[0] + (r() - 0.5) * 0.4, tip[1] + 0.25, tip[2] + (r() - 0.5) * 0.4, g);
+    tipClump.scale.y = 0.62;
+    const mid = mesh(new THREE.IcosahedronGeometry(h * (0.15 + r() * 0.05), 1), flat(leaves[(r() * 4) | 0]), ca * L * 0.5 + (r() - 0.5), h * 0.58 + L * 0.5 + r() * 0.6, sa * L * 0.5 + (r() - 0.5), g);
+    mid.scale.y = 0.58;
+    const under = mesh(new THREE.IcosahedronGeometry(h * 0.09, 1), flat(leaves[(r() * 4) | 0]), ca * L * 0.66, tip[1] - h * 0.07, sa * L * 0.66, g);
+    under.scale.y = 0.7;
   }
   mesh(new THREE.IcosahedronGeometry(h * 0.2, 1), flat(leaves[1]), 0.2, h * 0.92, 0, g).scale.y = 0.6;
   return g;
