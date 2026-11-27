@@ -46,6 +46,7 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
+import { SHOW_CARD } from '../../../engine/scene-warning.js';
 const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
 const NARR = SV.narrator;   /* title cards and captions */
 
@@ -224,7 +225,7 @@ setupCh1({ scene, state, WALLS, renderer, audioInit, focusGame: () => canvas.foc
 initStory({ startChapter, uiSound: uiS, setBusy });
 prepare(nextChapter());   /* the chapter Start opens: its bodies unpack behind the title */
 wireFight({ scene, camera, renderer, audioInit, next: () => startChapter(6) });
-const SEEN = { fightcard: false };   /* dev only: the autoplayer and ?test=all ask whether the opt-in card was answered before the street scene */
+const SEEN = { fightcard: !SHOW_CARD };   /* dev only: the autoplayer and ?test=all ask whether the opt-in card was answered before the street scene */
 $('fbegin').addEventListener('click', () => { SEEN.fightcard = true; });
 
 /* ---------- dev only: the scripted playthrough, the stepped clock and the hooks for ?test=all, ?test=heads and ?test=resume ---------- */
