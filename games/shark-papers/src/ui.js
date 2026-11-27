@@ -1,3 +1,4 @@
+import { createNarrator } from "../../../engine/narrator.js";
 import { liveHint } from '../../../engine/device.js';
 /* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
@@ -267,11 +268,16 @@ export function dialogue(who, L, done, cancel) {
   onClose = cancel;
   drawLine();
 }
+/* the characters' recorded lines (voices/index.json, keys who|text; engine/narrator.js), one voice at a time (owner rule 17) */
+export const NARR = createNarrator();
+NARR.preload();
 function drawLine() {
   const l = lines[li];
   $("who").textContent = l.who;
   $("line").textContent = l.text;
   $("dialogue").classList.toggle("me", ME.includes(l.who));
+  if (!ME.includes(l.who) && l.text) NARR.speak(l.who + "|" + String(l.text).replace(/\s+/g, " ").trim());
+  else NARR.stop();
 }
 $("next").onclick = () => {
   uiSound("tap");
@@ -281,14 +287,20 @@ $("next").onclick = () => {
   }
   const f = doneTalk;
   doneTalk = null;
+  NARR.stop();
   hide("dialogue");
   f?.();
 };
-$("dclose").onclick = () => hide("dialogue");
+$("dclose").onclick = () => {
+  NARR.stop();
+  hide("dialogue");
+};
 
 /* ---------- cards: the first button is the main one, the others are outlined; col puts the buttons one under another ---------- */
+/* a card is read aloud (title, then paragraphs) and the voice stops when a button is pressed (owner, 27 November 2026) */
 export function card(title, L, buttons, { col = false } = {}) {
   show("card");
+  NARR.speak(title + ". " + L.join(" "));
   $("ctitle").textContent = title;
   $("cbody").replaceChildren(
     ...L.map((t) => {
@@ -304,6 +316,7 @@ export function card(title, L, buttons, { col = false } = {}) {
       b.className = "btn" + (i ? " ghost" : "");
       b.textContent = text;
       b.onclick = () => {
+        NARR.stop();
         hide("card");
         fn?.();
       };

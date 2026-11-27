@@ -1,13 +1,13 @@
 /* The Shark Papers' spoken lines and who says them: node tools/audio/shark-papers-cast.mjs [--write] [--list]
    Writes games/shark-papers/voice-cast.json: [{ key: "<who>|<text>", who, text, spoken, voice, emotion, speed, stem }]. 
-   Voices (owner, 27 November 2026): Mr Fitton Roy, Ben "young man (expressive)", Mr Cato Jimmy Cliff, Mr Wylie Gary, the clerk Harrison. Jem (the player) is silent. */
+   Voices (owner, 27 November 2026): Mr Fitton Roy, Ben "young man (expressive)", Mr Cato Bob Marley, Mr Wylie Gary, the clerk Harrison. Jem (the player) is silent. */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { speakText } from "./voice-script.mjs";
 const root = new URL("../../games/shark-papers/", import.meta.url).pathname;
-const V = { fitton: "f2ddbdca-59d9-4363-abeb-a197d65ea24a", wylie: "dc52ada6-0e11-4684-a8fa-e0af5b7bdcb2", clerk: "df89f42f-f285-4613-adbf-14eedcec4c9e", cato: "90543854-f1d7-4ed4-b265-44eeb96e4d80", ben: "9e0fa051-eaef-4108-b0fb-aa134d35044e" };
-/* owner, 27 November 2026: Mr Fitton Roy (library), Ben "young man (expressive)", Mr Cato Jimmy Cliff, Mr Wylie Gary (library), the clerk Harrison (library) */
-export const CAST = { "Mr Fitton": ["fitton", "content", 1.0], Ben: ["ben", "content", 1.0], "Mr Cato": ["cato", "neutral", 0.95], "Mr Wylie": ["wylie", "content", 1.02], "The clerk": ["clerk", "neutral", 0.97] };
+const V = { fitton: "f2ddbdca-59d9-4363-abeb-a197d65ea24a", wylie: "dc52ada6-0e11-4684-a8fa-e0af5b7bdcb2", clerk: "df89f42f-f285-4613-adbf-14eedcec4c9e", cato: "2bd626f2-4c0c-44f0-940b-034afd5701eb", ben: "9e0fa051-eaef-4108-b0fb-aa134d35044e" };
+/* owner, 27 November 2026: Mr Fitton Roy (library), Ben "young man (expressive)", Mr Cato Bob Marley, Mr Wylie Gary (library), the clerk Harrison (library) */
+export const CAST = { "Mr Fitton": ["fitton", "content", 1.0], Ben: ["ben", "content", 1.0], "Mr Cato": ["cato", "content", 1.0], "Mr Wylie": ["wylie", "content", 1.02], "The clerk": ["clerk", "neutral", 0.97] };
 const MOOD = (who, i, t) => (/!/.test(t) && who !== "The clerk" ? ["excited", Math.max(CAST[who][2], 1.03)] : /\b(owns me|keeps the pay)\b/i.test(t) ? ["sad", 0.93] : null);
 if (import.meta.url === `file://${process.argv[1]}`) {
   const s = readFileSync(root + "src/content.js", "utf8");

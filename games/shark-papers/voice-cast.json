@@ -4,10 +4,10 @@
   "who": "Mr Cato",
   "text": "Morning, Jem. Not a breath of wind today.",
   "spoken": "Morning, Jem. Not a breath of wind today.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-3547bfb3"
  },
  {
@@ -15,10 +15,10 @@
   "who": "Mr Cato",
   "text": "A dead bullock is floating out there.",
   "spoken": "A dead bullock is floating out there.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-72952496"
  },
  {
@@ -26,10 +26,10 @@
   "who": "Mr Cato",
   "text": "Sharks can smell a meal from far away.",
   "spoken": "Sharks can smell a meal from far away.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-2726bd12"
  },
  {
@@ -37,10 +37,10 @@
   "who": "Mr Cato",
   "text": "Now, to work. Go and ring the ship's bell.",
   "spoken": "Now, to work. Go and ring the ship's bell.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-08bac66e"
  },
  {
@@ -103,10 +103,10 @@
   "who": "Mr Cato",
   "text": "There he lies. The biggest shark I ever saw.",
   "spoken": "There he lies. The biggest shark I ever saw.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-d2b9fc4a"
  },
  {
@@ -114,10 +114,10 @@
   "who": "Mr Cato",
   "text": "To get the pork back. Good pork, that.",
   "spoken": "To get the pork back. Good pork, that.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-10b31405"
  },
  {
@@ -125,10 +125,10 @@
   "who": "Mr Cato",
   "text": "But they found something else in there.",
   "spoken": "But they found something else in there.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-af46ccae"
  },
  {
@@ -136,10 +136,10 @@
   "who": "Mr Cato",
   "text": "Go and look, Jem.",
   "spoken": "Go and look, Jem.",
-  "voice": "90543854-f1d7-4ed4-b265-44eeb96e4d80",
+  "voice": "2bd626f2-4c0c-44f0-940b-034afd5701eb",
   "voiceName": "cato",
-  "emotion": "neutral",
-  "speed": 0.95,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-5a7d80cd"
  },
  {

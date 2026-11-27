@@ -1,0 +1,233 @@
+[
+ {
+  "key": "Off Jacmel. It is dawn on the schooner Ferret. There is no wind, and the sea is full of sharks. You are Jem, the ship's boy, aged twelve. You are fictional. The shark, the papers and the two officers were real.",
+  "stem": "n-b3325ad3",
+  "text": "Off Jacmel. It is dawn on the schooner Ferret. There is no wind, and the sea is full of sharks. You are Jem, the ship's boy, aged twelve. You are fictional. The shark, the papers and the two officers were real.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What the shark held. The shark lies on the deck. Two of the men open it, to get the pork back.",
+  "stem": "n-68474cf3",
+  "text": "What the shark held. The shark lies on the deck. Two of the men open it, to get the pork back.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Port Royal. The Ferret is home. The brig Nancy is here too, waiting for the court.",
+  "stem": "n-59f463a2",
+  "text": "Port Royal. The Ferret is home. The brig Nancy is here too, waiting for the court.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The court in Kingston. Mr Fitton has carried the papers across the harbour to Kingston.",
+  "stem": "n-7edee941",
+  "text": "The court in Kingston. Mister Fitton has carried the papers across the harbour to Kingston.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The Shark Papers. A ship's master threw his papers into the sea. A shark swallowed them. A sailor caught the shark. The papers reached the court, and the truth came out. You can still see them in Kingston today.",
+  "stem": "n-bce8b14c",
+  "text": "The Shark Papers. A ship's master threw his papers into the sea. A shark swallowed them. A sailor caught the shark. The papers reached the court, and the truth came out. You can still see them in Kingston today.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You pull the rope. Ding-ding! Ding-ding!",
+  "stem": "n-146d9573",
+  "text": "You pull the rope. Ding-ding! Ding-ding!",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The bell tells all hands the time.",
+  "stem": "n-57aa8e22",
+  "text": "The bell tells all hands the time.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It is early morning. Breakfast is not far off.",
+  "stem": "n-e34f361c",
+  "text": "It is early morning. Breakfast is not far off.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You pull the glass open and find her.",
+  "stem": "n-208d6d07",
+  "text": "You pull the glass open and find her.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A cutter, with one tall mast.",
+  "stem": "n-6566029f",
+  "text": "A cutter, with one tall mast.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She is 123 tons and about 66 feet long.",
+  "stem": "n-026bf751",
+  "text": "She is one hundred and twenty-three tons and about sixty-six feet long.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Her boat is pulling this way, with Mr Wylie in it.",
+  "stem": "n-96c44b4d",
+  "text": "Her boat is pulling this way, with Mister Wylie in it.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The line jerks tight in your hands!",
+  "stem": "n-242b7041",
+  "text": "The line jerks tight in your hands!",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The biggest shark has taken the pork.",
+  "stem": "n-12e77598",
+  "text": "The biggest shark has taken the pork.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "“Let it run,” says Mr Fitton. “Let the fish tire.”",
+  "stem": "n-d7c09f90",
+  "text": "Let it run, says Mister Fitton. Let the fish tire.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A bundle of papers, tied round with a string.",
+  "stem": "n-06e676f2",
+  "text": "A bundle of papers, tied round with a string.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The outside is spoiled. The papers inside are whole.",
+  "stem": "n-a874017c",
+  "text": "The outside is spoiled. The papers inside are whole.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who throws papers into the sea?",
+  "stem": "n-12978e0c",
+  "text": "Who throws papers into the sea?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Up her halyard runs a hoist of flags.",
+  "stem": "n-87573bb3",
+  "text": "Up her halyard runs a hoist of flags.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The great ship is HMS Abergavenny, the guard ship.",
+  "stem": "n-1230f65b",
+  "text": "The great ship is HMS Abergavenny, the guard ship.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She is the flagship here. The Ferret is her tender.",
+  "stem": "n-62a82119",
+  "text": "She is the flagship here. The Ferret is her tender.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A tender is a small ship that works for a big one.",
+  "stem": "n-94b69d6c",
+  "text": "A tender is a small ship that works for a big one.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The cover comes back. Rope, and red wax.",
+  "stem": "n-9d8cd8bb",
+  "text": "The cover comes back. Rope, and red wax.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is the brig Nancy, from Baltimore.",
+  "stem": "n-698f5a49",
+  "text": "This is the brig Nancy, from Baltimore.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The Sparrow took her on 28 August.",
+  "stem": "n-04eea408",
+  "text": "The Sparrow took her on the twenty-eighth of August.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Her hatch is sealed until the court decides.",
+  "stem": "n-7cfabc9d",
+  "text": "Her hatch is sealed until the court decides.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You open the papers Mr Wylie sealed up.",
+  "stem": "n-d717d09f",
+  "text": "You open the papers Mister Wylie sealed up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "They make the Nancy look like a neutral ship with nothing to hide.",
+  "stem": "n-db9b7d8c",
+  "text": "They make the Nancy look like a neutral ship with nothing to hide.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "They are false.",
+  "stem": "n-221d117b",
+  "text": "They are false.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "You lay out a letter from the shark.",
+  "stem": "n-21c58d92",
+  "text": "You lay out a letter from the shark.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Letters in French and German, bills and receipts.",
+  "stem": "n-1f2550ac",
+  "text": "Letters in French and German, bills and receipts.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Fitton remembered how one began: “The bearer hereof, my good friend Mr. Christopher Schultz, supercargo of the American brig Nancy, will hand you this.”",
+  "stem": "n-268cd7f1",
+  "text": "Fitton remembered how one began: The bearer hereof, my good friend Mister Christopher Schultz, supercargo of the American brig Nancy, will hand you this.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "They show the cargo belonged to Britain's enemies.",
+  "stem": "n-caa07970",
+  "text": "They show the cargo belonged to Britain's enemies.",
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+]
