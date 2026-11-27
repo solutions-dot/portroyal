@@ -34,3 +34,11 @@ test('a game with its own dialogue box speaks the lines through SV.line', () => 
     assert.doesNotMatch(s, /NARR\.speak\(\s*\w+\.who\s*\+/, `${g}/${f}: use SV.line(who, text, isMe)`);
   }
 });
+
+test('every game reads its cards through SV.card and stops the voice when a card closes', () => {
+  for (const g of games) {
+    const all = src(g).map(([, s]) => s).join('\n');
+    assert.match(all, /SV\.card\(/, `${g}: card() must call SV.card(title, paragraphs)`);
+    assert.match(all, /SV\.stop\(/, `${g}: closing a card must call SV.stop()`);
+  }
+});

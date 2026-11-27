@@ -498,11 +498,12 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 
 /* ---------- cards (small prompts) and chapter titles ---------- */
 function card(title, paras, btns) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   $('card').hidden = false; document.body.classList.add('carding'); busy = true; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; document.body.classList.remove('carding'); busy = panelsOpen(); }
 const QUICK = __DEV__ && /[?&](shot|auto|test)=/.test(location.search);   /* test views skip the fade */
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   if (QUICK) { fn(); return; } if (fading) return; stopIntro(); fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;

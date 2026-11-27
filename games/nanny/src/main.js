@@ -338,11 +338,12 @@ function toMenu() { saveGame(); location.href = MENU.url; }
 
 const CARD = { dismiss: null };
 function card(title, paras, btns, { col = false, dismiss } = {}) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); bb.classList.toggle('col', col); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 const readCard = (c) => new Promise((res) => readWhatHappened(card, { what: c.paras, go: () => { hideCard(); res(true); } }));   /* the standard What happened card (engine/scene-warning.js) */
 const infoCard = (c, go) => new Promise((res) => card(c.title, c.paras, [{ t: c.go || 'Go on', go: () => { hideCard(); if (go) go(); res(true); } }], { col: true }));
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */

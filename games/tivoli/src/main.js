@@ -129,12 +129,12 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 const setBusy = (b) => { busy = !!b || panelOpen() || !$('chcard').hidden || !$('dialogue').hidden; if (busy) keys.clear(); };
 /* a card over the whole screen (the end of a chapter, the reset choices), with a row of buttons; the first is the main one */
 const CARD = { dismiss: null }, MENU_URL = '../../../menu/';
-function card(title, paras, btns, { dismiss } = {}) { NARR.speak(title);
+function card(title, paras, btns, { dismiss } = {}) { SV.card(title, paras);
   $('chcardt').textContent = title; $('chcardl').replaceChildren(...paras.map((t) => { const p = document.createElement('p'); p.textContent = t; return p; }));
   $('chcardb').replaceChildren(...btns.map((x, i) => { const el = document.createElement(x.href ? 'a' : 'button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; if (x.href) { el.href = x.href; el.style.textDecoration = 'none'; el.style.display = 'inline-flex'; el.style.alignItems = 'center'; } else el.onclick = x.go; return el; }));
   CARD.dismiss = dismiss || null; $('chcard').hidden = false; setBusy(true); const f = $('chcardb').querySelector('button,a'); if (f) f.focus();
 }
-function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
+function hideCard() { SV.stop(); $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
 function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game), after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable); if (!nx) cue('end');   /* the last chapter: the closing phrase */
   offerNextChapter({ clear: () => !panelOpen() && $('chcard').hidden && $('dialogue').hidden, show: () => card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }]

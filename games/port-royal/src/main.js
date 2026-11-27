@@ -950,9 +950,9 @@ showSound();
 let moveSpeed = 2.7, eyeY = 1.62, seaLevel = -0.35;
 const Q = { on: false, phase: '', t: 0, shake: 0, ruin: false, boat: null, debris: [], T: 0, ac: null, gain: null };
 const DUST = new THREE.Color(0xb9a888), ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-function card(title, paras, buttons) { busy = true; keys.clear(); $('goal').style.visibility = 'hidden'; $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const p of paras) { const e = document.createElement('p'); e.textContent = p; b.appendChild(e); }
+function card(title, paras, buttons) { SV.card(title, paras); busy = true; keys.clear(); $('goal').style.visibility = 'hidden'; $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const p of paras) { const e = document.createElement('p'); e.textContent = p; b.appendChild(e); }
   const bt = $('cbtns'); bt.replaceChildren(); buttons.forEach((o, i) => { const e = document.createElement('button'); e.className = 'btn' + (i ? ' ghost' : ''); e.textContent = o.t; e.onclick = o.go; bt.appendChild(e); }); $('card').hidden = false; $('talk').hidden = true; bt.firstChild.focus(); }
-function hideCard() { $('card').hidden = true; $('goal').style.visibility = ''; busy = false; canvas.focus(); }
+function hideCard() { SV.stop(); $('card').hidden = true; $('goal').style.visibility = ''; busy = false; canvas.focus(); }
 /* When a part of the story is finished, offer the next one on screen, so nobody has to dig through Chapters. It waits until nothing is open and the
    screen has been clear for a moment, and has no "Stay here" (engine/chapter-end.js). */
 function nextChapterCard(i, _tries = 0, gen = navGen) {

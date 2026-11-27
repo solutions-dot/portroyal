@@ -459,11 +459,12 @@ function toMenu() { saveGame(); location.href = MENU.url; }
 /* ---------- cards ---------- */
 const CARD = { dismiss: null };
 function card(title, paras, btns, { col = false, credit = false } = {}) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); bb.classList.toggle('col', col); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   $('ccredit').hidden = !credit; $('card').hidden = false; keys.clear(); const f = bb.querySelector('button'); if (f) f.focus({ preventScroll: true });
 }
-function hideCard() { $('card').hidden = true; }
+function hideCard() { SV.stop(); $('card').hidden = true; }
 /* a fade to black with a chapter title, the scene changed while it is dark, then a fade back */
 async function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };   /* no skip X on a chapter title card (engine/cine.js, playChapterFade) */
@@ -487,14 +488,14 @@ function convo(ls, onEnd, who) { talkFull = false; convoForced = true; openConvo
 function openConvo(ls, onEnd, n) { document.body.classList.add('talk'); talkWith = n || null; if (n) TC.begin(); lines = ls; convoEnd = onEnd; keys.clear(); step = 0; uiSound('tap'); $('dialogue').hidden = false; showLine(); }
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock);
-  $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);
+  $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who); SV.line(s.who || '', s.text, me);
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus({ preventScroll: true }); } else $('next').focus({ preventScroll: true });
   const ac = talkWith && talkWith.ctl; if (ac && !/^Sit/.test(talkWith.anim || '')) { if (me || !s.who) ac.play(null); else if (s.anim && CL[s.anim]) ac.play(s.anim, true); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
 }
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
-function endTalk(finished) {
+function endTalk(finished) { SV.stop();
   document.body.classList.remove('talk'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; if (n && n.ctl && !/^Sit/.test(n.anim || '')) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(n); } if (cb && (finished || forced)) cb();
