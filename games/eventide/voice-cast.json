@@ -132,6 +132,50 @@
   "stem": "c-be5eb0e9"
  },
  {
+  "key": "Miss Iris|I cannot see you, child. But I know your footsteps.",
+  "who": "Miss Iris",
+  "text": "I cannot see you, child. But I know your footsteps.",
+  "spoken": "I cannot see you, child. But I know your footsteps.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-8f637621"
+ },
+ {
+  "key": "Miss Iris|I was a dressmaker, you know. Forty years.",
+  "who": "Miss Iris",
+  "text": "I was a dressmaker, you know. Forty years.",
+  "spoken": "I was a dressmaker, you know. Forty years.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-c5609c73"
+ },
+ {
+  "key": "Miss Iris|My eyes got tired. My hands still remember.",
+  "who": "Miss Iris",
+  "text": "My eyes got tired. My hands still remember.",
+  "spoken": "My eyes got tired. My hands still remember.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-93286a60"
+ },
+ {
+  "key": "Miss Iris|A letter came for me. Will you read it?",
+  "who": "Miss Iris",
+  "text": "A letter came for me. Will you read it?",
+  "spoken": "A letter came for me. Will you read it?",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-d490d38d"
+ },
+ {
   "key": "Miss Hyacinth|Come in, come in! Mind the beds, they are close.",
   "who": "Miss Hyacinth",
   "text": "Come in, come in! Mind the beds, they are close.",
@@ -218,6 +262,50 @@
   "emotion": "content",
   "speed": 0.95,
   "stem": "c-f7c37d18"
+ },
+ {
+  "key": "Miss Dora|Hello, little one. Do you like songs?",
+  "who": "Miss Dora",
+  "text": "Hello, little one. Do you like songs?",
+  "spoken": "Hello, little one. Do you like songs?",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-adc26e2d"
+ },
+ {
+  "key": "Miss Dora|I sang in the church choir when I was young.",
+  "who": "Miss Dora",
+  "text": "I sang in the church choir when I was young.",
+  "spoken": "I sang in the church choir when I was young.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-f60d9e3f"
+ },
+ {
+  "key": "Miss Dora|Now I sing for the ladies at night.",
+  "who": "Miss Dora",
+  "text": "Now I sing for the ladies at night.",
+  "spoken": "Now I sing for the ladies at night.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-3f418687"
+ },
+ {
+  "key": "Miss Dora|My comb is gone. And Iris wants her little radio.",
+  "who": "Miss Dora",
+  "text": "My comb is gone. And Iris wants her little radio.",
+  "spoken": "My comb is gone. And Iris wants her little radio.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "sad",
+  "speed": 0.9,
+  "stem": "c-c48403fb"
  },
  {
   "key": "Nurse Bell|Thank you for helping. They like their things just so.",
@@ -341,6 +429,72 @@
   "stem": "c-a9a60db4"
  },
  {
+  "key": "Miss Iris|Is that my reader? Come close.",
+  "who": "Miss Iris",
+  "text": "Is that my reader? Come close.",
+  "spoken": "Is that my reader? Come close.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-34fc6b9d"
+ },
+ {
+  "key": "Miss Iris|Will you come again soon?",
+  "who": "Miss Iris",
+  "text": "Will you come again soon?",
+  "spoken": "Will you come again soon?",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-06d31aff"
+ },
+ {
+  "key": "Miss Iris|Saturday. I will listen for your footsteps.",
+  "who": "Miss Iris",
+  "text": "Saturday. I will listen for your footsteps.",
+  "spoken": "Saturday. I will listen for your footsteps.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-f478ee04"
+ },
+ {
+  "key": "Miss Iris|A new song! I will wait for it.",
+  "who": "Miss Iris",
+  "text": "A new song! I will wait for it.",
+  "spoken": "A new song! I will wait for it.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-78620ff2"
+ },
+ {
+  "key": "Miss Iris|Then I hope the postman is kind.",
+  "who": "Miss Iris",
+  "text": "Then I hope the postman is kind.",
+  "spoken": "Then I hope the postman is kind.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-ab0b550c"
+ },
+ {
+  "key": "Miss Iris|Goodnight, child. Walk good.",
+  "who": "Miss Iris",
+  "text": "Goodnight, child. Walk good.",
+  "spoken": "Goodnight, child. Walk good.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-0021c0ec"
+ },
+ {
   "key": "Miss Hyacinth|Tell your Gran I said to rest her feet.",
   "who": "Miss Hyacinth",
   "text": "Tell your Gran I said to rest her feet.",
@@ -361,6 +515,17 @@
   "emotion": "content",
   "speed": 0.95,
   "stem": "c-697ccfa5"
+ },
+ {
+  "key": "Miss Dora|Goodnight, little one. God bless.",
+  "who": "Miss Dora",
+  "text": "Goodnight, little one. God bless.",
+  "spoken": "Goodnight, little one. God bless.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-9ec2ae82"
  },
  {
   "key": "Gran|It is morning, child. The fire is out.",
@@ -1032,5 +1197,181 @@
   "emotion": "excited",
   "speed": 1.03,
   "stem": "c-ab34c211"
+ },
+ {
+  "key": "Miss Iris|A song! Sing it for me before you go.",
+  "who": "Miss Iris",
+  "text": "A song! Sing it for me before you go.",
+  "spoken": "A song! Sing it for me before you go.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-2e9c09e5"
+ },
+ {
+  "key": "Miss Iris|Batteries! Now I can hear the news again.",
+  "who": "Miss Iris",
+  "text": "Batteries! Now I can hear the news again.",
+  "spoken": "Batteries! Now I can hear the news again.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-4df74883"
+ },
+ {
+  "key": "Miss Iris|Mangoes! I can smell them from here.",
+  "who": "Miss Iris",
+  "text": "Mangoes! I can smell them from here.",
+  "spoken": "Mangoes! I can smell them from here.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-01d99b5f"
+ },
+ {
+  "key": "Miss Iris|You sat with me so long on Saturday. Thank you.",
+  "who": "Miss Iris",
+  "text": "You sat with me so long on Saturday. Thank you.",
+  "spoken": "You sat with me so long on Saturday. Thank you.",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-066a039e"
+ },
+ {
+  "key": "Miss Iris|Did you hear the news on the radio?",
+  "who": "Miss Iris",
+  "text": "Did you hear the news on the radio?",
+  "spoken": "Did you hear the news on the radio?",
+  "voice": "5ef0d4e8-2813-484b-b5c1-4327eaa74624",
+  "voiceName": "iris",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-38f9ed94"
+ },
+ {
+  "key": "Miss Hyacinth|My market friend! Goodnight, goodnight.",
+  "who": "Miss Hyacinth",
+  "text": "My market friend! Goodnight, goodnight.",
+  "spoken": "My market friend! Goodnight, goodnight.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "hyacinth",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-215ae98a"
+ },
+ {
+  "key": "Miss Hyacinth|Goodnight, child. Thank you for finding my photograph.",
+  "who": "Miss Hyacinth",
+  "text": "Goodnight, child. Thank you for finding my photograph.",
+  "spoken": "Goodnight, child. Thank you for finding my photograph.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "hyacinth",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-e42dfcda"
+ },
+ {
+  "key": "Miss Maude|You listened well on Saturday. Top marks.",
+  "who": "Miss Maude",
+  "text": "You listened well on Saturday. Top marks.",
+  "spoken": "You listened well on Saturday. Top marks.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-658f2da8"
+ },
+ {
+  "key": "Miss Maude|Quick: what is seven and eight?",
+  "who": "Miss Maude",
+  "text": "Quick: what is seven and eight?",
+  "spoken": "Quick: what is seven and eight?",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-b9efca8e"
+ },
+ {
+  "key": "Miss Dora|Do you remember our hymn? Hum it going home.",
+  "who": "Miss Dora",
+  "text": "Do you remember our hymn? Hum it going home.",
+  "spoken": "Do you remember our hymn? Hum it going home.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-98517c47"
+ },
+ {
+  "key": "Miss Dora|Listen. The ladies are singing the evening hymn.",
+  "who": "Miss Dora",
+  "text": "Listen. The ladies are singing the evening hymn.",
+  "spoken": "Listen. The ladies are singing the evening hymn.",
+  "voice": "8a0755f0-e939-4228-bf16-81d141498320",
+  "voiceName": "dora",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-1e02b4a2"
+ },
+ {
+  "key": "Nurse Bell|Miss Iris told everyone you promised her a song.",
+  "who": "Nurse Bell",
+  "text": "Miss Iris told everyone you promised her a song.",
+  "spoken": "Miss Iris told everyone you promised her a song.",
+  "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
+  "voiceName": "bell",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-c4bac1c3"
+ },
+ {
+  "key": "Nurse Bell|Miss Iris said you would read to her again.",
+  "who": "Nurse Bell",
+  "text": "Miss Iris said you would read to her again.",
+  "spoken": "Miss Iris said you would read to her again.",
+  "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
+  "voiceName": "bell",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-03df5977"
+ },
+ {
+  "key": "Nurse Bell|Miss Iris was waiting for Saturday. She told me so.",
+  "who": "Nurse Bell",
+  "text": "Miss Iris was waiting for Saturday. She told me so.",
+  "spoken": "Miss Iris was waiting for Saturday. She told me so.",
+  "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
+  "voiceName": "bell",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-a723b90d"
+ },
+ {
+  "key": "Miss Hyacinth|You sat with me that Saturday. I never forgot.",
+  "who": "Miss Hyacinth",
+  "text": "You sat with me that Saturday. I never forgot.",
+  "spoken": "You sat with me that Saturday. I never forgot.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "hyacinth",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-c8b7cd5b"
+ },
+ {
+  "key": "Miss Hyacinth|I grow callaloo by my door now.",
+  "who": "Miss Hyacinth",
+  "text": "I grow callaloo by my door now.",
+  "spoken": "I grow callaloo by my door now.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "hyacinth",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-75055b1f"
  }
 ]
