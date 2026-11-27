@@ -152,5 +152,348 @@
   "text": "A board tells the story of his life.",
   "emotion": "neutral",
   "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey nods. Now the poster can go to the press.",
+  "stem": "n-0ade813b",
+  "text": "Marcus Garvey nods. Now the poster can go to the press.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is Amy Ashwood. She is one of the first members.",
+  "stem": "n-2cccc364",
+  "text": "This is Amy Ashwood. She is one of the first members.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She is helping to start a new association.",
+  "stem": "n-34a33bf6",
+  "text": "She is helping to start a new association.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Its members will help each other.",
+  "stem": "n-42913eb8",
+  "text": "Its members will help each other.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey stands up to speak to the room.",
+  "stem": "n-3a571ca0",
+  "text": "Marcus Garvey stands up to speak to the room.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He talks about helping people in need, and about pride.",
+  "stem": "n-1400d62e",
+  "text": "He talks about helping people in need, and about pride.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is the Universal Negro Improvement Association.",
+  "stem": "n-b62ed570",
+  "text": "This is the Universal Negro Improvement Association.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Amy Ashwood welcomes everyone who wants to join.",
+  "stem": "n-72644c08",
+  "text": "Amy Ashwood welcomes everyone who wants to join.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It begins here, in Kingston.",
+  "stem": "n-dc4a2624",
+  "text": "It begins here, in Kingston.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is Marcus Garvey. He has just come home from London.",
+  "stem": "n-ab76506e",
+  "text": "This is Marcus Garvey. He has just come home from London.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He plans an association to help people in need.",
+  "stem": "n-3f0665e6",
+  "text": "He plans an association to help people in need.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It will also build pride, and open a trade school.",
+  "stem": "n-76a31835",
+  "text": "It will also build pride, and open a trade school.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The first poster needs one big word. Which word?",
+  "stem": "n-ec8de4c8",
+  "text": "The first poster needs one big word. Which word?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey climbs onto the box.",
+  "stem": "n-fa3c5781",
+  "text": "Marcus Garvey climbs onto the box.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "People stop to listen.",
+  "stem": "n-effc002a",
+  "text": "People stop to listen.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is Marcus Garvey. He has just arrived in New York.",
+  "stem": "n-4e53a4de",
+  "text": "This is Marcus Garvey. He has just arrived in New York.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He listens carefully. What should he speak about?",
+  "stem": "n-4f4f8345",
+  "text": "He listens carefully. What should he speak about?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey reads your headline and nods.",
+  "stem": "n-ef218b81",
+  "text": "Marcus Garvey reads your headline and nods.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Now the front page is laid out on the stone table.",
+  "stem": "n-29b0130e",
+  "text": "Now the front page is laid out on the stone table.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey has started a new newspaper.",
+  "stem": "n-04b6ee26",
+  "text": "Marcus Garvey has started a new newspaper.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It is called the Negro World.",
+  "stem": "n-3f66d9fb",
+  "text": "It is called the Negro World.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The first page needs a big headline. Which one?",
+  "stem": "n-2a3a6bb4",
+  "text": "The first page needs a big headline. Which one?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "But people have paid their money. They want to see a ship.",
+  "stem": "n-583e711a",
+  "text": "But people have paid their money. They want to see a ship.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "So the old ship is bought, as really happened.",
+  "stem": "n-d026862c",
+  "text": "So the old ship is bought, as really happened.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey listens. Money is short, and people are waiting.",
+  "stem": "n-931d209c",
+  "text": "Marcus Garvey listens. Money is short, and people are waiting.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Buy this ship now, or save for a better one?",
+  "stem": "n-b4f28ce3",
+  "text": "Buy this ship now, or save for a better one?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is Marcus Garvey. He is starting a shipping company.",
+  "stem": "n-51441b14",
+  "text": "This is Marcus Garvey. He is starting a shipping company.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It is called the Black Star Line.",
+  "stem": "n-8166679c",
+  "text": "It is called the Black Star Line.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "People buy shares. The money will buy ships.",
+  "stem": "n-59eeabcb",
+  "text": "People buy shares. The money will buy ships.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He wants an honest look at the first ship.",
+  "stem": "n-857df5f0",
+  "text": "He wants an honest look at the first ship.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey welcomes the delegates to Liberty Hall.",
+  "stem": "n-b1f4404f",
+  "text": "Marcus Garvey welcomes the delegates to Liberty Hall.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "They have come from many countries.",
+  "stem": "n-d7d7b4b3",
+  "text": "They have come from many countries.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This month they write down the rights they want.",
+  "stem": "n-0342a4e4",
+  "text": "This month they write down the rights they want.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey nods to you and smiles.",
+  "stem": "n-5de03e71",
+  "text": "Marcus Garvey nods to you and smiles.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter has come for you, from a friend.",
+  "stem": "n-7d7a7ac9",
+  "text": "A letter has come for you, from a friend.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It is on the table by the door.",
+  "stem": "n-eabd46f1",
+  "text": "It is on the table by the door.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The cards are sorted. One rumour says the paper is closing.",
+  "stem": "n-1ff5c18b",
+  "text": "The cards are sorted. One rumour says the paper is closing.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A reader has written in about it.",
+  "stem": "n-66afbdd9",
+  "text": "A reader has written in about it.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What should be asked before it is printed?",
+  "stem": "n-713d40df",
+  "text": "What should be asked before it is printed?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This is Amy Jacques Garvey.",
+  "stem": "n-d9aa3c78",
+  "text": "This is Amy Jacques Garvey.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She helps to edit the Negro World.",
+  "stem": "n-d908adc1",
+  "text": "She helps to edit the Negro World.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She writes a page called Our Women and What They Think.",
+  "stem": "n-8d59c518",
+  "text": "She writes a page called Our Women and What They Think.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Marcus Garvey is in prison in Atlanta. She keeps the work going.",
+  "stem": "n-f2089010",
+  "text": "Marcus Garvey is in prison in Atlanta. She keeps the work going.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A gramophone plays a record of his voice.",
+  "stem": "n-ff360739",
+  "text": "A gramophone plays a record of his voice.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He made it in New York in July 1921.",
+  "stem": "n-9ecca222",
+  "text": "He made it in New York in July nineteen twenty-one.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Letters and stories arrive every day.",
+  "stem": "n-de477b17",
+  "text": "Letters and stories arrive every day.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Some are facts. Some are only rumours.",
+  "stem": "n-37ed77d2",
+  "text": "Some are facts. Some are only rumours.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The news cards on the desk need sorting.",
+  "stem": "n-2a76bbf4",
+  "text": "The news cards on the desk need sorting.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "His old letters still fill the Negro World.",
+  "stem": "n-f9a1153c",
+  "text": "His old letters still fill the Negro World.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]
