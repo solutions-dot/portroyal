@@ -103,7 +103,7 @@ export const FILMS = {
   opening: {
     place: "road", next: 10, journal: "road", title: "The dry road",
     read: ["St Ann was cattle country. In this story the ponds have dried to mud.", "A pack mule came down the castle road with no rider. People said travellers went missing up there."],
-    captions: [[0, "St Ann, Jamaica, 1772. In this story, a dry season."], [6, "Dr Hutton’s cattle pen. The pond is cracked mud."], [12, "The road runs west over the dry limestone hills."], [17, "Two miles off, on a rise: Edinburgh Castle."], [24, "A pack mule comes down that road. No rider."], [32, "People say travellers go missing up there."]],
+    captions: [[0, "St Ann, Jamaica, 1772. In this story, a dry season."], [6.7, "Dr Hutton’s cattle pen. The pond is cracked mud.", "opening-6"], [12, "The road runs west over the dry limestone hills."], [17, "Two miles off, on a rise: Edinburgh Castle."], [24, "A pack mule comes down that road. No rider."], [32, "People say travellers go missing up there."]],
     shots: [
       { t: 0, p: [16, 5.5, -5], look: [0, 1, -12] },
       { t: 6, p: [-9.0, 2.4, -3.0], look: [-10.4, 0, -7.6] },
@@ -164,7 +164,7 @@ export const FILMS = {
   warrant: {
     place: "castle", next: 45, journal: "callendar", title: "The neighbour",
     read: ["John Callendar came to the house about a strayed jackass. Hutchinson shot him, and he died.", "A sick man lying in the house slipped out and told. Hutchinson was taken."],
-    captions: [[0, "Morning. The house stands on its rise over the road."], [4, "John Callendar walks up the track."], [12, "His jackass is in the castle yard. He calls out. Nobody answers."], [19.5, "The upper shutter swings open."], [22.5, "One shot. The birds go up from the cotton tree."], [28, "A hat lies on the track."], [32, "A sick man in the house has seen. He slips out by the east door to tell."]],
+    captions: [[0, "Morning. The house stands on its rise over the road."], [4.1, "John Callendar walks up the track.", "warrant-4"], [12, "His jackass is in the castle yard. He calls out. Nobody answers."], [19.5, "The upper shutter swings open."], [22.5, "One shot. The birds go up from the cotton tree."], [28, "A hat lies on the track."], [32, "A sick man in the house has seen. He slips out by the east door to tell."]],
     shots: [
       { t: 0, p: [17, 2.4, 14.6], look: [0, 4.4, -12] },
       { t: 5, p: [11, 1.7, 13.2], look: [3, 1.5, 9] },
@@ -189,7 +189,7 @@ export const FILMS = {
   morning: {
     place: "town", next: 67, journal: "epitaph", title: "The sixteenth of March, 1773",
     read: ["Lewis Hutchinson was hanged in Spanish Town on the morning of 16 March 1773.", "He was not sorry. He left two lines for his tombstone. The stone was never made."],
-    captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "King’s House is dark. The square is full before the sun is up."], [14, "Everyone looks one way, down the street."], [20, "At its end, a frame of timber."], [27, "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”"], [34, "His words. His stone was never made."], [38, "The court tried him for one killing. No other was ever tried."]],
+    captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "King’s House is dark. The square is full before the sun is up."], [14, "Everyone looks one way, down the street."], [20, "At its end, a frame of timber."], [27, "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”"], [34.8, "His words. His stone was never made.", "morning-34"], [38.1, "The court tried him for one killing. No other was ever tried.", "morning-38"]],
     shots: [
       { t: 0, p: [-17.5, 1.8, -9], look: [-30, 6.5, 0] },
       { t: 7, p: [-14.6, 2.4, -7.5], look: [-9, 1.6, 0] },
@@ -203,7 +203,7 @@ export const FILMS = {
     fov: [[0, 46], [7, 44], [13, 46], [19, 30], [27, 24], [32, 30], [34, 44], [40, 50]],
     acts: [],
     sounds: [[1, "drum"], [3, "drum"], [5, "drum"], [14, "drum"], [16, "drum"], [20, "bell"], [27, "sad"]],
-    duration: 43,
+    duration: 44,
   },
 };
 export const QUIZ = {

@@ -88,7 +88,7 @@ export const FILMS = {
   catch: {
     place: "deck", next: 20, journal: "shark", title: "The catch",
     read: ["The biggest shark took the pork. Mr Fitton let it run on sixty fathoms of line until it was tired.", "Then all hands hauled together, and the shark was hoisted over the side and on to the deck."],
-    captions: [[0, "Mr Fitton waits at the stern. The pork is on the hook."], [5, "The line goes tight!"], [7.5, "He lets the shark run. Sixty fathoms of line!"], [11, "“All hands!” Everybody hauls together."], [14.5, "Up it comes, over the side."], [20.5, "There it lies: the biggest shark of all."]],
+    captions: [[0, "Mr Fitton waits at the stern. The pork is on the hook."], [5, "The line goes tight!"], [7.5, "He lets the shark run. Sixty fathoms of line!"], [11.3, "“All hands!” Everybody hauls together.", "catch-11"], [14.5, "Up it comes, over the side."], [20.5, "There it lies: the biggest shark of all."]],
     shots: [{ t: 0, p: [3.6, 3.2, 12.6], look: [-1.6, 0.6, 9.2] }, { t: 5, p: [1.9, 2.3, 7.2], look: [-3.4, -0.8, 11.5] }, { t: 10.5, p: [1.6, 1.9, 2.4], look: [-1.5, 1.0, 7.0] }, { t: 14.5, p: [-6.4, 1.2, 3.6], look: [-2.9, 0.2, 8.3] }, { t: 19.5, p: [1.9, 2.7, 4.3], look: [-1.3, 0.3, 6.8] }, { t: 26, p: [1.5, 2.3, 3.6], look: [-1.2, 0.4, 6.6] }],
     fov: [[0, 50], [5, 44], [10.5, 52], [14.5, 48], [26, 44]],
     acts: [],
@@ -112,7 +112,7 @@ export const FILMS = {
   verdict: {
     place: "court", next: 46, journal: "jaws", title: "The court decides",
     read: ["The court read both sets of papers. The papers from the shark showed that the cargo belonged to Britain's enemies.", "In November 1799 the Nancy and her cargo were judged a lawful prize. Mr Fitton's shark jaws were kept in the court, with his note."],
-    captions: [[0, "The Court of Vice-Admiralty, Kingston. November 1799."], [5.5, "Both sets of papers lie on the green table."], [10.5, "The papers from the shark tell the truth."], [16, "The clerk reads out what the court has decided."], [21, "The Nancy and her cargo are a lawful prize."], [26, "The judge sits over the court. His name is not known."], [30, "Mr Fitton's shark jaws stand by the wall."], [34, "“Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”"]],
+    captions: [[0, "The Court of Vice-Admiralty, Kingston. November 1799."], [5.7, "Both sets of papers lie on the green table.", "verdict-5_5"], [10.5, "The papers from the shark tell the truth."], [16, "The clerk reads out what the court has decided."], [21, "The Nancy and her cargo are a lawful prize."], [26, "The judge sits over the court. His name is not known."], [30.1, "Mr Fitton's shark jaws stand by the wall.", "verdict-30"], [34, "“Lieut. Fitton recommends these jaws for a collar for neutrals to swear through.”"]],
     shots: [{ t: 0, p: [0, 2.7, 4.0], look: [0, 1.9, -3.3] }, { t: 6, p: [0.3, 2.0, 2.3], look: [0, 0.9, 0] }, { t: 11, p: [1.0, 1.35, 1.25], look: [0.3, 0.83, 0.1] }, { t: 15.5, p: [-1.4, 1.7, 1.2], look: [-3.6, 1.45, -0.5] }, { t: 21, p: [-1.8, 1.65, 0.9], look: [-3.6, 1.45, -0.5] }, { t: 25, p: [0.25, 1.95, -0.7], look: [0, 1.5, -4.2] }, { t: 30.5, p: [-3.4, 1.65, 1.35], look: [-5.85, 1.3, 1.0] }, { t: 38, p: [-4.4, 1.5, 1.15], look: [-5.85, 1.25, 1.0] }],
     fov: [[0, 46], [6, 44], [11, 38], [15.5, 42], [21, 40], [25, 46], [30.5, 40], [38, 36]],
     acts: [[16.5, "clerk", "TalkM1"], [21.5, "fitton", "Nod"], [24, "clerk", "IdleM"]],

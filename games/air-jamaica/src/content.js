@@ -378,8 +378,8 @@ export const FILMS = {
     read: ["On 1 April 1969 Air Jamaica began flying its own jets from Kingston and Montego Bay to New York and Miami.", "The ground crew pulled away the steps, the DC-8 taxied to the runway, and then it took off."],
     captions: [
       [0, "The waving gallery, Palisadoes Airport. 1 April 1969."],
-      [3.5, "The crew wave. The steps are pulled away."],
-      [8, "The first Air Jamaica jet starts to roll."],
+      [6.1, "The crew wave. The steps are pulled away.", "takeoff-3_5"],
+      [9.6, "The first Air Jamaica jet starts to roll.", "takeoff-8"],
       [17, "It turns out onto the runway."],
       [26, "The engines roar. Faster and faster!"],
       [36, "The nose lifts. It is flying!"],
@@ -455,7 +455,7 @@ FILMS.newflight = {
   read: ["In December 1994 the first Air Jamaica plane in the new colours flew from Kingston.", "Guests and staff watched it roll out to the runway and take off."],
   captions: [
     [0, "Norman Manley Airport, Kingston. December 1994."],
-    [3.5, "Everyone steps back from the plane."],
+    [4.9, "Everyone steps back from the plane.", "newflight-3_5"],
     [8, "The new look starts to roll."],
     [17, "It turns out onto the runway."],
     [26, "The engines roar. Faster and faster!"],

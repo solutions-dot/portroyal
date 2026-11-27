@@ -127,12 +127,12 @@ export const FILMS = {
   pages: {
     place: "archive", next: 48, journal: "journal", title: "The estate's own book",
     read: ["The Rose Hall Journal, 1817 to 1832, is in the Jamaica Archives. It names 208 people held in slavery at Rose Hall. Over 90 died in fourteen years.", "It gives Celia as “Grasscutter”, Dorinda as “Hospital Attendant and Midwife”, George Stennet as “Head Driver”. Dorinda ran in April 1830. Archey was “transported” in 1826. Hercules ran away at least 26 times, Doshy 16. There is no Takoo in it, and no Millicent."],
-    captions: [[0, "RECORD. The Rose Hall Journal: the estate's own book."], [5.5, "It runs from 1817 to 1832. It names 208 people."], [11, "Celia: “Grasscutter”. The book says “weakly”."], [16, "Dorinda: “Hospital Attendant and Midwife”."], [21, "George Stennet: “Head Driver”. Aaron: “Head Penkeeper”."], [26.5, "21 April 1830. Dorinda “thot proper to abscond”. She ran."], [32, "Archey: “sent to Falmouth Workhouse for punishment”, 1823."], [37, "Hercules ran away at least 26 times. Doshy, 16."], [42, "Over 90 people died here in fourteen years."], [46.5, "No Takoo. No Millicent. The book names all 208."]],
+    captions: [[0, "RECORD. The Rose Hall Journal: the estate's own book."], [5.5, "It runs from 1817 to 1832. It names 208 people."], [12.3, "Celia: “Grasscutter”. The book says “weakly”.", "pages-11"], [16.3, "Dorinda: “Hospital Attendant and Midwife”.", "pages-16"], [21, "George Stennet: “Head Driver”. Aaron: “Head Penkeeper”."], [26.5, "21 April 1830. Dorinda “thot proper to abscond”. She ran."], [33, "Archey: “sent to Falmouth Workhouse for punishment”, 1823.", "pages-32"], [38.3, "Hercules ran away at least 26 times. Doshy, 16.", "pages-37"], [43.5, "Over 90 people died here in fourteen years.", "pages-42"], [47.2, "No Takoo. No Millicent. The book names all 208.", "pages-46_5"]],
     shots: [{ t: 0, p: [1.9, 1.7, 1.4], look: [0.5, 0.8, -0.7] }, { t: 8, p: [0.9, 1.45, 0.1], look: [0.5, 0.78, -0.7] }, { t: 18, p: [0.6, 1.3, -0.2], look: [0.5, 0.78, -0.72] }, { t: 30, p: [0.35, 1.3, -0.2], look: [0.48, 0.78, -0.72] }, { t: 42, p: [0.7, 1.4, 0.0], look: [0.5, 0.78, -0.7] }, { t: 51, p: [2.2, 1.9, 1.6], look: [0.3, 0.9, -0.8] }],
     fov: [[0, 46], [8, 40], [18, 36], [42, 38], [51, 46]],
     acts: [],
     sounds: [[0.5, "begin"], [9, "leaf"], [19.5, "leaf"], [30.5, "leaf"], [41, "leaf"], [47, "sad"]],
-    duration: 51,
+    duration: 53,
   },
 };
 export const QUIZ = {

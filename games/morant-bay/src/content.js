@@ -214,7 +214,7 @@ export const FILMS = {
   riot: {
     place: "bay", next: 48, journal: "eleventh", title: "The eleventh of October",
     read: ["Between three and four o'clock a crowd came to the court-house with sticks, cutlasses and guns, blowing shells and beating drums.", "The Custos called \"Peace, peace\" and was answered \"War\". Stones were thrown, the Volunteers fired, and people fell. The school-house was set alight and the fire spread to the court-house. It grew dark."],
-    captions: [[0, "Behind the stall. Between three and four o'clock."], [4, "Shells and drums, from the east road."], [10, "Hundreds of people come onto the Parade."], [17, "The Custos calls out: \"Peace, peace.\""], [20, "The crowd answers: \"War.\""], [23, "He begins to read the Riot Act. Stones fly."], [27.5, "The Volunteers fire."], [28.4, "People fall."], [29.9, "You hide your eyes. People run."], [34, "The crowd rushes the steps."], [39, "Someone sets the school-house alight."], [45, "The fire spreads to the court-house. It grows dark."]],
+    captions: [[0, "Behind the stall. Between three and four o'clock."], [4, "Shells and drums, from the east road."], [10, "Hundreds of people come onto the Parade."], [17, "The Custos calls out: \"Peace, peace.\""], [20.5, "The crowd answers: \"War.\"", "riot-20"], [23.1, "He begins to read the Riot Act. Stones fly.", "riot-23"], [27.5, "The Volunteers fire."], [29.5, "People fall.", "riot-28_4"], [31, "You hide your eyes. People run.", "riot-29_9"], [34, "The crowd rushes the steps."], [39, "Someone sets the school-house alight."], [45, "The fire spreads to the court-house. It grows dark."]],
     shots: [
       { t: 0, p: [-9.0, 0.78, 4.4], look: [6, 1.0, 1] },
       { t: 4, p: [-9.0, 0.78, 4.4], look: [24, 1.3, 0] },
@@ -253,7 +253,7 @@ export const FILMS = {
   burning: {
     place: "gut", next: 58, journal: "firestick", title: "From the cave mouth",
     read: ["On 19 October the soldiers burned the chapel at Stony Gut and about eight houses.", "Men were taken away. Many families never knew what happened to them."],
-    captions: [[0, "Thursday 19 October. From the cave mouth."], [3.5, "Smoke over the chapel."], [8, "The chapel roof falls in."], [11.5, "Then Mr Bogle's house. Then yours."], [23, "Night. Lanterns on the path."], [27, "Soldiers lead men away. One wears a hat like Papa's."]],
+    captions: [[0, "Thursday 19 October. From the cave mouth."], [4.4, "Smoke over the chapel.", "burning-3_5"], [8, "The chapel roof falls in."], [11.5, "Then Mr Bogle's house. Then yours."], [23, "Night. Lanterns on the path."], [27, "Soldiers lead men away. One wears a hat like Papa's."]],
     /* the chapel is already alight as the scene opens (owner: the cave view showed nothing happening); real cuts to your house and to the
        night path, not a swoop through the roofs (engine/shotpath.js) */
     shots: [
@@ -276,7 +276,7 @@ export const FILMS = {
   courts: {
     place: "bay", next: 62, journal: "courtsmartial", title: "Under martial law",
     read: ["Under martial law officers tried prisoners in a temporary court-house, an open shed. Many were put to death. At least 600 were flogged.", "A man is tied to a post to be flogged. This game cuts away before the whip comes down."],
-    captions: [[0, "Morant Bay, late October 1865."], [6, "The court-house is a burnt shell. A shed is the court now."], [13, "Officers judge. Prisoners wait on the benches."], [19, "Behind the shed, a man is tied to a post."], [22, "Mama turns your face away. You hear it."]],
+    captions: [[0, "Morant Bay, late October 1865."], [6, "The court-house is a burnt shell. A shed is the court now."], [13, "Officers judge. Prisoners wait on the benches."], [19, "Behind the shed, a man is tied to a post."], [22.6, "Mama turns your face away. You hear it.", "courts-22"]],
     shots: [
       { t: 0, p: [-2, 6, 18], look: [4, 2, -4] },
       { t: 6, p: [-4, 2, 2], look: [0, 3, -11] },
@@ -309,7 +309,7 @@ export const FILMS = {
   today: {
     place: "bay", next: 70, journal: "heroes", title: "Back in 2026",
     read: ["The court-house was rebuilt after 1865. It burned again in 2007, and its walls still stand.", "Edna Manley's statue of Paul Bogle stood in front of it from 1965 and was taken down to be mended after the fire. Bogle and Gordon became National Heroes in 1969."],
-    captions: [[0, "Morant Bay, 2026."], [6, "The court-house was rebuilt after 1865. It burned in 2007."], [12, "Edna Manley's statue of Paul Bogle stood here from 1965."], [16, "It was taken down to be mended after the fire."], [20, "Paul Bogle and George William Gordon are National Heroes of Jamaica."], [24, "Thousands of others have no statue. Their names are in the record."]],
+    captions: [[0, "Morant Bay, 2026."], [6, "The court-house was rebuilt after 1865. It burned in 2007."], [12.3, "Edna Manley's statue of Paul Bogle stood here from 1965.", "today-12"], [17.3, "It was taken down to be mended after the fire.", "today-16"], [20.6, "Paul Bogle and George William Gordon are National Heroes of Jamaica.", "today-20"], [25.6, "Thousands of others have no statue. Their names are in the record.", "today-24"]],
     shots: [
       { t: 0, p: [10, 8, 18], look: [0, 3, -10] },
       { t: 6, p: [6, 2.2, 6], look: [0, 4, -9] },
@@ -320,7 +320,7 @@ export const FILMS = {
     fov: [[0, 48], [6, 40], [12, 34], [18, 38], [24, 50]],
     acts: [],
     sounds: [[1, "begin"], [3, "wave"], [12, "bell"]],
-    duration: 28,
+    duration: 31,
   },
 };
 export const QUIZ = {
