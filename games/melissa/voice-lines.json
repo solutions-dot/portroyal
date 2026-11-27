@@ -96,5 +96,61 @@
   "text": "Night. The hall is full of sleeping people, and the wind grows louder and louder outside.",
   "emotion": "content",
   "speed": 0.97
+ },
+ {
+  "key": "Fallen wires. A pole fell, and its wires are on the ground. Never touch a fallen wire. It might still carry power, even if the lights are out. Keep away. Tell a grown-up, and call the light company.",
+  "stem": "n-e84b5da9",
+  "text": "Fallen wires. A pole fell, and its wires are on the ground. Never touch a fallen wire. It might still carry power, even if the lights are out. Keep away. Tell a grown-up, and call the light company.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The radio. It is still moving very slowly. Listen for the warnings, and go to a shelter early if your home is not strong. Mum looks at Grandpa. \"We will go to the church hall,\" she says.",
+  "stem": "n-b3822661",
+  "text": "The radio. It is still moving very slowly. Listen for the warnings, and go to a shelter early if your home is not strong. Mum looks at Grandpa. We will go to the church hall, she says.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A fallen tree. After lots of rain, the ground is soft. Strong wind can push a tree right over.",
+  "stem": "n-7205e1e8",
+  "text": "A fallen tree. After lots of rain, the ground is soft. Strong wind can push a tree right over.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Breadnut Corner Ready Plan. 1. Know your risk. Is your home safe in a hurricane? Is it near water? 2. Make a family plan. Where will we go? Who will we call? 3. Keep a kit. Water, food, a torch, a radio, medicine and papers. 4. Fix the roof early. Strong straps and nails help it stay on. 5. Listen to the official warnings, and leave early if you are told to.",
+  "stem": "n-3fff1231",
+  "text": "Breadnut Corner Ready Plan. One. Know your risk. Is your home safe in a hurricane? Is it near water? Two. Make a family plan. Where will we go? Who will we call? Three. Keep a kit. Water, food, a torch, a radio, medicine and papers. Four. Fix the roof early. Strong straps and nails help it stay on. Five. Listen to the official warnings, and leave early if you are told to.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Home. Mum holds your hand. \"Things can be mended,\" she says. \"We are together.\"",
+  "stem": "n-4c856a0c",
+  "text": "Home. Mum holds your hand. Things can be mended, she says. We are together.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A good kit. You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag. A kit is small, but it helps a lot.",
+  "stem": "n-4e53402b",
+  "text": "A good kit. You packed well: water, food that keeps, a torch, a radio, a charged phone, medicine and papers in a bag. A kit is small, but it helps a lot.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Jamaica's storms. Hurricanes are not new to Jamaica. They come, and people get ready and rebuild. Read about the earlier storms in your Journal.",
+  "stem": "n-bd7c757a",
+  "text": "Jamaica's storms. Hurricanes are not new to Jamaica. They come, and people get ready and rebuild. Read about the earlier storms in your Journal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. In this story you are a made-up child. The family is made up too. In 1951 you are Hattie, aged ten. In 1988 you are Pearl, aged twelve. In 2025 you are Pearl's child. The storms are real. The family is not.",
+  "stem": "n-ae7d1861",
+  "text": "Who you are. In this story you are a made-up child. The family is made up too. In nineteen fifty-one you are Hattie, aged ten. In nineteen eighty-eight you are Pearl, aged twelve. In twenty twenty-five you are Pearl's child. The storms are real. The family is not.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

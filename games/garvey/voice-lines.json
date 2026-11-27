@@ -68,5 +68,26 @@
   "text": "Back on the dock. New York, nineteen nineteen",
   "emotion": "content",
   "speed": 0.97
+ },
+ {
+  "key": "Chapter 2 is finished!. Well done.",
+  "stem": "n-2ed2a5c1",
+  "text": "Chapter two is finished!. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The End. Thank you for walking through this story. Your journey, with all your choices, is in the Journal. Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.",
+  "stem": "n-d0282568",
+  "text": "The End. Thank you for walking through this story. Your journey, with all your choices, is in the Journal. Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. You are a young helper in a print shop in Kingston, Jamaica. You are fictional. The printer and the customer are fictional too. Marcus Garvey and the events are real.",
+  "stem": "n-8f9d2910",
+  "text": "Who you are. You are a young helper in a print shop in Kingston, Jamaica. You are fictional. The printer and the customer are fictional too. Marcus Garvey and the events are real.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

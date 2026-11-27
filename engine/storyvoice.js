@@ -17,14 +17,22 @@ let current = null;
 /* the title fade (engine/chapter-end.js titleFade) reads its own words through whichever game voice is running */
 export const speakStory = (text) => { if (current) current.speak(text); };
 const norm = (t) => String(t).replace(/\s+/g, ' ').trim();
+/* dev builds only: every card, spoken line and look line that appears is listed in #storytext, so tools/audio/collect-text.mjs can record what a game really says
+   while the autoplayer plays it (dynamic text included). Dropped from the public build. */
+const seen = (kind, text) => {
+  if (typeof __DEV__ === 'undefined' || !__DEV__ || typeof document === 'undefined') return;
+  let el = document.getElementById('storytext');
+  if (!el) { el = document.createElement('pre'); el.id = 'storytext'; el.hidden = true; document.body.appendChild(el); }
+  const line = kind + '\t' + norm(text) + '\n'; if (!el.textContent.includes(line)) el.textContent += line;
+};
 export function createStoryVoice(opts) {
   const narrator = createNarrator(opts); narrator.preload(); current = narrator;
   return {
     narrator,
-    line(who, text, isMe) { if (!isMe && text) narrator.speak(who + '|' + norm(text)); else narrator.stop(); },
-    card(title, paragraphs) { narrator.speak(title + '. ' + paragraphs.join(' ')); },
+    line(who, text, isMe) { if (!isMe && text) { seen('line', who + '|' + text); narrator.speak(who + '|' + norm(text)); } else narrator.stop(); },
+    card(title, paragraphs) { seen('card', title + '. ' + paragraphs.join(' ')); narrator.speak(title + '. ' + paragraphs.join(' ')); },
     stop() { narrator.stop(); },
-    look: { speak: (t) => narrator.speak(t), voiceBusy: () => sharedVoice().active() },
+    look: { speak: (t) => { seen('look', t); narrator.speak(t); }, voiceBusy: () => sharedVoice().active() },
     lookLines: (lk) => [...(lk.say || []), ...(lk.lines || [])],
   };
 }
