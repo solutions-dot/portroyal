@@ -44,6 +44,17 @@ Build a game with test views first: `node tools/build.mjs <game> --dev`, then se
 
 **Story-first pass for all ten games (21 November 2026):** the full to-do list is in `docs/plans/story_first_plan.md`. Work from it, one phase at a time.
 
+## New idle and talking clips, not wired yet (owner, 27 November 2026)
+
+The owner uploaded four Mixamo clips to add to the library, so idles and talk gestures vary more and suit the situation and the line being said. Only the files are in `shared/anim-sources/` so far: they are not in `tools/anims/clips.json`, not retargeted, not packed and played by no game. The owner said to stop there; another session carries on.
+
+- `Walk_In_Circle.fbx`: new movement.
+- `Talking.fbx`: same byte size as `Talking_M2.fbx` (clip `TalkM2`), but the bytes differ a lot. Check pose by pose (`check_clips.mjs` lists duplicates) before giving it a name.
+- `Talking_1.fbx`: same size as `Talking_M1.fbx` (`TalkM1`, itself the same movement as `Talk2`) and differs in only about 4,000 bytes, so it is very likely a duplicate download.
+- `Standing_Arguing_2.fbx`: the owner's upload of `Standing_Arguing.fbx`, which is already in the library as `Argue`. Same size, about 4,000 bytes differ, so very likely the same clip. Saved under a new name so the original was not overwritten.
+
+Next steps: add the clips that are really new to `tools/anims/clips.json`, retarget, pack and check them (`docs/PIPELINE.md`, section 2), add the standing ones to `STANDING` in `engine/anim.js`, then choose talk and idle clips by the line's mood in the engine (rule 10), not game by game. Blender: `python3.13 -m venv ~/venv && ~/venv/bin/pip install bpy==5.3.0`.
+
 ## Nanny Town (games/nanny)
 
 - [x] **Audit after the waterfall came out.** The waterfall on the western hill of New Nanny Town (`buildNewTown` in `src/places.js`) was removed, and the place's `tick` that moved its water went with it. Run `?test=audit&p=newtown` and `?test=layout`. Expect 0 issues.
