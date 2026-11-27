@@ -176,6 +176,50 @@
   "stem": "c-4f9177b3"
  },
  {
+  "key": "Miss Maude|Stand up straight, child. I was a teacher.",
+  "who": "Miss Maude",
+  "text": "Stand up straight, child. I was a teacher.",
+  "spoken": "Stand up straight, child. I was a teacher.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-da2bbae2"
+ },
+ {
+  "key": "Miss Maude|I taught half this street to read.",
+  "who": "Miss Maude",
+  "text": "I taught half this street to read.",
+  "spoken": "I taught half this street to read.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-cbdd0b07"
+ },
+ {
+  "key": "Miss Maude|Ask me a sum some day. Any sum!",
+  "who": "Miss Maude",
+  "text": "Ask me a sum some day. Any sum!",
+  "spoken": "Ask me a sum some day. Any sum!",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "excited",
+  "speed": 1.03,
+  "stem": "c-83e8997b"
+ },
+ {
+  "key": "Miss Maude|I cannot find my Bible. It has my name inside.",
+  "who": "Miss Maude",
+  "text": "I cannot find my Bible. It has my name inside.",
+  "spoken": "I cannot find my Bible. It has my name inside.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-f7c37d18"
+ },
+ {
   "key": "Nurse Bell|Thank you for helping. They like their things just so.",
   "who": "Nurse Bell",
   "text": "Thank you for helping. They like their things just so.",
@@ -306,6 +350,17 @@
   "emotion": "content",
   "speed": 1,
   "stem": "c-736e75c3"
+ },
+ {
+  "key": "Miss Maude|Goodnight. Read something before you sleep.",
+  "who": "Miss Maude",
+  "text": "Goodnight. Read something before you sleep.",
+  "spoken": "Goodnight. Read something before you sleep.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-697ccfa5"
  },
  {
   "key": "Gran|It is morning, child. The fire is out.",
@@ -482,6 +537,28 @@
   "emotion": "content",
   "speed": 1,
   "stem": "c-5f666b38"
+ },
+ {
+  "key": "Miss Maude|Child, you came. Sit with me.",
+  "who": "Miss Maude",
+  "text": "Child, you came. Sit with me.",
+  "spoken": "Child, you came. Sit with me.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-aaaae065"
+ },
+ {
+  "key": "Miss Maude|I am counting the ladies. I keep losing count.",
+  "who": "Miss Maude",
+  "text": "I am counting the ladies. I keep losing count.",
+  "spoken": "I am counting the ladies. I keep losing count.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-c756a170"
  },
  {
   "key": "Gran|Today the whole country is in mourning.",
@@ -713,6 +790,149 @@
   "emotion": "content",
   "speed": 1,
   "stem": "c-299bbe9b"
+ },
+ {
+  "key": "Miss Maude|Well sorted! Now, a harder lesson.",
+  "who": "Miss Maude",
+  "text": "Well sorted! Now, a harder lesson.",
+  "spoken": "Well sorted! Now, a harder lesson.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-fd2504ac"
+ },
+ {
+  "key": "Miss Maude|A court met in May 1981 about the fire.",
+  "who": "Miss Maude",
+  "text": "A court met in May 1981 about the fire.",
+  "spoken": "A court met in May nineteen eighty-one about the fire.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-0e783693"
+ },
+ {
+  "key": "Miss Maude|It found that nobody could be blamed in law.",
+  "who": "Miss Maude",
+  "text": "It found that nobody could be blamed in law.",
+  "spoken": "It found that nobody could be blamed in law.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-6bc12ea3"
+ },
+ {
+  "key": "Miss Maude|People still ask what started it. Which question is fair?",
+  "who": "Miss Maude",
+  "text": "People still ask what started it. Which question is fair?",
+  "spoken": "People still ask what started it. Which question is fair?",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-f52d3b54"
+ },
+ {
+  "key": "Miss Maude|A fair question. Start with what is known.",
+  "who": "Miss Maude",
+  "text": "A fair question. Start with what is known.",
+  "spoken": "A fair question. Start with what is known.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-2089f5d6"
+ },
+ {
+  "key": "Miss Maude|A fair question. Always ask where a story comes from.",
+  "who": "Miss Maude",
+  "text": "A fair question. Always ask where a story comes from.",
+  "spoken": "A fair question. Always ask where a story comes from.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-99d62eac"
+ },
+ {
+  "key": "Miss Maude|A fair question, and the kindest one.",
+  "who": "Miss Maude",
+  "text": "A fair question, and the kindest one.",
+  "spoken": "A fair question, and the kindest one.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-50d6791a"
+ },
+ {
+  "key": "Miss Maude|Nobody has proved what started the fire.",
+  "who": "Miss Maude",
+  "text": "Nobody has proved what started the fire.",
+  "spoken": "Nobody has proved what started the fire.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-82e6f92a"
+ },
+ {
+  "key": "Miss Maude|So we do not guess. We remember, and we take care.",
+  "who": "Miss Maude",
+  "text": "So we do not guess. We remember, and we take care.",
+  "spoken": "So we do not guess. We remember, and we take care.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-31c81e82"
+ },
+ {
+  "key": "Miss Maude|There you are. Still reading before bed, I hope?",
+  "who": "Miss Maude",
+  "text": "There you are. Still reading before bed, I hope?",
+  "spoken": "There you are. Still reading before bed, I hope?",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-4426f610"
+ },
+ {
+  "key": "Miss Maude|People say many things about the fire.",
+  "who": "Miss Maude",
+  "text": "People say many things about the fire.",
+  "spoken": "People say many things about the fire.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-5b4b80c5"
+ },
+ {
+  "key": "Miss Maude|Some are facts. Some are opinions. Some are only rumours.",
+  "who": "Miss Maude",
+  "text": "Some are facts. Some are opinions. Some are only rumours.",
+  "spoken": "Some are facts. Some are opinions. Some are only rumours.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-8f1761bc"
+ },
+ {
+  "key": "Miss Maude|I made cards. Sort them at the table for me.",
+  "who": "Miss Maude",
+  "text": "I made cards. Sort them at the table for me.",
+  "spoken": "I made cards. Sort them at the table for me.",
+  "voice": "91558192-531d-427d-84f4-51db27aa6b5c",
+  "voiceName": "maude",
+  "emotion": "content",
+  "speed": 0.95,
+  "stem": "c-3c3c68d1"
  },
  {
   "key": "Kayla|You knew them. You really knew them.",
