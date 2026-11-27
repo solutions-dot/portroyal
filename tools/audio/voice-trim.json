@@ -1,0 +1,4 @@
+{
+  "_note": "dB offset from the -19 LUFS standard, by Cartesia voice id, for a voice that sounds louder or quieter than its measurement says. Applied by tools/audio/balance-dir.mjs to clips listed in a game's voice-cast.json. Owner, 27 November 2026.",
+  "dc27725f-d567-40fc-bbb7-ffd55445fe5d": -2.5
+}

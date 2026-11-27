@@ -270,7 +270,7 @@ export function dialogue(who, L, done, cancel) {
   drawLine();
 }
 /* the characters' recorded lines (voices/index.json, keys who|text; engine/narrator.js), one voice at a time (owner rule 17) */
-const NARR = createNarrator();
+export const NARR = createNarrator();
 NARR.preload();
 function drawLine() {
   const l = lines[li];
@@ -298,8 +298,10 @@ $("dclose").onclick = () => {
 };
 
 /* ---------- cards: the first button is the main one, the others are outlined; col puts the buttons one under another ---------- */
+/* a card is read aloud (title, then paragraphs) and the voice stops when a button is pressed (owner, 27 November 2026) */
 export function card(title, L, buttons, { col = false } = {}) {
   show("card");
+  NARR.speak(title + ". " + L.join(" "));
   $("ctitle").textContent = title;
   $("cbody").replaceChildren(
     ...L.map((t) => {
@@ -315,6 +317,7 @@ export function card(title, L, buttons, { col = false } = {}) {
       b.className = "btn" + (i ? " ghost" : "");
       b.textContent = text;
       b.onclick = () => {
+        NARR.stop();
         hide("card");
         fn?.();
       };
