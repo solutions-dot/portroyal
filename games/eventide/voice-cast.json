@@ -528,6 +528,39 @@
   "stem": "c-fcd344ff"
  },
  {
+  "key": "A retired nurse|I worked with old people all my life.",
+  "who": "A retired nurse",
+  "text": "I worked with old people all my life.",
+  "spoken": "I worked with old people all my life.",
+  "voice": "04335f47-1c97-45ab-a42c-fab4145e52ef",
+  "voiceName": "nurse",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-6ef31f2c"
+ },
+ {
+  "key": "A retired nurse|They were somebody's mother. Somebody's teacher.",
+  "who": "A retired nurse",
+  "text": "They were somebody's mother. Somebody's teacher.",
+  "spoken": "They were somebody's mother. Somebody's teacher.",
+  "voice": "04335f47-1c97-45ab-a42c-fab4145e52ef",
+  "voiceName": "nurse",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-e237da3b"
+ },
+ {
+  "key": "A retired nurse|We must do better for the ones still here.",
+  "who": "A retired nurse",
+  "text": "We must do better for the ones still here.",
+  "spoken": "We must do better for the ones still here.",
+  "voice": "04335f47-1c97-45ab-a42c-fab4145e52ef",
+  "voiceName": "nurse",
+  "emotion": "content",
+  "speed": 0.97,
+  "stem": "c-723a16a8"
+ },
+ {
   "key": "A neighbour|I live on Slipe Pen Road. I saw the sky that night.",
   "who": "A neighbour",
   "text": "I live on Slipe Pen Road. I saw the sky that night.",
