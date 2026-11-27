@@ -287,8 +287,12 @@ function wrecks(Q, at, y, turn) {
     small = X.caravel({ aground: true, shores: [-1], L: 18.5, B: 5.7, band: 0xb08a4a, torn: false });
   const c = Math.cos(turn), s = Math.sin(turn), off = (d) => [at[0] + c * d, at[1] - s * d];
   const [x1, z1] = off(-3.55), [x2, z2] = off(3.15);   /* close, but the Santiago's yard no longer cuts into La Capitana's roof (audit, 26 November 2026) */
-  add(Q, far(big), x1, z1, y, turn);
-  add(Q, far(small), x2, z2 + 0.6, y + 0.15, turn + 0.21);
+  /* The ships move in the opening scene (they sail in and run aground), so they are marked dynamic: left plain, the place's merge (mergePlace) baked them in
+     at the beach, so they sat aground from the first second while the sailors, placed on their decks each frame, sailed in over open water (owner,
+     27 November 2026: "these men still floating from the first scene"). Each is merged on its own first, so it stays a handful of meshes. */
+  for (const sh of [big, small]) { far(sh); batchStatic(sh); dyn(sh); }
+  add(Q, big, x1, z1, y, turn);
+  add(Q, small, x2, z2 + 0.6, y + 0.15, turn + 0.21);
   small.rotation.z = -0.05;   /* listing a little toward her neighbour */
   return [big, small];
 }
@@ -523,7 +527,7 @@ function maima({ night = false } = {}) {
       return;
     }
     ships.forEach((s, i) => {
-      s.visible = true;
+      s.visible = t >= 3.5;   /* they come round the point after "Something is coming around the point" begins, not before the scene's first words */
       /* they come in bow first along the course they end on, and run aground side by side (they slid in sideways before) */
       const k = sm((t - 4) / 22), h = shipHome[i][0], ry = shipHome[i][1], fx = -Math.sin(ry), fz = -Math.cos(ry), far = 95 + i * 6;
       const from = [h.x - fx * far, h.z - fz * far];

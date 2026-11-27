@@ -28,7 +28,8 @@ function show(id) {
   if (id === "dialogue") $("hint").hidden = true;
   $(id).hidden = false;
   $(id).setAttribute("aria-modal", "true");
-  requestAnimationFrame(() => $(id).querySelector("button,a")?.focus());
+  /* a talk box starts on Next, so Enter or the space bar goes on and the x must be chosen on purpose (owner, 27 November 2026) */
+  requestAnimationFrame(() => (id === "dialogue" && !$("next").hidden ? $("next") : $(id).querySelector("button,a"))?.focus());
 }
 export function hide(id = active) {
   if (!id) return;
