@@ -13,9 +13,12 @@
 import { createNarrator } from './narrator.js';
 import { sharedVoice } from './filmvoice.js';
 
+let current = null;
+/* the title fade (engine/chapter-end.js titleFade) reads its own words through whichever game voice is running */
+export const speakStory = (text) => { if (current) current.speak(text); };
 const norm = (t) => String(t).replace(/\s+/g, ' ').trim();
 export function createStoryVoice(opts) {
-  const narrator = createNarrator(opts); narrator.preload();
+  const narrator = createNarrator(opts); narrator.preload(); current = narrator;
   return {
     narrator,
     line(who, text, isMe) { if (!isMe && text) narrator.speak(who + '|' + norm(text)); else narrator.stop(); },
