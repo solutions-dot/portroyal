@@ -8,7 +8,16 @@ const keys = Object.keys(JSON.parse(readFileSync(`${root}${game}/voice-script.js
 const ids = readFileSync(0, "utf8").split(/\s+/).filter(Boolean);
 const url = (id) => `https://files.cartesia.ai/link/link_${id}`;
 const ok200 = (id) => { try { return execFileSync("curl", ["-s", "-o", "/dev/null", "-w", "%{http_code}", "-I", url(id)]).toString() === "200"; } catch { return false; } };
-const repair = (id) => { const t = []; for (let i = 0; i < id.length - 1; i++) t.push(id.slice(0, i) + id[i + 1] + id[i] + id.slice(i + 2)); for (let i = 0; i < id.length; i++) t.push(id.slice(0, i) + id.slice(i + 1)); return t.find(ok200) || null; };
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+/* a copied link id may have a swapped, moved, dropped or wrong character: try all of those at once, 32 requests in parallel (a link that answers 200 is the one) */
+const repair = (id) => {
+  const c = new Set();
+  for (let i = 0; i < id.length - 1; i++) c.add(id.slice(0, i) + id[i + 1] + id[i] + id.slice(i + 2));
+  for (let i = 0; i < id.length; i++) { const r = id.slice(0, i) + id.slice(i + 1); c.add(r); for (let j = 0; j <= r.length; j++) c.add(r.slice(0, j) + id[i] + r.slice(j)); }
+  for (let i = 0; i < id.length; i++) for (const ch of A) if (ch !== id[i]) c.add(id.slice(0, i) + ch + id.slice(i + 1));
+  c.delete(id);
+  try { const out = execFileSync("sh", ["-c", "xargs -P 32 -n1 " + new URL("./probe.sh", import.meta.url).pathname], { input: [...c].join("\n"), maxBuffer: 1 << 20 }).toString(); const m = out.split("\n").find((l) => l.startsWith("200 ")); return m ? m.slice(4).trim() : null; } catch { return null; }
+};
 let done = 0;
 ids.forEach((id, i) => {
   const k = keys[+first + i]; if (!k) return console.log("NO KEY", id);

@@ -412,7 +412,7 @@ const JOURNAL = [
     deeper: ['The monument was designed in 1964 by G. C. Hodges, the Government Town Planner.', 'The black star stands for his Black Star Line. The tomb is made of terrazzo, a stone made of chips, set with marble.', 'The bust is by the sculptor T. Alvin Marriott. It was placed in the park in 1956 and later moved into the monument.', 'In this game the shrine is built from written descriptions, not measured, so its size and some details are a guess. The plaque gives just his name and dates, because we have not found the exact words on the real one.', 'The student and the guide in this game are fictional.'] },
   { id: 'pardon', title: 'The pardon', simple: ['In January 2025 US President Joe Biden pardoned Marcus Garvey.', 'This pardon came after his death.', 'His family and many supporters had asked for this for years.'],
     deeper: ['Some of them also want the US Congress to exonerate him, which would clear his name completely.', 'People still disagree about how fair his trial was. This game does not decide it for you.'] },
-  { id: 'record', title: 'His voice on a record', simple: ['In July 1921 Marcus Garvey made a gramophone record in New York.', 'On it he explained what the UNIA wanted to do.', 'The words he speaks in this game are his real words from that record.'],
+  { id: 'record', title: 'His voice on a record', simple: ['In July 1921 Marcus Garvey made a gramophone record in New York.', 'The voice you hear in the game is recreated by computer, to read his real words. The real record is kept by the UCLA project.', 'On it he explained what the UNIA wanted to do.', 'The words he speaks in this game are his real words from that record.'],
     deeper: ['The record is called "Explanation of the Objects of the Universal Negro Improvement Association". The Marcus Garvey and UNIA Papers Project at UCLA keeps it and its words.', 'He said: "If anything praiseworthy is to be done, it must be done through unity." He also said: "what other men have done, Negroes can do."', 'Negro was the word used then. Today we say Black people.'] },
   { id: 'mind', title: 'Free the mind', simple: ['In October 1937 Marcus Garvey spoke at Menelik Hall in Sydney, Nova Scotia, in Canada.', 'One line from that speech is famous: none but ourselves can free the mind.'],
     deeper: ['Reports of the speech give the line in slightly different words. The part all of them share is "none but ourselves can free the mind". The game uses only that part.', 'He printed the speech in his magazine, the Black Man. Bob Marley later sang words based on it in "Redemption Song".', 'The guide in this game is fictional. Only the quoted words are Marcus Garvey\'s.'] },
@@ -509,7 +509,7 @@ function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   playChapterFade(f, fn, () => { fading = false; }, [750, 2500, 2900, 3800]);
 }
 function resetChapter() {   /* the print shop again: people go home, the goal starts over, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); enterPlace('shop');
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); enterPlace('shop');
   for (const n of SHOP_PEOPLE) { n.talked = false; n.heard = 0; n.i = 0; n.walking = false; n.wait = 1.5; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   setStage(0); showPlace();
 }
@@ -565,7 +565,7 @@ function startTalk(n) {
   showLine();
 }
 function showLine() {
-  const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);   /* a line told by the story has no name and is set in italics */
+  const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; if (s.sourced) { NARR.speak(s.text); NARR.bed('record'); } else { NARR.stop(); NARR.endBed(); }   /* his real, sourced words play in a recreated voice (owner, 26 November 2026) */ $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);   /* a line told by the story has no name and is set in italics */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (talkWith.seated) ac.play(sitClip(!me)); else if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
@@ -576,7 +576,7 @@ function choose(s, c) {   /* a choice: remember it, add the lines that answer it
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
-  const n = talkWith; talkWith = null; TC.end(); $('dialogue').hidden = true; document.body.classList.remove('talking'); busy = panelsOpen(); if (laterToast) { toast(laterToast); laterToast = null; } if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
+  const n = talkWith; talkWith = null; NARR.stop(); NARR.endBed(); TC.end(); $('dialogue').hidden = true; document.body.classList.remove('talking'); busy = panelsOpen(); if (laterToast) { toast(laterToast); laterToast = null; } if (n && n.m) n.m.userData.anim.play(n.seated ? sitClip(false) : null); if (n && n.amb && n.m && n.m.userData.amb) lifeFor(PLACES[place], LIFE_OPTS).hold(n, false);
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); }
 }
 function leaveTalk() { if (!$('dialogue').hidden) endTalk(false); }
@@ -834,7 +834,7 @@ for (const n of STREET_PEOPLE) initPerson(n);
 let streetLoading = null;
 function ensureStreet() { if (!streetLoading) { buildStreet(); streetLoading = Promise.all(STREET_PEOPLE.map(loadPerson)); } return streetLoading; }
 function resetChapter3() {   /* the street corner again: the journal and your choices are kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); stage = 20; delete story.words; delete story.answer;
   for (const n of STREET_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('street'); setStage(20); showPlace();
 }
@@ -940,7 +940,7 @@ for (const n of PRESS_PEOPLE) initPerson(n);
 let pressLoading = null;
 function ensurePress() { if (!pressLoading) { buildPress(); pressLoading = Promise.all(PRESS_PEOPLE.map(loadPerson)); } return pressLoading; }
 function resetChapter4() {   /* the press room again: the page comes down, the journal and your choices in earlier chapters are kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); stage = 30; delete story.headline; delete story.delivery; delete story.laid;
   for (const n of PRESS_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('press'); setStage(30); showPlace();
 }
@@ -1140,7 +1140,7 @@ for (const n of DOCK_PEOPLE) initPerson(n);
 let dockLoading = null;
 function ensureDock() { if (!dockLoading) { buildDock(); dockLoading = Promise.all(DOCK_PEOPLE.map(loadPerson)); } return dockLoading; }
 function resetChapter5() {   /* the dock again: your choices here are cleared, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); delete state.eyeY; inspectSeen = {}; stage = 40; delete story.plan; delete story.advice;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); delete state.eyeY; inspectSeen = {}; stage = 40; delete story.plan; delete story.advice;
   for (const n of DOCK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('dock'); setStage(40); showPlace();
 }
@@ -1229,7 +1229,7 @@ for (const n of LIB_PEOPLE) initPerson(n);
 let libLoading = null;
 function ensureLiberty() { if (!libLoading) { buildLiberty(); libLoading = Promise.all(LIB_PEOPLE.map(loadPerson)); } return libLoading; }
 function resetChapter6() {   /* Liberty Hall again: the banner is plain, your choice here is cleared, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); closeDecl(false); stage = 50; delete story.helped; delete story.banner; showBanner();
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); closePage(false); closeInspect(false); closeDecl(false); stage = 50; delete story.helped; delete story.banner; showBanner();
   for (const n of LIB_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('liberty'); setStage(50); showPlace();
 }
@@ -1335,7 +1335,7 @@ for (const n of OFF_PEOPLE) initPerson(n);
 let offLoading = null;
 function ensureOffice() { if (!offLoading) { buildOffice(); offLoading = Promise.all(OFF_PEOPLE.map(loadPerson)); } return offLoading; }
 function resetChapter7() {   /* Amy's desk again: your choices here are cleared, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 60; delete story.question; delete story.reassure;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); stage = 60; delete story.question; delete story.reassure;
   for (const n of OFF_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('office'); setStage(60); showPlace();
 }
@@ -1424,7 +1424,7 @@ for (const n of PARK_PEOPLE) initPerson(n);
 let parkLoading = null;
 function ensurePark() { if (!parkLoading) { buildPark(); parkLoading = Promise.all(PARK_PEOPLE.map(loadPerson)); } return parkLoading; }
 function resetChapter8() {   /* the park again: your last answer is cleared, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); stage = 70; delete story.final;
   for (const n of PARK_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.delay = 0; n.x = n.hx; n.z = n.hz; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('park'); setStage(70); showPlace();
 }
@@ -1590,7 +1590,7 @@ function enterPlace(name, keepPos) {
 }
 function showPlace() { if (!QUICK && state.started) INTRO.t = 0; const el = $('place'); el.textContent = PLACES[place].caption; el.hidden = false; el.style.opacity = 1; clearTimeout(placeT); placeT = setTimeout(() => { el.style.opacity = 0; }, 4500); }
 function resetChapter2() {   /* the hall again: the poster comes down, the neighbours go home, the journal is kept */
-  talkWith = null; $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
+  talkWith = null; NARR.stop(); NARR.endBed(); $('dialogue').hidden = true; busy = false; closeType(false); delete story.poster; delete story.printed; showPoster(); stage = 10;
   for (const n of HALL_PEOPLE) { n.talked = false; n.heard = 0; n.fol = null; n.legs = null; n.seated = false; n.delay = 0; n.x = n.hx; n.z = n.hz; n.hidden = HALL_PEOPLE.indexOf(n) >= 2; if (n.m) { n.m.position.set(n.x, 0, n.z); n.m.rotation.y = n.ry; delete n.m.userData.seatAnchor; n.m.userData.anim.play(null); } }
   enterPlace('hall'); setStage(10); showPlace();
 }

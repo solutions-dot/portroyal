@@ -13,14 +13,12 @@ Read this first to resume. It is written so another session or another model can
 
 The owner approved the delivery (26 November 2026: "the delivery sounds good, we need this on the clips"). `tools/audio/delivery.mjs` has already written `emotion` and `speed` into every line of `voice-script.json` and `voice-lines.json`. The clips on disk for most lines are still the first, flat recording.
 
-**Directed (done and checked):** Air Jamaica 33 of 33; The Mad Master 34 of 35 (`warrant-32` failed to download); Morant Bay 27 of 65 (indices 0 to 26).
+**Directed (done and checked by transcription):** Air Jamaica 33 of 33; The Mad Master 34 of 35 (`warrant-32` failed to download); Morant Bay 65 of 65; Rose Hall 31 of 31.
 
 **Still to record with delivery** (`node tools/audio/stale-clips.mjs <game>` lists them; it compares each clip's last commit with the delivery commit `87970788`):
 
 | Game | Left |
 |---|---|
-| Morant Bay | 38 (indices 27 to 64, from `riot-0`) |
-| Rose Hall | 31 |
 | Shark Papers | 27 |
 | Selassie | 8 |
 | Windrush | 8 |
@@ -52,7 +50,7 @@ A mood per film or scene plus word-based lifts and drops: `!` lines lift (excite
 
 `docs/audio/PLAN.md` has the cast. Rule (owner): **every light-skinned character gets a different Cartesia library voice; Black characters use the account's saved voices** (Faye Ellington, Rosie, Winston Stona, Bob Marley, Sizzla, Jimmy Cliff, Michael Sharpe; Xaymaca already uses Faye, Winston, Bob Marley, Sizzla, Rosie). Each character gets a different voice.
 
-Port Royal: `node tools/audio/port-royal-cast.mjs --write` makes `games/port-royal/voice-cast.json` (162 lines, 19 characters, voice and delivery per line). **32 of 162 recorded** (the first batch; lines 0 to 40, of which 9 failed to download: indices 31, 34, 35, 38 and five others; run `node -e` against `site/voices/index.json` to list the lines whose key is missing). Voices: Morgan Roy, Ned Griffin, Benning Gary, Sam Spencer, Sailor Oscar, Heath Benedict, the gunner Owen, Mendes Clive, Constable Hart Martin, Exquemelin Rupert, Quartermaster Harrison, Tom Alec, Dick Toby, Will Jasper, Jack Finn; Abba Faye, Grace Rosie, Kofi Michael Sharpe, Peter Jimmy Cliff. **Hannah (7 lines) has no voice yet:** only two saved female voices exist for three Black women, so the owner must add or choose one. **Wiring is not done:** `games/port-royal/src/main.js` has `NARR` for title cards; the dialogue (`showStep`) needs a call that plays `who|text` from `voices/index.json` (keys are `who|text`, stems `c-<hash>`).
+Port Royal: `node tools/audio/port-royal-cast.mjs --write` makes `games/port-royal/voice-cast.json` (162 lines, 19 characters, voice and delivery per line). **32 of 162 recorded** (the first batch; lines 0 to 40, of which 9 failed to download: indices 31, 34, 35, 38 and five others; run `node -e` against `site/voices/index.json` to list the lines whose key is missing). Voices: Morgan Roy, Ned Griffin, Benning Gary, Sam Spencer, Sailor Oscar, Heath Benedict, the gunner Owen, Mendes Clive, Constable Hart Martin, Exquemelin Rupert, Quartermaster Harrison, Tom Alec, Dick Toby, Will Jasper, Jack Finn; Abba Faye, Grace Rosie, Kofi Michael Sharpe, Peter Jimmy Cliff. **Hannah (7 lines) has no voice yet:** the owner has now added `Woman generic` and `dorraine samuels` (see `docs/audio/PLAN.md`, "New saved voices"); audition them and pick one. **Wiring is not done:** `games/port-royal/src/main.js` has `NARR` for title cards; the dialogue (`showStep`) needs a call that plays `who|text` from `voices/index.json` (keys are `who|text`, stems `c-<hash>`).
 
 Other games' characters (Air Jamaica, The Mad Master, Morant Bay, Rose Hall, Selassie, Shark Papers, Windrush, Kendal, Melissa, Nanny, and more): not yet extracted or cast.
 
@@ -63,3 +61,15 @@ Other games' characters (Air Jamaica, The Mad Master, Morant Bay, Rose Hall, Sel
 3. Tivoli and Garvey beds; Xaymaca's two clips to re-listen ("Navassa", "Ten canoes. Our people made them.").
 4. Whether a cheaper model may do the recording calls (it is mechanical; the risk is copying link ids, mitigated by the repair tool and the transcription check).
 5. A listening pass on phone and desktop for every game (nothing here has been heard by a person except samples).
+
+## Owner instructions added later on 26 November 2026
+
+- **Direct every clip** (emotion and pace per line), not only some. Until the table above reaches zero stale clips, the games play a mix of directed and flat takes.
+- **Add sounds and music where needed.** Gaps found so far: Tivoli and Garvey have no cinematic bed (Tivoli's May 2010 scenes need the owner's say first; Garvey has no `showCinematicSkip` scenes, so the chapter-7 record scene and the ship scenes could take a bed or a gramophone crackle); the title cards and chapter closers of the eight no-caption games have no sound of their own; Port Royal's character lines are not wired. Audit each game once by playing it with sound on and note silent stretches.
+- **Done on 26 November 2026 after the handoff was first written:** Xaymaca's guide Miss Sharon (the 2026 chapter, 11 clips) now uses the saved voice "Woman generic" instead of Rosie; Garvey's three sourced record lines play in the recreated "Marcus Garvey" voice (see `docs/games/garvey.md`, "His voice").
+
+**Update 26 November 2026, 22:50 UTC:** Morant Bay and Rose Hall are fully directed and checked. Left: Shark Papers 27, Selassie 8, Windrush 8, The Mad Master 1 (`warrant-32`), then the 109 no-caption lines. `fetch-film.mjs` now repairs a mistyped link id by trying swapped, moved, dropped and wrong characters in parallel (`tools/audio/probe.sh`); ids with more than one error still fail, so re-record those and download right away.
+
+**Update 26 November 2026, late:** Shark Papers 27, Windrush 8 and Selassie 9 are directed and checked. Left of the film clips: The Mad Master `warrant-32` (1). Then the 109 no-caption lines, character voices, and the Port Royal dialogue wiring. Xaymaca's on-screen dates now show as digits (the voice still says words); `tools/xaymaca/voice-coverage.mjs` flags a date spelled out on screen.
+
+**Update 26 November 2026, night:** all 109 no-caption narrator lines are directed and checked (Kendal 47, Eventide 16, Melissa 14, Garvey 10, Tivoli 8, Bog Walk 6, Nanny 6, Port Royal 2). **Every narrator clip is now directed except The Mad Master `warrant-32`.** Next: character voices (Port Royal 130 lines to record, 9 failed lines; the Mad Master, Shark Papers, Windrush, Morant Bay and the rest not yet extracted), the Port Royal dialogue wiring, then a listening pass.

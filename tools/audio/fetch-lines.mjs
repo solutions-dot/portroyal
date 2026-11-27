@@ -12,11 +12,14 @@ let ok = 0;
 const url = (id) => `https://files.cartesia.ai/link/link_${id}`;
 const status = (id) => { try { return execFileSync("curl", ["-s", "-o", "/dev/null", "-w", "%{http_code}", "-I", url(id)]).toString(); } catch { return "000"; } };
 /* a copied link id may have a swapped or dropped character: try those fixes (a link that answers 200 is the one) */
-function repair(id) {
-  const tries = [];
-  for (let i = 0; i < id.length - 1; i++) tries.push(id.slice(0, i) + id[i + 1] + id[i] + id.slice(i + 2));
-  for (let i = 0; i < id.length; i++) tries.push(id.slice(0, i) + id.slice(i + 1));
-  return tries.find((t) => status(t) === "200") || null;
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+function repair(id) {   /* swapped, moved, dropped or wrong character: all tried at once, 32 requests in parallel (tools/audio/probe.sh) */
+  const c = new Set();
+  for (let i = 0; i < id.length - 1; i++) c.add(id.slice(0, i) + id[i + 1] + id[i] + id.slice(i + 2));
+  for (let i = 0; i < id.length; i++) { const r = id.slice(0, i) + id.slice(i + 1); c.add(r); for (let j = 0; j <= r.length; j++) c.add(r.slice(0, j) + id[i] + r.slice(j)); }
+  for (let i = 0; i < id.length; i++) for (const ch of A) if (ch !== id[i]) c.add(id.slice(0, i) + ch + id.slice(i + 1));
+  c.delete(id);
+  try { const out = execFileSync("sh", ["-c", "xargs -P 32 -n1 " + new URL("./probe.sh", import.meta.url).pathname], { input: [...c].join("\n"), maxBuffer: 1 << 20 }).toString(); const m = out.split("\n").find((l) => l.startsWith("200 ")); return m ? m.slice(4).trim() : null; } catch { return null; }
 }
 ids.forEach((id, i) => {
   const l = lines[+first + i]; if (!l) return console.log("NO LINE for", id);

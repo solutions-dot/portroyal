@@ -16,6 +16,8 @@ export function createNarrator({ dir = './voices/' } = {}) {
     ready,
     speak(text) { const f = text && map[norm(text)]; if (!f) { FV.stopVoice(); return false; } FV.say('voices/' + f); return true; },
     stop() { FV.stopVoice(); },
+    bed(name) { FV.syncScore(name, () => 0); },   /* a quiet sound bed such as a gramophone's hiss (owner rule 16) */
+    endBed() { FV.stopScore(); },
     preload() { ready.then((m) => { for (const f of Object.values(m)) FV.preloadLine('voices/' + f); }); },
   };
 }
