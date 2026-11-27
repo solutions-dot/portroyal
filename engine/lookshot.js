@@ -57,7 +57,8 @@ function scope(on) {
   }
   scopeEl.style.opacity = on ? "1" : "0";
 }
-export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () => {}, freeze = () => {}, sound = () => {}, quick = () => false, reduced = false, home }) {
+const BREATH = 1.1;   /* seconds of quiet after a spoken look line */
+export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () => {}, speak = () => {}, voiceBusy = () => false, freeze = () => {}, sound = () => {}, quick = () => false, reduced = false, home }) {
   const L = { on: false, paused: false };
   let S = null;
   const aim = (p, look) => {
@@ -154,9 +155,15 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
       setFov(s.f1);
       if (s.phase === "act") {
         s.o.reveal?.(s.share + (1 - s.share) * Math.min(1, s.t / s.act));
+        /* each line waits for its narration, then a pause to breathe before the next line or the pull back (owner, 27 November 2026: the
+           scenes cut through the voice with no space). BREATH seconds of quiet after every spoken line. */
+        const busy = voiceBusy();
+        s.quiet = busy ? 0 : (s.quiet || 0) + Math.min(dt, 0.1);
+        const settled = !busy && s.quiet >= BREATH;
+        if (s.said >= 0 && s.t > (s.said + 1) * s.line && !settled) s.t = (s.said + 1) * s.line;
         const i = Math.min(s.lines.length - 1, Math.floor(s.t / s.line));
-        if (i > s.said) say(s.lines[(s.said = i)]);
-        if (s.t >= s.act && s.t >= s.lines.length * s.line) {
+        if (i > s.said) { say(s.lines[(s.said = i)]); speak(s.lines[i]); s.quiet = 0; }
+        if (s.t >= s.act && s.t >= s.lines.length * s.line && settled) {
           s.o.reveal?.(1);
           s.phase = "hold";
           const r = s.resolve;

@@ -806,7 +806,8 @@ function audioTick(t) {
   mixBeds({ ...S, crowd: night ? 0.02 : S.crowd || 0, cricket: night ? S.cricket || 0.15 : 0 }, { scale: AMB, duck: !!talkWith });
   let stream = S.stream || 0, fire = 0; if (cur === 'estate') stream = 0.16 * clamp01(1 - Math.abs(state.z + 13.5) / 9); if (cur === 'newtown') stream = 0.16 * clamp01(1 - Math.abs(state.x - 27) / 10);
   if (cur === 'town') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 3, state.z - 3) / 9) + (GUNS.on ? 0.12 : 0); if (cur === 'newtown') fire = 0.2 * clamp01(1 - Math.hypot(state.x + 5, state.z - 5.4) / 9);
-  SFX.setBeds({ stream: stream * 0.5, fire: fire * 0.6, rumble: GUNS.on ? 0.25 : FIGHT.firing > 0 ? 0.12 : 0 });
+  const vd = (talkWith || AU.voiceOn) ? 0.4 : 1;   /* the brook and fire sink while anyone speaks */
+  SFX.setBeds({ stream: stream * 0.5 * vd, fire: fire * 0.6 * vd, rumble: GUNS.on ? 0.25 : FIGHT.firing > 0 ? 0.12 : 0 });
   if (fire > 0.05 && Math.random() < 0.25) crackle();
   if (t > onceAt) { onceAt = t + 6 + Math.random() * 6; if (AU.on && state.started && !FIGHT.on && !HORN.on) { if (night && cur === 'town') SFX.frog(0.04, Math.random() - 0.5); else if (S.once) S.once(); } }
 }

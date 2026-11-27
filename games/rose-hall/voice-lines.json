@@ -1,0 +1,814 @@
+[
+ {
+  "key": "The night tour. You are Kayla. Your cousin Tia has dragged you on the ghost tour. You are Kayla, aged fifteen. You, your cousin and everyone you talk to are fictional. The papers you read are real.",
+  "stem": "n-0fe9d3f7",
+  "text": "The night tour. You are Kayla. Your cousin Tia has dragged you on the ghost tour. You are Kayla, aged fifteen. You, your cousin and everyone you talk to are fictional. The papers you read are real.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The shadow show. Now the guide tells the legend the old way: with shadows.",
+  "stem": "n-6d0df8e6",
+  "text": "The shadow show. Now the guide tells the legend the old way: with shadows.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The white monument. The old pamphlet points to a white monument in this church.",
+  "stem": "n-e7fae57b",
+  "text": "The white monument. The old pamphlet points to a white monument in this church.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The papers. If Annie Palmer was real, she left papers. So did the story.",
+  "stem": "n-6d60bcf9",
+  "text": "The papers. If Annie Palmer was real, she left papers. So did the story.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The names. Back at Rose Hall, in daylight. The book had names in it.",
+  "stem": "n-3c72dd57",
+  "text": "The names. Back at Rose Hall, in daylight. The book had names in it.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Legend or record. One last stop on the tour. Then you decide.",
+  "stem": "n-a38f9e18",
+  "text": "Legend or record. One last stop on the tour. Then you decide.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The story is told. That is the legend: three husbands, a cruel mistress, a ghost. Now check it. The pamphlet of 1868 points to a church in Montego Bay.",
+  "stem": "n-70ec1f95",
+  "text": "The story is told. That is the legend: three husbands, a cruel mistress, a ghost. Now check it. The pamphlet of eighteen sixty-eight points to a church in Montego Bay.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Two women, one story. Rosa Palmer: four husbands, died 1790, praised on her stone. Annie Palmer: born 1802. What do her own papers say?",
+  "stem": "n-9b6465ad",
+  "text": "Two women, one story. Rosa Palmer: four husbands, died seventeen ninety, praised on her stone. Annie Palmer: born eighteen oh two. What do her own papers say?",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "The book with the names. The papers say Annie Palmer was no murderer. But the estate's own book names 208 people held in slavery. Go back to Rose Hall by day, and meet them on the page.",
+  "stem": "n-8c704177",
+  "text": "The book with the names. The papers say Annie Palmer was no murderer. But the estate's own book names two hundred and eight people held in slavery. Go back to Rose Hall by day, and meet them on the page.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Two hundred and eight. You have read ten names. There are 198 more. One last stop on the tour. Then you decide: legend or record?",
+  "stem": "n-b4abbac5",
+  "text": "Two hundred and eight. You have read ten names. There are one hundred and ninety-eight more. One last stop on the tour. Then you decide: legend or record?",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Legend and record. The White Witch is a story. It began in print in 1868 and grew in a novel. Annie Palmer was real. She had one husband and died in 1846. The people held here were real too. 208 of them have names. You can still enjoy a ghost story. Just know which is which.",
+  "stem": "n-189a1616",
+  "text": "Legend and record. The White Witch is a story. It began in print in eighteen sixty-eight and grew in a novel. Annie Palmer was real. She had one husband and died in eighteen forty-six. The people held here were real too. Two hundred and eight of them have names. You can still enjoy a ghost story. Just know which is which.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Miss Bryan lifts her candle up the stair.",
+  "stem": "n-eed62874",
+  "text": "Miss Bryan lifts her candle up the stair.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A visitor about 1820 wrote of a mahogany staircase here.",
+  "stem": "n-9ae98e51",
+  "text": "A visitor about eighteen twenty wrote of a mahogany staircase here.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This stair is new. The house was a ruin until it was restored.",
+  "stem": "n-58af123d",
+  "text": "This stair is new. The house was a ruin until it was restored.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The card points up the dark stair.",
+  "stem": "n-0a53750d",
+  "text": "The card points up the dark stair.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The tour shows a room upstairs as Annie's bedroom.",
+  "stem": "n-7958a4a4",
+  "text": "The tour shows a room upstairs as Annie's bedroom.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "No paper from her time says which room was hers.",
+  "stem": "n-438867af",
+  "text": "No paper from her time says which room was hers.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Like the “dungeon”, it belongs to the tour, not the record.",
+  "stem": "n-288d2a66",
+  "text": "Like the dungeon, it belongs to the tour, not the record.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lift the cup and set it back down.",
+  "stem": "n-9b19e1f9",
+  "text": "You lift the cup and set it back down.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The card says a husband was poisoned with this cup.",
+  "stem": "n-2814d943",
+  "text": "The card says a husband was poisoned with this cup.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Poison, arsenic and boiling oil are told only on modern tours.",
+  "stem": "n-3d9ae3ac",
+  "text": "Poison, arsenic and boiling oil are told only on modern tours.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "No record says any husband was poisoned.",
+  "stem": "n-25875ec2",
+  "text": "No record says any husband was poisoned.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You hold the candle up. Three men look down.",
+  "stem": "n-0e37dbce",
+  "text": "You hold the candle up. Three men look down.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Three tall paintings of men. The guide says: her three husbands.",
+  "stem": "n-22c442ea",
+  "text": "Three tall paintings of men. The guide says: her three husbands.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A visitor in 1830 did see paintings here, in the empty house.",
+  "stem": "n-27605691",
+  "text": "A visitor in eighteen thirty did see paintings here, in the empty house.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He wrote that they were the husbands of the last lady of the house. Keep that in mind.",
+  "stem": "n-057213b7",
+  "text": "He wrote that they were the husbands of the last lady of the house. Keep that in mind.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Moonlight on the sea, far below.",
+  "stem": "n-3b5bceed",
+  "text": "Moonlight on the sea, far below.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A visitor about 1820 wrote of “a very extensive sea view”.",
+  "stem": "n-669fc8a3",
+  "text": "A visitor about eighteen twenty wrote of a very extensive sea view.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The house looks north, over the sea.",
+  "stem": "n-c6420a74",
+  "text": "The house looks north, over the sea.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "In 1830 a preacher found it empty, “save by rats, bats, and owls”.",
+  "stem": "n-6cb61ecd",
+  "text": "In eighteen thirty a preacher found it empty, save by rats, bats, and owls.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Your candle in the glass. Only your own face.",
+  "stem": "n-10053ebe",
+  "text": "Your candle in the glass. Only your own face.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Some guides say her face shows in a mirror at night.",
+  "stem": "n-e7d8a2e4",
+  "text": "Some guides say her face shows in a mirror at night.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "That is told only on modern tours.",
+  "stem": "n-4e0d99ab",
+  "text": "That is told only on modern tours.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "No old paper speaks of a face in a mirror.",
+  "stem": "n-2bed171e",
+  "text": "No old paper speaks of a face in a mirror.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "One by one, the candles go out.",
+  "stem": "n-b63d1793",
+  "text": "One by one, the candles go out.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You pinch out the candles one by one.",
+  "stem": "n-ec3309eb",
+  "text": "You pinch out the candles one by one.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Only the candle by the bare wall still burns.",
+  "stem": "n-0f05c528",
+  "text": "Only the candle by the bare wall still burns.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Now the guide can make shadows.",
+  "stem": "n-2fa7c2c3",
+  "text": "Now the guide can make shadows.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The lamp over the marble is turned up.",
+  "stem": "n-c137242a",
+  "text": "The lamp over the marble is turned up.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "“Near this place are deposited the Remains of Mrs Rosa Palmer, who died on the first day of May 1790.”",
+  "stem": "n-c2c79ead",
+  "text": "Near this place are deposited the Remains of Missus Rosa Palmer, who died on the first day of May seventeen ninety.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "“Her manners were open, cheerful and agreeable.”",
+  "stem": "n-8aa495ac",
+  "text": "Her manners were open, cheerful and agreeable.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Rosa Palmer was the first lady of Rose Hall. Her stone praises her.",
+  "stem": "n-decbee09",
+  "text": "Rosa Palmer was the first lady of Rose Hall. Her stone praises her.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "On the vase is a small carved head. A historian thought it was probably her face.",
+  "stem": "n-1b39f571",
+  "text": "On the vase is a small carved head. A historian thought it was probably her face.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lift the church's note to read it.",
+  "stem": "n-f6309afa",
+  "text": "You lift the church's note to read it.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Rosa Palmer married four times.",
+  "stem": "n-59b13073",
+  "text": "Rosa Palmer married four times.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Henry Fanning, George Ash, Norwood Witter, John Palmer.",
+  "stem": "n-c77dc0c9",
+  "text": "Henry Fanning, George Ash, Norwood Witter, John Palmer.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The monument was made by John Bacon in 1794.",
+  "stem": "n-f1a7ceeb",
+  "text": "The monument was made by John Bacon in seventeen ninety-four.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You draw back the tissue. A marriage book.",
+  "stem": "n-c22c15b3",
+  "text": "You draw back the tissue. A marriage book.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Annie Mary Paterson married John Rose Palmer.",
+  "stem": "n-00f23c4b",
+  "text": "Annie Mary Paterson married John Rose Palmer.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "At Mount Pleasant, St James, on 28 March 1820.",
+  "stem": "n-ee1499e8",
+  "text": "At Mount Pleasant, Saint James, on the twenty-eighth of March eighteen twenty.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She never married again. They had no children.",
+  "stem": "n-9599be7c",
+  "text": "She never married again. They had no children.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Under the tissue, a newspaper of 1827.",
+  "stem": "n-569e0baa",
+  "text": "Under the tissue, a newspaper of eighteen twenty-seven.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "John Rose Palmer died at Rose Hall, aged 42, deep in debt.",
+  "stem": "n-d93b6c81",
+  "text": "John Rose Palmer died at Rose Hall, aged forty-two, deep in debt.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "The cause of his death is not known.",
+  "stem": "n-403ca3fa",
+  "text": "The cause of his death is not known.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "“His intrinsic worth, kind heart, and generous disposition obtained him the esteem of all his acquaintance.”",
+  "stem": "n-af3f8b97",
+  "text": "His intrinsic worth, kind heart, and generous disposition obtained him the esteem of all his acquaintance.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A deed, signed in 1830.",
+  "stem": "n-7873ed92",
+  "text": "A deed, signed in eighteen thirty.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "In 1830 Annie sold “whatever rights she may have had” in Rose Hall.",
+  "stem": "n-b0a80878",
+  "text": "In eighteen thirty Annie sold whatever rights she may have had in Rose Hall.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "She was paid 200 pounds.",
+  "stem": "n-17898a88",
+  "text": "She was paid two hundred pounds.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She sold a year before the great rebellion began.",
+  "stem": "n-9377b8ae",
+  "text": "She sold a year before the great rebellion began.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "The burial book of Montego Bay.",
+  "stem": "n-71c8500a",
+  "text": "The burial book of Montego Bay.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Annie Palmer was buried in Montego Bay churchyard on 9 July 1846.",
+  "stem": "n-03c62f9e",
+  "text": "Annie Palmer was buried in Montego Bay churchyard on the ninth of July eighteen forty-six.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "The legend says she was killed in 1831. She lived fifteen years more.",
+  "stem": "n-43ec841f",
+  "text": "The legend says she was killed in eighteen thirty-one. She lived fifteen years more.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "No tombstone of hers has survived.",
+  "stem": "n-641cc339",
+  "text": "No tombstone of hers has survived.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The case light shows a page of names.",
+  "stem": "n-87bb7723",
+  "text": "The case light shows a page of names.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "The registers list the people each owner held in slavery.",
+  "stem": "n-7dbc58cc",
+  "text": "The registers list the people each owner held in slavery.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Annie Palmer held four people in 1829, and eight in 1833.",
+  "stem": "n-382bfcd0",
+  "text": "Annie Palmer held four people in eighteen twenty-nine, and eight in eighteen thirty-three.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "She was no witch. But she did own people.",
+  "stem": "n-26c1dc90",
+  "text": "She was no witch. But she did own people.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A thin pamphlet. Here the tale begins.",
+  "stem": "n-f5ce2a4d",
+  "text": "A thin pamphlet. Here the tale begins.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Here the tale is first printed: a Mrs Palmer, three husbands, murder.",
+  "stem": "n-1dc203b7",
+  "text": "Here the tale is first printed: a Missus Palmer, three husbands, murder.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "It was printed twenty-two years after Annie died.",
+  "stem": "n-38e1939c",
+  "text": "It was printed twenty-two years after Annie died.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "It has no Haiti, no voodoo, no Takoo and no White Witch.",
+  "stem": "n-6b698880",
+  "text": "It has no Haiti, no voodoo, no Takoo and no White Witch.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A novel. Its cover says White Witch.",
+  "stem": "n-7252b0ad",
+  "text": "A novel. Its cover says White Witch.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "“The White Witch of Rosehall”, by Herbert de Lisser.",
+  "stem": "n-ece9f691",
+  "text": "The White Witch of Rosehall, by Herbert de Lisser.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The Haiti childhood, the voodoo nurse, Takoo and Millicent begin here.",
+  "stem": "n-cef0a712",
+  "text": "The Haiti childhood, the voodoo nurse, Takoo and Millicent begin here.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It is a made-up story. The tour tells it as history.",
+  "stem": "n-a8957589",
+  "text": "It is a made-up story. The tour tells it as history.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Miss Bryan points to the names.",
+  "stem": "n-d8c08cd4",
+  "text": "Miss Bryan points to the names.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Celia, Dorinda, Cecelia, Mary James, George Stennet.",
+  "stem": "n-b536cc34",
+  "text": "Celia, Dorinda, Cecelia, Mary James, George Stennet.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Aaron, Adonis, Hercules, Doshy, Archey. And 198 more.",
+  "stem": "n-82c45bc9",
+  "text": "Aaron, Adonis, Hercules, Doshy, Archey. And one hundred and ninety-eight more.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The estate book names 208 people held here from 1817 to 1832.",
+  "stem": "n-ed4a07a1",
+  "text": "The estate book names two hundred and eight people held here from eighteen seventeen to eighteen thirty-two.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Miss Bryan points to the card.",
+  "stem": "n-b061f123",
+  "text": "Miss Bryan points to the card.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The estate book lists the clothes given out.",
+  "stem": "n-f2f4f03e",
+  "text": "The estate book lists the clothes given out.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Osnaburg and peniston: rough, cheap cloth.",
+  "stem": "n-3b1bcc76",
+  "text": "Osnaburg and peniston: rough, cheap cloth.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "No shoes are listed.",
+  "stem": "n-a9bad90f",
+  "text": "No shoes are listed.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lay a flower by her name.",
+  "stem": "n-401f0fef",
+  "text": "You lay a flower by her name.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Celia, also written as Catherine Lewis. Born about 1772.",
+  "stem": "n-420554d6",
+  "text": "Celia, also written as Catherine Lewis. Born about seventeen seventy-two.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Her work in the book: “Grasscutter”. The book says “weakly”.",
+  "stem": "n-8a1a9626",
+  "text": "Her work in the book: Grasscutter. The book says weakly.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She was a great-grandmother.",
+  "stem": "n-48beda09",
+  "text": "She was a great-grandmother.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Dorinda, also Rosy Mowatt: “Hospital Attendant and Midwife”.",
+  "stem": "n-9db80ccd",
+  "text": "Dorinda, also Rosy Mowatt: Hospital Attendant and Midwife.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Nine children. Four died before they were five.",
+  "stem": "n-5c2cf0ac",
+  "text": "Nine children. Four died before they were five.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "21 April 1830: “Dorrinda the midwife being orderd to the field for general neglect in the performance of her duty thot proper to abscond.” She ran.",
+  "stem": "n-7d8fca5f",
+  "text": "The twenty-first of April eighteen thirty: Dorrinda the midwife being orderd to the field for general neglect in the performance of her duty thought proper to abscond. She ran.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lay a flower by their names.",
+  "stem": "n-be67a277",
+  "text": "You lay a flower by their names.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Cecelia, born in Africa about 1769: “Attending Young Children”.",
+  "stem": "n-bed98959",
+  "text": "Cecelia, born in Africa about seventeen sixty-nine: Attending Young Children.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Mary James: “G.H. Attendant”. That means she worked in the great house.",
+  "stem": "n-98c52c5d",
+  "text": "Mary James: G.H. Attendant. That means she worked in the great house.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The book gives each of them only a few words.",
+  "stem": "n-f9f7fc99",
+  "text": "The book gives each of them only a few words.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "George Stennet: “Head Driver”.",
+  "stem": "n-bf53c0a0",
+  "text": "George Stennet: Head Driver.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Aaron, born in Africa: “Head Penkeeper”, over the animal pens.",
+  "stem": "n-bc7293b3",
+  "text": "Aaron, born in Africa: Head Penkeeper, over the animal pens.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Adonis: “Head Cooper”, over the making of barrels.",
+  "stem": "n-ae6e2746",
+  "text": "Adonis: Head Cooper, over the making of barrels.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Hercules ran away at least 26 times.",
+  "stem": "n-9364a09e",
+  "text": "Hercules ran away at least twenty-six times.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Doshy ran away 16 times.",
+  "stem": "n-a5b20d17",
+  "text": "Doshy ran away sixteen times.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The book records each time they tried to get free.",
+  "stem": "n-74b01005",
+  "text": "The book records each time they tried to get free.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lay a flower by his name.",
+  "stem": "n-31a4cbca",
+  "text": "You lay a flower by his name.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "In 1823 Archey was “sent to Falmouth Workhouse for punishment”.",
+  "stem": "n-251fd1db",
+  "text": "In eighteen twenty-three Archey was sent to Falmouth Workhouse for punishment.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "In 1826 he was “transported”: sent away from the island.",
+  "stem": "n-0f77b14d",
+  "text": "In eighteen twenty-six he was transported: sent away from the island.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He was 20 years old.",
+  "stem": "n-14b6288c",
+  "text": "He was twenty years old.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Miss Bryan points to the tomb.",
+  "stem": "n-4c217ef2",
+  "text": "Miss Bryan points to the tomb.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The tour calls this Annie Palmer's tomb.",
+  "stem": "n-f522bc31",
+  "text": "The tour calls this Annie Palmer's tomb.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "She was buried in Montego Bay churchyard on 9 July 1846.",
+  "stem": "n-a305d7be",
+  "text": "She was buried in Montego Bay churchyard on the ninth of July eighteen forty-six.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "No tombstone of hers has survived. Nobody knows when this tomb was built.",
+  "stem": "n-fec46fa5",
+  "text": "No tombstone of hers has survived. Nobody knows when this tomb was built.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Miss Bryan points from the card to the house.",
+  "stem": "n-a716ef38",
+  "text": "Miss Bryan points from the card to the house.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The sources disagree.",
+  "stem": "n-5add261b",
+  "text": "The sources disagree.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Hakewill, 1825: John Palmer built it “about fifty years since”, for 30,000 pounds.",
+  "stem": "n-36bd9200",
+  "text": "Hakewill, eighteen twenty-five: John Palmer built it about fifty years since, for thirty thousand pounds.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Others say George Ash, in the 1750s. Both cannot be right.",
+  "stem": "n-e8518f02",
+  "text": "Others say George Ash, in the seventeen fifties. Both cannot be right.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The great rebellion began on 27 December 1831, in St James.",
+  "stem": "n-3d6fba77",
+  "text": "The great rebellion began on the twenty-seventh of December eighteen thirty-one, in Saint James.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Its leader, Samuel Sharpe, was hanged on 23 May 1832.",
+  "stem": "n-db3a32aa",
+  "text": "Its leader, Samuel Sharpe, was hanged on the twenty-third of May eighteen thirty-two.",
+  "emotion": "sad",
+  "speed": 0.93
+ },
+ {
+  "key": "Full freedom came on 1 August 1838.",
+  "stem": "n-042ca27c",
+  "text": "Full freedom came on the first of August eighteen thirty-eight.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The Rose Hall book says nothing of the rebellion here.",
+  "stem": "n-56dc5bf8",
+  "text": "The Rose Hall book says nothing of the rebellion here.",
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+]
