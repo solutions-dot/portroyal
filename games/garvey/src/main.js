@@ -566,7 +566,7 @@ function startTalk(n) {
   showLine();
 }
 function showLine() {
-  const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; if (s.sourced) { NARR.speak(s.text); NARR.bed('record'); } else { NARR.stop(); NARR.endBed(); }   /* his real, sourced words play in a recreated voice (owner, 26 November 2026) */ $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);   /* a line told by the story has no name and is set in italics */
+  const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); $('who').textContent = s.who; $('who').hidden = !s.who; $('line').textContent = s.text; if (s.sourced) { NARR.speak(s.text); NARR.bed('record'); } else { SV.line(s.who, s.text, s.who === 'You'); NARR.endBed(); }   /* a story-told line is the Narrator's, a person's line is theirs (engine/storyvoice.js); his real, sourced words play in a recreated voice (owner, 26 November 2026) */ $('dialogue').classList.toggle('me', me); $('dialogue').classList.toggle('narr', !s.who);   /* a line told by the story has no name and is set in italics */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.m && talkWith.m.userData.anim; if (ac) { if (talkWith.seated) ac.play(sitClip(!me)); else if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }

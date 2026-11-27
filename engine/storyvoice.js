@@ -29,7 +29,7 @@ export function createStoryVoice(opts) {
   const narrator = createNarrator(opts); narrator.preload(); current = narrator;
   return {
     narrator,
-    line(who, text, isMe) { if (!isMe && text) { seen('line', who + '|' + text); narrator.speak(who + '|' + norm(text)); } else narrator.stop(); },
+    line(who, text, isMe) { if (!isMe && text) { seen('line', who + '|' + text); narrator.speak(who ? who + '|' + norm(text) : norm(text));   /* a line the story tells has no speaker: the Narrator clip is keyed by its plain text */ } else narrator.stop(); },
     card(title, paragraphs) {
       /* "Chapter 3 is finished!" has a different number every time: one clip, "Chapter finished. Well done.", is read for all of them */
       const head = /^Chapter \d+ is finished/i.test(title) ? 'Chapter finished' : title, text = head + '. ' + paragraphs.join(' ');
