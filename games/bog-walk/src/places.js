@@ -669,8 +669,8 @@ function harness(mu, side) {   /* bake(m.userData.back) after it: one mesh per m
   for (const s of [-1, 1]) { const h = box(0.035, 0.55, 0.03, brass, 0.64, 1.33, s * 0.27, m); h.rotation.z = PI / 2 - NA + PI / 2; }   /* hames along the sides of the collar */
   box(0.14, 0.05, 0.62, lea, 0.02, 1.47, 0, m); for (const s of [-1, 1]) box(0.12, 0.62, 0.03, lea, 0.02, 1.15, s * 0.29, m);   /* the back band, down the sides to the belly band */
   const bg = new THREE.TorusGeometry(0.29, 0.03, 5, 18, PI); bg.rotateX(PI / 2); bg.rotateY(-PI / 2); mesh(bg, lea, -0.6, 1.08, 0, m);   /* breeching round the rump */
-  const a = [0.6, 1.2], b = [-1.78, 0.84], len = Math.hypot(a[0] - b[0], a[1] - b[1]);
-  for (const s of [-1, 1]) { const tr = box(len, 0.035, 0.025, lea, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, s * 0.3, m); tr.rotation.z = Math.atan2(a[1] - b[1], a[0] - b[0]); }   /* the traces, from the hames back to the swingletree */
+  const a = [0.6, 1.2], b = [-1.91, 0.9], len = Math.hypot(a[0] - b[0], a[1] - b[1]);
+  for (const s of [-1, 1]) { const tr = box(len, 0.035, 0.025, lea, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, s * 0.3, m); tr.rotation.z = Math.atan2(a[1] - b[1], a[0] - b[0]); }   /* the traces, from the hames back to the swingletree (b is in the mule's fitting space: engine/beasts.js SIZE makes it 0.93 of this) */
 }
 const GAS_GLASS = new THREE.MeshStandardMaterial({ color: 0xf0e8c8, roughness: 0.15, transparent: true, opacity: 0.7 });
 function gasLamp(parent, x, z, ry = 0) {   /* a gas street lamp: a fluted iron post, a cross bar for the lamplighter's ladder, a four-sided lantern */

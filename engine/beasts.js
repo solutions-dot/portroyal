@@ -17,9 +17,13 @@ import { clone as skClone } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { model } from './loader.js';
 
-/* how tall each one stands, to the ear tips or horn tips, in metres. The mule is about 1.35 m at the withers, a small island cow about
-   1.25 m at the shoulder (as the drawn cow it replaces), a horse about 1.5 m. */
+/* HEIGHT: how tall each one is built, to the ear tips or horn tips, in metres; the tack (engine/mule.js, the horse's saddle) is fitted at this
+   size. SIZE then scales the animal and all it wears together, to its real height at the shoulder (the withers), measured on the body
+   (owner, 27 November 2026: "is the horse sized correctly in relation to environment, people and houses"): a mule about 1.37 m (13.2 hands,
+   a pack mule), a riding horse about 1.5 m (14.3 hands), a cow of the small island breed about 1.3 m (as the drawn cow it replaced), a bull
+   about 1.4 m. A grown man in these games is 1.7 to 1.8 m. */
 const HEIGHT = { mule: 2.01, cow: 1.62, bull: 1.7, horse: 2.2 };
+const SIZE = { mule: 0.93, cow: 0.83, bull: 0.85, horse: 0.9 };
 const TELEPORT = 3;
 const tpl = {}, loading = {};
 export function loadBeasts(names = ['mule']) {
@@ -84,8 +88,9 @@ export function beast(n, tint = {}, opts = {}) {
   g.userData.noBatch = true; g.userData.tick = () => {};
   if (!T) return { g, ride: () => g, onStep: () => {} };
   g.userData.stride = T.stride;
+  const inner = new THREE.Group(); inner.scale.setScalar(SIZE[n] || 1); g.add(inner);   /* its real size: body and tack together */
   const body = skClone(T.scene); body.scale.setScalar(T.scale); body.rotation.y = Math.PI / 2;   /* the pack's animals face +z; ours face +x */
-  g.add(body);
+  inner.add(body);
   let skinned = null;
   body.traverse((o) => {
     o.userData.noBatch = true;
@@ -94,7 +99,7 @@ export function beast(n, tint = {}, opts = {}) {
     o.geometry = coloured(T, o.geometry, tint);
   });
   g.updateMatrixWorld(true);
-  const ride = (b) => { const r = new THREE.Group(); g.add(r); g.updateMatrixWorld(true); (body.getObjectByName(b) || g).attach(r); r.userData.noBatch = true; r.userData.worn = true; return r; };   /* worn: engine/audit-reveal.js counts it held by the animal */
+  const ride = (b) => { const r = new THREE.Group(); inner.add(r); g.updateMatrixWorld(true); (body.getObjectByName(b) || g).attach(r); r.userData.noBatch = true; r.userData.worn = true; return r; };   /* worn: engine/audit-reveal.js counts it held by the animal */
   /* the clips: a walk and the idles, mixed by hand from how far the animal has moved */
   const mixer = new THREE.AnimationMixer(body), act = {};
   for (const c of ['Walk', 'Idle', 'Idle_2', 'Idle_Headlow', 'Eating']) if (T.clips[c]) { const a = mixer.clipAction(T.clips[c]); a.play(); a.paused = true; a.setEffectiveWeight(0); act[c] = a; }
@@ -108,7 +113,7 @@ export function beast(n, tint = {}, opts = {}) {
     let d = prevYaw === null ? 0 : pos.distanceTo(prev), turn = prevYaw === null ? 0 : Math.abs(Math.atan2(Math.sin(e.y - prevYaw), Math.cos(e.y - prevYaw)));
     if (d > TELEPORT || turn > 1.5) { d = 0; turn = 0; }
     prev.copy(pos); prevYaw = e.y;
-    const scale = ws.x || 1, move = d + turn * 0.35 * scale;   /* turning on the spot steps too */
+    const scale = (ws.x || 1) * (SIZE[n] || 1), move = d + turn * 0.35 * scale;   /* turning on the spot steps too */
     if (dt > 0) sm += (move / dt - sm) * (1 - Math.exp(-dt * 8));
     const w = Math.min(1, Math.max(0, sm / (0.3 * T.stride * scale)));
     phase = (phase + move / (T.stride * scale)) % 1;
