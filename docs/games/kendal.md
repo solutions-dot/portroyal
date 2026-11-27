@@ -214,3 +214,12 @@ The one finding (the journal count badge during a dialogue) was the test: it wan
 ## The brake close-up (22 November 2026)
 
 The hill station's "Check the brakes" look read as a dark box with a red bar. Each brake is now a long iron lever on a pivot bracket, moving down over a narrow curved guard with pin holes; checking it pulls the lever down, drops the pin in and hangs a white tag on it (a general 19th-century wagon type, not a drawing of the Jamaica Railway's own). A soft fill light from the camera (`fill` in `engine/lookkit.js`) lights it close up. Dev view: `?look=b1&at=2,34&k=0.5` (it now goes on after 6 s if the chapter fade waits on a card). Audit, layout and held 0; `?auto=3&one` done.
+
+## The mule (27 November 2026)
+
+Bess is the shared rigged mule (`engine/mule.js`, Quaternius, CC0). Loads go in `userData.back` at `userData.slots`, so they move with her.
+
+## The traveller's horse (27 November 2026)
+
+The traveller says "My horse is lame today", and now his horse is there (owner, 27 November 2026): the shared rigged horse (`engine/beasts.js`, Quaternius, CC0), bay, saddled (saddle cloth, seat, pommel and cantle, flaps, girth, stirrups) and bridled (headstall, cheek straps, noseband, bit, reins hanging), resting with its head low (`Idle_Headlow`) at the road's south edge at (0.5, 3.4), facing west, clear of his walk. The horse is the game's own, like the traveller; a lame leg is not shown (the pack has no limp), only the resting head.
+

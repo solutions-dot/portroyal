@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { loadMule } from "../../../engine/mule.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A Mature 13+ story on the shared engine. It plays like every other game (walk, talk, do, watch a scene) for an older audience:
@@ -1056,6 +1057,7 @@ onLoadFail(() => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    await loadMule();   /* the shared rigged mule, before any place is built */
     loadClips(await model("anims_mb"));   /* this game's own clip: the fall at the volley (tools/morant-bay/pack_clips.mjs) */
     $("bar").style.width = "25%";
     const Q = await ensure(GAME.title.place);

@@ -1,4 +1,5 @@
 import { JOURNEY } from './content.js';
+import { bake } from "../../../engine/beasts.js";
 /* games/bog-walk/src/places.js: the places outside the Tube, built in code (see docs/games/bog-walk.md, "Places").
    One site at three times (the station on Sunday evening, the yard the morning after, the ruins today) and Kingston in 1899.
    Each builder returns { id, group, walls, bounds, start, people, extras, env, eye, spots, tick, ... } like Kendal's places.
@@ -661,14 +662,15 @@ function muleCar() {
 }
 /* harness on a mule from props.js (it faces +x): a padded collar round the base of the neck with brass hames, a back band and belly band, breeching
    round the rump, and two traces running back to the swingletree; side = which side of the pole the mule stands, so the inner trace is not hidden */
-function harness(m, side) {
-  const lea = solid(0x2a1c14, 0.7), pad = solid(0x3a2a1c, 0.9), brass = M.brass, NA = 0.62;   /* NA: the lean of the mule's neck */
-  const cg = new THREE.TorusGeometry(0.25, 0.065, 8, 20); cg.scale(1, 1.2, 1); cg.rotateX(-PI / 2); cg.rotateZ(-NA); mesh(cg, pad, 0.76, 1.2, 0, m);   /* the collar, square to the neck */
-  for (const s of [-1, 1]) { const h = box(0.035, 0.55, 0.03, brass, 0.76, 1.2, s * 0.31, m); h.rotation.z = PI / 2 - NA + PI / 2; }   /* hames along the sides of the collar */
-  box(0.14, 0.05, 0.72, lea, 0.05, 1.37, 0, m); for (const s of [-1, 1]) box(0.12, 0.6, 0.03, lea, 0.05, 1.06, s * 0.31, m);   /* the back band, down the sides to the belly band */
-  const bg = new THREE.TorusGeometry(0.33, 0.03, 5, 18, PI); bg.rotateX(PI / 2); bg.rotateY(-PI / 2); mesh(bg, lea, -0.62, 1.0, 0, m);   /* breeching round the rump */
-  const a = [0.72, 1.12], b = [-1.78, 0.84], len = Math.hypot(a[0] - b[0], a[1] - b[1]);
-  for (const s of [-1, 1]) { const tr = box(len, 0.035, 0.025, lea, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, s * 0.33, m); tr.rotation.z = Math.atan2(a[1] - b[1], a[0] - b[0]); }   /* the traces, from the hames back to the swingletree */
+function harness(mu, side) {   /* bake(m.userData.back) after it: one mesh per material */
+  const m = mu.userData.back || mu;   /* rides on the spine of the shared rigged mule (engine/mule.js); measured on its body: back 1.45 m up, barrel 0.28 m to a side, the neck rising from about x 0.6 */
+  const lea = solid(0x2a1c14, 0.7), pad = solid(0x3a2a1c, 0.9), brass = M.brass, NA = 0.8;   /* NA: the lean of the mule's neck */
+  const cg = new THREE.TorusGeometry(0.22, 0.06, 8, 20); cg.scale(1, 1.25, 1); cg.rotateX(-PI / 2); cg.rotateZ(-NA); mesh(cg, pad, 0.64, 1.33, 0, m);   /* the collar, square to the neck at its base */
+  for (const s of [-1, 1]) { const h = box(0.035, 0.55, 0.03, brass, 0.64, 1.33, s * 0.27, m); h.rotation.z = PI / 2 - NA + PI / 2; }   /* hames along the sides of the collar */
+  box(0.14, 0.05, 0.62, lea, 0.02, 1.47, 0, m); for (const s of [-1, 1]) box(0.12, 0.62, 0.03, lea, 0.02, 1.15, s * 0.29, m);   /* the back band, down the sides to the belly band */
+  const bg = new THREE.TorusGeometry(0.29, 0.03, 5, 18, PI); bg.rotateX(PI / 2); bg.rotateY(-PI / 2); mesh(bg, lea, -0.6, 1.08, 0, m);   /* breeching round the rump */
+  const a = [0.6, 1.2], b = [-1.91, 0.9], len = Math.hypot(a[0] - b[0], a[1] - b[1]);
+  for (const s of [-1, 1]) { const tr = box(len, 0.035, 0.025, lea, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, s * 0.3, m); tr.rotation.z = Math.atan2(a[1] - b[1], a[0] - b[0]); }   /* the traces, from the hames back to the swingletree (b is in the mule's fitting space: engine/beasts.js SIZE makes it 0.93 of this) */
 }
 const GAS_GLASS = new THREE.MeshStandardMaterial({ color: 0xf0e8c8, roughness: 0.15, transparent: true, opacity: 0.7 });
 function gasLamp(parent, x, z, ry = 0) {   /* a gas street lamp: a fluted iron post, a cross bar for the lamplighter's ladder, a four-sided lantern */
@@ -710,7 +712,7 @@ export function buildKingston() {
   /* the retired mule car under a tree at the side of the street, and its two mules resting */
   const mc = muleCar(); mc.position.set(-30, 0, -3.8); g.add(mc); P.walls.push([-33.0, -4.9, -27.1, -2.7]);
   /* its two mules, still in harness, standing either side of the pole, ready to be led away: collars, hames, traces back to the swingletrees, a back band and breeching */
-  for (const z of [-4.32, -3.28]) { const m = mule(z < -3.8 ? 0x5a4838 : 0x6a5442, false); m.userData.noBatch = true; m.position.set(-25.35, 0, z); m.scale.setScalar(0.95); harness(m, z < -3.8 ? 1 : -1); g.add(m); P.flames.push(m); }
+  for (const z of [-4.32, -3.28]) { const m = mule(z < -3.8 ? 0x5a4838 : 0x6a5442, false); m.userData.noBatch = true; m.position.set(-25.35, 0, z); m.scale.setScalar(0.95); harness(m, z < -3.8 ? 1 : -1); bake(m.userData.back); g.add(m); P.flames.push(m); }
   P.walls.push([-27.1, -4.75, -23.3, -2.85]);
   /* the electric car, in the depot doorway */
   const car = electricCar(WIRE); car.position.set(-46, 0, 0); g.add(car); P.car = car;

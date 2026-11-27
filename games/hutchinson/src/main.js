@@ -13,6 +13,7 @@ import { offerNextChapter, nextLines, goingStraight, startCard, titleFade } from
 import { runQuiz } from "../../../engine/quiz.js";
 import * as THREE from "three";
 import { clone as skClone } from "three/addons/utils/SkeletonUtils.js";
+import { loadBeasts } from "../../../engine/beasts.js";
 import { model, onLoadFail } from "../../../engine/loader.js";
 import { hudTidy } from "../../../engine/hud.js";
 import { animate, loadClips, groundFeet } from "../../../engine/anim.js";
@@ -1054,6 +1055,7 @@ onLoadFail(() => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    await loadBeasts(["mule", "cow"]);   /* the shared rigged mule and cow (engine/beasts.js), before any place is built */
     $("bar").style.width = "25%";
     const Q = await ensure(GAME.title.place);
     current = GAME.title.place;
