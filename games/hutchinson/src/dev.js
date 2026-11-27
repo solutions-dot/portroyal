@@ -1,5 +1,6 @@
 /* Development checks are stripped from public builds. */
 import { auditReveals } from "../../../engine/audit-reveal.js";
+import { lensBlocked, targetHidden } from "../../../engine/lens-check.js";
 import { auditProps } from "../../../engine/audit-props.js";
 import { auditCourse } from "../../../engine/audit-course.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
@@ -19,7 +20,7 @@ import { skinProbe } from "../../../engine/skinprobe.js";
 import { walkRoute, routeIssues } from "../../../engine/placement.js";
 import { CAST, BASES, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS } from "./steps.js";
-import { CHAPTERS, TALK } from "./content.js";
+import { CHAPTERS, TALK, FILMS } from "./content.js";
 import { PLACE_IDS } from "./places.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
 import { $, closeAll } from "./ui.js";
@@ -124,6 +125,42 @@ export async function dev(A) {
   };
   if (q.get("test") === "all") {
     await checkAll(A.checkAdapter, CHECK_TABLES);
+    return;
+  }
+  if (q.get("test") === "lens") {
+    /* ?test=lens (as Morant Bay's): every camera scene sampled each second for a lens looking into a wall, a trunk or leaves within 1.4 m
+       (engine/lens-check.js), each shot's held moment for something between the camera and what it looks at, and every look's view.
+       Made after the towers film looked into a pale wall for five seconds (27 November 2026). LENS n at the end. */
+    A.begin();
+    for (const id of PLACE_IDS) await ensure(id);
+    const out = [], see = [];
+    for (const key of Object.keys(FILMS)) {
+      const st = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === key);
+      if (!st) continue;
+      A.chapterState(st); await go(st); closeAll(); S.view = null;
+      A.DIR.start(key); A.DIR.paused = true; let lastBad = -9;
+      for (let t = 0; t <= FILMS[key].duration; t += 1) {
+        A.DIR.apply(t); A.camera.updateMatrixWorld(true);
+        const b = lensBlocked(A.camera, world().group, { near: 1.4 });
+        if (b.share >= 0.34 && t - lastBad > 2) { out.push("LENS film " + key + " at " + t.toFixed(1) + "s: " + Math.round(b.share * 100) + "% of the view blocked within 1.4 m by " + b.what); lastBad = t; }
+      }
+      for (const sh of FILMS[key].shots || []) {
+        const t = Math.min(sh.t + 1, FILMS[key].duration);
+        A.DIR.apply(t); A.camera.updateMatrixWorld(true);
+        const h = targetHidden(A.camera.position.toArray(), sh.look, world().group);
+        if (h) see.push("SEE film " + key + " shot at " + sh.t + "s: something stands between the camera and what it looks at: " + h);
+      }
+      A.DIR.stop?.();
+    }
+    for (const [id, lk] of Object.entries(LOOKS)) {
+      if (!lk.view) continue;
+      const st = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === id));
+      if (!st) continue;
+      A.chapterState(st); await go(st); closeAll();
+      const h = targetHidden(lk.view.p || lk.view.pos, lk.view.look, world().group);
+      if (h) out.push("LENS look " + id + ": the view of it is blocked by " + h);
+    }
+    emit([...out, ...see, "LENS " + out.length, "AUTO END"]);
     return;
   }
   if (q.has("shot")) {
