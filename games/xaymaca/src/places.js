@@ -153,7 +153,9 @@ function crew(Q, canoe, slots, { taino = TAINO_CREW, spanish = SPANISH_CREW, who
 }
 const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0);
 function crewTicker(Q) {
-  Q.tickers.push((t) => {
+  /* Q.posers run every frame after the camera scene has moved the boats, even while the scene holds everything else still: the crews were placed
+     before the ship moved, or not at all during a scene, so the sailors hung in the air while their ship sailed in under them (owner, 27 November 2026) */
+  (Q.posers || (Q.posers = [])).push((t) => {
     for (const R of Q.crews || []) {
       const on = R.canoe.visible && R.canoe.userData.manned && R.canoe.parent;
       for (const r of R.list) {

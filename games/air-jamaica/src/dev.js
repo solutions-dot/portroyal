@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { auditReveals } from "../../../engine/audit-reveal.js";
 import { auditProps } from "../../../engine/audit-props.js";
+import { auditCourse } from "../../../engine/audit-course.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
@@ -332,7 +333,7 @@ export async function dev(A) {
       /* seated people on their seats, with room in front of them (engine/audit.js auditSeated): the flight deck's crew and the cabin's passengers */
       const seated = [];
       for (const n of [...Q.people, ...Q.extras]) if (n.m?.userData.seatAnchor && n.m.userData.anim) { n.m.userData.anim.mx.update(0.1); seated.push(...auditSeated(n.id, n.m, Q.snap, 0, [])); }
-      const errors = [...seated, ...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
+      const errors = [...seated, ...r.floating, ...r.inside, ...r.stuck, ...auditCourse(Q), ...auditReveals(Q, { groundAt: Q.groundAt || Q.ground }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* room to walk everywhere (engine/audit-passage.js) */   /* what a look moves, in both states (engine/audit-reveal.js) */
       /* limbs in furniture (owner, 26 November 2026: the engineer's arm through his chair, the chef's foot in his trolley): hands, forearms, upper arms,
          shins and feet, each with its thickness, against every exact box of the place (floors and the place's own shell left out) */
       { const boxes = Q.snap.filter((e) => e.lb && e.inv && e.b.max.y > 0.06 + (Q.deck || 0) && e.b.getSize(new THREE.Vector3()).length() < 4), V = THREE.Vector3, seen = new Set();

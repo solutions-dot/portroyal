@@ -346,6 +346,7 @@ test('the wall rectangles made for the audits cover the ground you may not walk 
 /* engine/story.js: who moves the story, the hint arrow, carried items */
 import './story.mjs';
 import './ambient.mjs';
+import './goto-space.mjs';
 import './faces.mjs';
 import './perf.mjs';
 import './controls.mjs';

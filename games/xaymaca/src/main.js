@@ -18,6 +18,7 @@ import { hudTidy } from "../../../engine/hud.js";
 import { animate, loadClips, groundFeet } from "../../../engine/anim.js";
 import { spreadArms, grip } from "../../../engine/grip.js";
 import { createAmbient } from "../../../engine/ambient.js";
+import { createLookAssist } from "../../../engine/lookassist.js";
 import { stop as stopFollow, tick as followTick, goTo } from "../../../engine/follow.js";
 import { createStory, createCarry, needList } from "../../../engine/story.js";
 import { createGuide } from "../../../engine/guide.js";   /* the gold arrow on the ground that shows the way (every game) */
@@ -778,6 +779,7 @@ canvas.addEventListener("pointermove", (e) => {
     look.moved += Math.abs(dx) + Math.abs(dy);
     S.yaw -= dx * 0.005;
     S.pitch = Math.max(-1.15, Math.min(1.15, S.pitch - dy * 0.004));
+    LOOKASSIST.touch(performance.now());
     look.x = e.clientX;
     look.y = e.clientY;
   }
@@ -805,6 +807,7 @@ function move(dt) {
     rt = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0) + stick.dx;
   if (keys.has("arrowleft")) S.yaw += dt * 1.6;
   if (keys.has("arrowright")) S.yaw -= dt * 1.6;
+  if (keys.has("arrowleft") || keys.has("arrowright")) LOOKASSIST.touch(performance.now());
   const length = Math.hypot(fw, rt);
   if (length > 1) {
     fw /= length;
@@ -892,6 +895,14 @@ function flash() {
     f.style.opacity = 0;
   });
 }
+const LOOKASSIST = createLookAssist();
+/* the camera eases toward the thing you are in reach of, when it is not in view (engine/lookassist.js) */
+function assistLook(dt, now) {
+  const Q = world();
+  if (!near || near.kind !== "do" || !S.started || busy || openPanel() || DIR.on) return LOOKASSIST.tick(S, null, dt, now);
+  const lk = LOOKS[near.id], look = lk && (lk.view?.look || Q.lookViews?.[near.id]?.look);
+  LOOKASSIST.tick(S, { x: near.x, y: look ? look[1] : 0.5, z: near.z }, dt, now, { eye: GAME.eye });
+}
 const TALK_R = 2.35;   /* how near you must be to talk: the talk button and a tap on a person (engine/tap.js) use the same reach */
 function findNear() {
   near = null;
@@ -950,7 +961,10 @@ function tick(dt, now = performance.now()) {
     if (n.fol) followTick(n, frozen ? 0 : dt, { px: S.x, pz: S.z, walls: Q.walls, bounds: Q.bounds, blocked: (x, z, r) => blocked(Q, x, z, r), others: Q.people, talking, view: { x: camera.position.x, z: camera.position.z, yaw: S.yaw } });   /* view: a follower keeps out of the middle of your view (engine/follow.js) */
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
-  else if (LS.tick(dt)) {
+  for (const f of Q.posers || []) f(t, dt, camera);   /* people who ride on something a scene moves (places.js crewTicker) */
+  if (DIR.on) {
+    /* the scene holds the camera */
+  } else if (LS.tick(dt)) {
     /* a look moment holds the camera */
   } else if (__DEV__ && S.view) {
     camera.position.set(...S.view.pos);
@@ -965,6 +979,7 @@ function tick(dt, now = performance.now()) {
     camera.rotation.set(S.pitch, S.yaw, 0, "YXZ");
   }
   findNear();
+  assistLook(dt, now);
   const quiet = hint(now);
   dangerTick(dt, quiet);
   if (S.started) audioTick(Q, dt);

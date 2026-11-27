@@ -178,7 +178,7 @@ export async function dev(A) {
       A.DIR.paused = true;
       A.DIR.time = Number(q.get("at") || 0);
       for (let t = 0; t <= A.DIR.time; t += 0.25) A.DIR.apply(t);
-      for (let i = 0; i < 30; i++) { for (const f of world().tickers || []) f(A.DIR.time, 1 / 30); world().life?.tick(1 / 30, {}); }   /* the place's own per-frame work, and a second of the people's clips, so the picture shows a crew kneeling in their canoe */
+      for (let i = 0; i < 30; i++) { for (const f of [...(world().tickers || []), ...(world().posers || [])]) f(A.DIR.time, 1 / 30); world().life?.tick(1 / 30, {}); }   /* the place's own per-frame work, and a second of the people's clips, so the picture shows a crew kneeling in their canoe */
       $("cineControls").hidden = !q.has("ui");
       if (!q.has("ui")) { A.DIR.hideSkip(); document.body.classList.remove("cine"); }
     }

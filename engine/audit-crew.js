@@ -17,7 +17,7 @@ export function auditCrew(Q, { times = [0.1, 0.35, 0.6, 0.85], tol = 0.015 } = {
     if (!boxes) continue;
     const was = [c.userData.manned, c.visible];
     c.userData.manned = true; c.visible = true;
-    for (const f of Q.tickers || []) f(0, 1 / 30);
+    for (const f of [...(Q.tickers || []), ...(Q.posers || [])]) f(0, 1 / 30);
     for (const r of R.list) {
       const n = Q.extras && Q.extras[r.idx];
       if (!n || !n.m || !n.ctl) continue;
@@ -25,7 +25,7 @@ export function auditCrew(Q, { times = [0.1, 0.35, 0.6, 0.85], tol = 0.015 } = {
       const act = n.ctl.cur, clip = act && act.getClip && act.getClip();
       for (const share of times) {
         if (clip) { act.time = clip.duration * share; n.ctl.mx.update(0); }
-        for (const f of Q.tickers || []) f(0, 0);
+        for (const f of [...(Q.tickers || []), ...(Q.posers || [])]) f(0, 0);
         n.m.updateMatrixWorld(true); c.updateMatrixWorld(true);
         const inv = c.matrixWorld.clone().invert();
         for (const s of ['Left', 'Right']) for (const [a, b, rad, what] of SEGS) {
@@ -48,7 +48,7 @@ export function auditCrew(Q, { times = [0.1, 0.35, 0.6, 0.85], tol = 0.015 } = {
       }
     }
     c.userData.manned = was[0]; c.visible = was[1];
-    for (const f of Q.tickers || []) f(0, 1 / 30);
+    for (const f of [...(Q.tickers || []), ...(Q.posers || [])]) f(0, 1 / 30);
   }
   return out;
 }

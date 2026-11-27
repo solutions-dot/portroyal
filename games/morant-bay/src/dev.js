@@ -2,6 +2,7 @@
 import { auditReveals } from "../../../engine/audit-reveal.js";
 import { lensBlocked, targetHidden } from "../../../engine/lens-check.js";
 import { auditProps } from "../../../engine/audit-props.js";
+import { auditCourse } from "../../../engine/audit-course.js";
 import { auditPassage, passageSpots } from "../../../engine/audit-passage.js";
 import { createStory, checkFlow, needList } from "../../../engine/story.js";
 import { checkAll, reachIssues, CHECKS } from "../../../engine/checks.js";
@@ -369,7 +370,7 @@ export async function dev(A) {
       const windows = [...new Set(facePeople.filter((p) => p.when).map((p) => p.when.join("-")))].map((k) => k.split("-").map(Number));
       const together = (w) => facePeople.filter((p) => !p.when || !w || (p.when[0] <= w[1] && p.when[1] >= w[0]));
       const twins = [...new Set((windows.length ? windows : [null]).flatMap((w) => faceCheck(together(w))))];
-      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditReveals(Q, { groundAt: Q.groundAt }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* what a look moves, in both states (engine/audit-reveal.js) */
+      const errors = [...r.floating, ...r.inside, ...r.stuck, ...auditCourse(Q), ...auditReveals(Q, { groundAt: Q.groundAt }), ...auditProps(Q.propList || []), ...auditPassage({ walls: Q.walls, bounds: Q.bounds, start: Q.start, r: 0.23, spots: passageSpots(Q, { LOOKS, TASKS }) })];   /* what a look moves, in both states (engine/audit-reveal.js) */
       results.push("AUDIT " + Q.id + " " + errors.length, ...errors, "FACES " + Q.id + " " + twins.length, ...twins.slice(0, 40));
     }
   if (test === "ambient")
