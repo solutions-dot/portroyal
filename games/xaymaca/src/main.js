@@ -577,6 +577,7 @@ const LOOK_SFX = {
   wind: () => { noiseHit(500, 0.3, 2.2, 0.05, -0.2, 0); gullCry?.(); },   /* the wind on the hill, a far bird */
   bell: () => [0, 0.18, 0.36, 0.7, 0.88].forEach((d) => { tone(2400, 2380, 0.5, "sine", 0.03, 0.1, d); tone(4810, 4800, 0.3, "sine", 0.012, 0.1, d); }),   /* a hawk's bell: ting-ting-ting */
   page: () => noiseHit(3000, 0.5, 0.4, 0.06, 0, 0.1),
+  water: () => { noiseHit(1400, 0.8, 1.6, 0.05, 0, 0.1); [0.3, 0.55, 0.8, 1.1].forEach((d) => tone(520 + d * 300, 900 + d * 200, 0.08, "sine", 0.02, 0, d)); },   /* the stream running into the gourd: a rush and a few gulps */
 };
 const _lq = new THREE.Quaternion(),
   _le = new THREE.Euler();
@@ -626,6 +627,18 @@ async function lookAt(id) {
   await LS.back();
   done();
 }
+/* Something filled before it is carried (rule 13: a close-up action): the camera eases in, the thing is filled with sound and short lines, eases back, and
+   then it is in your hands (owner, 27 November 2026: "the fill the water task makes no sense, you just pick up the jug and carry it over"). */
+async function fillFirst(id, t, Q) {
+  const st = S.stage;
+  busy = true;
+  await LS.play({ view: t.fill.view, line: 1.6, sound: t.fill.sound, lines: t.fill.lines, reveal: (k) => Q.reveal[t.fill.reveal](k) });
+  if (S.stage !== st) { busy = false; return; }
+  await LS.back();
+  busy = false;
+  (S.filled ||= {})[id] = true;
+  action(id);
+}
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
   if (LOOKS[id]) return lookAt(id);
@@ -639,6 +652,7 @@ function action(id) {
     }
     const o = Q.items[t.item];
     if (!o) throw Error("Missing item " + t.item + " in " + Q.id);
+    if (t.fill && Q.reveal[t.fill.reveal] && !S.filled?.[id]) return fillFirst(id, t, Q);   /* a close-up of the filling first (the calabash at the stream) */
     S.hand = t.item;
     o.name = t.item;
     carry.carry(o);
@@ -966,7 +980,7 @@ function tick(dt, now = performance.now()) {
   shadows(Q);
   if (DIR.on) DIR.tick(dt);
   for (const f of Q.posers || []) f(t, dt, camera);   /* people who ride on something a scene moves (places.js crewTicker) */
-  if (DIR.on) {
+  if (DIR.on && !(__DEV__ && S.view && S.viewOverFilm)) {   /* dev: S.viewOverFilm lets a check look at a held scene from any angle (/tmp angles) */
     /* the scene holds the camera */
   } else if (LS.tick(dt)) {
     /* a look moment holds the camera */

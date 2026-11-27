@@ -8,8 +8,8 @@ import { palm, tree, bush } from "./period-props.js";
 import * as P from "./props.js";
 import * as X from "./xaymaca.js";
 import { TASKS } from "./steps.js";
-import { createSea, gulls } from "../../../engine/sea.js";
-import { rowBoat, rowStroke } from "../../../engine/boats.js";
+import { createSea, createStream, gulls } from "../../../engine/sea.js";
+import { rowBoat, rowStroke, waterRing } from "../../../engine/boats.js";
 import { AU, tone, noiseHit, gullCry } from "../../../engine/audio.js";
 import { makeRidges } from "../../../engine/ridges.js";
 
@@ -121,6 +121,52 @@ function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of
   g.userData.depth = 0.55;
   return dyn(g);
 }
+/* Every canoe floats IN the water, with a ring of foam round her at the waterline (owner, 27 November 2026: "the canoes don't look like it's resting IN the water,
+   it looks like it's on it"). Her keel lies DRAUGHT below the surface (the inside bottom just above it, so the crew still sit dry and the sea plane does not cut
+   across the floor); on the sand she lies on the ground, and the change comes over a metre at the water's edge. Run every frame after the scene (Q.posers).
+   water: the sea's height; ground: her height on the sand; edge: the z the water starts at (canoes lie in the water at z below it; default: everywhere). */
+const DRAUGHT = 0.1;
+const SM_CORD = solid(0xbfa97e, 0.9);
+function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity, bob = 0.03, foam = 0xffffff }) {
+  /* sea: the place's water (engine/sea.js); she rides its swell (sea.height, the same waves the water is drawn with), pitching bow and stern with it */
+  const hull = canoe.userData.bow ? canoe : canoe.children.find((c) => c.userData.bow) || canoe;
+  const ring = waterRing(hull, { y: DRAUGHT, color: foam }), L = hull.userData.L || 5;
+  const last = new THREE.Vector3();
+  let prevT = null;
+  const seed = Q.posers ? Q.posers.length : 0;
+  (Q.posers || (Q.posers = [])).push((t) => {
+    const x = canoe.position.x, z = canoe.position.z, k = canoe.userData.afloat ?? (edge === Infinity ? 1 : sm((edge + 0.5 - z) / 1.0));   /* 0 on the sand, 1 in the water (a scene may say: userData.afloat) */
+    const fx = Math.cos(canoe.rotation.y) * L * 0.35, fz = -Math.sin(canoe.rotation.y) * L * 0.35;   /* toward the bow */
+    const h = (px, pz) => (sea ? sea.height(px, pz, t) : water + Math.sin(t * 1.3 + seed) * bob);
+    const hm = h(x, z), hb = h(x + fx, z + fz), hs = h(x - fx, z - fz);
+    const afloat = hm - DRAUGHT;
+    canoe.position.y = ground === null ? afloat : ground + (afloat - ground) * k;
+    canoe.rotation.z = k * Math.atan2(hb - hs, L * 0.7);   /* the bow lifts on the swell and dips after it */
+    const dt = prevT === null ? 0 : Math.abs(t - prevT); prevT = t;
+    const moved = Math.hypot(canoe.position.x - last.x, canoe.position.z - last.z); last.copy(canoe.position);
+    const speed = dt > 0 && dt < 0.5 ? Math.min(1, moved / dt / 2.2) : 0;   /* about 2 m a second is full speed */
+    if (ring) { ring.visible = k > 0.5 && canoe.visible; ring.userData.tick(t, speed); }
+  });
+  return ring;
+}
+/* A ship's foam line: where her hull meets the water, kept at the water's height as she moves (she rises and settles in the arrival scene). The ring is
+   built in her own frame (length along z, the bow at -z) from her lines, at the width of her side near the water. */
+function shipWater(Q, ship, { water, sea = null, foam = 0xffffff }) {
+  const F = ship.userData.F;
+  if (!F) return null;
+  const pts = [];
+  for (let i = 0; i <= 30; i++) { const s = i / 30, h = F.half(s) * 0.9; if (h > 0.15) pts.push([F.z(s), h]); }   /* z(s) runs stern (+z) to bow (-z) */
+  const ring = waterRing(ship, { points: pts.reverse().map(([z, h]) => [-z, h]), y: 0, width: 1.1, length: F.L, axis: "z", color: foam });
+  if (!ring) return null;
+  ring.rotation.y = Math.PI;   /* the points ran along -z: turned back to her own frame */
+  (Q.posers || (Q.posers = [])).push((t) => {
+    if (!ship.visible) return;
+    const w = sea ? sea.height(ship.position.x, ship.position.z, t) : water;
+    ring.position.y = (w - ship.position.y) / (ship.scale.y || 1) + 0.03;
+    ring.userData.tick(t, 0.15);
+  });
+  return ring;
+}
 /* People in a canoe: real bodies (background people, tools/xaymaca/people) that ride with it. Each is a background person whose standing spot is out of the
    way and who is hidden until the canoe is manned (canoe.userData.manned, set by a camera scene); then the place's ticker kneels them in their place in the
    canoe, facing the way it goes, a paddle in the hand, leaning into each stroke. (Kneel stands in for a paddling clip: owner, 25 November 2026, to come.)
@@ -151,7 +197,7 @@ function crew(Q, canoe, slots, { taino = TAINO_CREW, spanish = SPANISH_CREW, who
   (Q.crews || (Q.crews = [])).push(R);
   return R;
 }
-const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0);
+const _side = new THREE.Vector3(), _h0 = new THREE.Vector3(), _h1 = new THREE.Vector3(), _dir = new THREE.Vector3(), _down = new THREE.Vector3(0, -1, 0), _cq = new THREE.Quaternion(), _lq = new THREE.Quaternion(), _lean = new THREE.Quaternion(), _cp = new THREE.Vector3(), _ax = new THREE.Vector3(1, 0, 0), _up = new THREE.Vector3(0, 1, 0), _hu = new THREE.Vector3(), _hl = new THREE.Vector3(), _hd = new THREE.Vector3(), _tip = new THREE.Vector3();
 function crewTicker(Q) {
   /* Q.posers run every frame after the camera scene has moved the boats, even while the scene holds everything else still: the crews were placed
      before the ship moved, or not at all during a scene, so the sailors hung in the air while their ship sailed in under them (owner, 27 November 2026) */
@@ -212,12 +258,26 @@ function crewTicker(Q) {
           r.hands[0].getWorldPosition(_h0); r.hands[1].getWorldPosition(_h1);
           const mid = R.canoe.worldToLocal(_h0.add(_h1).multiplyScalar(0.5)), half = (R.canoe.userData.beam || 1.0) / 2, rail = (R.canoe.userData.depth || 0.55) + 0.08, side = r.z >= 0 ? 1 : -1;
           const act = n.ctl.cur;
+          if (R.canoe.userData.stow) {
+            /* the paddle laid along the bottom of the canoe beside him, while he sits and talks the trade with both hands free (owner, 27 November 2026:
+               "check hand placements": held upright, one hand hung in the air beside it) */
+            if (r.mode !== "stow") { r.mode = "stow"; n.ctl.play("SitTalk"); }
+            r.paddle.visible = true;
+            _cp.set(r.x + 0.25, (R.canoe.userData.bottom ?? 0.08) + 0.04, (r.z >= 0 ? -1 : 1) * 0.2).applyMatrix4(R.canoe.matrixWorld);
+            Q.group.worldToLocal(_cp);
+            r.paddle.position.copy(_cp);
+            R.canoe.getWorldQuaternion(_cq);
+            r.paddle.quaternion.copy(_cq).multiply(_lq.setFromUnitVectors(_down, _ax.set(-1, 0.04, 0).normalize()));   /* blade toward the stern */
+            _ax.set(1, 0, 0);
+            continue;
+          }
+          if (r.mode === "stow") { r.mode = ""; n.ctl.play("Paddle"); }
           if (R.canoe.userData.ashore) {
-            if (act && act.timeScale) { r.pace = act.timeScale; act.timeScale = 0; }
+            if (act && act.timeScale) { r.pace = Math.abs(act.timeScale); act.timeScale = 0; }
             _side.set(mid.x, mid.y + 1, mid.z + side * 0.12).applyMatrix4(R.canoe.matrixWorld);   /* blade up, leaning a little outboard */
             mid.y -= 0.35;   /* the grip end rests below the hands */
           } else {
-            if (act && !act.timeScale) act.timeScale = r.pace || 1;
+            if (act) { const want = (R.canoe.userData.reverse ? -1 : 1) * (r.pace || 1); if (act.timeScale !== want) act.timeScale = want; }   /* a back-paddle plays the stroke the other way */
             if (mid.y < rail + 0.12) mid.y = rail + 0.12;   /* hands low in the stroke: the shaft still starts above the rail */
             const zg = side * (half + 0.04), yw = -0.15, tmax = (mid.y - rail) / (mid.y - yw);
             let zw = side * (half + 0.3);
@@ -231,7 +291,19 @@ function crewTicker(Q) {
           _dir.subVectors(_side, mid);
           if (_dir.lengthSq() < 1e-6) _dir.set(0, -1, 0);
           _dir.normalize();
-          if (!R.canoe.userData.ashore) mid.addScaledVector(_dir, -0.28);   /* the top of the shaft a hand's breadth above the grip */
+          let gripped = false;
+          if (!R.canoe.userData.ashore) {
+            /* The grip in a hand (owner, 27 November 2026: "check hand placements"; the shaft started between the two hands, so neither held it). The
+               Paddle clip holds both hands at about one height, so a shaft through both lay flat across the canoe; instead the top hand holds the grip
+               and the shaft runs from it down to the water beside the canoe, past the lower hand. */
+            r.hands[0].getWorldPosition(_hu); r.hands[1].getWorldPosition(_hl);
+            const sideZ = r.z >= 0 ? 1 : -1, zu = R.canoe.worldToLocal(_tip.copy(_hu)).z * sideZ, zl = R.canoe.worldToLocal(_tip.copy(_hl)).z * sideZ;
+            const grip = Math.abs(_hu.y - _hl.y) > 0.06 ? (_hu.y > _hl.y ? _hu : _hl) : zu <= zl ? _hu : _hl;   /* the top hand holds the grip, as in a real stroke (the hand further from the water when they are level) */
+            _dir.subVectors(_side, grip).normalize();
+            mid.copy(grip).addScaledVector(_dir, -0.08);
+            gripped = true;
+          }
+          if (!R.canoe.userData.ashore && !gripped) mid.addScaledVector(_dir, -0.28);   /* the top of the shaft a hand's breadth above the grip */
           Q.group.worldToLocal(mid);
           r.paddle.position.copy(mid);
           r.paddle.quaternion.setFromUnitVectors(_down, _dir);
@@ -274,7 +346,7 @@ function placeCrews(Q) {
 function canoeSlots(L, n = 16, nSp = 6) {
   const rows = Math.ceil(n / 2), out = [];
   for (let k = 0; k < n; k++) {
-    const row = Math.floor(k / 2), x = -L * 0.3 + (L * 0.6 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
+    const row = Math.floor(k / 2), x = -L * 0.27 + (L * 0.54 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
     out.push([x, (k % 2 ? 0.36 : -0.36), mid && out.filter((s) => s[2]).length < nSp]);   /* two abreast, shoulders clear of each other and knees clear of the 2 m hull */
   }
   return out;
@@ -287,8 +359,12 @@ function wrecks(Q, at, y, turn) {
     small = X.caravel({ aground: true, shores: [-1], L: 18.5, B: 5.7, band: 0xb08a4a, torn: false });
   const c = Math.cos(turn), s = Math.sin(turn), off = (d) => [at[0] + c * d, at[1] - s * d];
   const [x1, z1] = off(-3.55), [x2, z2] = off(3.15);   /* close, but the Santiago's yard no longer cuts into La Capitana's roof (audit, 26 November 2026) */
-  add(Q, far(big), x1, z1, y, turn);
-  add(Q, far(small), x2, z2 + 0.6, y + 0.15, turn + 0.21);
+  /* The ships move in the opening scene (they sail in and run aground), so they are marked dynamic: left plain, the place's merge (mergePlace) baked them in
+     at the beach, so they sat aground from the first second while the sailors, placed on their decks each frame, sailed in over open water (owner,
+     27 November 2026: "these men still floating from the first scene"). Each is merged on its own first, so it stays a handful of meshes. */
+  for (const sh of [big, small]) { far(sh); batchStatic(sh); dyn(sh); }
+  add(Q, big, x1, z1, y, turn);
+  add(Q, small, x2, z2 + 0.6, y + 0.15, turn + 0.21);
   small.rotation.z = -0.05;   /* listing a little toward her neighbour */
   return [big, small];
 }
@@ -380,17 +456,20 @@ function maima({ night = false } = {}) {
   ranges(Q, { centre: Math.PI / 2, spread: 2.6, y: -6, seed: 7, green: 0x4f7a40, haze: 0xc8d4cc, layers: [{ r: 80, base: 8, amp: 18, k: 0.2 }, { r: 160, base: 30, amp: 50, k: 0.5 }, { r: 300, base: 70, amp: 110, k: 0.8 }] });
   /* the two caravels aground, side by side, bows to the beach */
   const ships = wrecks(Q, [(BAY.ships[0][0] + BAY.ships[1][0]) / 2, BAY.shipZ], BAY.y + 0.5, Math.PI - 0.55);   /* three-quarter on from the hill */
+  for (const sh of ships) shipWater(Q, sh, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
   deckCrew(Q, ships[1], [[0.45, 1, -Math.PI / 2, "LookAround"], [0.62, 0, 0.6, "IdleM"]]);   /* a few men on the wrecks, seen from the hill, until the rescue ship takes them */
   deckCrew(Q, ships[0], [[0.55, -1, Math.PI / 2, "IdleM"]]);
   const shipHome = ships.map((s) => [s.position.clone(), s.rotation.y]);   /* turned bow to the beach, local +x is west: each ship is propped on its outer side only, the two lean on each other */
   /* the rescue ship of June 1504, anchored off the wrecks (shown in chapter 6) */
   const rescue = add(Q, dyn(far(X.caravel({ aground: false, sails: true }))), 14, -230, BAY.y + 1.3, Math.PI * 0.55);
+  shipWater(Q, rescue, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
   rescue.visible = false;
   /* the ten canoes of the mutiny, far off on the bay (chapter 4's camera scene) */
   const flotilla = [];
   for (let i = 0; i < 10; i++) {
     const c = add(Q, far(bigCanoe(6, 1.2)), 8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2, BAY.y + 0.05, Math.PI / 2);   /* drawn up along the beach, 9 m apart bow to stern, not in a block (owner, 27 November 2026: "piled on top of each other") */
     c.visible = false;
+    floatBoat(Q, c, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
     flotilla.push(c);
     if (!night) crew(Q, c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]], { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
   }
@@ -523,7 +602,7 @@ function maima({ night = false } = {}) {
       return;
     }
     ships.forEach((s, i) => {
-      s.visible = true;
+      s.visible = t >= 3.5;   /* they come round the point after "Something is coming around the point" begins, not before the scene's first words */
       /* they come in bow first along the course they end on, and run aground side by side (they slid in sideways before) */
       const k = sm((t - 4) / 22), h = shipHome[i][0], ry = shipHome[i][1], fx = -Math.sin(ry), fz = -Math.cos(ry), far = 95 + i * 6;
       const from = [h.x - fx * far, h.z - fz * far];
@@ -537,13 +616,14 @@ function maima({ night = false } = {}) {
        loose column along the coast and never bunch (the mutineers took ten canoes: Ferdinand; "Nobody was hurt" in this scene) */
     flotilla.forEach((c, i) => {
       const rank = flotilla.length - 1 - i, t0 = 6.5 + rank * 0.95, home = [8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2];
-      const posAt = (tt) => { const k = sm((tt - t0 - 2.6) / 13); return [home[0] + k * 170, home[1] - k * (22 + (i % 4) * 3)]; };
+      const posAt = (tt) => { const k = sm((tt - t0 - 1.2) / 13), o = sm((tt - t0) / 3.2) * 5; return [home[0] + k * 170, home[1] - o - k * (22 + (i % 4) * 3)]; };   /* paddled straight out first, then curving east: the bow follows the curve, no turn on the spot (owner, 27 November 2026) */
       c.visible = t >= 0;
-      c.userData.manned = t >= t0 - 1.8;
+      c.userData.manned = t >= 0;   /* the men are in the canoes from the first second, paddles up, and push off in turn (owner, 27 November 2026: "they start empty and then the people just appear") */
+      c.userData.ashore = t < t0 + 0.4;
       const p = posAt(Math.max(t, 0));
       c.position.set(p[0], BAY.y + 0.05 + Math.sin(t * 1.3 + i) * 0.04, p[1]);   /* rocking on the water, up and down */
-      const beached = Math.PI / 2 + (i % 2 ? 0.12 : -0.1), east = canoeHeading(170, -(22 + (i % 4) * 3));
-      c.rotation.y = turnTo(beached, east, sm((t - t0) / 2.4));   /* swings from lying bow to the sea onto her course east, then goes (nothing moves while she turns) */   /* bows east, the way they paddle */
+      const beached = Math.PI / 2 + (i % 2 ? 0.12 : -0.1);
+      c.rotation.y = courseAt(posAt, Math.max(t, 0), canoeHeading, beached);   /* bow along the way she goes; still on the sand, as she lay */
     });
   };
   /* the red moon: it rises already bitten, the shadow covers it, turns it red, and slides away */
@@ -559,9 +639,66 @@ function maima({ night = false } = {}) {
         moon.position.set(MOON_FROM[0] + (MOON_TO[0] - MOON_FROM[0]) * rise, MOON_FROM[1] + (MOON_TO[1] - MOON_FROM[1]) * rise, MOON_FROM[2] + (MOON_TO[2] - MOON_FROM[2]) * rise);
         const k = t < 22 ? 0.35 + 0.65 * sm((t - 3) / 19) : 1 - sm((t - 34) / 9);
         moon.material.uniforms.k.value = k;
-        moonLight.intensity = 0.35 * (1 - 0.8 * k);
+        moonLight.intensity = 0.35 * (1 - 0.55 * k);
+        moonLight.color.setHex(0xc8d4ff).lerp(_red.setHex(0xff6a3c), sm((k - 0.55) / 0.45));   /* the light on the people turns red with the moon */
+        moonCrowd(t);
       }
     : null;
+  /* The people under the red moon (owner, 27 November 2026: "show persons' reaction to the moon.. some panic"): at the lookout a woman starts back from the
+     edge and then runs home; a man drops to his knees; at the red moon two from the village take food and run down the path to the ships (Ferdinand: they
+     "came running from all parts loaded with provisions"). Nobody is hurt. Background people, taken over for the scene and given back after it. */
+  const _red = new THREE.Color(), _hp = new THREE.Vector3();
+  const foodBaskets = [0, 1].map(() => { const b = X.basket(3, 0.22); b.visible = false; b.userData.noRest = true; Q.group.add(dyn(b)); return b; });
+  let moonHeld = null;
+  const gAt = (x, z) => (Q.groundAt ? Q.groundAt(x, z) : 0);
+  const moonCrowd = (t) => {
+    if (!night) return;
+    if (t < 0) {
+      if (moonHeld) for (const r of moonHeld) { r.n.m.position.set(r.home[0], r.home[1], r.home[2]); r.n.x = r.home[0]; r.n.z = r.home[2]; r.n.ground = r.home[1]; r.n.m.userData.ground = r.home[1]; r.n.m.rotation.y = r.home[3]; Q.life.hold(r.n, false); r.n.ctl.play("Idle"); }
+      moonHeld = null;
+      foodBaskets.forEach((b) => (b.visible = false));
+      return;
+    }
+    if (!moonHeld) {
+      const pick = (x, z) => (Q.extras || []).filter((n) => n.m && n.m.visible && !n.m.userData.aboard).sort((a, b) => Math.hypot(a.m.position.x - x, a.m.position.z - z) - Math.hypot(b.m.position.x - x, b.m.position.z - z))[0];
+      moonHeld = [[4, -8.8, "lookout"], [-4.2, -8.9, "kneel"], [-3.4, 4.4, "food0"], [-1.6, 4.6, "food1"]].map(([x, z, role]) => ({ n: pick(x, z), role })).filter((r) => r.n);
+      for (const r of moonHeld) { const m = r.n.m; r.home = [m.position.x, m.position.y, m.position.z, m.rotation.y]; Q.life.hold(r.n, true); r.clip = ""; }
+    }
+    const play = (r, clip) => { if (r.clip !== clip) { r.clip = clip; r.n.ctl.play(clip); } };
+    const go = (r, from, to, t0, t1) => {   /* along a straight run between t0 and t1, facing the way she goes */
+      const k = Math.max(0, Math.min(1, (t - t0) / (t1 - t0))), x = from[0] + (to[0] - from[0]) * k, z = from[1] + (to[1] - from[1]) * k;
+      const y = gAt(x, z);
+      r.n.m.position.set(x, y, z);
+      r.n.x = x; r.n.z = z; r.n.ground = y; r.n.m.userData.ground = y;   /* the crowd's own record too, or its tick puts them back where they stood */
+      if (t > t0 && t < t1) r.n.m.rotation.y = Math.atan2(to[0] - from[0], to[1] - from[1]);
+      return k;
+    };
+    const faceMoon = (r) => { r.n.m.rotation.y = Math.atan2(230 - r.n.m.position.x, -400 - r.n.m.position.z); };
+    for (const r of moonHeld) {
+      const h = [r.home[0], r.home[2]];
+      if (r.role === "lookout") {
+        if (t < 13.2) { faceMoon(r); play(r, t < 12.2 ? "Idle" : "HeadTurn"); go(r, h, h, 0, 1); }
+        else if (t < 15) { go(r, h, [h[0] + 0.5, h[1] + 1.4], 13.2, 15); play(r, "Walk"); faceMoon(r); r.n.ctl.cur && (r.n.ctl.cur.timeScale = -1); }   /* steps back from the edge, still staring */
+        else if (t < 23.4) { if (r.n.ctl.cur) r.n.ctl.cur.timeScale = 1; go(r, [h[0] + 0.5, h[1] + 1.4], [h[0] + 0.5, h[1] + 1.4], 0, 1); faceMoon(r); play(r, "Shrug"); }
+        else { play(r, "Run"); if (go(r, [h[0] + 0.5, h[1] + 1.4], [2.6, 4.2], 23.4, 27.4) >= 1) { play(r, "Idle"); faceMoon(r); } }   /* runs home */
+      } else if (r.role === "kneel") {
+        if (t < 13) { faceMoon(r); play(r, "Idle"); } else if (t < 22.8) { faceMoon(r); play(r, "LookAround"); } else { faceMoon(r); play(r, "Kneel"); }   /* at the red he goes down on his knees */
+      } else {
+        const j = r.role === "food0" ? 0 : 1, b = foodBaskets[j], start = 27.6 + j * 0.7;
+        if (t < 26) { faceMoon(r); play(r, "Idle"); b.visible = false; }
+        else if (t < start) { faceMoon(r); play(r, "HeadTurn"); b.visible = false; }
+        else {
+          play(r, "Run");
+          const mid = [-5.2 + j * 0.8, -9.5], end = [-8.5 + j * 0.8, -19];
+          if (t < start + 4) go(r, h, mid, start, start + 4); else go(r, mid, end, start + 4, start + 8);
+          const m = r.n.m;   /* the food in a basket on the head, carried with both hands up */
+          const head = m.getObjectByName("mixamorigHead");
+          if (head) { m.updateMatrixWorld(true); head.getWorldPosition(_hp); Q.group.worldToLocal(_hp); b.position.set(_hp.x, _hp.y + 0.13, _hp.z); } else b.position.set(m.position.x, m.position.y + 1.62, m.position.z);
+          b.rotation.y = m.rotation.y; b.visible = true;
+        }
+      }
+    }
+  };
   /* the ships leave: the new ship sails out of the bay */
   Q.films.leave = (t) => {
     rescue.visible = t >= 0;
@@ -621,10 +758,9 @@ function shore() {
   const reef = plane(500, 2.5, new THREE.MeshBasicMaterial({ color: 0xf4f4ee, transparent: true, opacity: 0.7, depthWrite: false }), 0, SEA + 0.05, -150, Q.group);
   reef.rotation.x = -Math.PI / 2;
   far(reef);
-  /* the stream at the east end, shallow over the sand */
-  const stream = plane(1.3, 16, new THREE.MeshStandardMaterial({ color: 0x7aa6a2, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.55, depthWrite: false }), 12.6, 0.012, 2.0, Q.group);
-  stream.rotation.x = -Math.PI / 2;
-  stream.userData.water = true;
+  /* the stream at the east end, running shallow over the sand to the sea, with a deeper pool by the stones where a gourd can be filled (engine/sea.js) */
+  const stream = createStream(Q.group, { points: [[12.9, 10], [12.4, 6.5], [12.75, 3.5], [12.45, 0.5], [12.7, -2.5], [12.5, -5.2]], width: 1.25, y: 0.012, seed: 4, pools: [[12.45, 2.4, 0.38]] });
+  Q.tickers.push((t) => stream.tick(t));
   for (let i = 0; i < 6; i++) add(Q, X.M.stone() && mesh(new THREE.DodecahedronGeometry(0.2 + (i % 3) * 0.05, 0), X.M.stone(), 0, 0.06, 0), 11.6 + (i % 2) * 2.0, -1 + i * 1.6);
   /* the hill of Maima behind, the woods along the back of the beach */
   ranges(Q, { centre: Math.PI / 2, spread: 2.8, y: 0, seed: 4, green: 0x4f7a40, haze: 0xcfd8d0, layers: [{ r: 40, base: 6, amp: 10, k: 0.2 }, { r: 90, base: 24, amp: 30, k: 0.45 }, { r: 200, base: 60, amp: 80, k: 0.75 }] });
@@ -634,6 +770,7 @@ function shore() {
   Q.walls.push([-40, 9.6, 40, 40]);
   /* the two caravels aground, bows to the beach, side by side; the water nearly to their decks */
   const ships = wrecks(Q, [(SHIPS[0][0] + SHIPS[1][0]) / 2, SHIPS[0][1]], SEA + 0.45, Math.PI - 0.35);
+  for (const sh of ships) shipWater(Q, sh, { water: SEA, sea });
   /* a few sailors aboard. The canoe trades alongside the wreck nearer the beach, on the side that faces the beach, at the open gap between the
      deck sheds by the mainmast, where two sailors stand at the rail (one points, one talks the trade); one more amidships, and two on the other wreck.
      (Before, the canoe went to a spot 7 m off La Capitana and the sailors stood on the far ship: owner, 26 November 2026.) */
@@ -652,9 +789,12 @@ function shore() {
   /* the trading canoe at the water's edge (chapter 2), and the two big canoes (chapter 3) */
   const tradeCanoe = add(Q, dyn(X.canoe(5.2, { beam: 1.0, depth: 0.5 })), 3.2, -3.3, -0.1, Math.PI / 2 + 0.05);
   crew(Q, tradeCanoe, [[tradeCanoe.userData.seatBoxes[0][0] + 0.06, 0, false, 0]], { taino: ["xa_cousin"], who: "Cousin" });   /* sat on the stern seat board, his legs forward into the open middle (owner, 26 November 2026: first his feet went through the seat, then he sat on nothing) */   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
+  floatBoat(Q, tradeCanoe, { water: SEA, sea, ground: -0.1, edge: -4.6 });
   tradeCanoe.userData.floor = 0.2;   /* this smaller dugout is shallower: kneeling lower, his shins came through its bottom */
   const bigA = add(Q, bigCanoe(), -1.4, -6.1, -0.12, Math.PI / 2 - 0.04),
     bigB = add(Q, bigCanoe(), 4.0, -6.5, -0.12, Math.PI / 2 + 0.03);   /* the longer canoes lie further down the beach, so their sterns stay where the old ones' did */
+  floatBoat(Q, bigA, { water: SEA, sea, edge: -4.6, ground: -0.1 });
+  floatBoat(Q, bigB, { water: SEA, sea, edge: -4.6, ground: -0.1 });
   for (const c of [bigA, bigB]) crew(Q, c, canoeSlots(12));   /* six Spaniards and ten paddlers in each (Ferdinand) */
   Q.walls.push([0.5, -3.9, 5.9, -2.75]);
   /* the ship's boat that brought Mendez and the interpreter ashore */
@@ -678,6 +818,34 @@ function shore() {
     bell.position.y = 0.03 + Math.abs(Math.sin(e * Math.PI * 4)) * 0.06 * (1 - e);
     bell.position.x = Math.sin(e * 40) * 0.012 * (1 - e);
   };
+  /* Filling the calabash at the stream (owner, 27 November 2026: "the fill the water task makes no sense, you just pick up the jug and carry it over"): a
+     close-up as it is picked up, tipped on its side with its mouth under the water, held while the water runs in and rings spread on the stream, and set
+     back upright on the bank, dripping, before you carry it to Cousin. */
+  const ripples = [0, 1].map(() => { const r = mesh(new THREE.RingGeometry(0.1, 0.106, 32), new THREE.MeshBasicMaterial({ color: 0xe8f4f4, transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0, Q.group); r.rotation.x = -Math.PI / 2; r.visible = false; r.userData.noAudit = true; return dyn(r); });
+  const drops = [0, 1, 2].map(() => { const d = mesh(new THREE.SphereGeometry(0.009, 6, 4), new THREE.MeshBasicMaterial({ color: 0xd8eef0, transparent: true, opacity: 0.85 }), 0, 0, 0, Q.group); d.visible = false; d.userData.noAudit = true; return dyn(d); });
+  /* a deeper pool in the stream where it runs past the stones, where a gourd can go under (the stream itself is only a skin of water over the sand) */
+  const cord = mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 1, 5), SM_CORD, 0, 0, 0, Q.group);   /* the gourd's cord, held by you above the picture */
+  cord.visible = false; cord.userData.noAudit = true; dyn(cord);
+  const _nk = new THREE.Vector3(), _top = new THREE.Vector3();
+  Q.reveal.fillCalabash = (k) => {
+    k = Math.min(1, Math.max(0, +k));
+    const o = Q.items.calabash, st = Q.itemStarts && Q.itemStarts.calabash;
+    if (!o || !st || o.parent !== Q.group) return;
+    const [x0, y0, z0] = st.at, wx = 12.45, wy = 0.012;   /* the pool */
+    const lift = sm(k / 0.22), dip = sm((k - 0.22) / 0.25), up = sm((k - 0.78) / 0.22);
+    const hx = x0 + (wx - x0) * dip, hy = y0 + 0.3 * lift + (-0.09 - 0.3) * dip, hr = -0.7 * dip;   /* lifted on its cord, then lowered half under in the pool, tipped so the water runs in */
+    o.position.set(hx + (x0 - hx) * up, hy + (y0 - hy) * up, z0);   /* and set back upright where it stood */
+    o.rotation.set(0, st.ry || 0, hr * (1 - up));
+    if (o.children[2]) o.children[2].visible = !(k > 0.18 && k < 0.88);   /* the corn-husk stopper out while it fills */
+    o.updateMatrixWorld(true);
+    _nk.set(0, 0.27, 0).applyMatrix4(o.matrixWorld); Q.group.worldToLocal(_nk); _top.copy(_nk).add(new THREE.Vector3(-0.25, 1.4, 0.3));
+    cord.visible = k > 0.02 && k < 0.98;
+    cord.position.copy(_nk).add(_top).multiplyScalar(0.5); cord.scale.set(1, _nk.distanceTo(_top), 1);
+    cord.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _top.clone().sub(_nk).normalize());
+    const inWater = k > 0.45 && k < 0.8, rk = (k - 0.45) / 0.35;
+    ripples.forEach((r, i) => { const t = (rk + i * 0.5) % 1; r.visible = inWater; r.position.set(wx, wy + 0.004, z0); r.scale.setScalar(1 + t * 2.4); r.material.opacity = 0.45 * (1 - t); });
+    drops.forEach((d, i) => { const t = ((k - 0.8) / 0.2 * 1.6 + i * 0.33) % 1; d.visible = k > 0.8 && k < 1; d.position.set(x0 + 0.02 - i * 0.03, 0.2 - t * 0.19, z0 + 0.02 * i); });
+  };
   Q.lookViews = {};
   Q.enter = (stage) => {
     shoreStage = stage;
@@ -685,6 +853,7 @@ function shore() {
     if (Q.items.basket && Q.items.basket.parent === Q.group) Q.items.basket.visible = stage < 23;   /* the bread went out to the ships in the trade scene (it lay on the beach for the rest of the chapter before) */
     tradeCanoe.visible = stage < 30;
     bigA.visible = bigB.visible = stage >= 30;
+    bigA.userData.afloat = bigB.userData.afloat = 0;   /* drawn up on the sand until the scene pushes them off */
     tradeCanoe.position.set(3.2, -0.1, -3.3);
     tradeCanoe.rotation.y = Math.PI / 2 + 0.05;
     for (const c of [bigA, bigB]) c.userData.manned = false;
@@ -702,17 +871,27 @@ function shore() {
   tradeBasket.position.set(0.55, (tradeCanoe.userData.bottom ?? 0.05) + 0.01, 0);
   tradeBasket.visible = false;
   tradeCanoe.add(tradeBasket);
+  const deckBasket = X.basket(4, 0.3);
+  deckBasket.position.set(2.0, 0.93, -31.42);   /* up on the rail between the two sailors, just handed up */
+  deckBasket.visible = false;
+  deckBasket.userData.noRest = true;   /* on the deck only in the scene (the rest check looks at the place between scenes) */
+  Q.group.add(dyn(deckBasket));
   const tradeHold = filmHold(Q, ["cousin"], (t, [cousin]) => {
-    const out = sm((t - 3) / 8.6), back = sm((t - 23) / 4.5), k = out - back;   /* there by 11.6 s, then swung in alongside while still */
-    tradeCanoe.userData.manned = t >= 3 && t <= 27;
-    tradeCanoe.userData.ashore = t >= 12.3 && t < 21.3;   /* alongside the ship he stops paddling and holds the paddle up while the trade is made (owner, 27 November 2026: "he is still rowing") */
-    tradeBasket.visible = t >= 3 && t < 19;   /* the basket of bread rides out in the canoe and is handed up to the sailors */
+    const out = sm((t - 3) / 8.6), back = sm((t - 23) / 4.5), k = out - back;   /* there by 11.6 s, then still; home again by 27.5 s */
+    tradeCanoe.userData.manned = t >= 0 && t <= 27;   /* he is in the canoe from the first frame and pushes off with his paddle (the people appeared in an empty canoe: owner, 27 November 2026) */
+    tradeCanoe.userData.ashore = t < 3;   /* alongside the ship he stops paddling and holds the paddle up while the trade is made (owner, 27 November 2026: "he is still rowing") */
+    tradeCanoe.userData.reverse = (t >= 10.4 && t < 12.3) || t >= 23;   /* he back-paddles to stop beside the ship, and again to back away home: the canoe never spins round (owner, 27 November 2026: "when he sails up the boat spins around (into the ship) can you make him row backwards so it doesn't have to turn?") */
+    tradeCanoe.userData.backing = t >= 23;   /* moving stern first: the course audit expects the stern, not the bow, to lead */
+    tradeCanoe.userData.stow = t >= 13 && t < 22.6;   /* paddle down while he trades */
+    tradeBasket.visible = t >= 0 && t < 18.5;
+    if (t >= 0 && Q.items.basket && Q.items.basket.parent === Q.group) Q.items.basket.visible = false;   /* the bread is in the canoe now, not also on the beach */   /* the basket of bread rides out in the canoe; the scene cuts to the deck as it is handed up (owner, 27 November 2026: "the handover of goods.. if we can't show it switch the camera angle") */
+    deckBasket.visible = t >= 18.5 && t < 27;   /* and there it is, up on the rail between the sailors */
     tradeCanoe.position.set(3.2 + (TP[0] - 3.2) * k, -0.1, -3.3 + (TP[1] + 3.3) * k);   /* out to the wreck's side, where the sailors stand at the rail */
-    /* bow out to the ship's side, alongside while trading, turned round beside the ship, bow back to the beach */
-    const beached = Math.PI / 2 + 0.05, out1 = canoeHeading(TP[0] - 3.2, TP[1] + 3.3), back1 = out1 + Math.PI;
-    /* out bow first, swung in alongside the ship for the trade, turned round, and bow first back to the beach */
-    tradeCanoe.rotation.y = t < 12 ? turnTo(beached, out1, sm((t - 3) / 1.5)) : t < 21 ? turnTo(out1, tradeHeading, sm((t - 12) / 1.8)) : t < 27.5 ? turnTo(tradeHeading, back1, sm((t - 21) / 2.2)) : turnTo(back1, beached, sm((t - 27.5) / 1.5));
-    if (cousin) cousin.m.visible = t < 3 || t > 27.5;
+    /* Out bow first; in the last stretch the bow eases a few degrees round until she lies along the wreck, still bow to the sea (the wreck lies along the
+       way out, so no turn of more than about 30 degrees is needed); then home stern first, the bow still to the sea, as she lay on the beach. */
+    const beached = Math.PI / 2 + 0.05, out1 = canoeHeading(TP[0] - 3.2, TP[1] + 3.3), par = tradeHeading + Math.PI;
+    tradeCanoe.rotation.y = t < 10 ? turnTo(beached, out1, sm((t - 3) / 1.5)) : t < 23 ? turnTo(out1, par, sm((t - 10) / 2.2)) : turnTo(par, beached, sm((t - 23) / 4.5));
+    if (cousin) cousin.m.visible = t < 0 || t > 27.5;
   });
   Q.films.trade = (t) => tradeHold(t);   /* the sailors who trade stand at the Santiago's rail (deckCrew, above) */
   /* the canoes set off: crews aboard, along the coast to the east */
@@ -725,13 +904,14 @@ function shore() {
       bigB.position.set(4.0, -0.12, -6.5);
       bigA.rotation.y = Math.PI / 2 - 0.04;
       bigB.rotation.y = Math.PI / 2 + 0.03;
-      for (const c of [bigA, bigB]) c.userData.manned = false;
+      for (const c of [bigA, bigB]) { c.userData.manned = false; c.userData.afloat = 0; }
       return;
     }
-    if (cousin) cousin.m.visible = t < 4;
+    if (cousin) cousin.m.visible = false;   /* he is one of the paddlers (his own body stood up in the canoe among them) */
     for (const [i, c] of [bigA, bigB].entries()) {
-      c.userData.manned = t >= 4;
-      c.userData.ashore = t < 8.2;   /* still on the sand: the paddlers hold their paddles up until she is pushed off */
+      c.userData.manned = true;   /* all sixteen are aboard from the first frame, paddles up until she is pushed off */
+      c.userData.ashore = t < 8.2;
+      c.userData.afloat = sm((t - 8.2 - i * 1.2) / 2.5);   /* drawn up on the sand, half in the water, until pushed off */   /* still on the sand: the paddlers hold their paddles up until she is pushed off */
       /* pushed straight out from the sand first, then swinging east along the coast; the bow follows the course */
       const home = [i ? 4.0 : -1.4, i ? -6.5 : -6.1], beached = Math.PI / 2 + (i ? 0.03 : -0.04);
       const posAt = (tt) => { const k = sm((tt - 11 - i * 1.2) / 20); return [home[0] + k * 150, home[1] - sm((tt - 8) / 6) * 6 - k * 10]; };
@@ -766,6 +946,7 @@ function crossing() {
   Q.tickers.push((t) => sea.tick && sea.tick(t));
   const c = add(Q, bigCanoe(), 0, 3.5, -0.2, Math.PI / 2 + 0.1);   /* her stern stays just clear of the camera that looks along her from behind (content.js, crossing) */
   c.userData.manned = true;
+  floatBoat(Q, c, { water: -0.3, sea, bob: 0.05, foam: 0x55607a });   /* night: dim foam */
   crew(Q, c, canoeSlots(12));
   Q.tickers.push((t) => {
     c.position.y = -0.2 + Math.sin(t * 0.9) * 0.05;

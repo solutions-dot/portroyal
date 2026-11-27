@@ -160,8 +160,8 @@ export async function dev(A) {
     const filmStep = +Object.keys(STEPS).find((k) => STEPS[k].card === "playing" && STEPS[k].film === q.get("key")),
       lookStep = +Object.keys(STEPS).find((k) => (STEPS[k].needs?.do || []).some((n) => (n.id || n) === q.get("key")));
     if (id === "film") A.chapterState(filmStep);   /* what the player has done before the scene (sheets laid out, papers read) is in place */
-    if (id === "look") A.chapterState(lookStep);
-    await go(id === "film" ? filmStep : id === "look" ? lookStep : STEPS[id] ? +id : FIRST);
+    if (id === "look" || id === "fill") A.chapterState(lookStep);
+    await go(id === "film" ? filmStep : id === "look" || id === "fill" ? lookStep : STEPS[id] ? +id : FIRST);
     closeAll();
     S.view = world().view || { pos: [world().start.x, 2.2, world().start.z], look: [0, 1.2, 0] };
     if (q.has("look")) A.action(q.get("look"));
@@ -195,6 +195,15 @@ export async function dev(A) {
       for (let t = 0, n = Number(q.get("at") || 2) * 30; t < n; t++) A.tick(1 / 30, performance.now() + t * 33);
       A.renderer.render = draw;
       A.LS.paused = true;
+    }
+    if (id === "fill") {
+      /* ?shot=fill&key=<task>&at=<0..1>: a task's filling close-up (TASKS[key].fill) held at that point */
+      const f = TASKS[q.get("key")].fill;
+      S.view = { pos: f.view.p, look: f.view.look };
+      A.camera.fov = f.view.fov || 40; A.camera.updateProjectionMatrix();
+      world().reveal[f.reveal](Number(q.get("at") || 0.5));
+      if (q.has("ui")) { document.body.classList.add("cine"); $("sub").textContent = f.lines[0]; $("sub").classList.remove("dim"); }
+      window.__SHOT = true;
     }
     if (id === "people") {
       world().group.visible = false;

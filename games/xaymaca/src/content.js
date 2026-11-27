@@ -128,7 +128,7 @@ export const FILMS = {
     place: "shore", next: 24, journal: "trade", title: "Out to the ships",
     read: ["The Taino paddled out to the ships with food. Two men on the ships did all the buying.", "Two hutias bought a piece of tin. Cassava bread bought two or three glass beads. A big load earned a hawk's bell."],
     captions: [[0,"Cousin pushes the canoe out.","full-trade-0"],[5,"Out to the ships, with the bread.","trade-05"],[11,"Sailors lean over the side.","full-trade-11"],[16,"Bread for beads. Red and yellow glass.","trade-16"],[22,"And for a big basket, a little bell.","trade-22"]],
-    shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [7.4, 2.0, -28.6], look: [1.7, 1.3, -31.4] }, { t: 16, p: [7.0, 1.7, -30.4], look: [1.7, 1.1, -31.0] }, { t: 22, p: [6.4, 1.6, -33.2], look: [2.6, 0.5, -30.9] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
+    shots: [{ t: 0, p: [6, 1.8, 1], look: [3, 0, -4] }, { t: 5, p: [5, 1.6, -4], look: [3, 0, -14] }, { t: 11, p: [7.4, 2.0, -28.6], look: [1.7, 0.8, -31.4] }, { t: 16, p: [7.0, 1.7, -30.4], look: [1.7, 0.55, -31.0] }, { t: 18.5, cut: true, p: [5.2, 0.55, -29.4], look: [1.9, 1.25, -31.5] }, { t: 22, p: [6.4, 1.6, -33.2], look: [2.6, 0.5, -30.9] }, { t: 25, p: [7.4, 1.8, -19.5], look: [3.0, 0.1, -25.5] }, { t: 28, p: [7, 2, -12], look: [2, 0.5, -20] }],
     fov: [[0, 50], [11, 44], [16, 36], [22, 40], [28, 48]],
     acts: [],
     sounds: [[0.3, "begin"], [5, "oars"], [7, "oars"], [9, "oars"], [11, "oars"], [14, "gull"], [17, "creak"], [21, "oars"], [23, "oars"]],
@@ -139,7 +139,7 @@ export const FILMS = {
     place: "shore", next: 36, journal: "paddlers", title: "The canoes set off",
     read: ["In July 1503 two canoes left St Ann's Bay. Each had six Spaniards and ten Taino paddlers.", "They went east along the coast to the end of the island, to wait for a calm sea."],
     captions: [[0,"Dawn. The two canoes are ready.","full-depart-0"],[5,"Six Spaniards and ten paddlers in each.","depart-05"],[11,"They push off from the sand.","depart-11"],[17,"East along the coast, to the end of the island.","full-depart-17"],[23,"Cousin does not look back.","depart-23"]],
-    shots: [{ t: 0, p: [2, 1.6, 3], look: [1, 0.3, -4.5] }, { t: 6, p: [-3, 1.8, 1], look: [2, 0, -5] }, { t: 12, p: [8, 2, -1], look: [12, 0, -12] }, { t: 18, p: [12, 2.5, 0], look: [60, 0, -16] }, { t: 24, p: [13, 2.4, 1], look: [110, 1, -20] }, { t: 29, p: [13, 2.4, 1], look: [140, 1, -21] }],
+    shots: [{ t: 0, p: [2, 1.6, 3], look: [1, 0.3, -4.5] }, { t: 6, p: [-3, 1.8, 1], look: [2, 0, -5] }, { t: 12, p: [8, 2, -1], look: [2.5, 0, -12] }, { t: 18, p: [12, 2.5, 0], look: [44, 0, -15] }, { t: 24, p: [13, 2.4, 1], look: [110, 1, -20] }, { t: 29, p: [13, 2.4, 1], look: [140, 1, -21] }],
     fov: [[0, 46], [6, 46], [12, 40], [18, 30], [24, 24]],
     acts: [],
     sounds: [[0.3, "begin"], [9, "oars"], [11, "oars"], [13, "oars"], [15, "gull"], [17, "oars"]],
@@ -173,10 +173,20 @@ export const FILMS = {
     place: "night", next: 55, journal: "eclipse", title: "The red moon",
     read: ["That evening the full moon rose already darkened. As it climbed, the shadow grew, until the moon was a dull red.", "People hurried down to the ships with food. Later the shadow slid away, and the moon was white again."],
     captions: [[0,"The night of 29 February 1504.","full-moon-0"],[5,"The moon is rising. Something is wrong with it.","full-moon-5"],[11,"Look at the edge of the moon. The shadow is growing.","red-moon-01"],[17,"The shadow grows.","full-moon-17"],[23,"Now it’s red. Red as a coal.","red-moon-02"],[29,"People run down the path with food.","full-moon-29"],[36,"And slowly, slowly, the shadow slides away.","full-moon-36"]],
-    shots: [{ t: 0, p: [1.6, 1.5, -7.5], look: [260, -25, -420] }, { t: 8, p: [1.6, 1.5, -7.6], look: [255, 0, -418] }, { t: 16, p: [1.6, 1.5, -7.8], look: [248, 40, -412] }, { t: 23, p: [1.6, 1.5, -7.8], look: [238, 120, -404] }, { t: 29, p: [0, 1.6, -4], look: [-5, 0.8, -9] }, { t: 36, p: [1.6, 1.5, -8], look: [232, 155, -400] }, { t: 44, p: [2, 1.7, -6], look: [230, 160, -400] }],
-    fov: [[0, 30], [8, 16], [16, 10], [23, 9], [29, 50], [36, 10], [44, 18]],
-    acts: [[12, "gran", "Point"], [16, "gran", "Idle"]],
-    sounds: [[0.3, "begin"], [6, "fire"], [18, "drum"], [30, "fire"]],
+    /* The camera follows the moon as it climbs (the looks are the moon's own place at each time: places.js MOON_FROM to MOON_TO, eased over 20 s; the
+       old looks lagged behind it, so in the long lens it sat at the edge of the picture or out of it: owner, 27 November 2026, "out of focus for most of
+       the shot"), and cuts to the people: they point, step back, stare; at the red, some run home, and then down the path to the ships with food. */
+    shots: [
+      { t: 0, p: [1.6, 1.5, -7.5], look: [260, -36, -420] }, { t: 1.5, p: [1.6, 1.5, -7.5], look: [259.5, -32.9, -419.7] }, { t: 3, p: [1.6, 1.5, -7.5], look: [258.2, -24.3, -418.8] }, { t: 4.5, p: [1.6, 1.5, -7.5], look: [256.1, -16.2, -417.4] }, { t: 6, p: [1.6, 1.5, -7.5], look: [253.5, 0.5, -415.7] }, { t: 7.5, p: [1.6, 1.5, -7.5], look: [250.5, 19.8, -413.7] }, { t: 9, p: [1.6, 1.5, -7.5], look: [247.2, 40.6, -411.5] }, { t: 10.5, p: [1.6, 1.5, -7.5], look: [243.9, 62.2, -409.3] }, { t: 11.4, p: [1.6, 1.5, -7.5], look: [241.9, 75.0, -407.9] },
+      { t: 11.5, cut: true, p: [0.5, 1.7, -15.4], look: [0.0, 1.25, -8.8] }, { t: 16.4, p: [0.3, 1.7, -15.0], look: [0.0, 1.3, -8.9] },
+      { t: 16.5, cut: true, p: [1.6, 1.5, -7.8], look: [232.4, 136.4, -401.6] }, { t: 18, p: [1.6, 1.5, -7.8], look: [230.8, 146.6, -400.6] }, { t: 19.5, p: [1.6, 1.5, -7.8], look: [230.1, 151.6, -400.0] }, { t: 21, p: [1.6, 1.5, -7.8], look: [230, 152, -400] }, { t: 22.5, p: [1.6, 1.5, -7.8], look: [230, 152, -400] }, { t: 25.4, p: [1.6, 1.5, -7.8], look: [230, 152, -400] },
+      { t: 25.5, cut: true, p: [5.0, 2.3, -0.6], look: [-2.4, 1.3, 4.2] }, { t: 28.9, p: [4.6, 2.3, -0.2], look: [-2.6, 1.2, 4.0] },
+      { t: 29, cut: true, p: [1.2, 1.5, -3.2], look: [-5.5, 0.6, -10] }, { t: 35.4, p: [0.8, 1.6, -3.6], look: [-6.5, 0.4, -12] },
+      { t: 35.5, cut: true, p: [1.6, 1.5, -8], look: [230, 152, -400] }, { t: 44, p: [2, 1.7, -6], look: [230, 148, -400] },
+    ],
+    fov: [[0, 30], [5, 16], [11.4, 11], [11.45, 56], [16.4, 50], [16.45, 10], [22, 8], [25.4, 8], [25.45, 52], [28.9, 50], [28.95, 54], [35.4, 52], [35.45, 9], [44, 16]],
+    acts: [[12, "gran", "Talk1"], [15.5, "gran", "Idle"], [26, "cacique", "LookAround"], [26.4, "interp", "Point"]],
+    sounds: [[0.3, "begin"], [6, "fire"], [12.5, "drum"], [18, "drum"], [25.6, "drum"], [30, "fire"]],
     duration: 44,
   },
   /* Ferdinand: the ship sent by Mendez; all sailed on 28 June 1504; the beached ships stayed. */

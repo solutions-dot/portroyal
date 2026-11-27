@@ -306,3 +306,62 @@ export function gulls(parent, n = 6, at = [0, 0], h = 14, r = 18, seed = 1) {
     }
   };
 }
+
+/* createStream(parent, { points, width, y, seed, pools }) -> { water, flow, bank, pools, tick(t) }: a shallow running stream over sand (owner, 27 November 2026,
+   Xaymaca: "this must look like running water.. I didn't realise it was water at all.. and not so perfect edges"). A ribbon along `points` ([[x, z], ...] in
+   the parent's frame) with banks that wander in and out, the sea's ripples and glints on it (seaLook, the same water as the bay), pale streaks that run
+   downstream (from the first point to the last), and a band of darker wet sand along each bank. pools: [[x, z, r]] deeper, darker hollows with uneven edges. */
+export function createStream(parent, { points, width = 1.3, y = 0.012, seed = 1, kind = "caribbean", pools = [] } = {}) {
+  sharedU.uSeaN.value = normals();
+  const W = WATERS[kind] || WATERS.caribbean;
+  const wob = (s, k) => Math.sin(s * 1.7 + seed * 3.1 + k) * 0.5 + Math.sin(s * 4.3 + seed * 1.3 + k * 2.1) * 0.3 + Math.sin(s * 9.1 + k * 0.7) * 0.2;   /* -1..1, smooth */
+  const pts = []; let len = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x0, z0] = points[i], [x1, z1] = points[i + 1], d = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.ceil(d / 0.2));
+    for (let j = 0; j < n; j++) { const k = j / n; pts.push([x0 + (x1 - x0) * k, z0 + (z1 - z0) * k, len + d * k]); }
+    len += d;
+  }
+  pts.push([...points[points.length - 1], len]);
+  const ribbon = (extra, lift, edgeKey) => {
+    const pos = [], uv = [], idx = [];
+    pts.forEach(([x, z, s], i) => {
+      const [xa, za] = pts[Math.max(0, i - 1)], [xb, zb] = pts[Math.min(pts.length - 1, i + 1)], tl = Math.hypot(xb - xa, zb - za) || 1, nx = -(zb - za) / tl, nz = (xb - xa) / tl;
+      const l = width / 2 * (1 + 0.28 * wob(s, 0)) + extra, r = width / 2 * (1 + 0.28 * wob(s, 5)) + extra;
+      pos.push(x + nx * l, y + lift, z + nz * l, x - nx * r, y + lift, z - nz * r);
+      uv.push(0, s / 1.2, 1, s / 1.2);
+      if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    });
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+    if (g.attributes.normal.getY(0) < 0) { g.index.array.reverse(); g.computeVertexNormals(); }
+    void edgeKey;
+    return g;
+  };
+  const mark = (m, name) => { m.name = name; m.userData.noBatch = true; m.userData.water = true; m.userData.noAudit = true; parent.add(m); return m; };
+  /* wet sand along both banks: darker, fading out across its width */
+  const bankTex = cv(64, 8, (c, w, h) => { for (let x = 0; x < w; x++) { const e = Math.abs(x / (w / 2 - 0.5) - 1), a = Math.max(0, Math.min(1, (e - 0.55) / 0.45)) * (e < 1 ? 1 : 0); c.fillStyle = `rgba(70,58,38,${(a * 0.55).toFixed(3)})`; c.fillRect(x, 0, 1, h); } });
+  const bank = mark(new THREE.Mesh(ribbon(0.45, -0.001), new THREE.MeshBasicMaterial({ map: bankTex, transparent: true, depthWrite: false })), "stream bank");
+  const mat = new THREE.MeshStandardMaterial({ color: 0x3f8e98, roughness: 0.12, metalness: 0.12, transparent: true, opacity: 0.86, depthWrite: false });
+  seaLook(mat, { deep: W.deep, refl: W.refl, rip: 1.2, lite: true });
+  const water = mark(new THREE.Mesh(ribbon(0, 0), mat), "stream");
+  water.renderOrder = 2;
+  /* streaks of foam and light that run downstream */
+  const streak = cv(64, 128, (c, Wd, Hd) => {
+    for (let i = 0; i < 26; i++) { const sx = (i * 37 + 11) % 64, sy = (i * 53) % 128, h = 10 + (i % 5) * 7; c.fillStyle = `rgba(240,250,250,${(0.25 + (i % 3) * 0.15).toFixed(2)})`; c.fillRect(sx, sy, 1 + (i % 2), h); }
+  });
+  streak.wrapS = streak.wrapT = THREE.RepeatWrapping;
+  const flow = mark(new THREE.Mesh(ribbon(-0.08, 0.003), new THREE.MeshBasicMaterial({ map: streak, transparent: true, opacity: 0.55, depthWrite: false })), "stream flow");
+  flow.renderOrder = 3;
+  const pmat = new THREE.MeshStandardMaterial({ color: 0x24606a, roughness: 0.08, metalness: 0.15, transparent: true, opacity: 0.8, depthWrite: false });
+  seaLook(pmat, { deep: W.deep, refl: W.refl, rip: 0.8, lite: true });
+  const poolMeshes = pools.map(([px, pz, pr], i) => {
+    const g = new THREE.CircleGeometry(1, 40), p = g.attributes.position;
+    for (let k = 1; k < p.count; k++) { const a = Math.atan2(p.getY(k), p.getX(k)), r = pr * (1 + 0.16 * Math.sin(a * 3 + i * 2 + seed) + 0.08 * Math.sin(a * 7 + 1.3)); p.setXY(k, Math.cos(a) * r, Math.sin(a) * r); }
+    g.rotateX(-Math.PI / 2);
+    const m = mark(new THREE.Mesh(g, pmat), "stream pool"); m.position.set(px, y + 0.0015, pz); m.renderOrder = 2; return m;
+  });
+  let last = null;
+  return {
+    water, flow, bank, pools: poolMeshes,
+    tick(t) { if (last !== null) streak.offset.y -= (t - last) * 0.45; last = t; },
+  };
+}

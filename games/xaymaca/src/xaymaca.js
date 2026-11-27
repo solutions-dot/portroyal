@@ -400,9 +400,14 @@ export function eclipseMoon(R = 6) {
     vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
     fragmentShader: `varying vec2 vUv; uniform float k; uniform float glow;
       float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+      float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y); }
       void main(){
         vec2 p=vUv*2.0-1.0; float r=length(p); if(r>1.0) discard;
-        float maria=0.82+0.18*smoothstep(0.2,0.8,hash(floor(p*5.0+3.0)))*0.6 - 0.12*smoothstep(0.55,0.0,length(p-vec2(-0.25,0.2))) - 0.1*smoothstep(0.4,0.0,length(p-vec2(0.3,-0.1)));
+        /* smooth grey seas (the old one was squares of one shade: the moon looked blurred and blocky in the long lens, owner 27 November 2026) */
+        float n=0.55*vnoise(p*3.0+1.7)+0.3*vnoise(p*7.0+4.1)+0.15*vnoise(p*15.0);
+        float maria=0.9-0.22*smoothstep(0.45,0.75,n) - 0.14*smoothstep(0.55,0.0,length(p-vec2(-0.25,0.2))) - 0.1*smoothstep(0.42,0.0,length(p-vec2(0.3,-0.12)));
+        maria*=0.82+0.18*sqrt(max(0.0,1.0-r*r));   /* darker toward the edge, as a ball */
         vec3 white=vec3(0.98,0.96,0.88)*maria;
         // the shadow's centre moves across from the left; 'cover' is how deep in the shadow this point is
         float sx=mix(-3.6,0.0,clamp(k,0.0,1.0)); float d=length(p-vec2(sx,0.15*(1.0-k)))-2.6;

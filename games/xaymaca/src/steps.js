@@ -65,7 +65,8 @@ export const STEPS = {
 export const TASKS = {
   bread: { place: "maima", item: "casabe", start: [1.0, 0.552, -0.4, 0.2], from: [1.3, 0.4], to: [-3.0, -7.4], at: [-3.6, 0.012, -7.9], label: "Take the cassava bread", put: "Put it in Cousin's basket" },
   basket: { place: "shore", item: "basket", start: [7.6, 0, 3.6, 0.3], from: [7.2, 3.0], to: [2.4, -1.6], at: [2.9, 0.32, -2.6], label: "Pick up the basket", put: "Put it in the canoe" },
-  calabash: { place: "shore", item: "calabash", start: [12.2, 0.02, 2.4, 0.2], from: [11.6, 2.6], to: [-0.4, -1.4], at: [-0.9, 0.3, -2.7], label: "Fill the calabash at the stream", put: "Give it to Cousin" },
+  calabash: { place: "shore", item: "calabash", start: [12.2, 0.02, 2.4, 0.2], from: [11.6, 2.6], to: [-0.4, -1.4], at: [-0.9, 0.3, -2.7], label: "Fill the calabash at the stream", put: "Give it to Cousin",
+    fill: { reveal: "fillCalabash", sound: "water", view: { p: [11.1, 0.75, 3.4], look: [12.35, 0.08, 2.4], fov: 36 }, lines: ["You dip the calabash into the cool stream.", "It fills with fresh water for the crossing."] } },
   store: { place: "maima", item: "casabe2", start: [1.0, 0.552, -0.4, 0.2], from: [1.3, 0.4], to: [-6.3, 0.3], at: [-7.0, 0.0, -1.6], label: "Take the cassava bread", put: "Put it inside the house" },
 };
 /* Things the player looks at (owner rule 13: a close-up action, engine/lookshot.js). at: where you stand. view: the close framing the camera

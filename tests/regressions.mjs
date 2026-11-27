@@ -426,3 +426,15 @@ test('shot paths: a cut jumps, a run glides (engine/shotpath.js)', async () => {
   assert.ok(P.at(4.5).p.x >= 99.999, 'jumps at the cut');
   assert.ok(P.at(2).p.x > 0.5 && P.at(2).p.x < 3.5, 'glides within a run');
 });
+
+test('a talk box opens with Next focused, so the x must be chosen on purpose (owner, 27 November 2026)', async () => {
+  const { readFileSync, readdirSync, existsSync } = await import('node:fs');
+  for (const g of readdirSync('games').filter((n) => !n.startsWith('_') && existsSync(`games/${n}/src/ui.js`))) {
+    const src = readFileSync(`games/${g}/src/ui.js`, 'utf8');
+    assert.ok(/id === "dialogue"[^\n]*\$\("next"\)/.test(src), `${g}: show() must focus #next for the dialogue box`);
+  }
+  for (const g of ['port-royal', 'garvey', 'kendal', 'bog-walk', 'nanny', 'melissa', 'eventide']) {
+    assert.ok(/\$\('next'\)\.focus\(/.test(readFileSync(`games/${g}/src/main.js`, 'utf8')), `${g}: a talk line must focus #next`);
+  }
+  assert.ok(/\$\('next'\)\.focus\(\)/.test(readFileSync('games/tivoli/src/talk.js', 'utf8')), 'tivoli: a talk line must focus #next');
+});
