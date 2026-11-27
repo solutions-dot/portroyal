@@ -88,6 +88,50 @@
   "stem": "c-0b5ee54e"
  },
  {
+  "key": "The gateman|Good afternoon! Visitors for the Home?",
+  "who": "The gateman",
+  "text": "Good afternoon! Visitors for the Home?",
+  "spoken": "Good afternoon! Visitors for the Home?",
+  "voice": "446ff704-529c-4aea-893d-5c8990a6bc14",
+  "voiceName": "gate",
+  "emotion": "neutral",
+  "speed": 1,
+  "stem": "c-e5621b33"
+ },
+ {
+  "key": "The gateman|Myers Ward. The old wooden one, on the right.",
+  "who": "The gateman",
+  "text": "Myers Ward. The old wooden one, on the right.",
+  "spoken": "Myers Ward. The old wooden one, on the right.",
+  "voice": "446ff704-529c-4aea-893d-5c8990a6bc14",
+  "voiceName": "gate",
+  "emotion": "neutral",
+  "speed": 1,
+  "stem": "c-1e04c847"
+ },
+ {
+  "key": "The gateman|About seven hundred people live here.",
+  "who": "The gateman",
+  "text": "About seven hundred people live here.",
+  "spoken": "About seven hundred people live here.",
+  "voice": "446ff704-529c-4aea-893d-5c8990a6bc14",
+  "voiceName": "gate",
+  "emotion": "neutral",
+  "speed": 1,
+  "stem": "c-55557e37"
+ },
+ {
+  "key": "The gateman|Old ladies, old men, and children too. Go right up.",
+  "who": "The gateman",
+  "text": "Old ladies, old men, and children too. Go right up.",
+  "spoken": "Old ladies, old men, and children too. Go right up.",
+  "voice": "446ff704-529c-4aea-893d-5c8990a6bc14",
+  "voiceName": "gate",
+  "emotion": "neutral",
+  "speed": 1,
+  "stem": "c-be5eb0e9"
+ },
+ {
   "key": "Miss Hyacinth|Come in, come in! Mind the beds, they are close.",
   "who": "Miss Hyacinth",
   "text": "Come in, come in! Mind the beds, they are close.",
@@ -105,8 +149,8 @@
   "spoken": "Thirty years I sold yam in the market.",
   "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
   "voiceName": "hyacinth",
-  "emotion": "content",
-  "speed": 1,
+  "emotion": "sad",
+  "speed": 0.9,
   "stem": "c-f1e56fbd"
  },
  {
@@ -270,8 +314,8 @@
   "spoken": "It is morning, child. The fire is out.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-a5d500b9"
  },
  {
@@ -281,8 +325,8 @@
   "spoken": "They could not get in, child. It was too fast.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-aa83f7a1"
  },
  {
@@ -292,8 +336,8 @@
   "spoken": "Nobody could have stopped it. Not you. Not anyone.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-33442a9e"
  },
  {
@@ -303,8 +347,8 @@
   "spoken": "Look. The bus is running. Life goes on, somehow.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-2509efb9"
  },
  {
@@ -314,8 +358,8 @@
   "spoken": "Come home. We will pray for them all.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-7d8e46ba"
  },
  {
@@ -325,8 +369,8 @@
   "spoken": "Stay close to me. Do not pass the rope.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-5dc4575d"
  },
  {
@@ -336,8 +380,8 @@
   "spoken": "It is the old wooden ward. Lord, have mercy.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-abe4034b"
  },
  {
@@ -347,8 +391,8 @@
   "spoken": "The firemen are here. See if we can help.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-49d14812"
  },
  {
@@ -391,8 +435,8 @@
   "spoken": "You are here. Thank God somebody is here.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-a0f4ae89"
  },
  {
@@ -402,8 +446,8 @@
   "spoken": "We are checking every name. Please be patient.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-915a67b7"
  },
  {
@@ -413,8 +457,8 @@
   "spoken": "Miss Hyacinth and Miss Maude are just there. Go to them.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-d4983eff"
  },
  {
@@ -424,8 +468,8 @@
   "spoken": "Child. I ran. My old market feet ran.",
   "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
   "voiceName": "hyacinth",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-6e11eebc"
  },
  {
@@ -435,8 +479,8 @@
   "spoken": "I left my photograph. It does not matter now.",
   "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
   "voiceName": "hyacinth",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-5f666b38"
  },
  {
@@ -446,8 +490,8 @@
   "spoken": "Today the whole country is in mourning.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-a20cb93c"
  },
  {
@@ -457,8 +501,8 @@
   "spoken": "Mourning means being sad together.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-1e11f4a9"
  },
  {
@@ -468,8 +512,8 @@
   "spoken": "Thousands of people came. Look at them all.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-dd6b9962"
  },
  {
@@ -479,8 +523,8 @@
   "spoken": "Listen to the people. Then find Nurse Bell.",
   "voice": "c6f27449-17f7-4ec6-afcc-fc4ea217b099",
   "voiceName": "gran",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-fcd344ff"
  },
  {
@@ -556,8 +600,8 @@
   "spoken": "I have to tell you something hard.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-0003c47a"
  },
  {
@@ -567,8 +611,8 @@
   "spoken": "Miss Iris and Miss Dora did not get out.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-db1c96af"
  },
  {
@@ -578,8 +622,8 @@
   "spoken": "I am so sorry. They were your friends.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-e96552e3"
  },
  {
@@ -589,8 +633,8 @@
   "spoken": "They knew you cared. That is a real thing.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-bfe74ca0"
  },
  {
@@ -600,8 +644,8 @@
   "spoken": "Go to the rail with Gran. Say goodbye your own way.",
   "voice": "41f3f9c6-d6e2-438a-af5a-2069a61d62ba",
   "voiceName": "bell",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 0.97,
   "stem": "c-c5152689"
  },
  {
@@ -633,8 +677,8 @@
   "spoken": "I still miss Iris and Dora every day.",
   "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
   "voiceName": "hyacinth",
-  "emotion": "sad",
-  "speed": 0.92,
+  "emotion": "content",
+  "speed": 1,
   "stem": "c-299bbe9b"
  },
  {
@@ -642,7 +686,7 @@
   "who": "Kayla",
   "text": "You knew them. You really knew them.",
   "spoken": "You knew them. You really knew them.",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -653,7 +697,7 @@
   "who": "Kayla",
   "text": "Why do we still remember them, after so long?",
   "spoken": "Why do we still remember them, after so long?",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -664,7 +708,7 @@
   "who": "Kayla",
   "text": "Miss Iris. Miss Dora. I will remember the names.",
   "spoken": "Miss Iris. Miss Dora. I will remember the names.",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "sad",
   "speed": 0.9,
@@ -675,7 +719,7 @@
   "who": "Kayla",
   "text": "I will visit my grandfather this week.",
   "spoken": "I will visit my grandfather this week.",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -686,7 +730,7 @@
   "who": "Kayla",
   "text": "Then I will tell my class what you told me.",
   "spoken": "Then I will tell my class what you told me.",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -697,7 +741,7 @@
   "who": "Kayla",
   "text": "Thank you for telling me who they were.",
   "spoken": "Thank you for telling me who they were.",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -708,7 +752,7 @@
   "who": "Kayla",
   "text": "Excuse me. Why are all these people here today?",
   "spoken": "Excuse me. Why are all these people here today?",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "content",
   "speed": 1.03,
@@ -719,7 +763,7 @@
   "who": "Kayla",
   "text": "Who is in the big grave?",
   "spoken": "Who is in the big grave?",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "sad",
   "speed": 0.9,
@@ -730,7 +774,7 @@
   "who": "Kayla",
   "text": "You knew them? Tell me what happened!",
   "spoken": "You knew them? Tell me what happened!",
-  "voice": "b883942d-facf-4719-917d-b164d2f3d93b",
+  "voice": "dac044c3-0e78-4d47-913b-6e47e80e8e3e",
   "voiceName": "kayla",
   "emotion": "excited",
   "speed": 1.03,
