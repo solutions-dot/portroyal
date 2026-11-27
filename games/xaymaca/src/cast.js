@@ -1,12 +1,12 @@
 /* The people of 1503 and 2026. Each body has its own recipe (tools/xaymaca/people). Real: Diego Mendez (imagined everyday words, flagged on
-   his journal page), the cacique of Maima and the interpreter (real, unnamed, imagined words). Fictional: Grandmother, Cousin, the runner, and
-   Miss Sharon the park guide. Columbus and his brother are not shown: Columbus is heard only through the interpreter. */
+   his journal page), the cacique of Maima and the man from Hispaniola (real, unnamed, imagined words). Fictional: Grandmother, Cousin, the runner, and
+   Miss Sharon the park guide. Columbus and his brother are not shown: Columbus is heard only through the man from Hispaniola. */
 export const CAST = {
   gran: { base: "xa_gran", sex: "f", who: "Grandmother", idle: "Idle" },
   cousin: { base: "xa_cousin", sex: "m", who: "Cousin", idle: "IdleM" },
   cacique: { base: "xa_cacique", sex: "m", who: "The cacique", idle: "IdleM" },
   runner: { base: "xa_runner", sex: "m", who: "A runner", idle: "IdleM" },
-  interp: { base: "xa_interp", sex: "m", who: "The interpreter", idle: "IdleM" },
+  interp: { base: "xa_interp", sex: "m", who: "The man from Hispaniola", idle: "IdleM" },
   mendez: { base: "xa_mendez", sex: "m", who: "Diego Mendez", idle: "IdleM" },
   guide: { base: "xa_guide", sex: "f", who: "Miss Sharon", idle: "Idle" },
 };

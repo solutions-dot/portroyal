@@ -684,8 +684,8 @@ function shore() {
     for (const c of [bigA, bigB]) c.userData.manned = false;
     if (stage < 30) {
       stand(Q, "cousin", stage >= 24 ? 1.8 : 1.4, stage >= 24 ? -1.2 : -2.0, 3.2, -3.2);
-      stand(Q, "interp", -4.2, 0.4, 2, -1);
-      stand(Q, "mendez", -5.3, 0.6, 2, -1);
+      stand(Q, "interp", -3.4, 1.6, 2, -1);
+      stand(Q, "mendez", -5.9, -0.2, 2, -1);
     } else {
       stand(Q, "cousin", -0.6, -2.4, -1, -4.6);
       stand(Q, "gran", 1.4, 0.8, -0.6, -2.4);
@@ -730,8 +730,8 @@ function shore() {
   };
   /* ---- people ---- */
   person(Q, "cousin", "cousin", 1.4, -2.0, face(1.4, -2.0, 3.2, -3.2), { kind: "watch", at: [3.2, -3.2], idles: ["IdleM"], react: ["HeadTurn", "Point"], every: [5, 9] });
-  person(Q, "interp", "interp", -4.2, 0.4, face(-4.2, 0.4, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
-  person(Q, "mendez", "mendez", -5.3, 0.6, face(-5.3, 0.6, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] });
+  person(Q, "interp", "interp", -3.4, 1.6, face(-3.4, 1.6, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn"], every: [6, 10] });
+  person(Q, "mendez", "mendez", -5.9, -0.2, face(-5.9, -0.2, 2, -1), { kind: "watch", at: [2, -1], idles: ["IdleM"], react: ["HeadTurn", "LookAround"], every: [6, 10] });
   person(Q, "gran", "gran", 1.4, 0.8, face(1.4, 0.8, -0.6, -2.4), { kind: "watch", at: [-0.6, -2.4], idles: ["Idle"], react: ["HeadTurn"], every: [6, 10] });
   crowd(Q, "xa_sailor", -7.6, -1.6, face(-7.6, -1.6, -6.4, -3.6), { kind: "watch", at: [-6.4, -3.6], react: ["HeadTurn", "Shrug"], every: [6, 9] });
   crowd(Q, "xa_man", 8.4, 1.0, face(8.4, 1.0, 3, -3), { kind: "chat", group: "b", at: [8.8, 1.2], ring: 0.6 });

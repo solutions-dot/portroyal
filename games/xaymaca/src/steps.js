@@ -42,7 +42,7 @@ export const STEPS = {
   44: t("maima", "Talk to the cacique.", ["cacique"], 45, { show: ["gran", "cacique", "runner"], journal: "cacique" }),
   45: t("maima", "A runner has come from the east. Talk to him.", ["runner"], 50, { show: ["gran", "cacique", "runner"] }),
   /* 5. The red moon (29 February 1504) */
-  50: t("night", "Talk to the interpreter by the fire.", ["interp"], 51, { show: ["gran", "cacique", "interp"] }),
+  50: t("night", "Talk to the man from Hispaniola by the fire.", ["interp"], 51, { show: ["gran", "cacique", "interp"] }),
   51: t("night", "Talk to the cacique.", ["cacique"], 52, { show: ["gran", "cacique", "interp"] }),
   52: t("night", "Talk to Grandmother at the edge of the hill.", ["gran"], 53, { show: ["gran", "cacique", "interp"] }),
   53: w("night", "The moon is rising.", "film", 54, { film: "moon", show: ["gran", "cacique", "interp"] }),

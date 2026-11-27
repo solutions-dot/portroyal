@@ -1,7 +1,7 @@
 /* Every word the player reads. The record of 1503 to 1504 is Spanish only (Ferdinand Columbus, Diego Mendez, Columbus). You, Grandmother,
-   Cousin, the runner and the park guide are fictional; the cacique of Maima and the interpreter were real but no source names them, and
+   Cousin, the runner and the park guide are fictional; the cacique of Maima and the man from Hispaniola were real but no source names them, and
    their words are imagined; Diego Mendez was real and his words here are imagined. Columbus has no invented words: what he said at the
-   eclipse comes only through the interpreter, close to Ferdinand's report. Facts, sources and the game's own rules: docs/games/xaymaca.md.
+   eclipse comes only through the man from Hispaniola, close to Ferdinand's report. Facts, sources and the game's own rules: docs/games/xaymaca.md.
    The readable script (docs/games/xaymaca/script.md) is made from this file by node tools/xaymaca/script.mjs. */
 export const TITLE = "Xaymaca";
 export const GAME = {
@@ -25,12 +25,12 @@ export const CHAPTERS = [
   { id: "today", name: "Back in 2026", year: "2026", first: 70, last: 75, place: "today", caption: "Seville Heritage Park, St Ann's Bay · 2026", intro: "The same hill, more than five hundred years later." },
 ];
 export const chapterOf = (stage) => Math.max(0, CHAPTERS.findIndex((c) => stage >= c.first && stage <= c.last));
-export const PEOPLE = { gran: "Grandmother", cousin: "Cousin", cacique: "The cacique", interp: "The interpreter", mendez: "Diego Mendez", runner: "A runner", guide: "Miss Sharon" };
+export const PEOPLE = { gran: "Grandmother", cousin: "Cousin", cacique: "The cacique", interp: "The man from Hispaniola", mendez: "Diego Mendez", runner: "A runner", guide: "Miss Sharon" };
 const L = (who, text, voice) => voice ? { who, text, voice } : { who, text };
 const G = "Grandmother",
   C = "Cousin",
   K = "The cacique",
-  I = "The interpreter",
+  I = "The man from Hispaniola",
   M = "Diego Mendez",
   Y = "You";
 export const TALK = {
@@ -40,7 +40,7 @@ export const TALK = {
   15: { cousin: [L(C, "They are building roofs on their ships. Like houses!"), L(Y, "So they are staying."), L(C, "For a while. And they have nothing to eat."), L(C, "Tomorrow we take bread down to them. You can help.")] },
   /* 2. Bread for bells */
   20: { cousin: [L(C, "The strangers stay on their ships. They do not come ashore."), L(C, "So we go out to them, in the canoe."), L(Y, "What will they give us for bread?"), L(C, "Beads. Bells. Strange shining things."), L(C, "Bring the basket of bread to the canoe.")] },
-  25: { interp: [L(I, "Do not be afraid. I speak your words."), L(Y, "You look like us. But you came on their ship."), L(I, "I come from the big island to the east."), L(I, "The Spanish call it Hispaniola. I sail with them."), L(I, "Their leader is the Admiral. He is old, and sick."), L(I, "Come. Diego Mendez wants to speak with your cousin.")] },
+  25: { interp: [L(I, "Do not be afraid. I am Taino, like you."), L(Y, "You look like us. But you came on their ship."), L(I, "I come from the big island to the east."), L(I, "The Spanish call it Hispaniola. I sail with them."), L(I, "Their leader is the Admiral. He is old, and sick."), L(I, "Come. Diego Mendez wants to speak with your cousin.")] },
   26: { mendez: [L(I, "This is Diego Mendez. He is brave, they say."), L(M, "I must cross the sea to Hispaniola. In a canoe."), L(I, "He needs strong paddlers. Ten for each canoe."), L(Y, "That sea is wide. People die out there."), L(M, "I know. That is why I need the best."), L(I, "He says he will pay the paddlers well.")] },
   27: { cousin: [L(C, "I am the best paddler in Maima. Everyone knows it.", "voices/cousin-01.mp3"), L(Y, "You are going with them?"), L(C, "Someone must. Or the strangers stay here for ever.", "voices/cousin-02.mp3"), L(Y, "Grandmother will be angry."), L(C, "Grandmother will be proud. In the end.", "voices/cousin-03.mp3")] },
   /* 3. The paddlers */
@@ -51,7 +51,7 @@ export const TALK = {
   44: { cacique: [L(K, "The strangers eat and eat. Their bellies have no bottom.", "voices/cacique-01.mp3"), L(K, "One of them eats as much as twenty of us.", "voices/cacique-02.mp3"), L(Y, "Our gardens are getting empty."), L(K, "Yes. So we will bring them less from now on.", "voices/cacique-03.mp3"), L(K, "We have children to feed too.", "voices/cacique-04.mp3")] },
   45: { runner: [L("A runner", "I ran from the east. Two days without stopping."), L("A runner", "The men who left are taking food by force."), L(Y, "Did they cross the sea?"), L("A runner", "No. The waves sent them back."), L("A runner", "They were cruel to the paddlers out there."), L(Y, "And Cousin? Was he with them?"), L("A runner", "No. Your cousin went long before. With the first canoes.")] },
   /* 5. The red moon */
-  50: { interp: [L(I, "The Admiral called your leaders today. I spoke his words."), L(I, "He said his God is angry with you."), L(I, "Because you bring less food."), L(I, "He said tonight the moon will show that anger."), L(Y, "How can he know what the moon will do?"), L(I, "He reads it in his books. That is all I know.")] },
+  50: { interp: [L(I, "The Admiral called your leaders today. I carried his message."), L(I, "He said his God is angry with you."), L(I, "Because you bring less food."), L(I, "He said tonight the moon will show that anger."), L(Y, "How can he know what the moon will do?"), L(I, "He reads it in his books. That is all I know.")] },
   51: { cacique: [L(K, "Some of the leaders are afraid. Some are laughing."), L(K, "Who can make the moon angry? Not a man."), L(K, "We will watch. And we will see.")] },
   52: { gran: [L(G, "I have seen the moon go dark before. Twice."), L(G, "It comes back. It always comes back."), L(Y, "But he said it would happen tonight."), L(G, "That is the strange part. How did he know?"), L(G, "Come. It is rising.")] },
   55: { gran: [L(G, "You see? It came back, as I said."), L(Y, "Everyone ran down with food."), L(G, "Yes. They were frightened. I was too, a little."), L(G, "Not of the moon. Of a man who knows it so well."), L(G, "Now. Bed.")] },
@@ -86,7 +86,7 @@ export const JOURNAL = [
   { id: "ships", title: "The two ships", simple: ["Columbus came to Jamaica in June 1503 with two ships.", "Shipworms had eaten holes in them. They were sinking.", "He ran them onto the sand, side by side."], deeper: ["The ships were La Capitana and the Santiago, called the Bermuda.", "The sailors put straw roofs on the decks and lived there.", "Columbus kept his men on the ships, so they would not take food or quarrel with the villages.", "The ships stood about a bowshot from the shore. The game draws them nearer, so you can see them."] },
   { id: "trade", title: "Trading", simple: ["The Taino paddled out to the ships to trade.", "Two hutias for a piece of tin.", "Cassava bread for two or three glass beads."], deeper: ["A big load of food earned a hawk's bell.", "A cacique might get a red cap, a small mirror or scissors.", "Ferdinand Columbus, the Admiral's son, wrote these prices down. He was about fifteen."] },
   { id: "bell", title: "The hawk's bell", simple: ["A small round bell, made for a hunting bird's leg.", "The Taino had never heard a sound like it."], deeper: ["The Spanish traded hawk's bells all over the Caribbean.", "Some have been found in Taino sites by archaeologists."] },
-  { id: "interpreter", title: "The interpreter", simple: ["A Taino man from Hispaniola sailed with the ships.", "He spoke for the Spanish."], deeper: ["He was real, but no record gives his name.", "His words in this game are imagined, except where he passes on what the Admiral said. That part follows Ferdinand Columbus's account.", "His shirt is imagined too."] },
+  { id: "interpreter", title: "The man from Hispaniola", simple: ["A Taino man from Hispaniola sailed with the Spanish ships.", "He carried the Admiral's messages to the villages."], deeper: ["He was real, but no record gives his name. Ferdinand Columbus calls him \"an Indian of Hispaniola\" who was on board.", "His words in this game are imagined, except where he passes on what the Admiral said. That part follows Ferdinand's account.", "In the game everyone speaks English so you can follow the story. In real life the Taino and the Spanish had no common language.", "His shirt is imagined too."] },
   { id: "mendez", title: "Diego Mendez", simple: ["Diego Mendez was real. He was Columbus's secretary.", "He offered to cross the sea in a canoe to get help."], deeper: ["His words in this game are imagined. In real life he spoke Spanish, and the interpreter passed his words on.", "Mendez wrote about the journey years later, in his will.", "He traded a brass helmet, a coat and a shirt for a good canoe.", "He and a cacique called Ameyro swapped names, as a sign of friendship."] },
   { id: "paddlers", title: "The paddlers", simple: ["In July 1503 two canoes set off for Hispaniola.", "Each had six Spaniards and ten Taino paddlers.", "No paddler's name was written down."], deeper: ["Bartholomew Fieschi led the second canoe. Columbus's brother saw them off from the east end of Jamaica.", "Mendez's own account is different. He says he tried twice, the first time with six Taino.", "The record does not say that any paddler came home. We do not know what happened to them."] },
   { id: "navassa", title: "The crossing", simple: ["It was very hot, and the water ran out.", "One paddler died of thirst.", "Then the moon rose behind a little island, Navassa."], deeper: ["On Navassa they found rainwater in holes in the rock.", "Some paddlers drank too much and died. Others were sick.", "The next day they reached Hispaniola. Nobody would paddle back to Jamaica.", "This is what Mendez told Ferdinand Columbus, who wrote it down."] },

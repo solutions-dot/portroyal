@@ -77,8 +77,8 @@ Bitter cassava root was grated, the poisonous juice squeezed out, and the meal b
 - **Grandmother**: makes casabe at the buren; remembers eclipses before. Fictional.
 - **Cousin**: about seventeen, a strong paddler. He goes with the canoes in July 1503. Fictional. **His fate is left open** (confirmed by the owner, 25 November 2026): the record names no paddler and records none coming home. The game ends with the family still watching the sea.
 - **The cacique of Maima**: real (the village had one), but no source names him. He has a few everyday words, flagged.
-- **The interpreter**: real ("an Indian of Hispaniola who was on board"), unnamed. His words are imagined except where they carry Ferdinand's report of what the Admiral said.
-- **Diego Mendez**: real; imagined everyday words through the interpreter, flagged.
+- **The man from Hispaniola** (id `interp`; was "the interpreter", renamed 27 November 2026 because the game's English made an interpreter pointless: owner): real ("an Indian of Hispaniola who was on board"), unnamed. His words are imagined except where they carry Ferdinand's report of what the Admiral said.
+- **Diego Mendez**: real; imagined everyday words, spoken in English like everyone else's, flagged.
 
 ## Chapters
 
