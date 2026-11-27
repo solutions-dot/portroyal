@@ -212,7 +212,8 @@ export function dugOut(o = {}) {
   const floor = TH * 1.6, K = paintKit(), V = (x, y, z) => new THREE.Vector3(x, y, z), seats = o.seats || [-0.16 * L, 0.18 * L];
   const halfIn = (x, y) => { const s = x / L + 0.5; let best = 0; for (let j = 0; j <= NT; j++) { const [z, yy] = inner(s, j / NT); if (yy <= y) best = Math.max(best, z); } return best; };
   /* seat boards across the top, each resting in two shallow notches, with a peg at either end */
-  for (const x of seats) { const s = x / L + 0.5, w = half(s) * 2 + 0.04, y = sheer(s) - 0.035; K.box(0.2, 0.03, w, x, y, 0, 0x9a7a54); for (const side of [1, -1]) K.cyl(0.012, 0.012, 0.06, x, y + 0.02, side * (half(s) - 0.01), 0x5a4430, 5); }
+  const lift = o.seatLift || 0;   /* o.seatLift: boards set higher than the rim notches (a deep canoe whose sitters' feet reached through the bottom) */
+  for (const x of seats) { const s = x / L + 0.5, w = half(s) * 2 + 0.04, y = sheer(s) - 0.035 + lift; K.box(0.2, 0.03, w, x, y, 0, 0x9a7a54); for (const side of [1, -1]) K.cyl(0.012, 0.012, 0.06, x, y + 0.02, side * (half(s) - 0.01), 0x5a4430, 5); }
   if (o.gear !== false) {
     /* two paddles lying in the bottom, blades toward the stern: a round shaft with a cross grip and a leaf-shaped blade */
     for (const side of [1, -1]) { const len = Math.min(1.45, L * 0.36), x0 = -0.1 * L + side * 0.1, z0 = side * Math.min(0.12, hw * 0.3), y0 = floor + 0.05 + (side > 0 ? 0.03 : 0);
@@ -227,9 +228,9 @@ export function dugOut(o = {}) {
       K.tube([V(x + 0.12, yAt(x + 0.12) - 0.03, 0), V(x + 0.1, yAt(x + 0.1) + 0.03, 0.03), V(x - 0.02, yAt(x - 0.02) + 0.022, 0.05), V(x - 0.14, yAt(x - 0.14) + 0.02, 0)], 0.012, rope, 8, 4);
       for (let i = 0; i < 2; i++) { const g = new THREE.TorusGeometry(0.09 - i * 0.02, 0.012, 4, 12); g.rotateX(Math.PI / 2); g.translate(x - 0.2, yAt(x - 0.2) + 0.014 + i * 0.022, 0); K.add(g, rope); } }
   }
-  const gear = K.mesh('canoeGear'); group.add(gear);
+  if (seats.length || o.gear !== false) { const gear = K.mesh('canoeGear'); group.add(gear); }   /* nothing to merge in a bare canoe (no seats, no gear) */
   /* seatBoxes: each seat board as a box in the canoe's own frame [x0, y0, z0, x1, y1, z1] (engine/audit-crew.js checks legs against them) */
-  const seatBoxes = seats.map((x) => { const sv = x / L + 0.5, y = sheer(sv) - 0.035, hw2 = half(sv) + 0.02; return [x - 0.1, y - 0.015, -hw2, x + 0.1, y + 0.015, hw2]; });
+  const seatBoxes = seats.map((x) => { const sv = x / L + 0.5, y = sheer(sv) - 0.035 + lift, hw2 = half(sv) + 0.02; return [x - 0.1, y - 0.015, -hw2, x + 0.1, y + 0.015, hw2]; });
   /* outline(y): the hull's outer edge where it crosses height y, as [x, z] points from the stern to the bow on the +z side (empty where the bottom curves above y).
      waterRing (below) draws the splash round a boat from it. */
   const outline = (y) => { const out = []; for (let i = 0; i <= NS; i++) { const s = i / NS; let z = null, prev = null; for (let j = 0; j <= NT; j++) { const [zz, yy] = sect(s, j / NT); if (prev && prev[1] <= y && yy >= y) { const k = (y - prev[1]) / Math.max(1e-6, yy - prev[1]); z = prev[0] + (zz - prev[0]) * k; break; } prev = [zz, yy]; } if (z !== null && z > 0.02) out.push([xOf(s), z]); } return out; };
@@ -250,7 +251,7 @@ function ringTex() {
 }
 export function waterRing(boat, o = {}) {
   /* o.points: [[along, half]] from stern to bow, for a hull without outline() (a ship); o.axis 'z' when the boat's length runs along its local z (a caravel) */
-  const u = boat.userData, wl = o.y ?? u.draught ?? 0.18, w0 = o.width ?? 0.24, pts = o.points || (u.outline ? u.outline(wl) : []), Lh = (o.length || u.L || 5) / 2;
+  const u = boat.userData, wl = o.y ?? u.draught ?? 0.18, w0 = o.width ?? 0.24 * Math.max(1, (u.beam || 1) / 1.1), pts = o.points || (u.outline ? u.outline(wl) : []), Lh = (o.length || u.L || 5) / 2;
   if (pts.length < 6) return null;
   const loop = [...pts.map(([x, z]) => [x, z]), ...pts.slice().reverse().map(([x, z]) => [x, -z])], n = loop.length, pos = [], uv = [], idx = [];
   let run = 0;
@@ -269,7 +270,21 @@ export function waterRing(boat, o = {}) {
   if (o.axis === 'z') { const a = g.attributes.position; for (let i = 0; i < a.count; i++) { const x = a.getX(i), z = a.getZ(i); a.setXYZ(i, z, a.getY(i), x); } }   /* along z: swap */
   const ring = new THREE.Mesh(g, m); ring.name = 'waterRing'; ring.renderOrder = 3; ring.frustumCulled = false;
   ring.traverse((q) => { q.userData.noBatch = true; q.userData.noAudit = true; q.userData.water = true; });
-  ring.userData.tick = (time, speed = 0) => { const k = Math.max(0, Math.min(1, speed)); m.opacity = 0.6 + 0.25 * k; m.map.offset.x = (time * (0.12 + 0.5 * k)) % 1; };
+  /* a short wake behind a boat under way: it widens and fades out behind the stern, and shows with speed */
+  let trail = null;
+  if (!o.points && u.L) {
+    const c = document.createElement('canvas'); c.width = 32; c.height = 128; const gx = c.getContext('2d'), img = gx.createImageData(32, 128);
+    for (let y = 0; y < 128; y++) for (let x = 0; x < 32; x++) { const v = y / 127, e = Math.abs(x / 15.5 - 1), edge = Math.pow(Math.max(0, 1 - Math.abs(e - 0.75) / 0.25), 1.5) * 0.9 + 0.25 * (1 - e), n = 0.6 + 0.4 * Math.sin(y * 0.9 + x * 0.7) * Math.sin(y * 0.31 + x * 1.3); const a = Math.max(0, Math.min(1, edge * n * Math.pow(1 - v, 1.6))); const i = (y * 32 + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = 245; img.data[i + 3] = Math.round(255 * a); }
+    gx.putImageData(img, 0, 0); const tt = new THREE.CanvasTexture(c); tt.colorSpace = THREE.SRGBColorSpace;
+    const len = Math.min(5, u.L * 0.5), b0 = (u.beam || 1) * 0.7, b1 = (u.beam || 1) * 2.4, sx = -u.L / 2 + 0.2;
+    const tg = new THREE.BufferGeometry();
+    tg.setAttribute('position', new THREE.Float32BufferAttribute([sx, wl + 0.025, -b0 / 2, sx, wl + 0.025, b0 / 2, sx - len, wl + 0.025, -b1 / 2, sx - len, wl + 0.025, b1 / 2], 3));
+    tg.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 1, 1], 2)); tg.setIndex([0, 2, 1, 1, 2, 3]);
+    trail = new THREE.Mesh(tg, new THREE.MeshBasicMaterial({ map: tt, color: o.color ?? 0xffffff, transparent: true, depthWrite: false, opacity: 0, side: THREE.DoubleSide }));
+    trail.name = 'wake'; trail.renderOrder = 3; trail.frustumCulled = false; trail.userData.noBatch = true; trail.userData.noAudit = true; trail.userData.water = true;
+    boat.add(trail);
+  }
+  ring.userData.tick = (time, speed = 0) => { const k = Math.max(0, Math.min(1, speed)); m.opacity = 0.78 + 0.2 * k; m.map.offset.x = (time * (0.12 + 0.5 * k)) % 1; if (trail) { trail.material.opacity = 0.85 * k; trail.visible = k > 0.03 && ring.visible; } };
   boat.add(ring); u.ring = ring; return ring;
 }
 

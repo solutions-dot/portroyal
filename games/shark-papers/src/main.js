@@ -399,7 +399,7 @@ function cast(Q, row) {
     if (!on && n.mark) n.mark.visible = false;
   }
 }
-async function go(stage, { restore = null, keep = false } = {}) {
+async function go(stage, { restore = null, keep = false, hold = false } = {}) {
   const straightFrom = !startCard();   /* came straight on from the last chapter's end card: its own start card is skipped (engine/chapter-end.js) */
   const generation = ++epoch;
   LS.cancel();
@@ -472,7 +472,7 @@ async function go(stage, { restore = null, keep = false } = {}) {
     card(c.name, [c.intro], [["Begin", () => waits(stage)]]);
   } else if (stage === c.first && straightFrom === true && !restore) {
     titleFade($("fade"), c.name, c.intro, () => waits(stage), QUICK);   /* came straight on: the chapter's title and introduction fade in and out, no click (engine/chapter-end.js) */
-  } else await waits(stage);
+  } else if (!hold) await waits(stage);   /* hold: start() shows the first chapter's card, and its Begin starts the step (otherwise the opening scene ran behind the card, two voices at once: owner, 27 November 2026) */
   /* a save made after a chapter's last step was done, before Next chapter was pressed: offer the next chapter again */
   if (restore && needList(row).length && needList(row).every((n) => !story.needs(n.id))) advance(row.next);
   callBackReturn(stage);
@@ -1015,7 +1015,7 @@ async function start() {
     await go(d.stage, { restore: d });
     return;
   }
-  await go(FIRST);
+  await go(FIRST, { hold: !skipIntro });
   if (!skipIntro) card(CHAPTERS[0].name, [CHAPTERS[0].intro, GAME.fiction], [["Begin", () => waits(FIRST)]]);   /* the first step is a scene card: it comes after the intro */
 }
 $("start").onclick = start;

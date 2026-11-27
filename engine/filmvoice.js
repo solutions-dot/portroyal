@@ -5,7 +5,7 @@
      const FV = createFilmVoice();
      FV.preload(captions, film)                     when a film starts (skip it in a fast test run)
      FV.sync(caption, () => seconds into caption, film)  every frame, with the caption showing now; starts a clip when the caption changes
-     time = FV.hold(time, nextTime, captions, end)  every tick: while a clip speaks, time never passes the next caption (or the end)
+     time = FV.hold(time, nextTime, captions, end)  every tick: while a clip speaks, and for PAUSE seconds after it, time never passes the next caption (or the end)
      FV.syncScore(film, () => film time)            every frame: a quiet music bed, scores/score-<film>.mp3, from the film's clock (owner rule 16)
      FV.say(path)                                   a character's recorded line (e.g. 'voices/gran-01.mp3') on the same voice channel, so it never overlaps a caption
      FV.play(stem, elapsed) / FV.preloadClip(stem) / FV.preloadLine(file) / FV.stopVoice() / FV.stopScore()   single clips and channels, for an ending or a dialogue
@@ -17,10 +17,15 @@
 import { AU } from './audio.js';
 
 export const SCORE_GAIN = 0.4, SCORE_DUCK = 0.17;
+/* a breath after every clip (owner, 27 November 2026: "the pause needs to be between each full said clip"): the channel counts as busy for PAUSE seconds after a
+   clip ends by itself, so a film's next caption, a look's next line or a card waits for it; one that was due long after the last clip ends is not delayed */
+export const PAUSE = 0.6;
 
 export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', scoreDir = './scores/' } = {}) {
   const clips = new Map();
-  let current = null, cue = null, score = null;
+  let current = null, cue = null, score = null, endedAt = -1e9;
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const busy = () => !!current || now() - endedAt < PAUSE * 1000;
   /* a caption's clip: its third field, or <film>-<second> (a dot in the second becomes an underscore) */
   const stemOf = (c, film) => c[2] || (film ? film + '-' + String(c[0]).replace('.', '_') : null);
   const path = (stem) => dir + prefix + stem + '.mp3';
@@ -53,7 +58,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
       if (off >= buf.duration) { current = null; return; }
       const src = AU.ctx.createBufferSource();
       src.buffer = buf; req.source = src; src.connect(AU.master);
-      src.onended = () => { src.disconnect(); if (current === req) current = null; duck(); };
+      src.onended = () => { src.disconnect(); if (current === req) { current = null; endedAt = now(); } duck(); };
       src.start(0, Math.max(0, off));
     });
   }
@@ -67,7 +72,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
         if (!buf || !AU.on) { stop(); return; }
         const src = AU.ctx.createBufferSource();
         src.buffer = buf; req.source = src; src.connect(AU.master);
-        src.onended = () => { src.disconnect(); if (current === req) { current = null; cue = null; } duck(); };
+        src.onended = () => { src.disconnect(); if (current === req) { current = null; cue = null; endedAt = now(); } duck(); };
         src.start(0); duck();
       });
     },
@@ -96,7 +101,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
       duck();
     },
     hold(time, nextTime, captions, end) {
-      if (!AU.on || !current) return nextTime;
+      if (!AU.on || !busy()) return nextTime;
       const next = (captions.find((c) => c[0] > time) || [end])[0];
       return Math.min(nextTime, next - 0.0001);
     },
@@ -106,7 +111,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
     stopVoice,
     stopScore,
     stop() { stopVoice(); stopScore(); },
-    active: () => !!current,
+    active: busy,   /* speaking, or in the pause after a clip */
   };
   addEventListener('pagehide', () => { stopVoice(); stopScore(); });
   return api;

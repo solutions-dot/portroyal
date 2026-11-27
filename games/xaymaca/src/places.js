@@ -112,13 +112,20 @@ function ranges(Q, { centre, spread, layers, y, green, haze, seed }) {
   return R;
 }
 /* a big dugout for the crossing, with the floor its crew kneel on (engine/boats.js) */
-function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of two, a metre apart (owner, 26 November 2026: "a little wider so the men aren't on top of each other"); still well inside the record (Ferdinand: a Jamaican canoe Columbus measured in 1494 was 96 feet long and 8 broad) */
-  const g = grp(), c = X.canoe(L, { beam, depth: 0.55, gear: false });
+function bigCanoe(L = 12, beam = 2.0, slots = null) {   /* slots: the crew's places (canoeSlots), so each row of paddlers gets its own seat board */   /* 12 m by 2 m: room for eight rows of two, a metre apart (owner, 26 November 2026: "a little wider so the men aren't on top of each other"); still well inside the record (Ferdinand: a Jamaican canoe Columbus measured in 1494 was 96 feet long and 8 broad) */
+  /* a seat board under every row of paddlers (owner, 27 November 2026: "the ones at the back should be sitting on benches.. they look like they are floating
+     in air"); the rows of kneeling Spaniards get none, so no board cuts through their legs */
+  const rows = slots ? [...new Set(slots.filter((q) => !q[2]).map((q) => q[0]))].sort((a, b) => a - b) : null;
+  const g = grp(), c = X.canoe(L, { beam, depth: 0.55, gear: false, seats: [] });   /* no boards across the rim: the paddlers sit on low blocks (crewTicker) */
   g.add(c);
   g.userData.floor = (c.userData.floor || 0.08) + 0.16;   /* the crew kneel this much higher: lower, their heels came out under the hull */
   g.userData.L = L;
   g.userData.beam = beam;
   g.userData.depth = 0.55;
+  g.userData.seatBoxes = c.userData.seatBoxes;   /* the wrapper's own frame is the dugout's */
+  g.userData.bottom = c.userData.bottom;   /* the true inside bottom (floor is raised for the kneelers): the crew check measures legs against it */
+  g.userData.rows = rows;
+  g.userData.blocks = true;   /* each paddler sits on a low block of wood (crewTicker): a seat at the rim put their legs through the bottom */
   return dyn(g);
 }
 /* Every canoe floats IN the water, with a ring of foam round her at the waterline (owner, 27 November 2026: "the canoes don't look like it's resting IN the water,
@@ -126,7 +133,7 @@ function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of
    across the floor); on the sand she lies on the ground, and the change comes over a metre at the water's edge. Run every frame after the scene (Q.posers).
    water: the sea's height; ground: her height on the sand; edge: the z the water starts at (canoes lie in the water at z below it; default: everywhere). */
 const DRAUGHT = 0.1;
-const SM_CORD = solid(0xbfa97e, 0.9);
+const SM_CORD = solid(0xbfa97e, 0.9), BLOCK_M = solid(0x7c5a3a, 0.95);
 function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity, bob = 0.03, foam = 0xffffff }) {
   /* sea: the place's water (engine/sea.js); she rides its swell (sea.height, the same waves the water is drawn with), pitching bow and stern with it */
   const hull = canoe.userData.bow ? canoe : canoe.children.find((c) => c.userData.bow) || canoe;
@@ -145,7 +152,7 @@ function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity
     const dt = prevT === null ? 0 : Math.abs(t - prevT); prevT = t;
     const moved = Math.hypot(canoe.position.x - last.x, canoe.position.z - last.z); last.copy(canoe.position);
     const speed = dt > 0 && dt < 0.5 ? Math.min(1, moved / dt / 2.2) : 0;   /* about 2 m a second is full speed */
-    if (ring) { ring.visible = k > 0.5 && canoe.visible; ring.userData.tick(t, speed); }
+    if (ring) { ring.visible = k > 0.5 && canoe.visible; ring.userData.tick(t, canoe.userData.backing ? 0 : speed); }   /* no wake trailing ahead of a canoe that backs stern first */
   });
   return ring;
 }
@@ -231,7 +238,7 @@ function crewTicker(Q) {
         }
         n.m.visible = true;
         R.canoe.updateMatrixWorld();
-        _cp.set(r.x, (R.canoe.userData.floor || 0.1) - (r.sp ? 0.16 : PADDLE_DROP), r.z).applyMatrix4(R.canoe.matrixWorld);   /* a paddler sits low on the bottom of the dugout (the Paddle clip is posed on a seat: lowered by PADDLE_DROP) */   /* kneeling, the shins lie along the bottom of the dugout, below its floor line */
+        _cp.set(r.x, (R.canoe.userData.floor || 0.1) - (r.sp ? 0.08 : PADDLE_DROP), r.z).applyMatrix4(R.canoe.matrixWorld);   /* a paddler sits low on the bottom of the dugout (the Paddle clip is posed on a seat: lowered by PADDLE_DROP) */   /* kneeling, the shins lie along the bottom of the dugout, below its floor line */
         n.m.parent.worldToLocal(_cp);
         if (r.seat !== undefined && r.dy !== undefined) _cp.y += r.dy;
         n.m.position.copy(_cp);
@@ -240,6 +247,19 @@ function crewTicker(Q) {
         _lq.setFromAxisAngle(_up, Math.PI / 2);   /* facing along the canoe, the way it goes (+x) */
         _lean.setFromAxisAngle(_ax, 0);   /* the stroke and its lean come from the Paddle clip itself */   /* leaning into the stroke and back */
         n.m.quaternion.copy(_cq).multiply(_lq).multiply(_lean);
+        if (R.canoe.userData.blocks && !r.sp && !r.block && (r.age = (r.age || 0) + 1) > 4) {   /* a few frames in, once the paddling pose is on the body */
+          /* a low block of wood under the hips, from the bottom of the canoe up to where the paddler sits (owner, 27 November 2026: "they look like they are
+             floating in air"), measured once from the body itself in the canoe's frame */
+          const hips = n.m.getObjectByName("mixamorigHips");
+          if (hips) {
+            n.m.updateMatrixWorld(true); R.canoe.updateMatrixWorld(true);
+            const hp = R.canoe.worldToLocal(new THREE.Vector3().setFromMatrixPosition(hips.matrixWorld)), base = (R.canoe.children[0]?.userData.floor ?? 0.1) - 0.02, top = hp.y - 0.085;
+            if (top - base > 0.03) {
+              const b = box(0.34, top - base, 0.3, BLOCK_M, hp.x, (top + base) / 2, hp.z, R.canoe);
+              b.userData.noAudit = true; b.userData.noBatch = true; r.block = b;
+            } else r.block = true;
+          }
+        }
         if (r.seat !== undefined && R.canoe.userData.seatBoxes) {   /* sat on a seat board: the hips rest on it, measured once from the body itself */
           const sb = R.canoe.userData.seatBoxes[r.seat], hips = n.m.getObjectByName("mixamorigHips");
           if (sb && hips) {
@@ -343,11 +363,13 @@ function placeCrews(Q) {
   }
 }
 /* the places in a canoe: rows of two along its length, the Spaniards in the middle (Ferdinand: six Spaniards and ten paddlers in each) */
+/* the crew's places with each paddler's seat board (bigCanoe's rows): [x, z, spaniard, seat] */
+function seated(canoe, slots) { return slots; }   /* (seat boards at the rim were tried: the paddlers' legs went 6 to 9 cm through the bottom; they sit on low blocks now) */
 function canoeSlots(L, n = 16, nSp = 6) {
   const rows = Math.ceil(n / 2), out = [];
   for (let k = 0; k < n; k++) {
-    const row = Math.floor(k / 2), x = -L * 0.27 + (L * 0.54 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
-    out.push([x, (k % 2 ? 0.36 : -0.36), mid && out.filter((s) => s[2]).length < nSp]);   /* two abreast, shoulders clear of each other and knees clear of the 2 m hull */
+    const row = Math.floor(k / 2), x = -L * 0.3 + (L * 0.5 * row) / Math.max(1, rows - 1), mid = Math.abs(row - (rows - 1) / 2) <= nSp / 4;   /* rows about a metre apart in a 12 m canoe; the six Spaniards in the middle rows (the old test took only four) */
+    out.push([x, (k % 2 ? 0.3 : -0.3), mid && out.filter((s) => s[2]).length < nSp]);   /* two abreast, shoulders clear of each other and knees clear of the 2 m hull */
   }
   return out;
 }
@@ -467,11 +489,11 @@ function maima({ night = false } = {}) {
   /* the ten canoes of the mutiny, far off on the bay (chapter 4's camera scene) */
   const flotilla = [];
   for (let i = 0; i < 10; i++) {
-    const c = add(Q, far(bigCanoe(6, 1.2)), 8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2, BAY.y + 0.05, Math.PI / 2);   /* drawn up along the beach, 9 m apart bow to stern, not in a block (owner, 27 November 2026: "piled on top of each other") */
+    const c = add(Q, far(bigCanoe(6, 1.2, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]])), 8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2, BAY.y + 0.05, Math.PI / 2);   /* drawn up along the beach, 9 m apart bow to stern, not in a block (owner, 27 November 2026: "piled on top of each other") */
     c.visible = false;
     floatBoat(Q, c, { water: BAY.y, sea, foam: night ? 0x55607a : 0xffffff });
     flotilla.push(c);
-    if (!night) crew(Q, c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]], { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
+    if (!night) crew(Q, c, seated(c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]]), { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
   }
   /* ---- the village ---- */
   const houses = [
@@ -791,11 +813,11 @@ function shore() {
   crew(Q, tradeCanoe, [[tradeCanoe.userData.seatBoxes[0][0] + 0.06, 0, false, 0]], { taino: ["xa_cousin"], who: "Cousin" });   /* sat on the stern seat board, his legs forward into the open middle (owner, 26 November 2026: first his feet went through the seat, then he sat on nothing) */   /* Cousin paddles the bread out (his story body stays on the beach, hidden while the scene runs) */
   floatBoat(Q, tradeCanoe, { water: SEA, sea, ground: -0.1, edge: -4.6 });
   tradeCanoe.userData.floor = 0.2;   /* this smaller dugout is shallower: kneeling lower, his shins came through its bottom */
-  const bigA = add(Q, bigCanoe(), -1.4, -6.1, -0.12, Math.PI / 2 - 0.04),
-    bigB = add(Q, bigCanoe(), 4.0, -6.5, -0.12, Math.PI / 2 + 0.03);   /* the longer canoes lie further down the beach, so their sterns stay where the old ones' did */
+  const bigA = add(Q, bigCanoe(12, 2.0, canoeSlots(12)), -1.4, -6.1, -0.12, Math.PI / 2 - 0.04),
+    bigB = add(Q, bigCanoe(12, 2.0, canoeSlots(12)), 4.0, -6.5, -0.12, Math.PI / 2 + 0.03);   /* the longer canoes lie further down the beach, so their sterns stay where the old ones' did */
   floatBoat(Q, bigA, { water: SEA, sea, edge: -4.6, ground: -0.1 });
   floatBoat(Q, bigB, { water: SEA, sea, edge: -4.6, ground: -0.1 });
-  for (const c of [bigA, bigB]) crew(Q, c, canoeSlots(12));   /* six Spaniards and ten paddlers in each (Ferdinand) */
+  for (const c of [bigA, bigB]) crew(Q, c, seated(c, canoeSlots(12)));   /* six Spaniards and ten paddlers in each (Ferdinand) */
   Q.walls.push([0.5, -3.9, 5.9, -2.75]);
   /* the ship's boat that brought Mendez and the interpreter ashore */
   const boat = rowBoat({ L: 4.6, beam: 1.5, depth: 0.6, wood: std(T.plank([118, 96, 72], 6, [1, 1])), timber: std(T.plank([92, 72, 52], 1, [1, 1])), oars: "shipped", rudder: false });
@@ -914,7 +936,7 @@ function shore() {
       c.userData.afloat = sm((t - 8.2 - i * 1.2) / 2.5);   /* drawn up on the sand, half in the water, until pushed off */   /* still on the sand: the paddlers hold their paddles up until she is pushed off */
       /* pushed straight out from the sand first, then swinging east along the coast; the bow follows the course */
       const home = [i ? 4.0 : -1.4, i ? -6.5 : -6.1], beached = Math.PI / 2 + (i ? 0.03 : -0.04);
-      const posAt = (tt) => { const k = sm((tt - 11 - i * 1.2) / 20); return [home[0] + k * 150, home[1] - sm((tt - 8) / 6) * 6 - k * 10]; };
+      const posAt = (tt) => { const k = sm((tt - 11 - i * 1.6) / 20); return [home[0] + k * 150, home[1] - sm((tt - 8 - i * 0.8) / 6) * (i ? 13 : 5) - k * 10]; };   /* the second canoe goes further out before turning east, so the two travel side by side 8 m apart (they turned into one line and ran into each other: owner, 27 November 2026) */
       const p = posAt(t);
       c.position.set(p[0], -0.12, p[1]);
       c.rotation.y = courseAt(posAt, t, canoeHeading, t < 8 ? beached : c.rotation.y);
@@ -944,10 +966,10 @@ function crossing() {
   Q.view = { pos: [6, 2, 8], look: [0, 0, -40] };
   const sea = createSea(Q.group, { kind: "caribbean", y: -0.3, at: [0, -60], size: 260, swell: 0.6 });
   Q.tickers.push((t) => sea.tick && sea.tick(t));
-  const c = add(Q, bigCanoe(), 0, 3.5, -0.2, Math.PI / 2 + 0.1);   /* her stern stays just clear of the camera that looks along her from behind (content.js, crossing) */
+  const c = add(Q, bigCanoe(12, 2.0, canoeSlots(12)), 0, 3.5, -0.2, Math.PI / 2 + 0.1);   /* her stern stays just clear of the camera that looks along her from behind (content.js, crossing) */
   c.userData.manned = true;
   floatBoat(Q, c, { water: -0.3, sea, bob: 0.05, foam: 0x55607a });   /* night: dim foam */
-  crew(Q, c, canoeSlots(12));
+  crew(Q, c, seated(c, canoeSlots(12)));
   Q.tickers.push((t) => {
     c.position.y = -0.2 + Math.sin(t * 0.9) * 0.05;
     c.rotation.z = Math.sin(t * 0.7) * 0.03;
