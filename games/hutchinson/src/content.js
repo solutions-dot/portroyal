@@ -155,8 +155,8 @@ export const FILMS = {
       { t: 31.5, p: [7.5, 5, 3.5], look: [3, 1.2, 8.5] },
       { t: 34.5, p: [12.6, 2.3, -12.4], look: [5.8, 2.0, -12.4] },
       { t: 37, p: [12.2, 2.3, -12.1], look: [5.8, 2.0, -12.4] },
-      { t: 39, p: [3.4, 2.3, 7.0], look: [2.9, 2.0, -6] },
-      { t: 43, p: [3.6, 3.4, 9.5], look: [2.6, 2.6, -8] },
+      { t: 39, p: [4.2, 2.3, 7.6], look: [3.0, 2.0, -6] },   /* clear of the cotton tree's trunk (at -0.8, 4.2) and the outcrop */
+      { t: 43, p: [4.4, 3.4, 9.8], look: [2.9, 2.6, -8] },
     ],
     fov: [[0, 48], [4, 40], [10, 40], [15, 36], [22, 30], [22.6, 40], [26, 40], [29.5, 42], [31.5, 44], [34.5, 40], [37, 38], [39, 38], [43, 46]],
     acts: [],
@@ -194,7 +194,7 @@ export const FILMS = {
     captions: [[0, "Spanish Town. The sixteenth morning of March, 1773."], [7, "King’s House is dark. The square is full before the sun is up."], [14, "Everyone looks one way, down the street."], [20, "At its end, a frame of timber."], [27, "“Their sentence, pride, and malice I defy, / Despise their power and like a Roman die.”"], [34.8, "His words. His stone was never made.", "morning-34"], [38.1, "The court tried him for one killing. No other was ever tried.", "morning-38"]],
     shots: [
       { t: 0, p: [-17.5, 1.8, -9], look: [-30, 6.5, 0] },
-      { t: 7, p: [-14.6, 2.4, -7.5], look: [-9, 1.6, 0] },
+      { t: 7, p: [-14.6, 3.1, -7.5], look: [-9, 1.6, 0] },   /* over the railing's pillars, not behind them */
       { t: 13, p: [-4, 2, -4], look: [-6, 1.6, 6] },
       { t: 19, p: [-7.4, 1.9, 8.5], look: [-8.8, 2.6, 30] },
       { t: 27, p: [-8.6, 2, 9], look: [-9, 3.4, 56] },

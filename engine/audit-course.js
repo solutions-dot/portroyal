@@ -4,7 +4,7 @@
 
    auditCourse(Q, { films, from = 0, to = 40, step = 1, tol = 25 }) -> lines.
    Every object in the place marked userData.bow ('x', '-x', 'z' or '-z': the local axis its bow points along; engine/boats.js dugOut sets 'x')
-   is followed through each of the place's camera scenes (Q.films[id](t), t from `from` to `to`). Whenever it moves more than 8 cm in half a second
+   is followed through each of the place's camera scenes (Q.films[id](t, Q), t from `from` to `to`). Whenever it moves more than 8 cm in half a second
    its bow must point within `tol` degrees of the way it moves. A boat that only drifts or bobs is not judged. Each scene is reset with t = -1 after.
    Boats hidden at the audit's story step are shown while the scenes run, then hidden again (the scene itself may not show them). */
 import * as THREE from 'three';
@@ -28,8 +28,8 @@ export function auditCourse(Q, { films = null, from = 0, to = 40, step = 1, tol 
     if (typeof film !== 'function') continue;
     const seen = new Set();
     for (let t = from; t <= to; t += step) {
-      film(t); const a = state();
-      film(t + 0.5); const b = state();
+      film(t, Q); const a = state();   /* films take the place as their second argument, as the directors call them (Morant Bay's riot reads Q.extras) */
+      film(t + 0.5, Q); const b = state();
       boats.forEach((o, i) => {
         if (!a[i][4] || seen.has(i)) return;
         const dx = b[i][0] - a[i][0], dz = b[i][1] - a[i][1], d = Math.hypot(dx, dz), fl = Math.hypot(a[i][2], a[i][3]);
@@ -40,7 +40,7 @@ export function auditCourse(Q, { films = null, from = 0, to = 40, step = 1, tol 
         if (err > tol) { seen.add(i); out.push(`course: in the scene "${id}" at ${t} s, ${o.name || 'a boat'} at (${a[i][0].toFixed(1)}, ${a[i][1].toFixed(1)}) moves ${err.toFixed(0)} degrees off the way its bow points`); }
       });
     }
-    film(-1);
+    film(-1, Q);
   }
   for (const q of hidden) q.visible = false;
   return out;
