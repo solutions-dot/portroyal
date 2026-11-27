@@ -8,7 +8,7 @@ import { palm, tree, bush } from "./period-props.js";
 import * as P from "./props.js";
 import * as X from "./xaymaca.js";
 import { TASKS } from "./steps.js";
-import { createSea, gulls } from "../../../engine/sea.js";
+import { createSea, createStream, gulls } from "../../../engine/sea.js";
 import { rowBoat, rowStroke, waterRing } from "../../../engine/boats.js";
 import { AU, tone, noiseHit, gullCry } from "../../../engine/audio.js";
 import { makeRidges } from "../../../engine/ridges.js";
@@ -126,6 +126,7 @@ function bigCanoe(L = 12, beam = 2.0) {   /* 12 m by 2 m: room for eight rows of
    across the floor); on the sand she lies on the ground, and the change comes over a metre at the water's edge. Run every frame after the scene (Q.posers).
    water: the sea's height; ground: her height on the sand; edge: the z the water starts at (canoes lie in the water at z below it; default: everywhere). */
 const DRAUGHT = 0.1;
+const SM_CORD = solid(0xbfa97e, 0.9);
 function floatBoat(Q, canoe, { water, sea = null, ground = null, edge = Infinity, bob = 0.03, foam = 0xffffff }) {
   /* sea: the place's water (engine/sea.js); she rides its swell (sea.height, the same waves the water is drawn with), pitching bow and stern with it */
   const hull = canoe.userData.bow ? canoe : canoe.children.find((c) => c.userData.bow) || canoe;
@@ -757,10 +758,9 @@ function shore() {
   const reef = plane(500, 2.5, new THREE.MeshBasicMaterial({ color: 0xf4f4ee, transparent: true, opacity: 0.7, depthWrite: false }), 0, SEA + 0.05, -150, Q.group);
   reef.rotation.x = -Math.PI / 2;
   far(reef);
-  /* the stream at the east end, shallow over the sand */
-  const stream = plane(1.3, 16, new THREE.MeshStandardMaterial({ color: 0x7aa6a2, roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.55, depthWrite: false }), 12.6, 0.012, 2.0, Q.group);
-  stream.rotation.x = -Math.PI / 2;
-  stream.userData.water = true;
+  /* the stream at the east end, running shallow over the sand to the sea, with a deeper pool by the stones where a gourd can be filled (engine/sea.js) */
+  const stream = createStream(Q.group, { points: [[12.9, 10], [12.4, 6.5], [12.75, 3.5], [12.45, 0.5], [12.7, -2.5], [12.5, -5.2]], width: 1.25, y: 0.012, seed: 4, pools: [[12.45, 2.4, 0.38]] });
+  Q.tickers.push((t) => stream.tick(t));
   for (let i = 0; i < 6; i++) add(Q, X.M.stone() && mesh(new THREE.DodecahedronGeometry(0.2 + (i % 3) * 0.05, 0), X.M.stone(), 0, 0.06, 0), 11.6 + (i % 2) * 2.0, -1 + i * 1.6);
   /* the hill of Maima behind, the woods along the back of the beach */
   ranges(Q, { centre: Math.PI / 2, spread: 2.8, y: 0, seed: 4, green: 0x4f7a40, haze: 0xcfd8d0, layers: [{ r: 40, base: 6, amp: 10, k: 0.2 }, { r: 90, base: 24, amp: 30, k: 0.45 }, { r: 200, base: 60, amp: 80, k: 0.75 }] });
@@ -817,6 +817,34 @@ function shore() {
     /* shaken: it hops and rattles on the cloth, then settles back down (it ended in the air: audit, 26 November 2026) */
     bell.position.y = 0.03 + Math.abs(Math.sin(e * Math.PI * 4)) * 0.06 * (1 - e);
     bell.position.x = Math.sin(e * 40) * 0.012 * (1 - e);
+  };
+  /* Filling the calabash at the stream (owner, 27 November 2026: "the fill the water task makes no sense, you just pick up the jug and carry it over"): a
+     close-up as it is picked up, tipped on its side with its mouth under the water, held while the water runs in and rings spread on the stream, and set
+     back upright on the bank, dripping, before you carry it to Cousin. */
+  const ripples = [0, 1].map(() => { const r = mesh(new THREE.RingGeometry(0.1, 0.106, 32), new THREE.MeshBasicMaterial({ color: 0xe8f4f4, transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0, Q.group); r.rotation.x = -Math.PI / 2; r.visible = false; r.userData.noAudit = true; return dyn(r); });
+  const drops = [0, 1, 2].map(() => { const d = mesh(new THREE.SphereGeometry(0.009, 6, 4), new THREE.MeshBasicMaterial({ color: 0xd8eef0, transparent: true, opacity: 0.85 }), 0, 0, 0, Q.group); d.visible = false; d.userData.noAudit = true; return dyn(d); });
+  /* a deeper pool in the stream where it runs past the stones, where a gourd can go under (the stream itself is only a skin of water over the sand) */
+  const cord = mesh(new THREE.CylinderGeometry(0.0045, 0.0045, 1, 5), SM_CORD, 0, 0, 0, Q.group);   /* the gourd's cord, held by you above the picture */
+  cord.visible = false; cord.userData.noAudit = true; dyn(cord);
+  const _nk = new THREE.Vector3(), _top = new THREE.Vector3();
+  Q.reveal.fillCalabash = (k) => {
+    k = Math.min(1, Math.max(0, +k));
+    const o = Q.items.calabash, st = Q.itemStarts && Q.itemStarts.calabash;
+    if (!o || !st || o.parent !== Q.group) return;
+    const [x0, y0, z0] = st.at, wx = 12.45, wy = 0.012;   /* the pool */
+    const lift = sm(k / 0.22), dip = sm((k - 0.22) / 0.25), up = sm((k - 0.78) / 0.22);
+    const hx = x0 + (wx - x0) * dip, hy = y0 + 0.3 * lift + (-0.09 - 0.3) * dip, hr = -0.7 * dip;   /* lifted on its cord, then lowered half under in the pool, tipped so the water runs in */
+    o.position.set(hx + (x0 - hx) * up, hy + (y0 - hy) * up, z0);   /* and set back upright where it stood */
+    o.rotation.set(0, st.ry || 0, hr * (1 - up));
+    if (o.children[2]) o.children[2].visible = !(k > 0.18 && k < 0.88);   /* the corn-husk stopper out while it fills */
+    o.updateMatrixWorld(true);
+    _nk.set(0, 0.27, 0).applyMatrix4(o.matrixWorld); Q.group.worldToLocal(_nk); _top.copy(_nk).add(new THREE.Vector3(-0.25, 1.4, 0.3));
+    cord.visible = k > 0.02 && k < 0.98;
+    cord.position.copy(_nk).add(_top).multiplyScalar(0.5); cord.scale.set(1, _nk.distanceTo(_top), 1);
+    cord.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _top.clone().sub(_nk).normalize());
+    const inWater = k > 0.45 && k < 0.8, rk = (k - 0.45) / 0.35;
+    ripples.forEach((r, i) => { const t = (rk + i * 0.5) % 1; r.visible = inWater; r.position.set(wx, wy + 0.004, z0); r.scale.setScalar(1 + t * 2.4); r.material.opacity = 0.45 * (1 - t); });
+    drops.forEach((d, i) => { const t = ((k - 0.8) / 0.2 * 1.6 + i * 0.33) % 1; d.visible = k > 0.8 && k < 1; d.position.set(x0 + 0.02 - i * 0.03, 0.2 - t * 0.19, z0 + 0.02 * i); });
   };
   Q.lookViews = {};
   Q.enter = (stage) => {

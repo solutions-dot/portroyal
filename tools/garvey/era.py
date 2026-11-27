@@ -2106,6 +2106,19 @@ def tuck_under_collar():
         if not NECK-0.10*s<c.z<NECK+0.04*s: continue
         hit=bt.ray_cast(c+v.normal*0.0005,v.normal,0.03)[0]
         if hit is None: hit=bt.ray_cast(c-v.normal*0.0005,-v.normal,0.01)[0]
+        if hit is None and name=='CoatNeck' and G.get('necktuckmiss'):
+            # (Xaymaca, Mendez, 27 November 2026) skin at the foot of the neck lies just under the facing but its normal runs along it, so the rays never meet it and it
+            # kept the neck's own weights: when the shoulders moved it came 3 to 8 mm through. Moving it to the nearest point of the facing pulled spikes; here it is
+            # only bound to the facing (the same weights, so it moves with it) and sunk 1 mm, staying where it is.
+            fl,fn,fi,fd=bt.find_nearest(c,0.022)
+            if fl is not None and c.z<top_at[int((math.atan2(c.x,-(c.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB]-0.004:      # only under the facing, never the bare neck above its edge
+                near=co.data.vertices[kv.find(fl)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
+                if bw:
+                    for g in list(v.groups):
+                        if tg.vertex_groups[g.group].name.startswith('mixamorig:'): tg.vertex_groups[g.group].remove([v.index])
+                    for nm,w in bw.items(): (tg.vertex_groups.get(nm) or tg.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
+                    v.co=c-v.normal*0.001; n+=1; globals()['_MISS']=globals().get('_MISS',0)+1
+            continue
         if hit is None: continue
         dtop=kt.find(c)[2] if top else 1.0; feather=min(1.0,max(0.0,(dtop-0.002)/0.016))      # sunk less near the collar's top edge, fully 1.8 cm below it: the skin's edge under the collar is then one smooth line, not a saw-tooth where some points were pushed in and their neighbours left out (owner, 17 November 2026: jagged collars)
         near=co.data.vertices[kv.find(hit)[1]]; bw={on[g.group]:g.weight for g in near.groups if on[g.group].startswith('mixamorig:') and g.weight>0}
@@ -2150,7 +2163,37 @@ def tuck_under_piece(name,z0=None,z1=None,ztop=None):
             if tg.vertex_groups[g.group].name.startswith('mixamorig:'): tg.vertex_groups[g.group].remove([v.index])
         for nm,w in bw.items(): (tg.vertex_groups.get(nm) or tg.vertex_groups.new(name=nm)).add([v.index],w,'REPLACE')
         v.co=c-v.normal*(0.0015+0.0065*feather)*(G.get('necktuckdepth',1.0) if name=='CoatNeck' else 1.0); n+=1      # necktuckdepth (Xaymaca, 25 November 2026): a deeper tuck under the neck of a coat worn over a bare-necked shirt
-    print('TUCKED UNDER',name,tg.name,n)
+    if name=='CoatNeck' and G.get('neckmask'):
+        # (Xaymaca, Mendez, 27 November 2026) skin that lies wholly under a closed coat's neck facing is taken away: three ways of tucking it (deeper, a taller
+        # band, bound to the nearest point) left 3 to 8 mm showing through at the foot of the neck when he talks. A face goes only when all its corners are
+        # at least 12 mm below the facing's top edge and within 25 mm of the facing, so the bare neck above the edge is untouched.
+        bm=bmesh.new(); bm.from_mesh(tg.data); bm.verts.ensure_lookup_table(); gone=[]
+        cb=bmesh.new()      # what can hide skin: the coat's neck facing and the coat itself
+        for nm in ('CoatNeck','Coat'):
+            ob=bpy.data.objects.get(nm)
+            if ob is not None and len(ob.data.polygons): cb.from_mesh(ob.data)
+        cb.normal_update(); cbt=BVHTree.FromBMesh(cb)
+        def under(p):
+            if not (z0<p.z<z1): return False
+            k=int((math.atan2(p.x,-(p.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB
+            if p.z>top_at[k]-0.012: return False
+            rx,ry=p.x,p.y-NJ.y; L=math.hypot(rx,ry) or 1; rx,ry=rx/L,ry/L
+            for d in ((rx,ry,0.0),(rx,ry,0.5),(0.0,-1.0,0.7),(rx*0.5,ry*0.5-0.7,0.4)):      # out, out and up, forward and up: from any of these a camera could see it (straight down into the narrow gap at the collar shows nothing)
+                dv=Vector(d).normalized()
+                if cbt.ray_cast(p+dv*0.0008,dv,0.4)[0] is None: return False      # it can be seen: keep it
+            return True
+        for f in bm.faces:
+            if all(under(v.co) for v in f.verts): gone.append(f)
+        bmesh.ops.delete(bm,geom=gone,context='FACES_ONLY'); bm.to_mesh(tg.data); bm.free(); tg.data.update()
+        print('NECK MASK: removed',len(gone),'skin faces under',name)
+    if os.environ.get('TUCK_DEBUG') and name=='CoatNeck':
+        for v in tg.data.vertices:
+            c=v.co
+            if abs(abs(c.x)-0.123)<0.012 and c.z>NECK-0.12 and c.z<NECK+0.06:
+                fl,fn,fi,fd=bt.find_nearest(c,0.05)
+                k=int((math.atan2(c.x,-(c.y-NJ.y))/(2*math.pi)+0.5)*_NB)%_NB
+                print('TUCKDBG',round(c.x,3),round(c.y,3),round(c.z,3),'band',z0<c.z<z1,'d',None if fd is None else round(fd,4),'side',None if fl is None else round((c-fl).dot(fn),4),'top',round(top_at[k],3),'nz',round(v.normal.z,2))
+    print('TUCKED UNDER',name,tg.name,n,'missed-rays bound',globals().get('_MISS',0),'necktuckmiss',G.get('necktuckmiss'))
 if G.get('necktuck') and OLD:
     tuck_under_piece('CoatNeck')
     if G.get('bands'): tuck_under_piece('Collar')
