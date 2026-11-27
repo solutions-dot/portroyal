@@ -2,7 +2,7 @@ import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed } from '../../../engine/cine.js';
-import { createNarrator } from '../../../engine/narrator.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { createStoryVoice } from '../../../engine/storyvoice.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
@@ -46,8 +46,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the chapter title cards (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting

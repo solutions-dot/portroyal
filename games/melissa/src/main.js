@@ -3,7 +3,7 @@ import { addRecap } from '../../../engine/recap.js';
 import { makeHelicopter } from '../../../engine/helicopter.js';   /* the shared helicopter (engine/helicopter.js) */   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { slideWalls, routeIssues, walkRoute } from '../../../engine/placement.js';
 import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
@@ -48,8 +48,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);

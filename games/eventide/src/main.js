@@ -8,7 +8,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
@@ -46,8 +46,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, work, warm, release } from '../../../engine/preload.js';   /* the next chapter made ready while you read, the last one let go (engine/preload.js) */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);

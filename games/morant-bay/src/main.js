@@ -31,9 +31,8 @@ import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, SILENT } from "./content.js";
-import { $, NARR, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, SV, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
-import { sharedVoice } from "../../../engine/filmvoice.js";
 import { createLookShot } from "../../../engine/lookshot.js";
 import { makeRidges } from "../../../engine/ridges.js";   /* far hills that fade into the haze, as in Nanny Town */   /* looking at a thing is a close-up action (owner rule 13) */
 import * as P from "./props.js";
@@ -622,8 +621,7 @@ const LS = createLookShot({
   },
   bars: (on) => document.body.classList.toggle("cine", on),
   say: (text) => ($("sub").textContent = text),
-  speak: (t) => NARR.speak(t),
-  voiceBusy: () => sharedVoice().active(),
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
@@ -646,7 +644,7 @@ async function lookAt(id) {
     };
   /* the story line, then what it means, one at a time in the lower bar over the close shot, each read aloud and held until it is finished;
      no pop-up card covers the thing (owner, 27 November 2026) */
-  await LS.play({ view: lk.view, act: lk.act, line: 1.6, sound: lk.sound, lines: [...(lk.say || []), ...(lk.lines || [])], reveal: (k) => Q.reveal[id]?.(k) });
+  await LS.play({ view: lk.view, act: lk.act, line: 1.6, sound: lk.sound, lines: SV.lookLines(lk), reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();

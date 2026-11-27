@@ -3,7 +3,7 @@ import { draw } from '../../../engine/look.js';   /* light from the sky and soft
 import { addRecap } from '../../../engine/recap.js';
 import { produceBasket } from '../../../engine/produce.js';   /* market baskets heaped with produce (moved to the engine, 23 November 2026) */   /* three things you learned, on the last card */
 import { playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter, goingStraight, startCard, titleFade } from '../../../engine/chapter-end.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { anchorSeat, routeIssues, furnitureRouteIssues } from '../../../engine/placement.js';
@@ -41,8 +41,8 @@ import { setQuiet } from '../../../engine/preload.js';
 import { pickPerson } from '../../../engine/tap.js';   /* tap a person to talk to them */   /* tells the engine when the player is reading, not moving */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the chapter title cards (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 const titleFadeN = (f, a, b, done, q) => { if (!q) NARR.speak(a + '. ' + b); return titleFade(f, a, b, done, q); };
 soundPref('portroyal-sound');
@@ -612,7 +612,7 @@ let busy = false;                     // true while a panel is open
 /* close-ups (owner rule 13, engine/lookshot.js): the bars come in, the camera eases to the thing, it does something with a sound, a short line from
    its journal page shows in the lower bar, the camera eases back, and then the page or card opens. The autoplayer and test views skip the camera. */
 const QUICK_LOOK = __DEV__ && /[?&](auto|test)=/.test(location.search), _lsq = new THREE.Quaternion(), _lse = new THREE.Euler();
-const LS = createLookShot({ camera, fov: () => 68, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } },
+const LS = createLookShot({ ...SV.look, camera, fov: () => 68, setFov: (f) => { if (Math.abs(camera.fov - f) > 0.01) { camera.fov = f; camera.updateProjectionMatrix(); } },
   bars: (on) => document.body.classList.toggle('cine', on), say: (t) => { $('cinesub').textContent = t; }, freeze: (on) => { busy = on; }, sound: lookSound, quick: () => QUICK_LOOK, reduced: reduceMotion,
   home: () => ({ pos: new THREE.Vector3(state.x, eyeY, state.z), quat: _lsq.setFromEuler(_lse.set(state.pitch, state.yaw, 0, 'YXZ')) }) });
 let FINDG = {};
@@ -700,7 +700,7 @@ function setGoal() {
 }
 let convo = TALK, convoEnd = null;
 function showStep() {
-  const s = convo[state.step], me = s.who === 'You' || s.who === 'Lewis'; if (!me) setSpeaker(s.who, s.anim); if (!me) NARR.speak(s.who + '|' + String(s.text).replace(/\s+/g, ' ').trim()); else NARR.stop();   /* a character's recorded line, one voice at a time (owner rule 17) */ $('who').textContent = me ? 'You' : s.who; $('dialogue').classList.toggle('me', me);   /* your own lines look different from theirs */ $('line').textContent = s.text; const ch = $('choices'); ch.replaceChildren();
+  const s = convo[state.step], me = s.who === 'You' || s.who === 'Lewis'; if (!me) setSpeaker(s.who, s.anim); SV.line(s.who, s.text, me);   /* a character's recorded line, one voice at a time (owner rule 17) */ $('who').textContent = me ? 'You' : s.who; $('dialogue').classList.toggle('me', me);   /* your own lines look different from theirs */ $('line').textContent = s.text; const ch = $('choices'); ch.replaceChildren();
   if (s.choices) { $('next').hidden = true; for (const c of s.choices) { const o = typeof c === 'string' ? { t: c, ok: true } : c; const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = o.t;
       b.onclick = () => { if (showingRight()) return; if (o.ok) { advance(); return; }
         const opts = s.choices.map((c) => (typeof c === 'string' ? { t: c, ok: true } : c)), ri = opts.findIndex((c) => c.ok), right = ch.children[ri];

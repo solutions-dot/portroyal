@@ -1,3 +1,4 @@
+import { createStoryVoice } from "../../../engine/storyvoice.js";
 import { liveHint } from '../../../engine/device.js';
 /* The interface, the same as Kendal 1957, Melissa, Garvey and Nanny Town: the goal box, the controls tip that shows
    for a few seconds at the start of play, toasts that wait while someone is talking, the Journal button that glows with a count of new
@@ -268,11 +269,14 @@ export function dialogue(who, L, done, cancel) {
   onClose = cancel;
   drawLine();
 }
+/* spoken lines, cards and look lines: one shared module (engine/storyvoice.js) */
+export const SV = createStoryVoice();
 function drawLine() {
   const l = lines[li];
   $("who").textContent = l.who;
   $("line").textContent = l.text;
   $("dialogue").classList.toggle("me", ME.includes(l.who));
+  SV.line(l.who, l.text, ME.includes(l.who));
 }
 $("next").onclick = () => {
   uiSound("tap");
@@ -282,14 +286,19 @@ $("next").onclick = () => {
   }
   const f = doneTalk;
   doneTalk = null;
+  SV.stop();
   hide("dialogue");
   f?.();
 };
-$("dclose").onclick = () => hide("dialogue");
+$("dclose").onclick = () => {
+  SV.stop();
+  hide("dialogue");
+};
 
 /* ---------- cards: the first button is the main one, the others are outlined; col puts the buttons one under another ---------- */
 export function card(title, L, buttons, { col = false } = {}) {
   show("card");
+  SV.card(title, L);
   $("ctitle").textContent = title;
   $("cbody").replaceChildren(
     ...L.map((t) => {
@@ -305,6 +314,7 @@ export function card(title, L, buttons, { col = false } = {}) {
       b.className = "btn" + (i ? " ghost" : "");
       b.textContent = text;
       b.onclick = () => {
+        SV.stop();
         hide("card");
         fn?.();
       };

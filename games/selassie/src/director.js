@@ -16,7 +16,7 @@ import { showCinematicSkip } from "../../../engine/cine.js";
    Nobody is given invented words. Every camera stays outside the aircraft, the steps and the people (the dev check tests it). */
 import * as THREE from "three";
 import { ARRIVAL_CAPTIONS } from "./content.js";
-import { createFilmVoice } from "../../../engine/filmvoice.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
 import { AU, chan, setG } from "../../../engine/audio.js";
 import { $ } from "./ui.js";
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
@@ -101,7 +101,7 @@ export function shots(P) {
 }
 export function createDirector({ camera, place, finish, read, fast = false }) {
   const D = { on: false, paused: false, time: 0, fast };
-  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js; captions here are [text, at] */
+  const FV = sharedVoice();   /* the narrator: engine/filmvoice.js; captions here are [text, at] */
   const NARR = ARRIVAL_CAPTIONS.map(([text, at]) => [at, text]);
   let engine = null,
     crowd = null,
