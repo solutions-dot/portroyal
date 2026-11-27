@@ -113,7 +113,9 @@ $('goal').onclick = () => setGoal(goalText, true);
 function setClock(t) { $('clock').hidden = !t; $('clock').textContent = t || ''; }
 function say(who, text, ms = 4200) {   /* a line shown as a subtitle; in the Tube the speaker is heard, not seen, and in the water the voices come from the direction of the light */
   const el = $('sub'); el.textContent = who ? who + ': ' + text : text; el.classList.toggle('dim', !text); clearTimeout(subTimer); subTimer = setTimeout(() => el.classList.add('dim'), ms * (QUICK ? 0.4 : 1));
-  if (MODE === 'tube' && who) voice(['rise', 'dark'].includes(N.phase) ? Math.max(-0.9, Math.min(0.9, -Math.sin(bearingToLight()) * 0.9)) : Math.random() * 1.2 - 0.6, who !== 'Rudy');
+  /* a named speaker is heard through the one story-voice path (engine/storyvoice.js); only the player's own lines keep the old murmur, and nothing is said for a narrator quote (who is empty) */
+  if (who && who !== 'You') SV.line(who, text, false);
+  else if (MODE === 'tube' && who) voice(['rise', 'dark'].includes(N.phase) ? Math.max(-0.9, Math.min(0.9, -Math.sin(bearingToLight()) * 0.9)) : Math.random() * 1.2 - 0.6, true);
 }
 let toastTimer = 0;
 function toast(msg, ms = 2800) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms); }
