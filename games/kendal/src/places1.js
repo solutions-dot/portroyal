@@ -2,6 +2,7 @@
    the open carriage of the first train, and a hill station (1890s). Each builder returns the group, walking bounds, walls,
    people, background figures and the spots the game's actions use. Coordinates are metres; yaw 0 looks toward -z. */
 import * as THREE from 'three';
+import { horse } from '../../../engine/beasts.js';
 import { T, std, solid, flat, mesh, box, cyl, plane, grp, rng } from './gfx.js';
 import { rails, steamLoco, carriage1845, wagon, TM } from './trains.js';
 import { palm, tree, banana, bananaBunch, bush, boardHouse, shed, hillRing, scatter, mule, yamBasket, provisionSack, bananaLoad, cart, crate, sack, hamper, barrel, bucket, pole, lampPost, milestone, signBoard, surveyPole, waterTower, bench, suitcase, PM } from './props.js';
@@ -40,6 +41,9 @@ export function buildRoad() {
   people.push(person('dudley', 'muleteer', 'Mass Dudley', -28.4, 2.0, 0.4, { h: 1.78 }));
   people.push(person('cleo', 'higgler', 'Miss Cleo', -15, -2.6, PI * 0.8, { h: 2.18, props: [['Head', 'basket']] }));
   people.push(person('traveller', 'gent45', 'The traveller', -3.5, 2.3, -0.4, { h: 1.8, path: [[-3.5, 2.3], [3.5, 1.8], [-1, 1.4]] }));
+  /* the traveller's horse, lame today ("My horse is lame today"): saddled and bridled, resting with its head low at the road's edge, clear of his walk
+     (engine/beasts.js, the shared rigged horse; owner, 27 November 2026) */
+  const lame = horse(0x5a3a26, { saddle: true, bridle: true, idle: 'Idle_Headlow' }); lame.position.set(0.5, 0, 3.4); lame.rotation.y = PI; g.add(lame); walls.push([-1.25, 3.05, 1.75, 3.75]);
   people.push(person('surveyor', 'surveyor', 'The surveyor', 31, -2.2, PI * 0.9, { h: 1.78 }));
   extras.push(extra('worker45', 33.4, -4.7, 0.3, 'Carry'), extra('worker45', 17.5, -4.5, -0.8, 'CarryIdle'), extra('worker45', 41, -4.3, PI, 'Idle'), extra('worker45', 38, -6.5, PI * 0.5, 'Talk2', { ground: 0.6 }));
   return { id: 'road', group: g, walls, bounds: { x0: -40, x1: 46, z0: -7, z1: 7 }, start: { x: -36, z: 0.6, yaw: -PI / 2 }, people, extras, env: ENV.hazy, mule: bess, goods, goodsText: ['A basket of yams goes into the left pannier.', 'A sack of provisions goes into the right one.', 'A bunch of bananas is tied on top.'],

@@ -32,7 +32,7 @@ import { setPlaneParts } from "./planes.js";   /* the DC-8 parts taken from the 
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, QUIZZES } from "./content.js";
-import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, SV, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { tunePixels } from '../../../engine/perf.js';
@@ -592,6 +592,7 @@ const LS = createLookShot({
     $("sub").textContent = text;
     $("sub").classList.toggle("dim", !text);
   },
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
@@ -613,13 +614,14 @@ async function lookAt(id) {
       save();
     };
   /* a framing from the look itself, or from the place when it depends on how the place was built (a ship out in the harbour) */
-  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  await LS.play({ view: lk.view || Q.lookViews?.[id], act: lk.act, sound: lk.sound, line: 1.6, lines: SV.lookLines(lk), reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();
     return done();
   }
-  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
+  await LS.back();
+  done();
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;

@@ -8,7 +8,7 @@ import '../../../engine/textfit.js';   // first: every sign's words fit their bo
    Rules that shape the code: the fire is only ever seen from behind the rope and nobody is shown in it or hurt (docs/games/eventide.md, "How the fire is told");
    nothing the player does changes what happened; skin is lightened so faces read in every light (owner rule 9). */
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import * as THREE from 'three';
 import { headTop as realHeadTop, markAt, NEAR_GAP, showTalkMark, showTalkBubble } from '../../../engine/marks.js';   /* the talk mark sits the same gap over the real head or hat in every game */
@@ -46,8 +46,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, work, warm, release } from '../../../engine/preload.js';   /* the next chapter made ready while you read, the last one let go (engine/preload.js) */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);
@@ -350,11 +350,12 @@ const MENU = { ok: true, url: '../../../menu/' };   /* Always available on the g
 function toMenu() { saveGame(); location.href = MENU.url; }
 const CARD = { dismiss: null };
 function card(title, paras, btns, { col = false, dismiss } = {}) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); bb.classList.toggle('col', col); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; if (x.ok) el.dataset.ok = '1'; bb.appendChild(el); });
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
@@ -433,6 +434,7 @@ function openConvo(ls, onEnd, n) { document.body.classList.add('talking'); busy 
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock);
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
+  SV.line(s.who, s.text, me);   /* the character's recorded line (engine/storyvoice.js) */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
@@ -440,6 +442,7 @@ function showLine() {
 function choose(c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
+  SV.stop();
   document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();

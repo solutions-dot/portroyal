@@ -1,8 +1,9 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
+import { loadBeasts } from "../../../engine/beasts.js";
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, reachOf, placeFaces } from '../../../engine/faces.js';
 import { hudTidy, onceWhenClear } from '../../../engine/hud.js';
@@ -58,8 +59,8 @@ import { JOIN_STATS } from '../../../engine/joinbody.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);
@@ -397,11 +398,12 @@ function toMenu() { saveGame(); location.href = MENU.url; }
 
 const CARD = { dismiss: null };
 function card(title, paras, btns, { col = false, dismiss } = {}) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); bb.classList.toggle('col', col); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */
   if (QUICK) { fn(); return; } if (fading) return; fading = true; const f = $('fade'); $('fadeT').textContent = title; $('fadeS').textContent = sub; $('card').hidden = true; $('dialogue').hidden = true;
   playChapterFade(f, fn, () => { fading = false; }, [800, 3200, 3700, 4600]);
@@ -480,6 +482,7 @@ function gestureFor(n) { const a = n.anim || 'Idle', held = (n.m.userData.held |
 function showLine() {
   const s = lines[step], me = s.who === 'You' || !!s.choices; if (s.unlock) unlock(s.unlock); if (s.give === 'lamp') { story.lamp = true; saveGame(); toast('Mass Ezra gives you his lamp.'); updateLamp(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
+  SV.line(s.who, s.text, me);   /* the character's recorded line (engine/storyvoice.js) */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.ctl; if (ac) { const g = me ? null : gestureFor(talkWith); if (me || !g) { if (ac.cur !== ac.base && !isSeated(talkWith.anim)) ac.play(null); } else if (CL[g] || g === 'SitTalk') ac.play(g); }
@@ -487,6 +490,7 @@ function showLine() {
 function choose(s, c) { uiSound('tap'); if (c.set) Object.assign(story, c.set); saveGame(); lines.splice(step + 1, 0, ...(c.then || [])); step++; if (step >= lines.length) endTalk(true); else showLine(); }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
+  SV.stop();
   document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   if (n && n.amb && P_() && P_().life) P_().life.hold(n, false);
   const forced = convoForced; convoForced = false;
@@ -911,7 +915,7 @@ registerShows(); applySave(loadGame());
 { let done = 0; const total = 3; const tick = () => { done++; $('bar').style.width = (done / total * 100) + '%'; };
   buildPlace('kingston57'); enterPlace('kingston57');   /* the long platform and the train, as a backdrop for the title card */
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
-  model('anims').then((an) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
+  Promise.all([model('anims'), loadBeasts(['mule', 'horse'])]).then(([an]) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); else setTimeout(backgroundLoad, 2500); }); }
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in story order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */
@@ -1087,7 +1091,7 @@ function devViews() {
     const pids = (q.get('ids') || '').split(',').filter(Boolean), plo = q.has('lo'); if (q.has('pick')) setTimeout(() => { const out = []; for (const xy of q.get('pick').split(';')) { const [px, py] = xy.split(',').map(Number), rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(px * 2 - 1, -(py * 2 - 1)), camera); const hits = []; scene.traverse((o) => { if (o.isSkinnedMesh) { o.computeBoundingSphere && o.computeBoundingSphere(); } }); const hs = rc.intersectObjects(scene.children, true).filter((h) => h.object.isMesh); out.push(xy + '=' + hs.slice(0, 3).map((h) => h.object.name + '/' + (h.object.material.name || '') + '@' + h.distance.toFixed(2)).join('>')); } document.title = 'PICK ' + out.join(' | '); }, 14000);   /* &pick=x,y;x,y (0..1 of the screen): which pieces lie under those points, nearest first */ if (q.has('ds')) setTimeout(() => scene.traverse((o) => { if (o.isMesh && o.material) { for (const m of [].concat(o.material)) { m.side = THREE.DoubleSide; m.needsUpdate = true; } } }), 6000);   /* &ds: draw every face from both sides (does a hole come from cloth folding over?) */ if (pids.length) await Promise.all(pids.map((id) => loadBase((LOOKS[id] || { base: id }).base + (plo ? '_lo' : ''))));   /* ?shot=model&m=people&ids=gran,lloyd[&lo][&hold=suitcase][&anim=Walk] lines people up for a close look */
     P.group.visible = false; $('hud').hidden = true; const m = q.get('m') || 'diesel', num = (k, d) => (q.has(k) ? +q.get(k) : d), root = new THREE.Group(); scene.add(root);
     const MODELS = { diesel: [() => TRN.dieselLoco(), 1, 17, 3.2, 1.2], coach: [() => TRN.woodCoach(7), 1, 15, 3, 1.2], early: [() => TRN.steamLoco('early'), 1, 11, 2.4, 0.6], late: [() => TRN.steamLoco('late'), 1, 12, 2.6, 0.8], first: [() => TRN.carriage1845('first'), 1, 8, 2.4, 0.6], third: [() => TRN.carriage1845('third'), 1, 8, 2.4, 0.6], sides: [() => TRN.carriage1845('third', 6.4, 2.4, 'sides'), 1, 9, 2.4, 0.6], wagon: [() => TRN.wagon(), 1, 9, 2.4, 0.4],
-      mule: [() => PRP.mule(), 0, 3.6, 1.5, 0.95], mule3: [() => { const mu = PRP.mule(), L = [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad()]; L.forEach((o, i) => { mu.add(o); o.position.set(...mu.userData.slots[i]); o.rotation.set(0, i * 1.4, 0); o.scale.setScalar(i === 2 ? 0.9 : 0.8); }); mu.userData.dip = 1; return mu; }, 0, 3.6, 1.5, 0.95],
+      mule: [() => PRP.mule(), 0, 3.6, 1.5, 0.95], mule3: [() => { const mu = PRP.mule(), L = [PRP.yamBasket(), PRP.provisionSack(), PRP.bananaLoad()]; L.forEach((o, i) => { mu.userData.back.add(o); o.position.set(...mu.userData.slots[i]); o.rotation.set(0, i * 1.4, 0); o.scale.setScalar(i === 2 ? 0.9 : 0.8); }); mu.userData.dip = 1; return mu; }, 0, 3.6, 1.5, 0.95],
       cart: [() => PRP.cart(), 0, 5.5, 1.8, 0.7], truck: [() => PRP.truck(), 0, 7.5, 2.2, 1.0], bench: [() => PRP.bench(2.2), 0, 3.4, 1.3, 0.45],
       people: [() => { const g = new THREE.Group(); pids.forEach((id, i) => { const b = makeBody({ ...(LOOKS[id] || { base: id, tint: {} }), ...(q.get('hide') ? { hide: q.get('hide').split('-') } : {}), bodyId: (LOOKS[id] || { base: id }).base + (plo ? '_lo' : ''), x: (i - (pids.length - 1) / 2) * num('sp', 0.75), z: 0, ry: num('ry', 0), anim: q.get('anim') || 'Idle', props: q.get('hold') ? [['RightHand', q.get('hold')]] : undefined }); const c = b.userData.anim; if (q.has('at')) { c.base.time = num('at', 0) * c.base.getClip().duration; c.mx.update(0); } else c.mx.update(0.4); gripTick(b); g.add(b); if (q.has('at')) for (let k = 0; k < 30; k++) groundFeet(b);
         if (q.has('ds')) b.traverse((o) => { if (o.isMesh) o.material.side = THREE.DoubleSide; });   /* &ds draws the back of every face too (dev only): a hole that vanishes with it is a face folded over */

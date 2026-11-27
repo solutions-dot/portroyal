@@ -52,8 +52,29 @@
   "key": "Xaymaca. For a year, the people of Maima fed the strangers on those ships. The written accounts we have come from the Spanish. Here in Jamaica, part of the story is still with us. Every time we eat bammy, we taste something the Taíno passed down.",
   "stem": "n-093f283a",
   "text": "Xaymaca. For a year, the people of Maima fed the strangers on those ships. The written accounts we have come from the Spanish. Here in Jamaica, part of the story is still with us. Every time we eat bammy, we taste something the Taíno passed down.",
-  "emotion": "content",
-  "speed": 0.92
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Chapter finished. Well done.",
+  "stem": "n-b84db689",
+  "text": "Chapter finished. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You dip the calabash into the cool stream.",
+  "stem": "n-1edb111f",
+  "text": "You dip the calabash into the cool stream.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It fills with fresh water for the crossing.",
+  "stem": "n-c4d5042e",
+  "text": "It fills with fresh water for the crossing.",
+  "emotion": "neutral",
+  "speed": 0.95
  },
  {
   "key": "Grandmother lifts the cloth. The zemi looks back at you.",

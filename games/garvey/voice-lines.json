@@ -68,5 +68,89 @@
   "text": "Back on the dock. New York, nineteen nineteen",
   "emotion": "content",
   "speed": 0.97
+ },
+ {
+  "key": "Chapter 2 is finished!. Well done.",
+  "stem": "n-2ed2a5c1",
+  "text": "Chapter two is finished!. Well done.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The End. Thank you for walking through this story. Your journey, with all your choices, is in the Journal. Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.",
+  "stem": "n-d0282568",
+  "text": "The End. Thank you for walking through this story. Your journey, with all your choices, is in the Journal. Marcus Garvey, Amy Ashwood and Amy Jacques Garvey were real people. Their words here are fictional. Check the facts in the Journal against books and archives, and ask your own questions.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. You are a young helper in a print shop in Kingston, Jamaica. You are fictional. The printer and the customer are fictional too. Marcus Garvey and the events are real.",
+  "stem": "n-8f9d2910",
+  "text": "Who you are. You are a young helper in a print shop in Kingston, Jamaica. You are fictional. The printer and the customer are fictional too. Marcus Garvey and the events are real.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The paint looks fresh.",
+  "stem": "n-9eca8bb7",
+  "text": "The paint looks fresh.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Under it, the plates are rusty.",
+  "stem": "n-c94256be",
+  "text": "Under it, the plates are rusty.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The engineer says it runs.",
+  "stem": "n-e4db1f6e",
+  "text": "The engineer says it runs.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "But it is very old and needs many repairs.",
+  "stem": "n-65d808bb",
+  "text": "But it is very old and needs many repairs.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The planks are worn, and some of the rails are loose.",
+  "stem": "n-7b4e3968",
+  "text": "The planks are worn, and some of the rails are loose.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The Declaration of Rights of the Negro Peoples of the World.",
+  "stem": "n-95e4c669",
+  "text": "The Declaration of Rights of the Negro Peoples of the World.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It was agreed here in August 1920.",
+  "stem": "n-206d00cb",
+  "text": "It was agreed here in August nineteen twenty.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter from your friend lies open.",
+  "stem": "n-6116e7ca",
+  "text": "A letter from your friend lies open.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A board tells the story of his life.",
+  "stem": "n-df9feecc",
+  "text": "A board tells the story of his life.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

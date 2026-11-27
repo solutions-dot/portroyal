@@ -2,7 +2,7 @@ import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed } from '../../../engine/cine.js';
-import { createNarrator } from '../../../engine/narrator.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
+import { createStoryVoice } from '../../../engine/storyvoice.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
 import { releaseOnBlur, useInteractionKey } from '../../../engine/input.js';
 import { hudTidy } from '../../../engine/hud.js';
 import { createTalkCam, speakerHead } from '../../../engine/talk-cam.js';   /* the view turns to the person talking */
@@ -46,8 +46,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, ahead, work } from '../../../engine/preload.js';
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the chapter title cards (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 
 const $ = (id) => document.getElementById(id);
 soundPref('tivoli-sound');   // each game remembers its own sound setting
@@ -129,12 +129,12 @@ $('snd').onclick = () => { setSound(!AU.on); showSound(); }; showSound();
 const setBusy = (b) => { busy = !!b || panelOpen() || !$('chcard').hidden || !$('dialogue').hidden; if (busy) keys.clear(); };
 /* a card over the whole screen (the end of a chapter, the reset choices), with a row of buttons; the first is the main one */
 const CARD = { dismiss: null }, MENU_URL = '../../../menu/';
-function card(title, paras, btns, { dismiss } = {}) { NARR.speak(title);
+function card(title, paras, btns, { dismiss } = {}) { SV.card(title, paras);
   $('chcardt').textContent = title; $('chcardl').replaceChildren(...paras.map((t) => { const p = document.createElement('p'); p.textContent = t; return p; }));
   $('chcardb').replaceChildren(...btns.map((x, i) => { const el = document.createElement(x.href ? 'a' : 'button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; if (x.href) { el.href = x.href; el.style.textDecoration = 'none'; el.style.display = 'inline-flex'; el.style.alignItems = 'center'; } else el.onclick = x.go; return el; }));
   CARD.dismiss = dismiss || null; $('chcard').hidden = false; setBusy(true); const f = $('chcardb').querySelector('button,a'); if (f) f.focus();
 }
-function hideCard() { $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
+function hideCard() { SV.stop(); $('chcard').hidden = true; CARD.dismiss = null; setBusy(false); }
 function chapterEnd(id, end) {   /* the end of a walking chapter: what happened, then Next chapter (as in every game), after a short pause on a clear screen and with no "Stay here" (engine/chapter-end.js) */
   const nx = CHAPTERS.find((c) => c.id === id + 1 && c.playable); if (!nx) cue('end');   /* the last chapter: the closing phrase */
   offerNextChapter({ clear: () => !panelOpen() && $('chcard').hidden && $('dialogue').hidden, show: () => card(end.title, end.lines, nx ? [{ t: 'Next chapter', go: () => { hideCard(); startChapter(nx.id); } }, { t: 'Chapters', go: () => { hideCard(); openChapters(); } }]

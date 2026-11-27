@@ -182,3 +182,7 @@ All reference images are in `docs/games/morant-bay/images/` (see `INDEX.md` ther
 2. A vertical slice first: the Parade and courthouse at 3 to 4 pm on 11 October, Hannah, the crowd, and the chapter 4 cinematic behind its card. Show it to the owner.
 3. Recipes in `tools/morant-bay/people/`: Hannah, Mother, Gran, Father, the little brother, Bogle (the photograph), Gordon (the note), market women, villagers, constables, Volunteers, soldiers and marines, Maroons. Stand-ins are listed in the game's doc and marked as work to do (rule 3).
 4. The other chapters, the journal ("Dig deeper" carries the Commission's findings), the menu card (`data-year` 1865, `data-age="13"`, `data-warn`), the autoplayer, and the facts check against the sources here.
+
+## The mule (27 November 2026)
+
+The mule is the shared rigged mule (`engine/mule.js`, Quaternius, CC0); its footprint was turned to match it (it faces +x).

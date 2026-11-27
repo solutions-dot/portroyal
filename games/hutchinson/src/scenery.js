@@ -367,91 +367,9 @@ export const mudTex = (repeat = [3, 3]) =>
     ),
   );
 
-/* ---------- cattle ---------- */
-/* a cow of the small mixed island breed: a loft body (engine/loft.js), plain legs, short horns. pose: "graze" (head down), "stand", "lie".
-   coat: [top colour, belly colour, a second colour for a pied one or null]. Faces +x. About 1.25 m at the shoulder. */
-const HIDE = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-export const COATS = [
-  [0x7a4a30, 0x9a7050, null],
-  [0x2e2622, 0x3a322c, null],
-  [0xa8845a, 0xc8ac84, null],
-  [0x6a3c28, 0xd8ccb4, 0xd8ccb4],
-  [0x8a6a4a, 0xb89a74, null],
-  [0x3a2c26, 0xcfc4ae, 0xcfc4ae],
-];
-export function cow(coat = COATS[0], pose = "graze", seed = 1) {
-  const g = grp(),
-    r = rng(seed),
-    [c, belly, pied] = coat,
-    p = (i) => (pied && i % 2 ? pied : c),
-    dark = solid(new THREE.Color(c).multiplyScalar(0.55).getHex(), 1),
-    hoof = solid(0x1c1714, 0.8),
-    horn = solid(0xd8ceb0, 0.6),
-    lie = pose === "lie",
-    y0 = lie ? -0.52 : 0;
-  const part = (rings, sides = 12) => {
-    const m = new THREE.Mesh(loftSkin(rings, sides), HIDE);
-    g.add(m);
-    return m;
-  };
-  part([
-    [-0.8, 1.02 + y0, 0, 0.05, 0.08, c],
-    [-0.7, 0.98 + y0, 0, 0.23, 0.27, p(1), belly],
-    [-0.42, 0.93 + y0, 0, 0.3, 0.34, p(2), belly],
-    [-0.05, 0.88 + y0, 0, 0.34, 0.38, p(3), belly],
-    [0.3, 0.92 + y0, 0, 0.32, 0.36, p(4), belly],
-    [0.52, 1.0 + y0, 0, 0.25, 0.31, p(5), belly],
-    [0.68, 1.06 + y0, 0, 0.14, 0.2, c],
-  ]);
-  const head =
-    pose === "graze"
-      ? [
-          [0.56, 1.05, 0, 0.15, 0.2, c],
-          [0.8, 0.86, 0, 0.12, 0.16, c],
-          [0.98, 0.56, 0, 0.1, 0.13, c],
-          [1.08, 0.34, 0, 0.1, 0.115, pied || c],
-          [1.15, 0.2, 0, 0.085, 0.09, pied || c],
-          [1.2, 0.09, 0, 0.065, 0.065, 0x3a2c26],
-        ]
-      : [
-          [0.56, 1.05 + y0, 0, 0.15, 0.2, c],
-          [0.78, 1.16 + y0, 0, 0.12, 0.16, c],
-          [0.96, 1.24 + y0, 0, 0.1, 0.13, c],
-          [1.1, 1.24 + y0, 0, 0.1, 0.12, pied || c],
-          [1.26, 1.16 + y0, 0, 0.085, 0.095, pied || c],
-          [1.38, 1.08 + y0, 0, 0.065, 0.07, 0x3a2c26],
-        ];
-  part(head, 12);
-  const hp = head[3],
-    up = pose === "graze" ? [0.1, 0.06] : [-0.04, 0.12];
-  for (const s of [-1, 1]) {
-    const e = mesh(new THREE.SphereGeometry(0.06, 6, 5), dark, hp[0] + up[0] - 0.03, hp[1] + up[1] - 0.02, s * 0.13, g);
-    e.scale.set(0.5, 0.9, 1.5);
-    const hn = mesh(new THREE.ConeGeometry(0.024, 0.2, 5), horn, hp[0] + up[0], hp[1] + up[1] + 0.04, s * 0.1, g);
-    hn.rotation.x = s * 1.1;
-    hn.rotation.z = pose === "graze" ? -0.9 : 0.2;
-  }
-  if (lie) {
-    /* lying: the legs folded under, only the knees and hooves showing */
-    for (const [x, z] of [[0.45, 0.2], [0.45, -0.2], [-0.5, 0.26], [-0.5, -0.26]]) {
-      const k = cyl(0.06, 0.05, 0.42, dark, x, 0.07, z, g, 6);
-      k.rotation.z = Math.PI / 2;
-    }
-  } else
-    for (const [x, z] of [[0.44, 0.16], [0.44, -0.16], [-0.52, 0.17], [-0.52, -0.17]]) {
-      const lean = (r() - 0.5) * 0.12;
-      const u = cyl(0.075, 0.05, 0.5, HIDE_SOLID(c), x, 0.6, z, g, 6);
-      u.rotation.z = lean;
-      cyl(0.042, 0.036, 0.36, dark, x - lean * 0.4, 0.2, z, g, 6);
-      cyl(0.05, 0.055, 0.07, hoof, x - lean * 0.4, 0.035, z, g, 6);
-    }
-  const tail = cyl(0.016, 0.012, 0.75, dark, -0.83, 0.66 + y0, 0, g, 5);
-  tail.rotation.z = -0.1;
-  mesh(new THREE.SphereGeometry(0.045, 5, 4), dark, -0.87, 0.26 + y0, 0, g).scale.y = 1.8;
-  if (lie) g.position.y = 0;
-  return g;
-}
-const HIDE_SOLID = (c) => keep("hide" + c, () => solid(c, 0.95));
+/* ---------- cattle: the shared rigged cow (engine/beasts.js; owner, 27 November 2026: "we need a cow to match") ---------- */
+export { cow, COATS } from "../../../engine/beasts.js";
+const HIDE = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });   /* vertex-coloured loft shapes (the cotton tree) */
 
 /* ---------- the pen ---------- */
 /* a post-and-rail fence of split logwood, len along x */
@@ -810,17 +728,46 @@ export function castle({ w = 11, d = 7, h = 6.6, r = 2.05 } = {}) {
   };
   return g;
 }
-/* a far, small copy of the castle for another place's horizon: plain blocks, no detail */
+/* a far copy of the castle for another place's horizon (the road, two miles off). It keeps what reads at that distance, as the near castle
+   above has it (Cundall, 1915): lime rubble walls on a plinth with a cornice, two rows of loopholes on the faces seen from the road (the
+   front, +z, and the east end, +x), the front door beside the front tower, the one shuttered upper window, the two round towers with their
+   rims and shingled cones, and the chimney on the front tower. Slits are drawn a little wide so they still show from far off. */
 export function farCastle(s = 1) {
   const g = grp(),
-    m = solid(0xb0a894, 1);
-  box(11 * s, 6.6 * s, 7 * s, m, 0, 3.3 * s, 0, g);
-  for (const [x, z] of [[5.5, 3.5], [-5.5, -3.5]]) {
-    cyl(2.05 * s, 2.1 * s, 7.9 * s, m, x * s, 3.95 * s, z * s, g, 12);
-    mesh(new THREE.ConeGeometry(2.4 * s, 1.9 * s, 12), solid(0x5d5347, 1), x * s, 8.85 * s, z * s, g);
+    w = 11, d = 7, h = 6.6, r = 2.05,
+    m = W.rubbleMat(W.LIME, 12, 6),
+    mt = W.rubbleMat(W.LIME, 9, 5),
+    dark = solid(0x2a2620, 1),
+    rim = solid(0x9a9280, 1),
+    cone = solid(0x5d5347, 1),
+    shut = solid(0x5a4632, 1);
+  box(w * s, h * s, d * s, m, 0, (h / 2) * s, 0, g);
+  box((w + 0.3) * s, 0.45 * s, (d + 0.3) * s, rim, 0, 0.225 * s, 0, g);   /* the plinth */
+  box((w + 0.5) * s, 0.22 * s, (d + 0.5) * s, rim, 0, (h + 0.1) * s, 0, g);   /* the cornice under the roof */
+  for (const [x, z] of [[w / 2, d / 2], [-w / 2, -d / 2]]) {
+    cyl(r * s, (r + 0.05) * s, (h + 1.3) * s, mt, x * s, ((h + 1.3) / 2) * s, z * s, g, 16);
+    cyl((r + 0.14) * s, (r + 0.14) * s, 0.2 * s, rim, x * s, (h + 1.4) * s, z * s, g, 16);   /* the rim at the top of the tower */
+    mesh(new THREE.ConeGeometry((r + 0.34) * s, 1.9 * s, 16), cone, x * s, (h + 2.45) * s, z * s, g);
+    /* loopholes round the tower's outer side, two rows */
+    for (const y of [1.6, 4.6]) for (const a of [0.2, 0.9, 1.6]) {
+      const ang = (x > 0 ? 0 : Math.PI) + a - 0.9, sl = box(0.32 * s, 1.0 * s, 0.1 * s, dark, (x + Math.cos(ang) * (r + 0.14)) * s, y * s, (z + Math.sin(ang) * (r + 0.14)) * s, g);
+      sl.rotation.y = -ang + Math.PI / 2;
+    }
   }
-  const rf = W.hipRoof(11 * s, 7 * s, 2.2 * s, 0.45 * s);
-  rf.position.y = 6.6 * s;
+  /* the chimney on the front tower */
+  box(0.7 * s, 2.6 * s, 0.7 * s, m, (w / 2 - r * 0.62) * s, (h + 1.3 + 1.3) * s, (d / 2 - r * 0.62) * s, g);
+  box(0.84 * s, 0.14 * s, 0.84 * s, rim, (w / 2 - r * 0.62) * s, (h + 2.6 + 1.3) * s, (d / 2 - r * 0.62) * s, g);
+  /* loopholes on the front and the east end, as on the near castle */
+  for (const y of [1.5, 4.5]) {
+    for (const x of [-4.2, -2.9, 0.4, 2.4]) if (!(y > 4 && Math.abs(x + 1.7) < 1.3)) box(0.3 * s, 0.95 * s, 0.08 * s, dark, x * s, y * s, (d / 2 + 0.07) * s, g);
+    for (const z of [-2.2, -0.4]) box(0.08 * s, 0.95 * s, 0.3 * s, dark, (w / 2 + 0.07) * s, y * s, z * s, g);
+  }
+  box(1.1 * s, 2.1 * s, 0.08 * s, dark, (w / 2 - r - 0.85) * s, 1.05 * s, (d / 2 + 0.08) * s, g);   /* the front door */
+  box(1.0 * s, 2.0 * s, 0.08 * s, dark, (w / 2 + 0.08) * s, 1.0 * s, (d / 2 - r - 0.85) * s, g).rotation.y = Math.PI / 2;   /* the east door */
+  box(0.8 * s, 1.0 * s, 0.08 * s, dark, -1.7 * s, 4.5 * s, (d / 2 + 0.08) * s, g);   /* the watched window, its shutters shut */
+  for (const sx of [-1, 1]) box(0.4 * s, 1.0 * s, 0.06 * s, shut, (-1.7 + sx * 0.2) * s, 4.5 * s, (d / 2 + 0.13) * s, g);
+  const rf = W.hipRoof(w * s, d * s, 2.2 * s, 0.45 * s);
+  rf.position.y = (h + 0.2) * s;
   g.add(rf);
   return g;
 }

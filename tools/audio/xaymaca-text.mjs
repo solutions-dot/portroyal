@@ -11,6 +11,8 @@ const add = (t) => { t = norm(t); if (t.length > 3 && !keys.has(t)) keys.set(t, 
 /* a card is read as one clip: its title, then its paragraphs (the first chapter's card also has the fiction note) */
 c.CHAPTERS.forEach((ch, i) => add(ch.name + ". " + ch.intro + (i === 0 ? " " + c.GAME.fiction : "")));
 add(c.CARDS.end.title + ". " + c.CARDS.end.lines.join(" "));   // the scene cards no longer show (the Watch card is off), so only the end card is read
+add("Chapter finished. Well done.");   // the shared chapter-end clip (engine/storyvoice.js)
+for (const t of Object.values(st.TASKS)) for (const l of t.fill?.lines || []) add(l);   // close-ups of filling or doing a task (fillFirst in main.js)
 for (const lk of Object.values(st.LOOKS)) for (const l of [...(lk.say || []), ...(lk.lines || [])]) add(l);
 const out = [...keys].map(([key, stem]) => ({ key, stem, text: speakText(key), emotion: "neutral", speed: 0.95 }));
 console.log(out.length, "lines,", out.reduce((n, o) => n + o.text.split(" ").length, 0), "words");

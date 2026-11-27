@@ -4,7 +4,6 @@ import "../../../engine/textfit.js";   // first: every sign's words fit their bo
 /* An all-ages mystery on the shared engine. It plays like every other game (walk, talk, do, watch a scene). Everything that differs from one mature game
    to the next is data: content.js (words), steps.js (the story table), places.js (the world) and cast.js (the people). */
 import { renderFramed } from "../../../engine/cine.js";
-import { sharedVoice } from "../../../engine/filmvoice.js";
 import { createLookShot } from "../../../engine/lookshot.js";   /* looking at a thing is a close-up action (owner rule 13) */
 import { sceneWarning, readWhatHappened } from "../../../engine/scene-warning.js";
 import { placeActionButton } from "../../../engine/action-button.js";
@@ -32,7 +31,7 @@ import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ } from "./content.js";
-import { $, NARR, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, SV, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import * as P from "./props.js";
 import { cockedHat } from "./ships.js";
@@ -598,8 +597,7 @@ const LS = createLookShot({
     $("sub").textContent = text;
     $("sub").classList.toggle("dim", !text);
   },
-  speak: (t) => NARR.speak(t),
-  voiceBusy: () => sharedVoice().active(),
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
@@ -623,7 +621,7 @@ async function lookAt(id) {
   /* a framing from the look itself, or from the place when it depends on how the place was built (a ship out in the harbour) */
   /* the story line, then what it means, one at a time in the lower bar over the close shot, each read aloud and held until it is finished;
      no pop-up card covers the thing (owner, 27 November 2026) */
-  await LS.play({ view: lk.view || Q.lookViews?.[id], first: Q.lookFirst?.[id], scope: lk.scope, act: lk.act, line: 1.6, sound: lk.sound, lines: [...(lk.say || []), ...(lk.lines || [])], reveal: (k) => Q.reveal[id]?.(k) });
+  await LS.play({ view: lk.view || Q.lookViews?.[id], first: Q.lookFirst?.[id], scope: lk.scope, act: lk.act, line: 1.6, sound: lk.sound, lines: SV.lookLines(lk), reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();

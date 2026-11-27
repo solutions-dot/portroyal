@@ -367,91 +367,9 @@ export const mudTex = (repeat = [3, 3]) =>
     ),
   );
 
-/* ---------- cattle ---------- */
-/* a cow of the small mixed island breed: a loft body (engine/loft.js), plain legs, short horns. pose: "graze" (head down), "stand", "lie".
-   coat: [top colour, belly colour, a second colour for a pied one or null]. Faces +x. About 1.25 m at the shoulder. */
-const HIDE = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-export const COATS = [
-  [0x7a4a30, 0x9a7050, null],
-  [0x2e2622, 0x3a322c, null],
-  [0xa8845a, 0xc8ac84, null],
-  [0x6a3c28, 0xd8ccb4, 0xd8ccb4],
-  [0x8a6a4a, 0xb89a74, null],
-  [0x3a2c26, 0xcfc4ae, 0xcfc4ae],
-];
-export function cow(coat = COATS[0], pose = "graze", seed = 1) {
-  const g = grp(),
-    r = rng(seed),
-    [c, belly, pied] = coat,
-    p = (i) => (pied && i % 2 ? pied : c),
-    dark = solid(new THREE.Color(c).multiplyScalar(0.55).getHex(), 1),
-    hoof = solid(0x1c1714, 0.8),
-    horn = solid(0xd8ceb0, 0.6),
-    lie = pose === "lie",
-    y0 = lie ? -0.52 : 0;
-  const part = (rings, sides = 12) => {
-    const m = new THREE.Mesh(loftSkin(rings, sides), HIDE);
-    g.add(m);
-    return m;
-  };
-  part([
-    [-0.8, 1.02 + y0, 0, 0.05, 0.08, c],
-    [-0.7, 0.98 + y0, 0, 0.23, 0.27, p(1), belly],
-    [-0.42, 0.93 + y0, 0, 0.3, 0.34, p(2), belly],
-    [-0.05, 0.88 + y0, 0, 0.34, 0.38, p(3), belly],
-    [0.3, 0.92 + y0, 0, 0.32, 0.36, p(4), belly],
-    [0.52, 1.0 + y0, 0, 0.25, 0.31, p(5), belly],
-    [0.68, 1.06 + y0, 0, 0.14, 0.2, c],
-  ]);
-  const head =
-    pose === "graze"
-      ? [
-          [0.56, 1.05, 0, 0.15, 0.2, c],
-          [0.8, 0.86, 0, 0.12, 0.16, c],
-          [0.98, 0.56, 0, 0.1, 0.13, c],
-          [1.08, 0.34, 0, 0.1, 0.115, pied || c],
-          [1.15, 0.2, 0, 0.085, 0.09, pied || c],
-          [1.2, 0.09, 0, 0.065, 0.065, 0x3a2c26],
-        ]
-      : [
-          [0.56, 1.05 + y0, 0, 0.15, 0.2, c],
-          [0.78, 1.16 + y0, 0, 0.12, 0.16, c],
-          [0.96, 1.24 + y0, 0, 0.1, 0.13, c],
-          [1.1, 1.24 + y0, 0, 0.1, 0.12, pied || c],
-          [1.26, 1.16 + y0, 0, 0.085, 0.095, pied || c],
-          [1.38, 1.08 + y0, 0, 0.065, 0.07, 0x3a2c26],
-        ];
-  part(head, 12);
-  const hp = head[3],
-    up = pose === "graze" ? [0.1, 0.06] : [-0.04, 0.12];
-  for (const s of [-1, 1]) {
-    const e = mesh(new THREE.SphereGeometry(0.06, 6, 5), dark, hp[0] + up[0] - 0.03, hp[1] + up[1] - 0.02, s * 0.13, g);
-    e.scale.set(0.5, 0.9, 1.5);
-    const hn = mesh(new THREE.ConeGeometry(0.024, 0.2, 5), horn, hp[0] + up[0], hp[1] + up[1] + 0.04, s * 0.1, g);
-    hn.rotation.x = s * 1.1;
-    hn.rotation.z = pose === "graze" ? -0.9 : 0.2;
-  }
-  if (lie) {
-    /* lying: the legs folded under, only the knees and hooves showing */
-    for (const [x, z] of [[0.45, 0.2], [0.45, -0.2], [-0.5, 0.26], [-0.5, -0.26]]) {
-      const k = cyl(0.06, 0.05, 0.42, dark, x, 0.07, z, g, 6);
-      k.rotation.z = Math.PI / 2;
-    }
-  } else
-    for (const [x, z] of [[0.44, 0.16], [0.44, -0.16], [-0.52, 0.17], [-0.52, -0.17]]) {
-      const lean = (r() - 0.5) * 0.12;
-      const u = cyl(0.075, 0.05, 0.5, HIDE_SOLID(c), x, 0.6, z, g, 6);
-      u.rotation.z = lean;
-      cyl(0.042, 0.036, 0.36, dark, x - lean * 0.4, 0.2, z, g, 6);
-      cyl(0.05, 0.055, 0.07, hoof, x - lean * 0.4, 0.035, z, g, 6);
-    }
-  const tail = cyl(0.016, 0.012, 0.75, dark, -0.83, 0.66 + y0, 0, g, 5);
-  tail.rotation.z = -0.1;
-  mesh(new THREE.SphereGeometry(0.045, 5, 4), dark, -0.87, 0.26 + y0, 0, g).scale.y = 1.8;
-  if (lie) g.position.y = 0;
-  return g;
-}
-const HIDE_SOLID = (c) => keep("hide" + c, () => solid(c, 0.95));
+/* ---------- cattle: the shared rigged cow (engine/beasts.js; owner, 27 November 2026: "we need a cow to match") ---------- */
+export { cow, COATS } from "../../../engine/beasts.js";
+const HIDE = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });   /* vertex-coloured loft shapes (the cotton tree) */
 
 /* ---------- the pen ---------- */
 /* a post-and-rail fence of split logwood, len along x */

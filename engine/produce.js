@@ -19,6 +19,7 @@ const KINDS = {
   plantain: { r: 0.03, color: 0x8aa040, rough: 0.6, sx: 4.2 },
 };
 let weaveTex = null;
+export function weaveTexture() { return weave(); }
 function weave() {
   if (weaveTex) return weaveTex;
   const c = document.createElement('canvas'); c.width = 64; c.height = 32; const x = c.getContext('2d');

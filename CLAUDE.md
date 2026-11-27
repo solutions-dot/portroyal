@@ -84,6 +84,8 @@ Audience: **children aged 6 and up, plus adults**. Every choice follows from tha
 
 17. **One voice at a time, and speech never traps the player** (owner, 26 November 2026: "I want these rules for all"). Narration, film captions and character lines share one voice channel (`engine/filmvoice.js`: `sync`, `say`), so two never overlap. Starting a new line, advancing, closing, skipping, muting or leaving the page stops the old one. Every spoken line is also on screen and works with sound off ("Read instead" stays). Numbers are spoken as words, a hard name is respelled only in the voice script (never on screen: "Palisadoes" shows as written and is said "Palesaydoze"), and a clip that runs past its caption makes the film wait rather than cutting it off. Missing or blocked audio never stops play. Details and checks: `docs/AUDIO.md`.
 
+18. **One story-voice path for every game, existing and future** (owner, 27 November 2026: "all games are standardised, no individual code, because when we make a change it must be across all"). Cards, dialogue lines and look scenes are read aloud only through `engine/storyvoice.js` (`createStoryVoice`: `SV.line`, `SV.card`, `...SV.look`, `SV.lookLines`), film directors use `sharedVoice()`, look scenes have no pop-up, and every clip sits at -19 LUFS (`tools/audio/balance-dir.mjs`). New games start from `games/_template/`, which already makes `SV`. `tests/story-voice.mjs` enforces it; read `docs/ENGINE.md` ("Story voice") and `docs/AUDIO.md`.
+
 ## Quick commands
 
 ```bash

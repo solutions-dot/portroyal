@@ -1,7 +1,7 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
-import { createNarrator } from '../../../engine/narrator.js';
+import { createStoryVoice } from '../../../engine/storyvoice.js';
 import { offerNextChapter } from '../../../engine/chapter-end.js';
 import { spreadBodies, placeFaces } from '../../../engine/faces.js';
 import { hudTidy } from '../../../engine/hud.js';
@@ -52,8 +52,8 @@ import { tunePixels } from '../../../engine/perf.js';
 import { setQuiet, placeKeeper } from '../../../engine/preload.js';   /* the next place is built in quiet moments, a place left behind gives back its memory */
 import { touchFirst, liveHint } from '../../../engine/device.js';
 import { addExit } from '../../../engine/exit.js';
-const NARR = createNarrator();   /* reads the text the game already shows (engine/narrator.js, owner rule 17) */
-NARR.preload();
+const SV = createStoryVoice();   /* every spoken line, card and look line goes through one engine module (engine/storyvoice.js, owner rule 17) */
+const NARR = SV.narrator;   /* title cards and captions */
 configureCinematicBed('story');   /* a quiet bed under every cinematic (owner rule 16) */
 
 const $ = (id) => document.getElementById(id);
@@ -338,11 +338,12 @@ function toMenu() { saveGame(); location.href = MENU.url; }
 
 const CARD = { dismiss: null };
 function card(title, paras, btns, { col = false, dismiss } = {}) {
+  SV.card(title, paras);   /* read aloud (engine/storyvoice.js) */
   $('ctitle').textContent = title; const b = $('cbody'); b.replaceChildren(); for (const t of paras) { const p = document.createElement('p'); p.textContent = t; b.appendChild(p); }
   const bb = $('cbtns'); bb.replaceChildren(); bb.classList.toggle('col', col); btns.forEach((x, i) => { const el = document.createElement('button'); el.className = 'btn' + (i ? ' ghost' : ''); el.textContent = x.t; el.onclick = x.go; bb.appendChild(el); });
   CARD.dismiss = dismiss === undefined ? null : dismiss; $('card').hidden = false; busy = true; keys.clear(); $('talk').hidden = true; const f = bb.querySelector('button'); if (f) f.focus();
 }
-function hideCard() { $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
+function hideCard() { SV.stop(); $('card').hidden = true; CARD.dismiss = null; busy = panelsOpen(); }
 const readCard = (c) => new Promise((res) => readWhatHappened(card, { what: c.paras, go: () => { hideCard(); res(true); } }));   /* the standard What happened card (engine/scene-warning.js) */
 const infoCard = (c, go) => new Promise((res) => card(c.title, c.paras, [{ t: c.go || 'Go on', go: () => { hideCard(); if (go) go(); res(true); } }], { col: true }));
 function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);   /* fade to a black title card, change the scene while it is dark, fade back */
@@ -417,7 +418,7 @@ function showLine() {
   }
   const s = lines[step], me = s.who === 'You'; if (s.unlock) unlock(s.unlock); if (s.give === 'cloak') { story.cloak = true; saveGame(); toast(SAY.cloak, 3200); SFX.rustle(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
-  if (!me && s.text) NARR.speak(s.who + '|' + String(s.text).replace(/\s+/g, ' ').trim()); else NARR.stop();   /* the character's recorded line (voices/index.json, owner rule 17) */
+  SV.line(s.who, s.text, me);   /* the character's recorded line (voices/index.json, owner rule 17) */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c, b); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }

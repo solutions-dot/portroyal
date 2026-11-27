@@ -12,5 +12,236 @@
   "text": "Sixteen seventy. Old Ned's story, from twenty years ago. In it, you are young Ned, a ship's boy.",
   "emotion": "content",
   "speed": 0.97
+ },
+ {
+  "key": "Saved. Hands pull you over the side of the boat. You are alive. Behind you, most of Port Royal is under the sea. Four new pages are in your journal.",
+  "stem": "n-4c5a722c",
+  "text": "Saved. Hands pull you over the side of the boat. You are alive. Behind you, most of Port Royal is under the sea. Four new pages are in your journal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "7 June 1692. Two years later. Lewis is now a merchant.",
+  "stem": "n-7746e234",
+  "text": "The seventh of June sixteen ninety-two. Two years later. Lewis is now a merchant.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. You are Lewis Galdy. He was a real person, born in France in 1659. His family were Huguenots, French Protestants. France punished them for their faith, so Lewis sailed to Jamaica.",
+  "stem": "n-7a157d0f",
+  "text": "Who you are. You are Lewis Galdy. He was a real person, born in France in sixteen fifty-nine. His family were Huguenots, French Protestants. France punished them for their faith, so Lewis sailed to Jamaica.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Swallowed. The wet sand has gone soft, like mud. You sink up to your neck. You cannot move. Then the ground shakes again!",
+  "stem": "n-01ee7d58",
+  "text": "Swallowed. The wet sand has gone soft, like mud. You sink up to your neck. You cannot move. Then the ground shakes again!",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Stay, or go?. Your town is under the sea. Across the water, people are starting again. What will you do?",
+  "stem": "n-e5fe053a",
+  "text": "Stay, or go?. Your town is under the sea. Across the water, people are starting again. What will you do?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He stayed. The real Lewis Galdy stayed. He grew rich and helped build a new church.",
+  "stem": "n-e02a5a93",
+  "text": "He stayed. The real Lewis Galdy stayed. He grew rich and helped build a new church.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Most people left. Most people crossed the water. Their new town became Kingston. But the real Lewis Galdy stayed. He grew rich and helped build a new church.",
+  "stem": "n-1bf94010",
+  "text": "Most people left. Most people crossed the water. Their new town became Kingston. But the real Lewis Galdy stayed. He grew rich and helped build a new church.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Here lies Lewis Galdy. “Here Lyes the Body of LEWIS GALDY Esq. who departed this Life at Port Royal the 22d December 1739, Aged 80. He was Born at Montpelier in France, but left that Country for his Religion, and came to settle in this Island, where he was swallowed up in the Great Earthquake in the Year 1692, and By the Providence of God was by another Shock thrown into the Sea, and Miraculously saved by swimming until a Boat took him up. He lived many Years after in great Reputation, Beloved by all that knew him, and much Lamented at his Death.”",
+  "stem": "n-5a545bf7",
+  "text": "Here lies Lewis Galdy. Here Lyes the Body of LEWIS GALDY Esquire Who departed this Life at Port Royal the twenty-second of December seventeen thirty-nine, Aged eighty. He was Born at Montpelier in France, but left that Country for his Religion, and came to settle in this Island, where he was swallowed up in the Great Earthquake in the Year sixteen ninety-two, and By the Providence of God was by another Shock thrown into the Sea, and Miraculously saved by swimming until a Boat took him up. He lived many Years after in great Reputation, Beloved by all that knew him, and much Lamented at his Death.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The End. Lewis Galdy lived 47 more years. His stone does not say what he sold to get rich. Abba would tell it another way. Two new pages are in your journal.",
+  "stem": "n-a23104af",
+  "text": "The End. Lewis Galdy lived forty-seven more years. His stone does not say what he sold to get rich. Abba would tell it another way. Two new pages are in your journal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "1691. One year later. Lewis has his own warehouse by the wharf. Ships bring goods. He sells them. That is how merchants get rich.",
+  "stem": "n-a497f7b2",
+  "text": "Sixteen ninety-one. One year later. Lewis has his own warehouse by the wharf. Ships bring goods. He sells them. That is how merchants get rich.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The letter. “Mr Galdy, let us sell enslaved people to Spanish buyers. We will both get rich.” It is from the captain of a slave ship.",
+  "stem": "n-d62038c8",
+  "text": "The letter. Mister Galdy, let us sell enslaved people to Spanish buyers. We will both get rich. It is from the captain of a slave ship.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Ned’s story. Ned will tell you about the summer Morgan’s ships got ready to sail. In his story, you are young Ned.",
+  "stem": "n-5ae345c2",
+  "text": "Ned's story. Ned will tell you about the summer Morgan's ships got ready to sail. In his story, you are young Ned.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "1670. This is old Ned’s story, from 20 years ago. In it, you are young Ned, a ship’s boy.",
+  "stem": "n-adbd5a55",
+  "text": "Sixteen seventy. This is old Ned's story, from twenty years ago. In it, you are young Ned, a ship's boy.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What happened next. The ships sailed. Morgan’s men took the city of Panama, and it burned. About 1,200 men marched with him. Later the King made Morgan a knight. He came back to help rule Jamaica, and hanged pirates. He died in 1688. In 1692 the earthquake took his grave into the sea.",
+  "stem": "n-a2d9549d",
+  "text": "What happened next. The ships sailed. Morgan's men took the city of Panama, and it burned. About one thousand two hundred men marched with him. Later the King made Morgan a knight. He came back to help rule Jamaica, and hanged pirates. He died in sixteen eighty-eight. In sixteen ninety-two the earthquake took his grave into the sea.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This round bottle is called an onion bottle, because of its shape.",
+  "stem": "n-0e656183",
+  "text": "This round bottle is called an onion bottle, because of its shape.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It held wine or other drinks.",
+  "stem": "n-bb32e1e7",
+  "text": "It held wine or other drinks.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Pewter is a soft grey metal.",
+  "stem": "n-a9d8d5e9",
+  "text": "Pewter is a soft grey metal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Many people ate from pewter plates.",
+  "stem": "n-f4f98255",
+  "text": "Many people ate from pewter plates.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Many people in Port Royal smoked tobacco in long clay pipes.",
+  "stem": "n-27a7cc4b",
+  "text": "Many people in Port Royal smoked tobacco in long clay pipes.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Divers found so many pipes that it seemed the whole town smoked.",
+  "stem": "n-8a573f89",
+  "text": "Divers found so many pipes that it seemed the whole town smoked.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This little box is covered in turtle shell.",
+  "stem": "n-f43ce379",
+  "text": "This little box is covered in turtle shell.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A box like it was found under the sea at Port Royal.",
+  "stem": "n-ed8fcb11",
+  "text": "A box like it was found under the sea at Port Royal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "These big casks are full of sugar.",
+  "stem": "n-9bf125e1",
+  "text": "These big casks are full of sugar.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Sugar was the main thing Jamaica sold to the world.",
+  "stem": "n-47242814",
+  "text": "Sugar was the main thing Jamaica sold to the world.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "These sacks hold cocoa beans.",
+  "stem": "n-96f50a58",
+  "text": "These sacks hold cocoa beans.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "People ground them up to make a chocolate drink.",
+  "stem": "n-0d046c0a",
+  "text": "People ground them up to make a chocolate drink.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "This dark red wood is called logwood.",
+  "stem": "n-d0679481",
+  "text": "This dark red wood is called logwood.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It was not for building.",
+  "stem": "n-f43c6b53",
+  "text": "It was not for building.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The great church fell down in the earthquake.",
+  "stem": "n-68ab7e2d",
+  "text": "The great church fell down in the earthquake.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Most people who lived left Port Royal.",
+  "stem": "n-b1aec5c7",
+  "text": "Most people who lived left Port Royal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "They crossed the harbour and began a new town.",
+  "stem": "n-9b9759f0",
+  "text": "They crossed the harbour and began a new town.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter lies open on the desk.",
+  "stem": "n-17bdb34c",
+  "text": "A letter lies open on the desk.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "An old stone, its letters worn by the sea air.",
+  "stem": "n-6957eef8",
+  "text": "An old stone, its letters worn by the sea air.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

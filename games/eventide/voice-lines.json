@@ -110,5 +110,26 @@
   "text": "Morning. Smoke hangs over Slipe Pen Road.",
   "emotion": "sad",
   "speed": 0.92
+ },
+ {
+  "key": "At the grave. The grave is closed now, with concrete and steel. How will you say goodbye?",
+  "stem": "n-266e6b6c",
+  "text": "At the grave. The grave is closed now, with concrete and steel. How will you say goodbye?",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The End. For years the Eventide fire was a line at the bottom of the page. You have read past it. The women of Eventide were people, each with a name and a life. Your journal has a page about your journey.",
+  "stem": "n-0ce3e327",
+  "text": "The End. For years the Eventide fire was a line at the bottom of the page. You have read past it. The women of Eventide were people, each with a name and a life. Your journal has a page about your journey.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Who you are. You are a child who lives near Slipe Pen Road, in Kingston. Gran visits her friend at the Eventide Home. You go with her. You and Gran are fictional. The Home and the fire are real.",
+  "stem": "n-fc0cfb68",
+  "text": "Who you are. You are a child who lives near Slipe Pen Road, in Kingston. Gran visits her friend at the Eventide Home. You go with her. You and Gran are fictional. The Home and the fire are real.",
+  "emotion": "neutral",
+  "speed": 0.95
  }
 ]

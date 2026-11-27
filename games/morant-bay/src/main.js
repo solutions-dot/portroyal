@@ -1,4 +1,5 @@
 import { touchFirst } from '../../../engine/device.js';
+import { loadMule } from "../../../engine/mule.js";
 import { addRecap } from "../../../engine/recap.js";   /* three things you learned, on the last card */
 import "../../../engine/textfit.js";   // first: every sign's words fit their board (engine/textfit.js)
 /* A Mature 13+ story on the shared engine. It plays like every other game (walk, talk, do, watch a scene) for an older audience:
@@ -31,7 +32,7 @@ import { buildPlace, mergePlace } from "./places.js";
 import { CAST, CROWD } from "./cast.js";
 import { STEPS, TASKS, LOOKS, ITEMS, TASK_IDS } from "./steps.js";
 import { GAME, CHAPTERS, chapterOf, PEOPLE, TALK, FLAVOUR, CARDS, FILMS, QUIZ, SILENT } from "./content.js";
-import { $, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
+import { $, SV, openPanel, dialogue, card, journal, chapters, closeAll, toast, showCount, newPage, goalSetup, setGoal, nudgeGoal, startHint, hintTick, createMarks } from "./ui.js";
 import { createDirector } from "./director.js";
 import { createLookShot } from "../../../engine/lookshot.js";
 import { makeRidges } from "../../../engine/ridges.js";   /* far hills that fade into the haze, as in Nanny Town */   /* looking at a thing is a close-up action (owner rule 13) */
@@ -621,6 +622,7 @@ const LS = createLookShot({
   },
   bars: (on) => document.body.classList.toggle("cine", on),
   say: (text) => ($("sub").textContent = text),
+  ...SV.look,
   freeze: (on) => (busy = on),
   sound: (name) => AU.ctx && AU.on && AU.ctx.state === "running" && LOOK_SFX[name]?.(),
   quick: () => QUICK && !S.lookShot,
@@ -641,13 +643,16 @@ async function lookAt(id) {
       uiSound("goal");
       save();
     };
-  await LS.play({ view: lk.view, act: lk.act, sound: lk.sound, lines: lk.say, reveal: (k) => Q.reveal[id]?.(k) });
+  /* the story line, then what it means, one at a time in the lower bar over the close shot, each read aloud and held until it is finished;
+     no pop-up card covers the thing (owner, 27 November 2026) */
+  await LS.play({ view: lk.view, act: lk.act, line: 1.6, sound: lk.sound, lines: SV.lookLines(lk), reveal: (k) => Q.reveal[id]?.(k) });
   if (S.stage !== st) return;
   if (openPanel()) {
     LS.cancel();
     return done();
   }
-  card(lk.title, lk.lines, [[lk.button || "Go on", async () => { await LS.back(); done(); }]]);
+  await LS.back();
+  done();
 }
 function action(id) {
   if (busy || openPanel() || DIR.on || !story.needs(id)) return;
@@ -1052,6 +1057,7 @@ onLoadFail(() => {
 (async () => {
   try {
     loadClips(await model("anims"));
+    await loadMule();   /* the shared rigged mule, before any place is built */
     loadClips(await model("anims_mb"));   /* this game's own clip: the fall at the volley (tools/morant-bay/pack_clips.mjs) */
     $("bar").style.width = "25%";
     const Q = await ensure(GAME.title.place);
