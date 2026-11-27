@@ -49,60 +49,11 @@
   "speed": 0.95
  },
  {
-  "key": "Two ships. Two broken ships sail slowly into the bay. Their crews run them onto the sand.",
-  "stem": "n-d22799ed",
-  "text": "Two ships. Two broken ships sail slowly into the bay. Their crews run them onto the sand.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "Out to the ships. Cousin paddles the bread out to the ships. Sailors lean over the side to trade.",
-  "stem": "n-ced716e7",
-  "text": "Out to the ships. Cousin paddles the bread out to the ships. Sailors lean over the side to trade.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "The canoes set off. At dawn the two canoes set off along the coast. Cousin is in one of them.",
-  "stem": "n-81f49410",
-  "text": "The canoes set off. At dawn the two canoes set off along the coast. Cousin is in one of them.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "What Mendez wrote. The canoes cross the open sea toward Hispaniola. Mendez wrote that it was very hot, and the water ran out. One paddler died of thirst. Nothing is shown.",
-  "stem": "n-16a61421",
-  "text": "What Mendez wrote. The canoes cross the open sea toward Hispaniola. Mendez wrote that it was very hot, and the water ran out. One paddler died of thirst. Nothing is shown.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "Shouting on the ships. Far below, men shout on the ships. They take ten canoes and paddle away east. Nobody is hurt in this scene.",
-  "stem": "n-853bed52",
-  "text": "Shouting on the ships. Far below, men shout on the ships. They take ten canoes and paddle away east. Nobody is hurt in this scene.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "The red moon. The full moon rises dark, and turns deep red. People are frightened. Nobody is hurt.",
-  "stem": "n-6ce7c942",
-  "text": "The red moon. The full moon rises dark, and turns deep red. People are frightened. Nobody is hurt.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
-  "key": "The ships sail. The new ship sails away with all the strangers. The old wrecks stay on the sand.",
-  "stem": "n-fe712524",
-  "text": "The ships sail. The new ship sails away with all the strangers. The old wrecks stay on the sand.",
-  "emotion": "neutral",
-  "speed": 0.95
- },
- {
   "key": "Xaymaca. For a year, the people of Maima fed the strangers on those ships. The written accounts we have come from the Spanish. Here in Jamaica, part of the story is still with us. Every time we eat bammy, we taste something the Taíno passed down.",
   "stem": "n-093f283a",
   "text": "Xaymaca. For a year, the people of Maima fed the strangers on those ships. The written accounts we have come from the Spanish. Here in Jamaica, part of the story is still with us. Every time we eat bammy, we taste something the Taíno passed down.",
-  "emotion": "neutral",
-  "speed": 0.95
+  "emotion": "content",
+  "speed": 0.92
  },
  {
   "key": "Grandmother lifts the cloth. The zemi looks back at you.",

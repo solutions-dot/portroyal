@@ -33,7 +33,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
     return clips.get(p);
   }
   function stopVoice() {
-    const c = current; current = null; cue = null;
+    const c = current; current = null; cue = null; AU.voiceOn = false;
     try { c && c.source && c.source.stop(); } catch (e) { /* already stopped */ }
   }
   function stopScore() {
@@ -41,7 +41,7 @@ export function createFilmVoice({ dir = './voices/', prefix = 'narrator-', score
     try { c && c.source && c.source.stop(); } catch (e) { /* already stopped */ }
   }
   const stop = stopVoice;
-  const duck = () => { if (score && score.gain) score.gain.gain.setTargetAtTime(current ? SCORE_DUCK : SCORE_GAIN, AU.ctx.currentTime, 0.09); };
+  const duck = () => { AU.voiceOn = !!current; if (score && score.gain) score.gain.gain.setTargetAtTime(current ? SCORE_DUCK : SCORE_GAIN, AU.ctx.currentTime, 0.09); };
   function play(stem, elapsed) {
     stop();
     if (!AU.on || !AU.ctx || !AU.master) return;

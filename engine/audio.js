@@ -78,8 +78,8 @@ export function cricketBed(f = 4300, chop = 24, slow = 3.1) { const c = AU.ctx, 
    Target (docs/ENGINE.md, "One ambient level"): the loudest bed of a place between BED_RANGE.lo and BED_RANGE.hi, after the game's own scale,
    and every bed times BED_RANGE.duck while someone talks. */
 export const BEDS = ['room', 'crowd', 'wind', 'sea', 'surf', 'traffic', 'cricket'];
-export const BED_RANGE = { lo: 0.05, hi: 0.35, duck: 0.6 };
-export function bedLevels(S = {}, { scale = 1, duck = false } = {}) { const o = {}; for (const k of BEDS) o[k] = (S[k] || 0) * scale * (duck ? BED_RANGE.duck : 1); return o; }
+export const BED_RANGE = { lo: 0.05, hi: 0.35, duck: 0.4 };   /* beds sink to 0.4 while anyone speaks, in conversation or by the narrator (AU.voiceOn, set by engine/filmvoice.js; owner, 27 November 2026) */
+export function bedLevels(S = {}, { scale = 1, duck = false } = {}) { duck = duck || !!AU.voiceOn; const o = {}; for (const k of BEDS) o[k] = (S[k] || 0) * scale * (duck ? BED_RANGE.duck : 1); return o; }
 export function mixBeds(S, opts = {}) { if (!AU.ctx) return; const L = bedLevels(S, opts); for (const k of BEDS) if (AU.ch[k]) setG(AU.ch[k], L[k], opts.tc); }
 /* the dev check (?test=beds in each game): rows [{ place, beds: { name: effective gain } , once }] ; a place is silent (no bed and no one-shot), too quiet (loudest bed under lo) or too loud (any bed over hi) */
 export function bedReport(rows, { lo = BED_RANGE.lo, hi = BED_RANGE.hi } = {}) {
