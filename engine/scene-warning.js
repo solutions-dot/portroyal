@@ -1,6 +1,6 @@
 /* engine/scene-warning.js: the one card before a cinematic, the same in every game (owner, 21 November 2026).
    The card says what happens. A scene that may be scary adds the two standard lines, "It may be scary." and "Nobody is hurt on the screen.",
-   so the words never drift from game to game. A scene that is only loud or big (the Selassie arrival, the Windrush ship scenes) is a plain
+   so the words never drift from game to game. A scene with scary: false and no hurt skips the card and plays at once (27 November 2026). A scene that is only loud or big (the Selassie arrival, the Windrush ship scenes) is a plain
    choice: scary: false leaves the two lines out. The buttons are always "Watch scene" and "Read what happened instead". There is no calm mode
    (the owner, 21 November 2026): sceneIsCalm() is always false, kept so the games' calls still work.
 
@@ -62,6 +62,9 @@ export function addSceneWarningOptions(body, watchButton, readButton, watch, rea
 }
 
 export function sceneWarning(card, { title, what, scary = true, hurt = false, watch, read, pairs = false }) {
+  /* A scene that is not scary goes straight to the film (owner, 27 November 2026: the Watch / Read card was an unnecessary click).
+     The film still has its own "Read instead" and skip. Scary and hurt scenes keep the card, so the choice is there when it matters. */
+  if (scary === false && !hurt && typeof watch === 'function') { watch(); return; }
   const noop = () => {};
   const buttons = pairs ? [[WATCH, noop], [READ, noop]] : [{ t: WATCH, go: noop }, { t: READ, go: noop }];
   card(title, [warningText(what, scary, { hurt })], buttons, { col: true });
