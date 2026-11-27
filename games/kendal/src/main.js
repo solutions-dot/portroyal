@@ -1,5 +1,5 @@
 import { sceneWarning, sceneIsCalm, endSceneWarning, readWhatHappened } from '../../../engine/scene-warning.js';
-import { loadMule } from "../../../engine/mule.js";
+import { loadBeasts } from "../../../engine/beasts.js";
 import { addRecap } from '../../../engine/recap.js';   /* three things you learned, on the last card */
 import '../../../engine/textfit.js';   // first: every sign's words fit their board (engine/textfit.js)
 import { renderFramed, playChapterFade, showCinematicSkip, configureCinematicBed, nextCinematicBed } from '../../../engine/cine.js';   /* camera scenes framed for a phone held upright (engine/cine.js) */
@@ -912,7 +912,7 @@ registerShows(); applySave(loadGame());
 { let done = 0; const total = 3; const tick = () => { done++; $('bar').style.width = (done / total * 100) + '%'; };
   buildPlace('kingston57'); enterPlace('kingston57');   /* the long platform and the train, as a backdrop for the title card */
   const first = CH_PLACE[hasSave && stage >= 10 ? chapterOf(stage) : 0];
-  Promise.all([model('anims'), loadMule()]).then(([an]) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
+  Promise.all([model('anims'), loadBeasts(['mule', 'horse'])]).then(([an]) => { loadClips(an); tick(); return ensurePlace(first); }).then(() => { tick(); modelsReady = true; $('start').disabled = false; $('start').textContent = hasSave ? 'Continue' : 'Start'; $('tchap').hidden = false; $('loadnote').textContent = ''; $('savenote').hidden = !hasSave; tick();
     if (__DEV__) devViews(); else setTimeout(backgroundLoad, 2500); }); }
 /* every place in the background, one at a time through engine/preload.js work(): the next chapter's places first, then the rest in story order, each in a quiet moment */
 function backgroundLoad() { PLACES_KEEP.background(() => { const i = state.started ? chapterOf(stage) : -1; return [...usedIn(i + 1), 'station45', 'hill', 'kingston57', 'ride45', 'coach', 'beach', 'crash', 'memorial']; }, 400); }   /* one place at a time in quiet moments, the next chapter's first (engine/preload.js) */

@@ -154,10 +154,52 @@ export function cow(coat = COATS[0], pose = 'graze', seed = 1) {
 export function bull(c = 0x2a2420, pose = 'stand', seed = 1) {
   return beast('bull', { Main: c, Main_Light: new THREE.Color(c).multiplyScalar(1.5).getHex() }, { idle: POSE[pose] || 'Idle', seed }).g;
 }
-/* ---------- a horse. c: the coat (bay by default); dark legs, mane and tail. ---------- */
+/* ---------- a horse. c: the coat (bay by default); dark legs, mane and tail. opts.saddle: a riding saddle on a saddle cloth, with flaps,
+   a girth, stirrup leathers and iron stirrups. opts.bridle: a headstall, cheek straps, a noseband, a bit and the reins hanging in a loop
+   under the jaw (nobody holds them). opts.idle as any animal ('Idle_Headlow': resting, head low). Tack is made on the standing body, measured:
+   back about 1.6 m up under the saddle, barrel about 0.26 m to a side and centred about 1.3 m up, the muzzle about 1.45 m forward and 1.7 m up. ---------- */
 export function horse(c = 0x6a3c24, opts = {}) {
   const C = new THREE.Color(c), k = (f) => C.clone().multiplyScalar(f).getHex();
-  return beast('horse', { Main: c, Main_Light: k(1.35), Main_Dark: k(0.5), Hair: 0x1e1814, Muzzle: 0x241c18 }, opts).g;
+  const { g, ride } = beast('horse', { Main: c, Main_Light: k(1.35), Main_Dark: k(0.5), Hair: 0x1e1814, Muzzle: 0x241c18 }, { ...opts, idle: 'Idle' });   /* dressed standing */
+  if (opts.saddle || opts.bridle) {
+    const back = ride('Torso2'), head = ride('Head');
+    g.userData.back = back; g.userData.head = head;
+    if (back !== g) {
+      if (opts.saddle) ridingSaddle(back);
+      if (opts.bridle) bridle(head);
+      bake(back); bake(head);
+    }
+  }
+  g.userData.idle = opts.idle || 'Idle';
+  return g;
+}
+function ridingSaddle(p) {
+  const { mat, add, box, rod } = tack, Y = 1.3, X = 0.08;
+  const leather = mat(0x5a3a22, 0.75), cloth = mat(0x2c3a52, 1, { side: THREE.DoubleSide }), seatM = mat(0x5a3a22, 0.75, { side: THREE.DoubleSide }), iron = mat(0x5a5c60, 0.5);
+  const shell = (r, len, arc, m, x, sy) => { const ge = new THREE.CylinderGeometry(r, r, len, 18, 1, true, Math.PI / 2 - arc, arc * 2); ge.rotateZ(Math.PI / 2); const o = add(ge, m, x, Y, 0, p); o.scale.set(1, sy, 1); return o; };
+  shell(0.275, 0.8, 1.2, cloth, X, 1.24);   /* the saddle cloth */
+  shell(0.29, 0.54, 0.78, seatM, X, 1.24);   /* the seat */
+  box(0.1, 0.1, 0.2, leather, X + 0.28, Y + 0.36, 0, p).rotation.z = -0.35;   /* the pommel */
+  box(0.07, 0.13, 0.27, leather, X - 0.28, Y + 0.36, 0, p).rotation.z = 0.4;   /* the cantle */
+  const girth = add(new THREE.TorusGeometry(0.27, 0.016, 5, 24), leather, X + 0.12, Y - 0.04, 0, p); girth.rotation.y = Math.PI / 2; girth.scale.set(1.04, 1.18, 1);
+  for (const s of [-1, 1]) {
+    box(0.36, 0.38, 0.02, leather, X + 0.02, Y + 0.06, s * 0.285, p);   /* a flap */
+    rod([X + 0.05, Y + 0.25, s * 0.295], [X + 0.07, 0.96, s * 0.31], 0.012, leather, p);   /* the stirrup leather */
+    add(new THREE.TorusGeometry(0.06, 0.009, 5, 12), iron, X + 0.07, 0.9, s * 0.31, p).rotation.y = Math.PI / 2;   /* the stirrup */
+    box(0.12, 0.012, 0.05, iron, X + 0.07, 0.845, s * 0.31, p);   /* its tread */
+  }
+}
+function bridle(head) {
+  const { mat, add, rod, strap } = tack, leather = mat(0x3a2418, 0.8), steel = mat(0x8c8f93, 0.4);
+  const ring = (r, at, tilt, arc = Math.PI * 2) => { const o = add(new THREE.TorusGeometry(r, 0.011, 5, 18, arc), leather, ...at, head); o.rotation.order = 'ZYX'; o.rotation.set(0, Math.PI / 2, tilt); return o; };
+  const N = { r: 0.14, at: [1.45, 1.7, 0] }, P = { r: 0.155, at: [1.12, 1.85, 0] };
+  ring(N.r, N.at, -0.62);   /* the noseband */
+  ring(P.r, P.at, 0.5, Math.PI);   /* the headstall behind the ears */
+  for (const s of [-1, 1]) {
+    rod([P.at[0], P.at[1], s * P.r], [1.5, 1.64, s * 0.125], 0.009, leather, head);   /* a cheek strap down to the bit */
+    add(new THREE.TorusGeometry(0.025, 0.006, 4, 10), steel, 1.5, 1.64, s * 0.128, head);   /* a bit ring */
+  }
+  strap([[1.5, 1.64, -0.13], [1.42, 1.38, -0.12], [1.32, 1.22, 0], [1.42, 1.38, 0.12], [1.5, 1.64, 0.13]], 0.009, leather, head);   /* the reins, hanging */
 }
 
 /* ---------- join the small pieces hung on an animal (a pack saddle, a halter, a harness) into one mesh per material, so a dressed animal
@@ -181,3 +223,16 @@ export function bake(group) {
   }
   return group;
 }
+
+/* ---------- small builders for the things animals wear (engine/mule.js, the horse's saddle and bridle below): materials shared by colour ---------- */
+const TMATS = new Map();
+const mat = (c, rough = 1, opts = {}) => { const key = c + ':' + rough + ':' + (opts.side || 0); return TMATS.get(key) || TMATS.set(key, new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: 0, ...opts })).get(key); };
+const add = (geo, m, x, y, z, parent) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; parent.add(o); return o; };
+const box = (w, h, d, m, x, y, z, p) => add(new THREE.BoxGeometry(w, h, d), m, x, y, z, p);
+const rod = (a, b, r, m, p) => {   /* a round rod from point a to point b */
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = new THREE.Vector3().subVectors(B, A);
+  const o = add(new THREE.CylinderGeometry(r, r, d.length(), 5), m, (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2, p);
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return o;
+};
+const strap = (pts, r, m, p) => add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 28, r, 6, false), m, 0, 0, 0, p);
+export const tack = { mat, add, box, rod, strap };

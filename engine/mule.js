@@ -19,7 +19,9 @@
      stride, step, mixer, dip, tick: see engine/beasts.js, which loads, smooths and walks every animal; this file dresses the mule.
    If the model failed to load (the loader's "please reload" note shows), mule() returns an empty group so the place still builds. */
 import * as THREE from 'three';
-import { loadBeasts, beast, bake } from './beasts.js';
+import { loadBeasts, beast, bake, tack } from './beasts.js';
+
+const { mat, add, box, rod, strap } = tack;
 import { weaveTexture } from './produce.js';
 
 export const loadMule = () => loadBeasts(['mule']);
@@ -31,17 +33,6 @@ function coat(c, kind) {
     ? { Main: c, Main_Light: 0xd6d0c4, Main_Dark: k(0.55), Hair: 0x2a2622, Muzzle: 0x2a2420, Hooves: 0x24201c }
     : { Main: c, Main_Light: 0xa8947a, Main_Dark: k(0.55), Hair: 0x241c16, Muzzle: 0x2a221c, Hooves: 0x1c1714 };
 }
-
-const MATS = new Map();
-const mat = (c, rough = 1, opts = {}) => { const key = c + ':' + rough + ':' + (opts.side || 0); return MATS.get(key) || MATS.set(key, new THREE.MeshStandardMaterial({ color: c, roughness: rough, metalness: 0, ...opts })).get(key); };
-const add = (geo, m, x, y, z, parent) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; parent.add(o); return o; };
-const box = (w, h, d, m, x, y, z, p) => add(new THREE.BoxGeometry(w, h, d), m, x, y, z, p);
-const rod = (a, b, r, m, p) => {   /* a round rod from point a to point b */
-  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = new THREE.Vector3().subVectors(B, A);
-  const o = add(new THREE.CylinderGeometry(r, r, d.length(), 5), m, (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2, p);
-  o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); return o;
-};
-const strap = (pts, r, m, p) => add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 28, r, 6, false), m, 0, 0, 0, p);
 
 /* the pack saddle, in mule space: a blanket and a pad over the back, two crossed wooden frames joined by side bars, a girth, a breast strap and
    a strap behind, and two woven panniers hung from the frames by rope. Measured on the standing body: its back is about 1.45 m up, its
