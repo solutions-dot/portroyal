@@ -308,8 +308,11 @@ $("next").onclick = () => {
 $("dclose").onclick = () => hide("dialogue");
 
 /* ---------- cards: the first button is the main one, the others are outlined; col puts the buttons one under another ---------- */
+/* a card is read aloud, and the voice stops when a button is pressed (owner, 27 November 2026); main.js sets these */
+export const cardVoice = { speak: () => {}, stop: () => {} };
 export function card(title, L, buttons, { col = false } = {}) {
   show("card");
+  cardVoice.speak(title + ". " + L.join(" "));
   $("ctitle").textContent = title;
   $("cbody").replaceChildren(
     ...L.map((t) => {
@@ -325,6 +328,7 @@ export function card(title, L, buttons, { col = false } = {}) {
       b.className = "btn" + (i ? " ghost" : "");
       b.textContent = text;
       b.onclick = () => {
+        cardVoice.stop();
         hide("card");
         fn?.();
       };

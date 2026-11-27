@@ -1,5 +1,5 @@
 import { showCinematicSkip } from "../../../engine/cine.js";
-import { createFilmVoice } from "../../../engine/filmvoice.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
 /* Camera scenes. Each is a reconstruction, and says so on its card.
    The camera follows a smooth curve through each film's shots (a Catmull-Rom spline in time, eased at the start and end), looks at a second
    curve, and can change its lens. The place stages its own part: Q.films[key](t, Q) is called every frame with the film's time (a rider on
@@ -25,7 +25,7 @@ function sampleKeys(keys, t) {
 }
 export function createDirector({ camera, world, finish, read, fast = false, reduced = false, fov: playFov = () => 66 }) {
   const D = { on: false, paused: false, time: 0, key: null, fast };
-  const FV = createFilmVoice();   /* the narrator: engine/filmvoice.js */
+  const FV = sharedVoice();   /* the page's one voice channel: engine/filmvoice.js */
   let rumble = null,
     curve = null,
     lookCurve = null,

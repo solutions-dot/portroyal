@@ -1,0 +1,331 @@
+[
+ {
+  "key": "The dry road. You are Quaco, enslaved on Dr Hutton’s cattle pen. The ponds are dry. You are Quaco, aged fourteen. You are fictional. The killer, the doctor and the young man who came for him were real.",
+  "stem": "n-99facfcf",
+  "text": "The dry road. You are Quaco, enslaved on Doctor Hutton's cattle pen. The ponds are dry. You are Quaco, aged fourteen. You are fictional. The killer, the doctor and the young man who came for him were real.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The doctor’s quarrel. Two men claim the same strip of land. One of them owns the castle.",
+  "stem": "n-e04152b1",
+  "text": "The doctor's quarrel. Two men claim the same strip of land. One of them owns the castle.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Under the towers. In this story the castle well still gives water. Someone watches from the upper window. When the shutter opens, be behind something.",
+  "stem": "n-d0c0e72b",
+  "text": "Under the towers. In this story the castle well still gives water. Someone watches from the upper window. When the shutter opens, be behind something.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The neighbour. A neighbour has come up the road about a lost animal.",
+  "stem": "n-0168e3af",
+  "text": "The neighbour. A neighbour has come up the road about a lost animal.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What the house held. He has run. For the first time, people walk into his house and look.",
+  "stem": "n-20d28076",
+  "text": "What the house held. He has run. For the first time, people walk into his house and look.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Spanish Town. The trial is in the capital. Dr Hutton has brought you and Cubba with him.",
+  "stem": "n-ce3beb4e",
+  "text": "Spanish Town. The trial is in the capital. Doctor Hutton has brought you and Cubba with him.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The pen needs water. Dr Hutton sends you with Sampson's cart, to the one well that still gives. It stands under the towers of Edinburgh Castle.",
+  "stem": "n-381c2961",
+  "text": "The pen needs water. Doctor Hutton sends you with Sampson's cart, to the one well that still gives. It stands under the towers of Edinburgh Castle.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "What we really know. The record: one killing, one trial, one hanging. The story: many more deaths, never counted, first printed years later. The people who knew most were not allowed to speak. Now you know. That is a kind of record too.",
+  "stem": "n-d8280fef",
+  "text": "What we really know. The record: one killing, one trial, one hanging. The story: many more deaths, never counted, first printed years later. The people who knew most were not allowed to speak. Now you know. That is a kind of record too.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "You push the stick into the mud.",
+  "stem": "n-e1a8575f",
+  "text": "You push the stick into the mud.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Cracked mud. Hoof marks baked as hard as brick.",
+  "stem": "n-1c0c3a77",
+  "text": "Cracked mud. Hoof marks baked as hard as brick.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A hand deep, and still no wet.",
+  "stem": "n-9f074e39",
+  "text": "A hand deep, and still no wet.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You lift the flap of the pack.",
+  "stem": "n-a8f553b2",
+  "text": "You lift the flap of the pack.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A bedroll. A tin cup. A shirt, folded small.",
+  "stem": "n-7092dea8",
+  "text": "A bedroll. A tin cup. A shirt, folded small.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Somebody packed this for a long ride. The mule came back alone.",
+  "stem": "n-112e7fa6",
+  "text": "Somebody packed this for a long ride. The mule came back alone.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Something lies between the roots. A hat.",
+  "stem": "n-30dadf2a",
+  "text": "Something lies between the roots. A hat.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A riding hat, bleached by sun and rain.",
+  "stem": "n-e0a00a97",
+  "text": "A riding hat, bleached by sun and rain.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You hang it on a broken branch. Nobody came back for it.",
+  "stem": "n-12d19b89",
+  "text": "You hang it on a broken branch. Nobody came back for it.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "The windlass creaks. The bucket comes up heavy and cold.",
+  "stem": "n-293fc197",
+  "text": "The windlass creaks. The bucket comes up heavy and cold.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Juba fills your pail.",
+  "stem": "n-7cc99819",
+  "text": "Juba fills your pail.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Her eyes never leave the upper window.",
+  "stem": "n-ecb53130",
+  "text": "Her eyes never leave the upper window.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "A grey jackass comes to the wall.",
+  "stem": "n-7ed441bb",
+  "text": "A grey jackass comes to the wall.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "It stands among cattle in the castle yard.",
+  "stem": "n-f250d0f4",
+  "text": "It stands among cattle in the castle yard.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter of 1773 says Hutchinson kept his neighbours’ strayed cattle.",
+  "stem": "n-432f213d",
+  "text": "A letter of seventeen seventy-three says Hutchinson kept his neighbours' strayed cattle.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The lid comes up. Watches, packed tight.",
+  "stem": "n-5e8b9354",
+  "text": "The lid comes up. Watches, packed tight.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The captain's man counts them twice. Forty-three.",
+  "stem": "n-5a2b16ec",
+  "text": "The captain's man counts them twice. Forty-three.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "One man does not need forty-three watches.",
+  "stem": "n-a1bcb263",
+  "text": "One man does not need forty-three watches.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Later accounts give this number. One says forty-seven.",
+  "stem": "n-369d64d2",
+  "text": "Later accounts give this number. One says forty-seven.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "You draw back the cloth.",
+  "stem": "n-e335d94a",
+  "text": "You draw back the cloth.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Coats. Riding coats, a merchant's coat, a boy's jacket.",
+  "stem": "n-4c32e7cc",
+  "text": "Coats. Riding coats, a merchant's coat, a boy's jacket.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Later accounts say a great deal of clothing was found here.",
+  "stem": "n-95a9ff14",
+  "text": "Later accounts say a great deal of clothing was found here.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Nobody can say whose each coat was.",
+  "stem": "n-8c5e2d78",
+  "text": "Nobody can say whose each coat was.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "The board comes away. Daylight falls in.",
+  "stem": "n-2abb8480",
+  "text": "The board comes away. Daylight falls in.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A small square hole in a thick wall, plastered smooth.",
+  "stem": "n-7f7df923",
+  "text": "A small square hole in a thick wall, plastered smooth.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Through it the whole road lies open. There is nowhere to hide.",
+  "stem": "n-bb6649d1",
+  "text": "Through it the whole road lies open. There is nowhere to hide.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "People said he shot from holes like this. That was first printed in 1828.",
+  "stem": "n-26965a78",
+  "text": "People said he shot from holes like this. That was first printed in eighteen twenty-eight.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "You set the cup back by the cot.",
+  "stem": "n-70040fba",
+  "text": "You set the cup back by the cot.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A plain cot, the blanket thrown back.",
+  "stem": "n-d9924c5f",
+  "text": "A plain cot, the blanket thrown back.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A letter of 1773 says a sick man lay in this house.",
+  "stem": "n-2415e302",
+  "text": "A letter of seventeen seventy-three says a sick man lay in this house.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "He slipped out and told what he had seen.",
+  "stem": "n-a275c2b7",
+  "text": "He slipped out and told what he had seen.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The captain's men let a lantern down on a rope.",
+  "stem": "n-ae719a68",
+  "text": "The captain's men let a lantern down on a rope.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "The light grows small. Then the rope runs out.",
+  "stem": "n-1dd9b5ea",
+  "text": "The light grows small. Then the rope runs out.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "Nobody here can see the bottom.",
+  "stem": "n-f5764210",
+  "text": "Nobody here can see the bottom.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "Long after, cavers measured the hole: about 98 metres deep.",
+  "stem": "n-94fe3d8a",
+  "text": "Long after, cavers measured the hole: about ninety-eight metres deep.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "A shutter opens on the long gallery. Voices come down.",
+  "stem": "n-5e34c548",
+  "text": "A shutter opens on the long gallery. Voices come down.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "One name is read out, again and again: John Callendar.",
+  "stem": "n-2bdb0730",
+  "text": "One name is read out, again and again: John Callendar.",
+  "emotion": "neutral",
+  "speed": 0.95
+ },
+ {
+  "key": "He says he is not guilty.",
+  "stem": "n-451a6e11",
+  "text": "He says he is not guilty.",
+  "emotion": "sad",
+  "speed": 0.92
+ },
+ {
+  "key": "You are not allowed up the stair.",
+  "stem": "n-ea5831e2",
+  "text": "You are not allowed up the stair.",
+  "emotion": "neutral",
+  "speed": 0.95
+ }
+]
