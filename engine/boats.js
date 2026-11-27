@@ -194,15 +194,18 @@ export function dugOut(o = {}) {
     return [zi, sh - Math.max(0, sh - (y + TH * (1.6 - 0.6 * Math.abs(t)))) * e]; };
   /* colour: adze marks run across the log as faint bands; the outside is darker low down (wet, tarred), the inside darker still, the rim worn pale */
   const adze = (x, t) => 0.9 + 0.1 * Math.sin(x * 21 + Math.sin(t * 3.1) * 1.3) * Math.sin(x * 5.3 + 1.7);
-  const out = (x, y, z) => new THREE.Vector3(0, y - D * 0.45, z);
+  /* outward normals: across and up, and, toward each end where the underside sweeps up, along the boat too (without it the stern's lower side lit as dark wedges: owner, 27 November 2026) */
+  const out = (x, y, z) => { const e = (2 * x) / L; return new THREE.Vector3(Math.sign(e) * Math.pow(Math.abs(e), 3) * 1.4, y - D * 0.45, z); };
   const b = { pos: [], col: [], idx: [] };
   skin(b, NS, NT * 2, (i, j) => { const s = i / NS, t = j / NT - 1, [z, y] = sect(s, t), x = xOf(s), k = (y < D * 0.32 ? 0.66 : 0.82 + 0.18 * smooth(D * 0.32, D * 0.6, y)) * adze(x, t); return [x, y, z, k, k * 0.98, k * 0.94]; }, out);
   skin(b, NS, NT * 2, (i, j) => { const s = i / NS, t = j / NT - 1, [z, y] = inner(s, t), x = xOf(s), e = hollow(s), k = (0.95 - 0.27 * e - 0.08 * e * (1 - Math.abs(t))) * adze(x * 1.3, t); return [x, y, z, k, k * 0.96, k * 0.9]; }, (x, y, z) => new THREE.Vector3(0, D * 2 - y, -z));
   for (const side of [1, -1]) skin(b, NS, 1, (i, j) => { const s = i / NS, x = xOf(s), [z, y] = j ? inner(s, side) : sect(s, side); return [x, j ? y : y, z, 1.06, 1.02, 0.94]; }, () => new THREE.Vector3(0, 1, 0));
-  for (const s of [0, 1]) { /* close the very tips of the log */
-    const base = b.pos.length / 3, x = xOf(s), ring = []; for (let j = 0; j <= NT * 2; j++) ring.push(sect(s, j / NT - 1)); for (let j = NT * 2; j >= 0; j--) ring.push(inner(s, j / NT - 1));
-    const cy = ring.reduce((a, p) => a + p[1], 0) / ring.length; b.pos.push(x, cy, 0); b.col.push(0.7, 0.68, 0.64); for (const [z, y] of ring) { b.pos.push(x, y, z); b.col.push(0.74, 0.72, 0.68); }
-    for (let j = 0; j < ring.length; j++) { const p = base + 1 + j, q = base + 1 + (j + 1) % ring.length; if (s) b.idx.push(base, q, p); else b.idx.push(base, p, q); } }
+  for (const s of [0, 1]) { /* close the very tips of the log: a strip of wood from the outer skin to the inner one, all the way round the cross-section (a fan from the centre left gaps in the hollow, owner, 27 November 2026) */
+    const base = b.pos.length / 3, x = xOf(s), n = NT * 2;
+    for (let j = 0; j <= n; j++) { const [z, y] = sect(s, j / NT - 1); b.pos.push(x, y, z); b.col.push(0.74, 0.72, 0.68); }
+    for (let j = 0; j <= n; j++) { const [z, y] = inner(s, j / NT - 1); b.pos.push(x, y, z); b.col.push(0.7, 0.68, 0.64); }
+    for (let j = 0; j < n; j++) { const a = base + j, c = base + n + 1 + j; if (s) b.idx.push(a, c, a + 1, a + 1, c, c + 1); else b.idx.push(a, a + 1, c, a + 1, c + 1, c); }
+  }
   const hullG = geoOf(b);
   const wood = o.wood || DUGWOOD || (DUGWOOD = new THREE.MeshStandardMaterial({ color: 0x8a6440, roughness: 0.95 })); wood.vertexColors = true;
   const group = new THREE.Group(), hull = new THREE.Mesh(hullG, wood); hull.name = 'canoeHull'; group.add(hull);

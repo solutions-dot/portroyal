@@ -389,7 +389,7 @@ function maima({ night = false } = {}) {
   /* the ten canoes of the mutiny, far off on the bay (chapter 4's camera scene) */
   const flotilla = [];
   for (let i = 0; i < 10; i++) {
-    const c = add(Q, far(bigCanoe(6, 1.2)), 8 + (i % 5) * 3, -188 - Math.floor(i / 5) * 3, BAY.y + 0.05, Math.PI / 2);
+    const c = add(Q, far(bigCanoe(6, 1.2)), 8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2, BAY.y + 0.05, Math.PI / 2);   /* drawn up along the beach, 9 m apart bow to stern, not in a block (owner, 27 November 2026: "piled on top of each other") */
     c.visible = false;
     flotilla.push(c);
     if (!night) crew(Q, c, [[-1.6, 0, false], [0, 0, true], [1.6, 0, false]], { spanish: ["xa_sailor", "xa_sailor2"] });   /* far off: three of each crew are shown (the 48 men and their paddlers would be too many bodies for a phone; journal: 48 men, ten canoes) */
@@ -529,13 +529,17 @@ function maima({ night = false } = {}) {
   };
   /* the mutiny: the ten canoes move off east across the bay */
   Q.films.mutiny = (t) => {
+    /* the canoes lie drawn up along the beach, empty; the men climb in and push off one after another, the nearest the ships first, so they string out into a
+       loose column along the coast and never bunch (the mutineers took ten canoes: Ferdinand; "Nobody was hurt" in this scene) */
     flotilla.forEach((c, i) => {
-      c.visible = t >= 0 && t > 5;
-      c.userData.manned = c.visible;
-      const k = sm((t - 6 - i * 0.3) / 16);
-      c.position.x = 8 + (i % 5) * 3 + k * 170;
-      c.position.z = -188 - Math.floor(i / 5) * 3 - k * 25;
-      c.rotation.y = canoeHeading(170, -25);   /* bows east, the way they paddle */
+      const rank = flotilla.length - 1 - i, t0 = 6.5 + rank * 0.95, home = [8 + i * 9, -186 - (i % 3) * 3.5 - (i % 2) * 1.2];
+      const posAt = (tt) => { const k = sm((tt - t0 - 2.6) / 13); return [home[0] + k * 170, home[1] - k * (22 + (i % 4) * 3)]; };
+      c.visible = t >= 0;
+      c.userData.manned = t >= t0 - 1.8;
+      const p = posAt(Math.max(t, 0));
+      c.position.set(p[0], BAY.y + 0.05 + Math.sin(t * 1.3 + i) * 0.04, p[1]);   /* rocking on the water, up and down */
+      const beached = Math.PI / 2 + (i % 2 ? 0.12 : -0.1), east = canoeHeading(170, -(22 + (i % 4) * 3));
+      c.rotation.y = turnTo(beached, east, sm((t - t0) / 2.4));   /* swings from lying bow to the sea onto her course east, then goes (nothing moves while she turns) */   /* bows east, the way they paddle */
     });
   };
   /* the red moon: it rises already bitten, the shadow covers it, turns it red, and slides away */
@@ -659,7 +663,7 @@ function shore() {
   const bell = mesh(new THREE.SphereGeometry(0.03, 12, 8), solid(0xc8a24a, 0.3, 0.9), 0, 0.03, 0, gift);
   box(0.05, 0.002, 0.004, solid(0x2a2010, 0.6), 0, 0, -0.029, bell);   /* the bell's slit moves with it */
   for (let i = 0; i < 9; i++) mesh(new THREE.SphereGeometry(0.008, 6, 4), solid(i % 2 ? 0xd8322a : 0xe8c02a, 0.2), 0.08 + (i % 5) * 0.022, 0.008, -0.05 + Math.floor(i / 5) * 0.03, gift);
-  add(Q, dyn(gift), 3.2, -0.9, 0, 0.2);
+  add(Q, dyn(gift), 4.5, 0.5, 0, 0.2);   /* up the beach from the trading canoe, whose stern lay beside the old spot and hid the bell in its close-up (owner, 27 November 2026: "there is no bell to be seen") */
   gift.visible = false;
   Q.reveal.bell = (k) => {
     k = Math.min(1, +k);
@@ -733,7 +737,7 @@ function shore() {
   crowd(Q, "xa_man", 8.4, 1.0, face(8.4, 1.0, 3, -3), { kind: "chat", group: "b", at: [8.8, 1.2], ring: 0.6 });
   crowd(Q, "xa_woman", 9.2, 1.4, 0, { kind: "chat", group: "b" });
   crowd(Q, "xa_boy", 6.0, 3.0, 0, { kind: "play", area: [4, 2, 10, 7] });
-  Q.keepOff.push({ at: [3.2, -1.6], r: 0.9 }, { at: [7.2, 3.0], r: 0.8 }, { at: [11.6, 2.6], r: 0.8 }, { at: [-0.4, -1.4], r: 0.8 }, { at: [3.4, -0.4], r: 0.8 });
+  Q.keepOff.push({ at: [3.2, -1.6], r: 0.9 }, { at: [7.2, 3.0], r: 0.8 }, { at: [11.6, 2.6], r: 0.8 }, { at: [-0.4, -1.4], r: 0.8 }, { at: [4.3, 1.3], r: 0.8 });
   placeCrews(Q);
   crewTicker(Q);
   return Q;
