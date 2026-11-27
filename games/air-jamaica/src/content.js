@@ -378,8 +378,8 @@ export const FILMS = {
     read: ["On 1 April 1969 Air Jamaica began flying its own jets from Kingston and Montego Bay to New York and Miami.", "The ground crew pulled away the steps, the DC-8 taxied to the runway, and then it took off."],
     captions: [
       [0, "The waving gallery, Palisadoes Airport. 1 April 1969."],
-      [3.5, "The crew wave. The steps are pulled away."],
-      [8, "The first Air Jamaica jet starts to roll."],
+      [6.1, "The crew wave. The steps are pulled away.", "takeoff-3_5"],
+      [9.6, "The first Air Jamaica jet starts to roll.", "takeoff-8"],
       [17, "It turns out onto the runway."],
       [26, "The engines roar. Faster and faster!"],
       [36, "The nose lifts. It is flying!"],
@@ -437,7 +437,7 @@ FILMS.landing = {
 FILMS.reveal = {
   place: "newlook", next: 40, journal: "newlook", title: "New colours",
   read: ["In December 1994 Air Jamaica showed off its new colours at Norman Manley Airport in Kingston, before the new look's first flight."],
-  captions: [[0, "December 1994. Norman Manley Airport, Kingston."], [2.6, "Air Jamaica has new colours."], [5.4, "Yellow, orange, pink and blue along the side."], [7.8, "And on the dark blue tail, the bird."]],
+  captions: [[0, "December 1994. Kingston."], [2.9, "New colours for Air Jamaica.", "reveal-2_6"], [5.2, "Yellow, orange, pink and blue.", "reveal-5_4"], [7.8, "And on the tail, the bird.", "reveal-7_8"]],
   shots: [
     { t: 0, p: [-28, 1.6, 9], look: [-9, 4, -8] },
     { t: 2.6, p: [-15, 2.6, 7], look: [0, 4.2, -8] },
@@ -455,7 +455,7 @@ FILMS.newflight = {
   read: ["In December 1994 the first Air Jamaica plane in the new colours flew from Kingston.", "Guests and staff watched it roll out to the runway and take off."],
   captions: [
     [0, "Norman Manley Airport, Kingston. December 1994."],
-    [3.5, "Everyone steps back from the plane."],
+    [4.9, "Everyone steps back from the plane.", "newflight-3_5"],
     [8, "The new look starts to roll."],
     [17, "It turns out onto the runway."],
     [26, "The engines roar. Faster and faster!"],

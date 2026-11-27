@@ -469,7 +469,7 @@ async function chapterFade(title, sub, fn) { NARR.speak(title + '. ' + sub);
   const finish = (ms) => { captionOff(); fadeTo('#000', 0, ms); hideHud(false); fading = false; };   /* no skip X on a chapter title card (engine/cine.js, playChapterFade) */
   fading = true; hideHud(true); fadeTo('#000', 1, 800);
   await wait(0.9); fn(); caption(title, sub);
-  await wait(2.6); captionOff();
+  await wait(2.6); await NARR.done(); captionOff();
   await wait(0.9); finish(1200);
 }
 

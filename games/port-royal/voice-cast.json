@@ -550,6 +550,83 @@
   "stem": "c-f8a2eca7"
  },
  {
+  "key": "Hannah|Welcome to The Turtle! I work here for Abba.",
+  "who": "Hannah",
+  "text": "Welcome to The Turtle! I work here for Abba.",
+  "spoken": "Welcome to The Turtle! I work here for Abba.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-43bcc649"
+ },
+ {
+  "key": "Hannah|Stew costs two reales.",
+  "who": "Hannah",
+  "text": "Stew costs two reales.",
+  "spoken": "Stew costs two reales.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-04373e69"
+ },
+ {
+  "key": "Hannah|A piece of eight is eight reales. The stew is two.",
+  "who": "Hannah",
+  "text": "A piece of eight is eight reales. The stew is two.",
+  "spoken": "A piece of eight is eight reales. The stew is two.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-b8a6d11a"
+ },
+ {
+  "key": "Hannah|How much change do I give you?",
+  "who": "Hannah",
+  "text": "How much change do I give you?",
+  "spoken": "How much change do I give you?",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-b6583f8a"
+ },
+ {
+  "key": "Hannah|Six! Here is your change, and your stew.",
+  "who": "Hannah",
+  "text": "Six! Here is your change, and your stew.",
+  "spoken": "Six! Here is your change, and your stew.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-265f6cbb"
+ },
+ {
+  "key": "Hannah|Look around while you eat. Most things here came on a ship.",
+  "who": "Hannah",
+  "text": "Look around while you eat. Most things here came on a ship.",
+  "spoken": "Look around while you eat. Most things here came on a ship.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-d951029b"
+ },
+ {
+  "key": "Hannah|Take your time. Look around.",
+  "who": "Hannah",
+  "text": "Take your time. Look around.",
+  "spoken": "Take your time. Look around.",
+  "voice": "aa188bb9-72e0-47ab-9fc8-6b927aaf45cd",
+  "voiceName": "woman",
+  "emotion": "content",
+  "speed": 1,
+  "stem": "c-03ecafe7"
+ },
+ {
   "key": "Abba|Take your time. Look around.",
   "who": "Abba",
   "text": "Take your time. Look around.",

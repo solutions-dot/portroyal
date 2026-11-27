@@ -111,10 +111,13 @@ export function playChapterFade(fade, setup, onDone, [open, textOff, fadeOut, en
   };
   fade.hidden = false;
   const frame = requestAnimationFrame(() => fade.classList.add('on'));
-  const timers = [
-    setTimeout(() => { apply(); fade.classList.add('txt'); }, open),
-    setTimeout(() => fade.classList.remove('txt'), textOff),
-    setTimeout(() => fade.classList.remove('on'), fadeOut),
-    setTimeout(finish, end),
-  ];
+  /* The card stays until the narrator has finished (owner, 27 November 2026: the screen came off before the narration was complete).
+     Each stage waits while a voice is speaking, then the rest of the fixed timing carries on from there. */
+  const timers = [];
+  const after = (ms, fn) => { timers.push(setTimeout(fn, ms)); };
+  const whenQuiet = (fn) => { const FV = sharedVoice(); const tick = () => (FV.active() ? after(150, tick) : fn()); tick(); };
+  after(open, () => { apply(); fade.classList.add('txt');
+    after(Math.max(0, textOff - open), () => whenQuiet(() => { after(300, () => { fade.classList.remove('txt');
+      after(Math.max(0, fadeOut - textOff), () => { fade.classList.remove('on');
+        after(Math.max(0, end - fadeOut), finish); }); }); })); });
 }

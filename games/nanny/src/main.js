@@ -366,7 +366,7 @@ async function lookPaper(P) {   /* the cloth over the paper is drawn back, and t
   const c = CARDS.paper; card(c.title, c.paras.slice(1), [{ t: c.go, go: async () => { hideCard(); await LOOK.back(); setStage(62); } }], { col: true });
 }
 let subTimer = 0;
-function say(text, ms = 3800) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); subTimer = setTimeout(() => { el.classList.add('dim'); document.body.classList.remove('subbing'); }, Math.max(500, ms * TS)); }
+function say(text, ms = 3800) { NARR.speak(text); const el = $('sub'); el.textContent = text; el.classList.toggle('dim', !text); document.body.classList.toggle('subbing', !!text); clearTimeout(subTimer); NARR.after(Math.max(500, ms * TS), () => { el.classList.add('dim'); document.body.classList.remove('subbing'); }); }
 function flash(op, ms = 0, color = '#fff') { const f = $('flash'); f.style.background = color; f.style.transition = 'opacity ' + (QUICK ? 0 : ms) + 'ms ease-out'; f.style.opacity = sceneIsCalm() && color !== '#000' ? 0 : op; }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * TS));
 async function run(steps) { const ep = EP; for (const [ms, fn] of steps) { await wait(ms); if (ep !== EP) return false; fn(); } return true; }   /* timed steps: [wait in ms, then do this]. Stops if the chapter changes. */
@@ -417,6 +417,7 @@ function showLine() {
   }
   const s = lines[step], me = s.who === 'You'; if (s.unlock) unlock(s.unlock); if (s.give === 'cloak') { story.cloak = true; saveGame(); toast(SAY.cloak, 3200); SFX.rustle(); }
   $('who').textContent = s.who; $('line').textContent = s.text; $('dialogue').classList.toggle('me', me);
+  if (!me && s.text) NARR.speak(s.who + '|' + String(s.text).replace(/\s+/g, ' ').trim()); else NARR.stop();   /* the character's recorded line (voices/index.json, owner rule 17) */
   const box = $('choices'); box.replaceChildren(); $('next').hidden = !!s.choices;
   if (s.choices) { s.choices.forEach((c) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = c.t; b.onclick = () => choose(s, c, b); box.appendChild(b); }); box.firstChild.focus(); } else $('next').focus();
   const ac = talkWith && talkWith.ctl; if (ac) { if (me) ac.play(null); else if (CL.Talk1) ac.play(TALKS[talkN++ % 3]); }
@@ -427,6 +428,7 @@ function choose(s, c, btn) {
 }
 function nextLine() { uiSound('tap'); step++; if (step >= lines.length) { endTalk(true); return; } showLine(); }
 function endTalk(finished) {
+  NARR.stop();
   document.body.classList.remove('talking'); const n = talkWith, cb = convoEnd; talkWith = null; TC.end(); convoEnd = null; $('dialogue').hidden = true; busy = panelsOpen(); if (n && n.ctl) n.ctl.play(null);
   const forced = convoForced; convoForced = false;
   if (finished && n && talkFull) { n.talked = true; saveGame(); onTalked(); } if (cb && (finished || forced)) cb();
