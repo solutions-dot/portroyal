@@ -128,7 +128,7 @@ export function rowBoat(o = {}) {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); g.setIndex(ix);
     const m = new THREE.Mesh(g, MASK || (MASK = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide }))); m.name = 'boatWaterMask'; m.renderOrder = 1; group.add(m); group.userData.mask = m; }
   for (const g of T) g.dispose(); for (const g of bits) g.dispose();
-  Object.assign(group.userData, { seatTop, thwarts: thw, oars, halfAt, boards, sheer: (x) => sheer(x / L + 0.5), rowAt, pinX });
+  Object.assign(group.userData, { seatTop, thwarts: thw, oars, halfAt, boards, sheer: (x) => sheer(x / L + 0.5), rowAt, pinX, bow: 'x' });   /* bow: the course check (engine/audit-course.js) can follow this boat in any game's camera scenes */
   return group;
 }
 let BITS = null, MASK = null;
