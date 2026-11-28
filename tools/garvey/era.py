@@ -2713,9 +2713,12 @@ if BAND:      # the chest band itself, from the measure taken before the body wa
         rr=[]; zs=[]
         for i in range(_NA):
             a=-math.pi+2*math.pi*(i+0.5)/_NA; z=BAND_Z[0]+(BAND_TOP(a)-BAND_Z[0])*k/_NZ; kz=int(round(z/0.01))
-            rr.append(max([_bins.get((i,q),0) for q in range(kz-2,kz+3)]+[0.05*s])+0.006+0.008*abs(math.sin(a))+(0.002 if G.get('bandhug') else 0.007)*(k/_NZ)**2); zs.append(z)      # more room at the sides, where the chest moves with the arms
-        if _rows: rr=[max(rr[i],(0.93 if G.get('bandhug') and k>_NZ//2 else 0.985)*_prev[i]) for i in range(_NA)]      # bandhug (Xaymaca, 28 November 2026): above the bust the top rows follow the chest back in, so the top edge lies on the skin instead of standing out like a tube      # a row never dips inside the one below (on a slight chest the top edge stood in teeth)
+            _top=G.get('bandhug') and k>=_NZ-1      # bandhug: the top rows take the skin at their own height and just above it, not the fuller bust below, so the edge lies on the chest
+            rr.append(max([_bins.get((i,q),0) for q in (range(kz,kz+2) if _top and abs(math.cos(a))>0.7 else range(kz-2,kz+3))]+[0.05*s])+(0.004+0.008*abs(math.sin(a)) if _top else 0.006+0.008*abs(math.sin(a))+(0.002 if G.get('bandhug') else 0.007)*(k/_NZ)**2)); zs.append(z)      # more room at the sides, where the chest moves with the arms
+        _floor=[max([_bins.get((i,int(round(zs[i]/0.01))+d),0) for d in (-1,0,1)]+[0])+0.0025 for i in range(_NA)]      # never inside the skin at this height, whatever the smoothing does
+        if _rows and not (G.get('bandhug') and k>=_NZ-1): rr=[max(rr[i],(0.93 if G.get('bandhug') and k>_NZ//2 else 0.985)*_prev[i]) for i in range(_NA)]      # bandhug (Xaymaca, 28 November 2026): above the bust the top rows follow the chest back in, so the top edge lies on the skin instead of standing out like a tube      # a row never dips inside the one below (on a slight chest the top edge stood in teeth)
         for _ in range(6 if k<_NZ-1 else 14): rr=[(rr[(i-1)%_NA]+2*rr[i]+rr[(i+1)%_NA])/4 for i in range(_NA)]
+        if G.get('bandhug'): rr=[max(rr[i],_floor[i]) for i in range(_NA)]
         _prev=rr
         _rows.append([(math.sin(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],_cy-math.cos(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],zs[i]) for i in range(_NA)])
     _bb=bmesh.new(); _vv=[[_bb.verts.new(p) for p in row] for row in _rows]
