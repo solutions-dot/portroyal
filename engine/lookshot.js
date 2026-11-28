@@ -57,7 +57,7 @@ function scope(on) {
   }
   scopeEl.style.opacity = on ? "1" : "0";
 }
-const BREATH = 1.1;   /* seconds of quiet after a spoken look line */
+const BREATH = 0.5;   /* seconds of quiet after a spoken look line, on top of the voice channel's own 0.6 s pause (engine/filmvoice.js PAUSE) */
 export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () => {}, speak = () => {}, voiceBusy = () => false, freeze = () => {}, sound = () => {}, quick = () => false, reduced = false, home }) {
   const L = { on: false, paused: false };
   let S = null;
@@ -160,7 +160,7 @@ export function createLookShot({ camera, fov, setFov, bars = () => {}, say = () 
         const busy = voiceBusy();
         s.quiet = busy ? 0 : (s.quiet || 0) + Math.min(dt, 0.1);
         const settled = !busy && s.quiet >= BREATH;
-        if (s.said >= 0 && s.t > (s.said + 1) * s.line && !settled) s.t = (s.said + 1) * s.line;
+        if (s.said >= 0 && s.t >= (s.said + 1) * s.line - 0.001 && !settled) s.t = (s.said + 1) * s.line - 0.001;   /* held just short of the next line (held exactly on it, floor() below started the next line anyway: every look read over its own voice, owner, 28 November 2026) */
         const i = Math.min(s.lines.length - 1, Math.floor(s.t / s.line));
         if (i > s.said) { say(s.lines[(s.said = i)]); speak(s.lines[i]); s.quiet = 0; }
         if (s.t >= s.act && s.t >= s.lines.length * s.line && settled) {

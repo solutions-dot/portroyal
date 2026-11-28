@@ -23,6 +23,8 @@ import { STEPS, TASKS, LOOKS } from "./steps.js";
 import { CHAPTERS, TALK, FILMS, QUIZ } from "./content.js";
 import { PLACE_IDS } from "./places.js";
 import { makeAdapter, CHECK_TABLES } from "./checktables.js";
+import { sharedVoice } from "../../../engine/filmvoice.js";
+import { AU } from "../../../engine/audio.js";
 import { $, closeAll } from "./ui.js";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const FIRST = CHAPTERS[0].first,
@@ -30,6 +32,7 @@ const FIRST = CHAPTERS[0].first,
 export async function dev(A) {
   const { q, S, world, worlds, ensure, go, story } = A;
   window.__GAME = A;
+  window.__FV = sharedVoice(); window.__AU = AU;   /* dev: the voice channel, to time speech in a check */
   A.checkAdapter = makeAdapter(A);
   A.checkTables = CHECK_TABLES;
   window.__adapter = A.checkAdapter;
