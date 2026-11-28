@@ -30,7 +30,8 @@
   "sleeve": 0.0,
   "belt": false,
   "waistband": false,
-  "hairfall": true
+  "hairfall": true,
+  "bandhug": true
  },
  "colors": {
   "Skin": [

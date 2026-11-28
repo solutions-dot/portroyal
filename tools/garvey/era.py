@@ -2713,8 +2713,8 @@ if BAND:      # the chest band itself, from the measure taken before the body wa
         rr=[]; zs=[]
         for i in range(_NA):
             a=-math.pi+2*math.pi*(i+0.5)/_NA; z=BAND_Z[0]+(BAND_TOP(a)-BAND_Z[0])*k/_NZ; kz=int(round(z/0.01))
-            rr.append(max([_bins.get((i,q),0) for q in range(kz-2,kz+3)]+[0.05*s])+0.006+0.008*abs(math.sin(a))+0.007*(k/_NZ)**2); zs.append(z)      # more room at the sides, where the chest moves with the arms
-        if _rows: rr=[max(rr[i],0.985*_prev[i]) for i in range(_NA)]      # a row never dips inside the one below (on a slight chest the top edge stood in teeth)
+            rr.append(max([_bins.get((i,q),0) for q in range(kz-2,kz+3)]+[0.05*s])+0.006+0.008*abs(math.sin(a))+(0.002 if G.get('bandhug') else 0.007)*(k/_NZ)**2); zs.append(z)      # more room at the sides, where the chest moves with the arms
+        if _rows: rr=[max(rr[i],(0.93 if G.get('bandhug') and k>_NZ//2 else 0.985)*_prev[i]) for i in range(_NA)]      # bandhug (Xaymaca, 28 November 2026): above the bust the top rows follow the chest back in, so the top edge lies on the skin instead of standing out like a tube      # a row never dips inside the one below (on a slight chest the top edge stood in teeth)
         for _ in range(6 if k<_NZ-1 else 14): rr=[(rr[(i-1)%_NA]+2*rr[i]+rr[(i+1)%_NA])/4 for i in range(_NA)]
         _prev=rr
         _rows.append([(math.sin(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],_cy-math.cos(-math.pi+2*math.pi*(i+0.5)/_NA)*rr[i],zs[i]) for i in range(_NA)])
