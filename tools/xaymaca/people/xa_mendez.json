@@ -26,7 +26,8 @@
   "necktuck": true,
   "coatopen": false,
   "necktuckdepth": 2.2,
-  "neckmask": true
+  "neckmask": true,
+  "sleevetuck": 0.03
  },
  "colors": {
   "Skin": [
